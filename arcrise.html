@@ -210,10 +210,99 @@
       50%      { transform: scale(1.1); opacity: 1; }
     }
 
-    /* "TOUCH HIGH LARGE RADIUS" hint */
-    #touch-hi {
-      position: fixed; font-size: 6px; color: rgba(255,255,255,.5);
-      letter-spacing: 1px; text-align: center; display: none;
+    /* ══════════ TUTORIAL PAGE ══════════ */
+    #tut-page {
+      background: rgba(8,10,14,0.97);
+      justify-content: flex-start;
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* Üst başlık */
+    .tut-header {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; max-width: 400px;
+      padding: 18px 20px 10px;
+    }
+    .tut-header h2 { font-size: 12px; letter-spacing: 2px; color: var(--green); }
+    .tut-close {
+      background: none; border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px; color: #fff; font-family: var(--font);
+      font-size: 7px; letter-spacing: 1px; padding: 7px 12px; cursor: pointer;
+    }
+
+    /* Slide alanı */
+    .tut-slides { flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%; overflow: hidden; }
+
+    .tut-slide { display: none; flex-direction: column; align-items: center; width: 100%; animation: fadeSlide .3s ease; }
+    .tut-slide.active { display: flex; }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Mini canvas illustrasyon */
+    #tut-canvas {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.07);
+      display: block;
+      width: min(88vw, 320px);
+      height: min(52vw, 200px);
+      margin: 8px 0 14px;
+    }
+
+    /* Başlık + açıklama */
+    .tut-title {
+      font-size: 11px; letter-spacing: 2px; color: #fff;
+      text-align: center; margin-bottom: 8px;
+    }
+    .tut-title span.g { color: var(--green); }
+    .tut-title span.r { color: var(--red); }
+    .tut-desc {
+      font-size: 7px; color: rgba(255,255,255,.55);
+      letter-spacing: 1px; line-height: 1.9;
+      text-align: center; max-width: 300px; padding: 0 16px;
+    }
+
+    /* Dot indikatörleri */
+    .tut-dots { display: flex; gap: 8px; margin: 18px 0 12px; }
+    .tut-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,.2); transition: background .25s;
+    }
+    .tut-dot.active { background: var(--green); }
+
+    /* Navigasyon */
+    .tut-nav {
+      display: flex; gap: 12px; width: min(88vw,320px);
+      margin-bottom: 20px;
+    }
+    .tut-nav .btn-gray { flex: 1; font-size: 9px; padding: 13px 10px; }
+    #tut-play { display: none; }
+
+    /* ── HOME alt bağlantıları ── */
+    #home-links {
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 24px; align-items: center;
+    }
+    .home-link {
+      font-size: 6.5px; color: rgba(255,255,255,.3);
+      letter-spacing: 1px; cursor: pointer; background: none;
+      border: none; font-family: var(--font);
+    }
+    .home-link:hover { color: rgba(255,255,255,.6); }
+
+    /* ── RESET butonu (Settings'te) ── */
+    .btn-danger {
+      padding: 12px 24px; border-radius: 13px;
+      border: 1.5px solid rgba(255,51,85,.45);
+      background: rgba(255,51,85,.08);
+      color: #ff3355; font-family: var(--font);
+      font-size: 8px; letter-spacing: 1px;
+      cursor: pointer; width: 100%;
+    }
+    .btn-danger:active { transform: scale(0.97); }
+
+    /* Onay baloncuğu */
+    #reset-confirm {
+      display: none; font-size: 7px; color: rgba(255,255,255,.5);
+      letter-spacing: 1px; text-align: center; margin-top: -10px;
     }
   </style>
 </head>
@@ -251,7 +340,11 @@
     <button class="btn-gray" id="btn-settings">Settings</button>
   </div>
   <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">00000000</span></div>
-  <div id="credits">CREDITS</div>
+  <div id="home-links">
+    <button class="home-link" id="btn-tutorial-link">TUTORIAL</button>
+    <span style="color:rgba(255,255,255,.12);font-size:10px">·</span>
+    <button class="home-link" id="btn-credits">CREDITS</button>
+  </div>
 </div>
 
 <!-- ══ SETTINGS ══ -->
@@ -303,6 +396,8 @@
     </div>
 
     <button class="btn-gray" id="btn-back" style="margin-top:4px">Back</button>
+    <button class="btn-danger" id="btn-reset">🗑 Reset Data</button>
+    <div id="reset-confirm">Veriler silindi. ✓</div>
   </div>
 </div>
 
@@ -325,7 +420,62 @@
   </div>
 </div>
 
-<!-- Tutorial canvas-üzerine çizilir, HTML div kaldırıldı -->
+<!-- ══ TUTORIAL PAGE ══ -->
+<div class="screen" id="tut-page">
+  <div class="tut-header">
+    <h2>HOW TO PLAY</h2>
+    <button class="tut-close" id="tut-close">✕ KAPAT</button>
+  </div>
+
+  <div class="tut-slides">
+    <!-- Canvas illustrasyon (tek canvas, slide değişince yeniden çizilir) -->
+    <canvas id="tut-canvas"></canvas>
+
+    <!-- Slide 0: TOUCH -->
+    <div class="tut-slide active" id="ts-0">
+      <div class="tut-title">TOUCH</div>
+      <div class="tut-desc">Ekranın herhangi bir yerine dokunarak oynamaya başla.</div>
+    </div>
+    <!-- Slide 1: COLLECT GREEN -->
+    <div class="tut-slide" id="ts-1">
+      <div class="tut-title">COLLECT <span class="g">GREEN</span> TO MOVE</div>
+      <div class="tut-desc">Yeşil topları topla. Toplamadan 10 saniye geçerse enerji biter ve kaybedersin.</div>
+    </div>
+    <!-- Slide 2: STAY AWAY -->
+    <div class="tut-slide" id="ts-2">
+      <div class="tut-title">STAY AWAY FROM <span class="r">THE RED</span></div>
+      <div class="tut-desc">Kırmızı engellere çarpma! Çarparsan oyun biter. Duvarlara da dikkat et.</div>
+    </div>
+    <!-- Slide 3: TOUCH HIGH -->
+    <div class="tut-slide" id="ts-3">
+      <div class="tut-title">TOUCH HIGH → <span class="g">LARGE RADIUS</span></div>
+      <div class="tut-desc">Ekranın üstüne dokunmak geniş bir yay çizer. Engelleri rahat geçmek için kullan.</div>
+    </div>
+    <!-- Slide 4: TOUCH LOW -->
+    <div class="tut-slide" id="ts-4">
+      <div class="tut-title">TOUCH LOW → <span class="r">SMALL RADIUS</span></div>
+      <div class="tut-desc">Ekranın altına dokunmak dar bir yay çizer. Dar geçişlerde işe yarar.</div>
+    </div>
+  </div>
+
+  <!-- Dot indikatörleri -->
+  <div class="tut-dots" id="tut-dots">
+    <div class="tut-dot active"></div>
+    <div class="tut-dot"></div>
+    <div class="tut-dot"></div>
+    <div class="tut-dot"></div>
+    <div class="tut-dot"></div>
+  </div>
+
+  <!-- Navigasyon butonları -->
+  <div class="tut-nav">
+    <button class="btn-gray" id="tut-prev">◀ GERİ</button>
+    <button class="btn-gray" id="tut-next">İLERİ ▶</button>
+    <div class="rb-wrap" id="tut-play" style="flex:1">
+      <div class="rb-inner" id="tut-play-btn" style="font-size:13px;padding:13px 10px">OYNA ▶</div>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -376,6 +526,7 @@
   const homeEl     = document.getElementById('home');
   const settingsEl = document.getElementById('settings');
   const gameoverEl = document.getElementById('gameover');
+  const tutPageEl  = document.getElementById('tut-page');
   const homeBestV  = document.getElementById('home-best-val');
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
@@ -387,7 +538,8 @@
 
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
-  let running = false, started = false, firstPlay = true;
+  let running = false, started = false;
+  let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   let best    = Number(localStorage.getItem('arc_best') || 0);
 
@@ -895,9 +1047,230 @@
     homeEl.classList.toggle('active',     s === 'home');
     settingsEl.classList.toggle('active', s === 'settings');
     gameoverEl.classList.toggle('active', s === 'over');
+    tutPageEl.classList.toggle('active',  s === 'tutorial');
     hudEl.classList.toggle('active',      s === 'play');
     if (s === 'home') homeBestV.textContent = pad(best);
+    if (s === 'tutorial') { tutSlide = 0; renderTutSlide(); }
   }
+
+  // ── Tutorial Page ─────────────────────────────────────────
+  const TC   = document.getElementById('tut-canvas');
+  const tctx = TC.getContext('2d');
+  const TW = 640, TH = 400;
+  TC.width = TW; TC.height = TH;
+
+  let tutSlide = 0;
+  const TUT_TOTAL = 5;
+  // Hangi sayfadan gelindi (tutorial bitince oraya dön)
+  let tutFrom = 'home';
+
+  const slides = [
+    {
+      draw: drawTS0,
+      title: null, // HTML'de zaten var
+    },
+    { draw: drawTS1 },
+    { draw: drawTS2 },
+    { draw: drawTS3 },
+    { draw: drawTS4 },
+  ];
+
+  function renderTutSlide() {
+    // Slide göster/gizle
+    for (let i = 0; i < TUT_TOTAL; i++) {
+      document.getElementById(`ts-${i}`).classList.toggle('active', i === tutSlide);
+    }
+    // Dotlar
+    document.querySelectorAll('.tut-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === tutSlide);
+    });
+    // Prev/Next/Play butonları
+    document.getElementById('tut-prev').style.display = tutSlide === 0 ? 'none' : '';
+    document.getElementById('tut-next').style.display = tutSlide === TUT_TOTAL - 1 ? 'none' : '';
+    document.getElementById('tut-play').style.display = tutSlide === TUT_TOTAL - 1 ? '' : 'none';
+    // Canvas illustrasyon çiz
+    slides[tutSlide].draw();
+  }
+
+  // ── Mini canvas: ortak yardımcılar ─────────────────────
+  function tcGrid() {
+    tctx.save(); tctx.strokeStyle = '#fff'; tctx.lineWidth = .5; tctx.globalAlpha = .1;
+    const sz = 44;
+    for (let x = 0; x < TW; x += sz) { tctx.beginPath(); tctx.moveTo(x,0); tctx.lineTo(x,TH); tctx.stroke(); }
+    for (let y = 0; y < TH; y += sz) { tctx.beginPath(); tctx.moveTo(0,y); tctx.lineTo(TW,y); tctx.stroke(); }
+    tctx.restore();
+  }
+  function tcClear() {
+    tctx.clearRect(0, 0, TW, TH);
+    tctx.fillStyle = '#080a0e'; tctx.fillRect(0, 0, TW, TH);
+    tcGrid();
+  }
+  function tcPlayer(x, y, num = '') {
+    const r = 18;
+    let g = tctx.createRadialGradient(x,y,2,x,y,r*2.5);
+    g.addColorStop(0,'rgba(124,255,122,.45)'); g.addColorStop(1,'rgba(124,255,122,0)');
+    tctx.fillStyle = g; tctx.beginPath(); tctx.arc(x,y,r*2.5,0,Math.PI*2); tctx.fill();
+    tctx.fillStyle = '#000'; tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.fill();
+    tctx.strokeStyle = 'rgba(124,255,122,.9)'; tctx.lineWidth = 2;
+    tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.stroke();
+    if (num !== '') {
+      tctx.fillStyle = '#fff'; tctx.font = '8px "Press Start 2P",monospace';
+      tctx.textAlign = 'center'; tctx.textBaseline = 'middle';
+      tctx.fillText(String(num), x, y);
+    }
+  }
+  function tcDashedRing(x, y, r, color = 'rgba(255,255,255,.7)') {
+    tctx.save(); tctx.setLineDash([9,6]);
+    tctx.strokeStyle = color; tctx.lineWidth = 1.8;
+    tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.stroke();
+    tctx.setLineDash([]); tctx.restore();
+  }
+  function tcGreenBlob(x, y, r = 20) {
+    let g = tctx.createRadialGradient(x,y,0,x,y,r*2.5);
+    g.addColorStop(0,'rgba(124,255,122,.9)'); g.addColorStop(1,'rgba(60,255,60,0)');
+    tctx.fillStyle = g; tctx.beginPath(); tctx.arc(x,y,r*2.5,0,Math.PI*2); tctx.fill();
+    tctx.fillStyle = '#7CFF7A'; tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.fill();
+  }
+  function tcRedBlob(x, y, r = 28) {
+    let g = tctx.createRadialGradient(x,y,0,x,y,r*2);
+    g.addColorStop(0,'rgba(255,80,110,.55)'); g.addColorStop(1,'rgba(255,40,70,0)');
+    tctx.fillStyle = g; tctx.beginPath(); tctx.arc(x,y,r*2,0,Math.PI*2); tctx.fill();
+    g = tctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,'rgba(255,140,160,.9)'); g.addColorStop(1,'rgba(200,55,80,.7)');
+    tctx.fillStyle = g; tctx.beginPath(); tctx.arc(x,y,r,0,Math.PI*2); tctx.fill();
+  }
+  function tcArc(cx, cy, r, aStart, aEnd, colorA, colorB) {
+    // Rainbow trail segment
+    const grad = tctx.createLinearGradient(
+      cx + Math.cos(aStart)*r, cy + Math.sin(aStart)*r,
+      cx + Math.cos(aEnd)*r,   cy + Math.sin(aEnd)*r
+    );
+    grad.addColorStop(0, colorA); grad.addColorStop(1, colorB);
+    tctx.save(); tctx.globalCompositeOperation = 'lighter';
+    tctx.strokeStyle = grad; tctx.lineWidth = 3; tctx.lineCap = 'round';
+    tctx.beginPath(); tctx.arc(cx, cy, r, aStart, aEnd); tctx.stroke();
+    tctx.restore();
+  }
+  function tcLabel(x, y, txt, color = '#fff', size = 8) {
+    tctx.save(); tctx.font = `${size}px "Press Start 2P",monospace`;
+    tctx.fillStyle = 'rgba(0,0,0,.6)'; tctx.textAlign = 'center'; tctx.textBaseline = 'middle';
+    tctx.fillText(txt, x+1, y+1);
+    tctx.fillStyle = color; tctx.fillText(txt, x, y);
+    tctx.restore();
+  }
+
+  // ── Slide çizimleri ────────────────────────────────────
+  function drawTS0() { // TOUCH
+    tcClear();
+    // Kırmızı duvarlar
+    tctx.fillStyle='rgba(255,51,85,.08)'; tctx.fillRect(0,0,14,TH); tctx.fillRect(TW-14,0,14,TH);
+    tctx.fillStyle='#ff3355'; tctx.fillRect(14,0,6,TH); tctx.fillRect(TW-20,0,6,TH);
+    // Player altta
+    tcPlayer(TW*0.37, TH*0.82, '0');
+    // Dashed ring sağda
+    tcDashedRing(TW*0.72, TH*0.55, 52);
+    // "TOUCH" etiketi
+    tcLabel(TW*0.72, TH*0.55, 'TOUCH', '#fff', 9);
+    // Ok: player → ring
+    tctx.save(); tctx.strokeStyle='rgba(255,255,255,.25)'; tctx.lineWidth=1; tctx.setLineDash([4,4]);
+    tctx.beginPath(); tctx.moveTo(TW*0.42,TH*0.78); tctx.lineTo(TW*0.64,TH*0.62); tctx.stroke();
+    tctx.setLineDash([]); tctx.restore();
+  }
+
+  function drawTS1() { // COLLECT GREEN
+    tcClear();
+    tctx.fillStyle='rgba(255,51,85,.08)'; tctx.fillRect(0,0,14,TH); tctx.fillRect(TW-14,0,14,TH);
+    tctx.fillStyle='#ff3355'; tctx.fillRect(14,0,6,TH); tctx.fillRect(TW-20,0,6,TH);
+    // Arc trail
+    tcArc(TW*0.25, TH*0.9, 120, Math.PI*1.2, Math.PI*1.68, 'hsla(60,100%,65%,.8)', 'hsla(160,100%,65%,.8)');
+    // Player
+    tcPlayer(TW*0.55, TH*0.55, '2');
+    // Green bonus + ring
+    tcGreenBlob(TW*0.65, TH*0.28, 18);
+    tcDashedRing(TW*0.65, TH*0.28, 44, 'rgba(124,255,122,.75)');
+    tcLabel(TW*0.65, TH*0.28-58, 'COLLECT GREEN', '#7CFF7A', 7);
+  }
+
+  function drawTS2() { // STAY AWAY FROM THE RED
+    tcClear();
+    tctx.fillStyle='rgba(255,51,85,.08)'; tctx.fillRect(0,0,14,TH); tctx.fillRect(TW-14,0,14,TH);
+    tctx.fillStyle='#ff3355'; tctx.fillRect(14,0,6,TH); tctx.fillRect(TW-20,0,6,TH);
+    // Arc trail
+    tcArc(TW*0.75, TH*0.85, 130, Math.PI*1.3, Math.PI*1.75, 'hsla(200,100%,65%,.8)', 'hsla(280,100%,65%,.8)');
+    // Player
+    tcPlayer(TW*0.42, TH*0.52, '3');
+    // Red obstacle + ring
+    tcRedBlob(TW*0.62, TH*0.28, 26);
+    tcDashedRing(TW*0.62, TH*0.28, 52, 'rgba(255,51,85,.8)');
+    tcLabel(TW*0.62, TH*0.28-68, 'STAY AWAY!', '#ff3355', 7);
+  }
+
+  function drawTS3() { // TOUCH HIGH → LARGE RADIUS
+    tcClear();
+    tctx.fillStyle='rgba(255,51,85,.08)'; tctx.fillRect(0,0,14,TH); tctx.fillRect(TW-14,0,14,TH);
+    tctx.fillStyle='#ff3355'; tctx.fillRect(14,0,6,TH); tctx.fillRect(TW-20,0,6,TH);
+    // Büyük yay
+    tcArc(TW*0.5, TH*1.1, 260, Math.PI*1.1, Math.PI*1.9, 'hsla(120,100%,65%,.7)', 'hsla(240,100%,65%,.7)');
+    // Player yayın üstünde
+    tcPlayer(TW*0.50, TH*0.15, '5');
+    // Üst ring (touch area)
+    tcDashedRing(TW*0.72, TH*0.14, 40);
+    tcLabel(TW*0.72, TH*0.14, 'TAP', '#fff', 7);
+    // "= LARGE RADIUS"
+    tcLabel(TW*0.5, TH*0.7, '= LARGE RADIUS', '#7CFF7A', 7);
+  }
+
+  function drawTS4() { // TOUCH LOW → SMALL RADIUS
+    tcClear();
+    tctx.fillStyle='rgba(255,51,85,.08)'; tctx.fillRect(0,0,14,TH); tctx.fillRect(TW-14,0,14,TH);
+    tctx.fillStyle='#ff3355'; tctx.fillRect(14,0,6,TH); tctx.fillRect(TW-20,0,6,TH);
+    // Küçük yay (sağa doğru dar dönüş)
+    tcArc(TW*0.68, TH*0.5, 80, Math.PI*0.9, Math.PI*1.7, 'hsla(320,100%,65%,.7)', 'hsla(60,100%,65%,.7)');
+    // Player
+    tcPlayer(TW*0.68, TH*0.35, '5');
+    // Alt ring (touch area)
+    tcDashedRing(TW*0.28, TH*0.88, 38);
+    tcLabel(TW*0.28, TH*0.88, 'TAP', '#fff', 7);
+    // "= SMALL RADIUS"
+    tcLabel(TW*0.5, TH*0.2, '= SMALL RADIUS', '#ff3355', 7);
+  }
+
+  // Tutorial nav butonları
+  document.getElementById('tut-prev').addEventListener('click', () => {
+    if (tutSlide > 0) { tutSlide--; renderTutSlide(); }
+  });
+  document.getElementById('tut-next').addEventListener('click', () => {
+    if (tutSlide < TUT_TOTAL - 1) { tutSlide++; renderTutSlide(); }
+  });
+  document.getElementById('tut-close').addEventListener('click', () => {
+    // Eğer oyun başlatmak için gelindiyse, kapat → ana sayfaya dön
+    showScene(tutFrom === 'play' ? 'home' : tutFrom);
+  });
+  document.getElementById('tut-play').addEventListener('click', () => {
+    if (tutFrom === 'play') {
+      // Tutorial sayfasından OYNA → oyunu başlat (firstPlay zaten false yapıldı)
+      // resetGame() zaten startGame içinde çağrıldı, yeniden çağırmaya gerek yok
+      showScene('play');
+    } else {
+      showScene('home');
+    }
+  });
+  document.getElementById('tut-play-btn').addEventListener('click', function() {
+    this.closest('#tut-play').click();
+  });
+
+  // ── Reset Data ────────────────────────────────────────────
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    ['arc_best','arc_diff_idx','arc_sfx','arc_mus','arc_fb','arc_firstplay'].forEach(k => localStorage.removeItem(k));
+    best = 0; diffIdx = 1; firstPlay = true;
+    dValEl.textContent = DIFFS[diffIdx];
+    homeBestV.textContent = pad(0);
+    sfxSl.value = 80; musSl.value = 50;
+    syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
+    const confirm = document.getElementById('reset-confirm');
+    confirm.style.display = 'block';
+    setTimeout(() => { confirm.style.display = 'none'; }, 2500);
+  });
 
   // ── Input ────────────────────────────────────────────────
   gc.addEventListener('pointerdown', e => {
@@ -950,16 +1323,30 @@
   // ── Nav buttons ───────────────────────────────────────────
   function startGame() {
     resetGame();
-    showScene('play');
-    // İlk oyunda tutorial adım 0'dan başlat
     if (firstPlay) {
+      // İlk oyun: önce tutorial sayfasını göster
       firstPlay = false;
-      advanceTut(0);   // adım 0: TOUCH ring göster
+      localStorage.setItem('arc_firstplay', '0');
+      tutFrom = 'play'; // Tutorial'dan OYNA butonuna basınca doğrudan oyuna git
+      showScene('tutorial');
+    } else {
+      showScene('play');
+      // İlk oyunda in-game overlay yerine tutorial sayfası gösterildi;
+      // sonraki oyunlarda in-game tutorial gösterilmez (isteğe bağlı: advanceTut(0))
     }
   }
 
   document.getElementById('btn-start').addEventListener('click', startGame);
   document.getElementById('wrap-start').addEventListener('click', startGame);
+
+  // Home alt bağlantılar
+  document.getElementById('btn-tutorial-link').addEventListener('click', () => {
+    tutFrom = 'home';
+    showScene('tutorial');
+  });
+  document.getElementById('btn-credits').addEventListener('click', () => {
+    alert('ArcRise\nv1.0 — 2025\nDesign & Code: Buğra Sulukcu');
+  });
 
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
