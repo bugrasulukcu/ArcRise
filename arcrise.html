@@ -325,10 +325,7 @@
   </div>
 </div>
 
-<!-- ══ TUTORIAL ══ -->
-<div class="screen" id="tutorial">
-  <div id="touch-ring" style="position:fixed;right:18%;bottom:32%">TOUCH</div>
-</div>
+<!-- Tutorial canvas-üzerine çizilir, HTML div kaldırıldı -->
 
 <script>
 (() => {
@@ -379,7 +376,6 @@
   const homeEl     = document.getElementById('home');
   const settingsEl = document.getElementById('settings');
   const gameoverEl = document.getElementById('gameover');
-  const tutorialEl = document.getElementById('tutorial');
   const homeBestV  = document.getElementById('home-best-val');
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
@@ -394,6 +390,12 @@
   let running = false, started = false, firstPlay = true;
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   let best    = Number(localStorage.getItem('arc_best') || 0);
+
+  // ── Tutorial state ───────────────────────────────────────
+  // -1 = kapalı, 0 = ilk dokunuş bekle, 1..4 = adımlar, 5 = bitti
+  let tutStep  = -1;
+  let tutTimer = 0;   // mevcut adımdaki süre (saniye)
+  let tutAlpha = 0;   // fade in/out (0..1)
 
   const DIFFS  = ['Easy', 'Normal', 'Hard', 'Extreme'];
   const SPEEDS = [180, 220, 280, 350];
@@ -601,6 +603,147 @@
     player.ang = Math.atan2(player.y - player.cy, player.x - player.cx);
   }
 
+  // ── Tutorial çizim sistemi ────────────────────────────────
+  function dashedRing(x, y, r, color, dash = [9, 6]) {
+    ctx.save();
+    ctx.setLineDash(dash);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.8;
+    ctx.globalAlpha = tutAlpha;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  function tutLabel(cx, cy, line1, line2, col1 = '#fff', col2 = '#fff') {
+    ctx.save();
+    ctx.globalAlpha  = tutAlpha;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = '9px "Press Start 2P", monospace';
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillText(line1, cx + 1, cy + 1);
+    if (line2) ctx.fillText(line2, cx + 1, cy + 17);
+    ctx.fillStyle = col1;
+    ctx.fillText(line1, cx, cy);
+    if (line2) { ctx.fillStyle = col2; ctx.fillText(line2, cx, cy + 17); }
+    ctx.restore();
+  }
+
+  // "FROM THE RED" → "FROM " normal + "THE RED" kırmızı
+  function tutLabelMixed(cx, cy, line1, prefix, highlight, col1 = '#fff') {
+    ctx.save();
+    ctx.globalAlpha  = tutAlpha;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = '9px "Press Start 2P", monospace';
+    ctx.fillStyle = col1;
+    ctx.fillText(line1, cx, cy);
+    // measure prefix + highlight widths
+    const fullW  = ctx.measureText(prefix + highlight).width;
+    const preW   = ctx.measureText(prefix).width;
+    const startX = cx - fullW / 2;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(prefix, startX, cy + 17);
+    ctx.fillStyle = '#ff3355';
+    ctx.fillText(highlight, startX + preW, cy + 17);
+    ctx.restore();
+  }
+
+  // "COLLECT GREEN / TO MOVE" → "COLLECT " normal + "GREEN" yeşil
+  function tutLabelGreen(cx, cy) {
+    ctx.save();
+    ctx.globalAlpha  = tutAlpha;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = '9px "Press Start 2P", monospace';
+    const l1 = 'COLLECT GREEN';
+    const fullW = ctx.measureText(l1).width;
+    const preW  = ctx.measureText('COLLECT ').width;
+    const sx    = cx - fullW / 2;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff'; ctx.fillText('COLLECT ', sx, cy);
+    ctx.fillStyle = '#7CFF7A'; ctx.fillText('GREEN', sx + preW, cy);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('TO MOVE', cx, cy + 17);
+    ctx.restore();
+  }
+
+  function drawTutorial(time) {
+    if (tutStep < 0 || tutStep > 4) return;
+
+    // fade in/out (0→1 in 0.4s, stays, 1→0 in last 0.4s for timed steps)
+    tutAlpha = Math.min(1, tutAlpha);
+
+    const pulse = 0.75 + 0.25 * Math.sin(time * 3.5); // pulsing ring
+
+    if (tutStep === 0) {
+      // ── Adım 0: TOUCH ──────────────────────────────────────
+      const rx = W * 0.72, ry = H * 0.72;
+      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
+      ctx.setLineDash([9, 6]);
+      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(rx, ry, 56, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      tutLabel(rx, ry, 'TOUCH', null, '#fff');
+
+    } else if (tutStep === 1) {
+      // ── Adım 1: COLLECT GREEN TO MOVE ──────────────────────
+      // Ekranda görünen ilk bonus etrafında yeşil dashed ring
+      const b = bonuses.find(bo => { const sy = W2S(bo.y); return sy > 60 && sy < H - 60; });
+      if (b) {
+        const sy = W2S(b.y);
+        dashedRing(b.x, sy, b.r + 22, `rgba(124,255,122,${pulse * .85})`);
+        tutLabelGreen(b.x, sy - b.r - 46);
+      }
+
+    } else if (tutStep === 2) {
+      // ── Adım 2: STAY AWAY FROM THE RED ─────────────────────
+      // Ekranda görünen ilk engel etrafında kırmızı dashed ring
+      const ob = obstacles.find(o => { const sy = W2S(o._oy ?? o.y); return sy > 60 && sy < H - 60; });
+      if (ob) {
+        const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
+        ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
+        ctx.setLineDash([9, 6]);
+        ctx.strokeStyle = `rgba(255,51,85,.85)`; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(sx, sy, ob.r + 22, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        tutLabelMixed(sx, sy - ob.r - 46, 'STAY AWAY', 'FROM ', 'THE RED');
+      }
+
+    } else if (tutStep === 3) {
+      // ── Adım 3: TOUCH HIGH LARGE RADIUS ────────────────────
+      const rx = W * 0.37, ry = H * 0.10;
+      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
+      ctx.setLineDash([10, 7]);
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(rx, ry, 68, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      tutLabel(rx, ry + 88, 'TOUCH HIGH', 'LARGE RADIUS');
+
+    } else if (tutStep === 4) {
+      // ── Adım 4: TOUCH LOW SMALL RADIUS ─────────────────────
+      const rx = W * 0.37, ry = H * 0.88;
+      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
+      ctx.setLineDash([10, 7]);
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(rx, ry, 52, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      tutLabel(rx, ry - 70, 'TOUCH LOW', 'SMALL RADIUS');
+    }
+  }
+
+  function advanceTut(nextStep) {
+    tutStep  = nextStep;
+    tutTimer = 0;
+    tutAlpha = 0; // sıfırdan fade-in
+  }
+
   function resetGame() {
     player.x = W/2; player.y = H - 60;
     player.heading = -Math.PI/2; player.dir = 0;
@@ -609,6 +752,7 @@
     nextSpawnY = player.y - 500; lastBonusY = player.y;
     score = 0; maxAscend = 0; energy = 1;
     started = false; running = false; lbFrame = 0;
+    tutStep = -1; tutTimer = 0; tutAlpha = 0;
     initBgArcs();
   }
 
@@ -673,7 +817,25 @@
     }
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r)**2) { bonuses.splice(i,1); energy = 1; }
+      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        bonuses.splice(i,1); energy = 1;
+        // Adım 1 aktifken bonus toplandığında ilerle
+        if (tutStep === 1) advanceTut(2);
+      }
+    }
+
+    // ── Tutorial zamanlayıcısı ──────────────────────────────
+    if (tutStep >= 0 && tutStep <= 4) {
+      tutTimer += dt;
+      // Fade in: ilk 0.5s
+      if (tutTimer < 0.5) tutAlpha = tutTimer / 0.5;
+      else tutAlpha = 1;
+
+      // Zamanlı adımlar için otomatik ilerleme
+      if (tutStep === 1 && tutTimer > 3.5) advanceTut(2);
+      if (tutStep === 2 && tutTimer > 3.5) advanceTut(3);
+      if (tutStep === 3 && tutTimer > 5.5) advanceTut(4);
+      if (tutStep === 4 && tutTimer > 5.5) advanceTut(5);
     }
   }
 
@@ -713,6 +875,8 @@
     if (scene === 'play' || scene === 'over') {
       drawWalls(); drawObstacles(); drawBonuses();
       drawTrail(time); drawPlayer(); drawRipples();
+      // Tutorial katmanı — her zaman oyun üzerine çiz
+      if (scene === 'play') drawTutorial(time);
     }
 
     if (scene === 'play' && running) {
@@ -732,7 +896,6 @@
     settingsEl.classList.toggle('active', s === 'settings');
     gameoverEl.classList.toggle('active', s === 'over');
     hudEl.classList.toggle('active',      s === 'play');
-    tutorialEl.classList.remove('active');
     if (s === 'home') homeBestV.textContent = pad(best);
   }
 
@@ -746,11 +909,16 @@
     ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
 
     if (!started) {
+      // Adım 0 → ilk dokunuşta oyunu başlat ve adım 1'e geç
       beginArc(Math.random() < .5 ? -1 : 1, radius);
       started = true; running = true;
-      tutorialEl.classList.remove('active');
+      if (tutStep === 0) advanceTut(1);
     } else if (running) {
       beginArc(-player.dir, radius);
+      // Adım 3: üst %35'e dokunulursa ilerle
+      if (tutStep === 3 && sy < H * 0.35) advanceTut(4);
+      // Adım 4: alt %35'e dokunulursa ilerle
+      else if (tutStep === 4 && sy > H * 0.65) advanceTut(5);
     }
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
@@ -781,8 +949,13 @@
 
   // ── Nav buttons ───────────────────────────────────────────
   function startGame() {
-    resetGame(); showScene('play');
-    if (firstPlay) { tutorialEl.classList.add('active'); firstPlay = false; }
+    resetGame();
+    showScene('play');
+    // İlk oyunda tutorial adım 0'dan başlat
+    if (firstPlay) {
+      firstPlay = false;
+      advanceTut(0);   // adım 0: TOUCH ring göster
+    }
   }
 
   document.getElementById('btn-start').addEventListener('click', startGame);
