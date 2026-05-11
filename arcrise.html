@@ -48,28 +48,73 @@
     .screen.active { display: flex; }
 
     /* ── HUD ── */
+    /* #hud artık .stack içinde — position: absolute ile canvas'a göre konumlanır */
     #hud {
-      position: fixed; inset: 0;
+      position: absolute; inset: 0;
       z-index: 15; pointer-events: none;
       display: none;
     }
     #hud.active { display: block; }
-    .hud-tl { position: absolute; top: 18px; left: 18px; }
-    .hud-tr { position: absolute; top: 18px; right: 18px; text-align: right; }
+
+    /* Duvar iç kenarı: canvas 600px'de 20px sol/sağ → %3.33
+       Güvenli bölge başlangıcı = calc(3.4% + 10px)                */
+    .hud-tl {
+      position: absolute; top: 18px;
+      left: calc(3.4% + 12px);
+    }
+    .hud-tr {
+      position: absolute; top: 18px;
+      right: calc(3.4% + 12px);
+      text-align: right;
+    }
     .hud-lbl { font-size: 7px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
     .hud-num { font-size: 13px; letter-spacing: 1px; }
+    /* Küçük avatar renk noktası YOUR BEST yanında */
+    #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
-    /* Leaderboard sidebar */
+    /* Leaderboard sidebar — sağ duvarın içinde */
     #lb {
-      position: absolute; top: 0; right: 0;
-      width: 130px; height: 100%;
+      position: absolute; top: 0;
+      right: calc(3.4% + 10px);
+      width: 108px; height: 100%;
       display: flex; flex-direction: column;
       justify-content: center; gap: 5px;
-      padding: 60px 10px 20px 4px;
+      padding: 60px 0 20px 0;
       overflow: hidden;
     }
     .lb-row   { font-size: 5.5px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
-    .lb-row.you { font-size: 6px; color: #fff; }
+    .lb-row.you { font-size: 6px; }
+
+    /* ══════════ PROFILE (Settings içinde) ══════════ */
+    .profile-sect {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding-bottom: 18px;
+    }
+    .profile-lbl { font-size: 6.5px; color: var(--green); letter-spacing: 2px; margin-bottom: 12px; }
+    .av-picker { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .av-opt {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: border-color .18s, transform .15s;
+      flex-shrink: 0;
+    }
+    .av-opt.sel { border-color: #fff; transform: scale(1.18); }
+    .name-row { display: flex; gap: 8px; align-items: center; }
+    #name-input {
+      flex: 1; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
+      color: #fff; font-family: var(--font); font-size: 8px;
+      letter-spacing: 2px; padding: 10px 12px;
+      text-transform: uppercase; min-width: 0;
+    }
+    #name-input:focus { outline: none; border-color: var(--green); }
+    #name-save {
+      padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--green); background: rgba(124,255,122,.1);
+      color: var(--green); font-family: var(--font);
+      font-size: 7px; letter-spacing: 1px; cursor: pointer; flex-shrink: 0;
+    }
+    #name-save:active { transform: scale(0.95); }
 
     /* ══════════ HOME ══════════ */
     #home { gap: 0; }
@@ -284,25 +329,23 @@
 </head>
 <body>
 
-<!-- ── Canvas ── -->
+<!-- ── Canvas + HUD (aynı stack içinde, duvar sınırlarına göre konumlanır) ── -->
 <div id="wrap">
   <div class="stack">
     <canvas id="bg"></canvas>
     <canvas id="gc"></canvas>
+    <div id="hud">
+      <div class="hud-tl">
+        <div class="hud-lbl">SCORE</div>
+        <div class="hud-num" id="h-score">00000000</div>
+      </div>
+      <div class="hud-tr">
+        <div class="hud-lbl">YOUR BEST <span id="hud-av"></span></div>
+        <div class="hud-num" id="h-best">00000000</div>
+      </div>
+      <div id="lb"></div>
+    </div>
   </div>
-</div>
-
-<!-- ── HUD ── -->
-<div id="hud">
-  <div class="hud-tl">
-    <div class="hud-lbl">SCORE</div>
-    <div class="hud-num" id="h-score">00000000</div>
-  </div>
-  <div class="hud-tr">
-    <div class="hud-lbl">YOUR BEST</div>
-    <div class="hud-num" id="h-best">00000000</div>
-  </div>
-  <div id="lb"></div>
 </div>
 
 <!-- ══ HOME ══ -->
@@ -327,6 +370,16 @@
 <div class="screen" id="settings">
   <div class="panel">
     <h2>Settings</h2>
+
+    <!-- ── Profil ── -->
+    <div class="profile-sect">
+      <div class="profile-lbl">PROFILE</div>
+      <div class="av-picker" id="av-picker"></div>
+      <div class="name-row">
+        <input type="text" id="name-input" maxlength="8" placeholder="PLAYER" spellcheck="false" autocomplete="off">
+        <button id="name-save">SAVE</button>
+      </div>
+    </div>
 
     <div class="srow">
       <span class="sicon">🔥</span>
@@ -461,6 +514,7 @@
   const hudEl      = document.getElementById('hud');
   const hScore     = document.getElementById('h-score');
   const hBest      = document.getElementById('h-best');
+  const hudAvDot   = document.getElementById('hud-av');
   const lbEl       = document.getElementById('lb');
   const homeEl     = document.getElementById('home');
   const settingsEl = document.getElementById('settings');
@@ -477,6 +531,34 @@
   const sfxTh      = document.getElementById('sfx-th');
   const musSl      = document.getElementById('mus-sl');
   const musTh      = document.getElementById('mus-th');
+
+  // ── Profil ───────────────────────────────────────────────
+  const AVATAR_COLORS = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa','#ffffff'];
+  let playerName = (localStorage.getItem('arc_name') || 'PLAYER').toUpperCase().slice(0, 8);
+  let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 3); // varsayılan yeşil
+
+  function applyProfile() {
+    // HUD avatar dot rengi
+    hudAvDot.style.background = AVATAR_COLORS[avatarIdx];
+  }
+
+  function renderAvPicker() {
+    const p = document.getElementById('av-picker');
+    p.innerHTML = '';
+    AVATAR_COLORS.forEach((c, i) => {
+      const d = document.createElement('div');
+      d.className = 'av-opt' + (i === avatarIdx ? ' sel' : '');
+      d.style.background = c;
+      d.title = c;
+      d.addEventListener('click', () => {
+        avatarIdx = i;
+        localStorage.setItem('arc_avatar', i);
+        renderAvPicker();
+        applyProfile();
+      });
+      p.appendChild(d);
+    });
+  }
 
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
@@ -731,13 +813,16 @@
   function refreshLB() {
     lbFrame++;
     if (lbFrame % 30 !== 0) return; // update every 30 frames
-    const sc = Math.floor(score);
+    const sc  = Math.floor(score);
+    const avc = AVATAR_COLORS[avatarIdx];
     const rows = LB_NAMES.map((n, i) => ({ n, s: Math.max(0, sc + (i-5)*3 + (Math.floor(Math.random()*3)-1)) }));
     rows.sort((a,b) => b.s - a.s);
     const youIdx = Math.min(Math.floor(rows.length/2), rows.length - 1);
-    rows.splice(youIdx, 0, { n: 'YOU', s: sc, you: true });
+    rows.splice(youIdx, 0, { n: playerName, s: sc, you: true });
     lbEl.innerHTML = rows.slice(0, 14).map(r =>
-      `<div class="lb-row${r.you?' you':''}">${r.n}</div>`
+      r.you
+        ? `<div class="lb-row you" style="color:${avc}">▶ ${r.n}</div>`
+        : `<div class="lb-row">${r.n}</div>`
     ).join('');
   }
 
@@ -1004,14 +1089,19 @@
     best = Math.max(best, Math.floor(score));
     localStorage.setItem('arc_best', String(best));
 
-    const sc = Math.floor(score);
-    const r1 = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
+    const sc  = Math.floor(score);
+    const avc = AVATAR_COLORS[avatarIdx];
+    const r1  = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
     rankRows.innerHTML = [
-      { rk: '0000001.', name: 'USERUSER', sc: r1,  you: false },
-      { rk: '0000002.', name: 'YOU',      sc,       you: true  },
-      { rk: '0000003.', name: 'USERUSER', sc: r3,  you: false },
+      { rk: '0000001.', name: 'USERUSER',  sc: r1, you: false },
+      { rk: '0000002.', name: playerName,  sc,      you: true  },
+      { rk: '0000003.', name: 'USERUSER',  sc: r3, you: false },
     ].map(r =>
-      `<tr class="${r.you?'you':''}"><td>${r.rk}</td><td style="padding:0 10px">${r.name}</td><td>${pad(r.sc)}</td></tr>`
+      `<tr class="${r.you?'you':''}" ${r.you ? `style="color:${avc}"` : ''}>
+        <td>${r.rk}</td>
+        <td style="padding:0 10px">${r.name}</td>
+        <td>${pad(r.sc)}</td>
+      </tr>`
     ).join('');
     goBestV.textContent = pad(best);
     showScene('over');
@@ -1067,12 +1157,15 @@
 
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
-    ['arc_best','arc_diff_idx','arc_sfx','arc_mus','arc_fb','arc_firstplay'].forEach(k => localStorage.removeItem(k));
+    ['arc_best','arc_diff_idx','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar'].forEach(k => localStorage.removeItem(k));
     best = 0; diffIdx = 1; firstPlay = true;
+    playerName = 'PLAYER'; avatarIdx = 3;
     dValEl.textContent = DIFFS[diffIdx];
     homeBestV.textContent = pad(0);
     sfxSl.value = 80; musSl.value = 50;
     syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
+    document.getElementById('name-input').value = playerName;
+    renderAvPicker(); applyProfile();
     const confirm = document.getElementById('reset-confirm');
     confirm.style.display = 'block';
     setTimeout(() => { confirm.style.display = 'none'; }, 2500);
@@ -1101,6 +1194,28 @@
     }
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+  // ── Profil UI ─────────────────────────────────────────────
+  renderAvPicker();
+  applyProfile();
+  document.getElementById('name-input').value = playerName;
+
+  document.getElementById('name-save').addEventListener('click', () => {
+    const raw = document.getElementById('name-input').value
+      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
+    playerName = raw || 'PLAYER';
+    localStorage.setItem('arc_name', playerName);
+    document.getElementById('name-input').value = playerName;
+    // Kısa flash: buton rengi yeşile döner
+    const btn = document.getElementById('name-save');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = 'SAVE'; }, 1200);
+  });
+
+  // Enter tuşu kaydet
+  document.getElementById('name-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('name-save').click();
+  });
 
   // ── Settings UI ───────────────────────────────────────────
   function syncThumb(sl, th) {
@@ -1167,6 +1282,7 @@
   // ── Boot ─────────────────────────────────────────────────
   initBgArcs();
   resetGame();
+  applyProfile();
   showScene('home');
   requestAnimationFrame(loop);
 })();
