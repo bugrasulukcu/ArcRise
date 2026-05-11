@@ -469,7 +469,71 @@
   </div>
 </div>
 
+<!--
+  ══════════════════════════════════════════════════════════
+  Firebase kurulumu:
+  1. console.firebase.google.com → yeni proje → "arcrise"
+  2. Build → Firestore → "Start in test mode" → europe-west1
+  3. Project Settings → Web app → firebaseConfig'i kopyala
+  4. Aşağıdaki FIREBASE_CONFIG alanını doldur
+  ══════════════════════════════════════════════════════════
+-->
 <script>
+// ── Firebase Firestore (REST API — SDK gerekmez) ────────────
+// Config'i console.firebase.google.com > Project Settings > Web app'ten al
+const FIREBASE_CONFIG = {
+  apiKey:    'BURAYA_API_KEY',          // ← yapıştır
+  projectId: 'BURAYA_PROJECT_ID',       // ← yapıştır
+};
+
+const ARC_DB = (() => {
+  const { apiKey, projectId } = FIREBASE_CONFIG;
+  const BASE = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+
+  // Skor kaydet
+  async function submitScore(name, avatar, score) {
+    if (!projectId || projectId.startsWith('BURAYA')) return; // config yoksa sessizce atla
+    try {
+      await fetch(`${BASE}/scores?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: {
+          name:   { stringValue: name  },
+          avatar: { integerValue: String(avatar) },
+          score:  { integerValue: String(score)  },
+          ts:     { integerValue: String(Date.now()) },
+        }}),
+      });
+    } catch(e) { console.warn('[ArcDB] submit failed', e); }
+  }
+
+  // Top-N skor çek
+  async function getTopScores(n = 10) {
+    if (!projectId || projectId.startsWith('BURAYA')) return [];
+    try {
+      const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from:    [{ collectionId: 'scores' }],
+          orderBy: [{ field: { fieldPath: 'score' }, direction: 'DESCENDING' }],
+          limit:   n,
+        }}),
+      });
+      const rows = await res.json();
+      return rows
+        .filter(r => r.document?.fields)
+        .map(r => ({
+          name:   r.document.fields.name.stringValue,
+          avatar: parseInt(r.document.fields.avatar.integerValue ?? 3),
+          score:  parseInt(r.document.fields.score.integerValue ?? 0),
+        }));
+    } catch(e) { console.warn('[ArcDB] fetch failed', e); return []; }
+  }
+
+  return { submitScore, getTopScores };
+})();
+
 (() => {
   // ── Canvas setup ──────────────────────────────────────────
   const W = 600, H = 1066;
@@ -1084,27 +1148,51 @@
     }
   }
 
-  function endGame() {
+  async function endGame() {
     running = false; started = false;
     best = Math.max(best, Math.floor(score));
     localStorage.setItem('arc_best', String(best));
 
     const sc  = Math.floor(score);
     const avc = AVATAR_COLORS[avatarIdx];
-    const r1  = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
-    rankRows.innerHTML = [
-      { rk: '0000001.', name: 'USERUSER',  sc: r1, you: false },
-      { rk: '0000002.', name: playerName,  sc,      you: true  },
-      { rk: '0000003.', name: 'USERUSER',  sc: r3, you: false },
-    ].map(r =>
-      `<tr class="${r.you?'you':''}" ${r.you ? `style="color:${avc}"` : ''}>
-        <td>${r.rk}</td>
-        <td style="padding:0 10px">${r.name}</td>
-        <td>${pad(r.sc)}</td>
-      </tr>`
-    ).join('');
+
     goBestV.textContent = pad(best);
+    // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
+
+    // Geçici "yükleniyor" satırları
+    rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size:6px;padding:12px 0">LOADING...</td></tr>`;
+
+    // Skoru Firestore'a gönder (config yoksa no-op)
+    await ARC_DB.submitScore(playerName, avatarIdx, sc);
+
+    // Gerçek top-10'u çek
+    const topRows = await ARC_DB.getTopScores(10);
+
+    if (topRows.length === 0) {
+      // Firebase config yok → yerel fallback göster
+      const r1 = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
+      topRows.push(
+        { name: 'NEXUS',    avatar: 0, score: r1, you: false },
+        { name: playerName, avatar: avatarIdx, score: sc, you: true  },
+        { name: 'BYTE',     avatar: 4, score: r3, you: false },
+      );
+    }
+
+    // Kendi satırını işaretle (aynı skor + aynı isimden ilkini bul)
+    let markedYou = false;
+    rankRows.innerHTML = topRows.map((r, i) => {
+      const isYou = !markedYou && r.name === playerName && r.score === sc;
+      if (isYou) markedYou = true;
+      const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
+      return `<tr class="${isYou?'you':''}" ${isYou ? `style="color:${avc}"` : ''}>
+        <td>${String(i+1).padStart(7,'0')}.</td>
+        <td style="padding:0 10px">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:5px"></span>${r.name}
+        </td>
+        <td>${pad(r.score)}</td>
+      </tr>`;
+    }).join('');
   }
 
   const pad = n => String(Math.max(0,n)).padStart(8,'0');
