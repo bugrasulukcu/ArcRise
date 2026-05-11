@@ -13,3 +13,6 @@ desktop.ini
 # Node (ileride eklenirse)
 node_modules/
 dist/
+
+# Claude Code (kişisel ayarlar commit'lenmez)
+.claude/settings.local.json
