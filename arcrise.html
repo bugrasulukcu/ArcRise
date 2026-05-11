@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ArcRise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #7CFF7A;
+      --red:   #ff3355;
+      --bg:    #080a0e;
+      --panel: rgba(10,13,22,0.92);
+      --font:  'Press Start 2P', monospace;
+    }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); }
+    body { font-family: var(--font); color: #fff; }
+
+    /* ── Canvas layer ── */
+    #wrap {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stack {
+      position: relative;
+      width: min(100vw, 56.25vh);
+      height: 100vh;
+    }
+    canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+    #bg  { z-index: 0; }
+    #gc  { z-index: 1; touch-action: none; cursor: pointer; }
+
+    /* ── Overlays ── */
+    .screen {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 20;
+      font-family: var(--font);
+    }
+    .screen.active { display: flex; }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed; inset: 0;
+      z-index: 15; pointer-events: none;
+      display: none;
+    }
+    #hud.active { display: block; }
+    .hud-tl { position: absolute; top: 18px; left: 18px; }
+    .hud-tr { position: absolute; top: 18px; right: 18px; text-align: right; }
+    .hud-lbl { font-size: 7px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
+    .hud-num { font-size: 13px; letter-spacing: 1px; }
+
+    /* Leaderboard sidebar */
+    #lb {
+      position: absolute; top: 0; right: 0;
+      width: 130px; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 5px;
+      padding: 60px 10px 20px 4px;
+      overflow: hidden;
+    }
+    .lb-row   { font-size: 5.5px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
+    .lb-row.you { font-size: 6px; color: #fff; }
+
+    /* ══════════ HOME ══════════ */
+    #home { gap: 0; }
+    #title {
+      font-size: clamp(34px, 9vw, 52px);
+      letter-spacing: 3px;
+      text-align: center;
+      position: relative;
+    }
+    /* small ball on arc above title */
+    #logo-canvas {
+      display: block; margin: 0 auto 6px;
+      width: clamp(200px, 55vw, 320px);
+      height: clamp(50px, 13vw, 80px);
+    }
+
+    /* rainbow border wrapper */
+    @property --a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    .rb-wrap {
+      padding: 2.5px; border-radius: 16px;
+      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      animation: spinA 3s linear infinite;
+      cursor: pointer;
+    }
+    @keyframes spinA { to { --a: 360deg; } }
+    .rb-inner {
+      background: rgba(22,26,38,0.96);
+      border-radius: 13px;
+      padding: 17px 28px;
+      font-family: var(--font);
+      font-size: 20px; letter-spacing: 3px;
+      color: #fff; text-align: center;
+      user-select: none;
+    }
+    .rb-inner:active { transform: scale(0.97); }
+
+    .menu { display: flex; flex-direction: column; gap: 14px; width: min(88vw, 310px); margin-top: 30px; }
+
+    .btn-gray {
+      padding: 14px 24px; border-radius: 13px;
+      border: 1.5px solid rgba(255,255,255,.22);
+      background: rgba(18,22,32,.85);
+      color: #fff; font-family: var(--font);
+      font-size: 13px; letter-spacing: 2px;
+      cursor: pointer; width: 100%;
+    }
+    .btn-gray:active { transform: scale(0.97); }
+
+    #home-best {
+      font-size: 8px; letter-spacing: 1px; margin-top: 20px;
+      color: var(--green); text-align: center;
+    }
+    #home-best span { color: #fff; }
+
+    #credits {
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+      font-size: 6.5px; color: rgba(255,255,255,.3); letter-spacing: 1px;
+    }
+
+    /* ══════════ SETTINGS ══════════ */
+    #settings .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 22px;
+      padding: 30px 26px 24px;
+      width: min(90vw, 340px);
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    #settings h2 { font-size: 18px; text-align: center; letter-spacing: 2px; }
+
+    .srow { display: flex; align-items: center; gap: 10px; }
+    .sicon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+    .slbl  { font-size: 8px; color: #999; letter-spacing: 1px; flex: 1; }
+    .sctl  { display: flex; align-items: center; }
+
+    /* Difficulty < Easy > */
+    .darr { background: none; border: none; color: var(--green); font-family: var(--font); font-size: 13px; cursor: pointer; padding: 0 6px; }
+    .dval {
+      font-size: 8px; letter-spacing: 1px; color: #fff; min-width: 72px; text-align: center;
+      background: rgba(0,180,160,.18); border: 1px solid rgba(0,210,180,.35);
+      border-radius: 8px; padding: 7px 10px;
+    }
+
+    /* Rainbow slider */
+    .rslide-wrap {
+      position: relative; height: 18px; border-radius: 9px; overflow: visible;
+      background: linear-gradient(to right,#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff);
+    }
+    .rslide-wrap input[type=range] {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; margin: 0;
+    }
+    .rslide-thumb {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 5px; height: 26px; background: #fff;
+      border-radius: 3px; pointer-events: none;
+      box-shadow: 0 1px 6px rgba(0,0,0,.55);
+    }
+
+    /* On/Off toggle */
+    .tog { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.15); }
+    .tog-btn { font-family: var(--font); font-size: 7px; letter-spacing: 1px; padding: 8px 12px; cursor: pointer; border: none; }
+    .tog-btn.active-on  { background: var(--green); color: #000; }
+    .tog-btn.active-off { background: rgba(255,255,255,.06); color: #666; }
+
+    /* ══════════ GAME OVER ══════════ */
+    #gameover .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 22px;
+      padding: 26px 22px 22px;
+      width: min(90vw, 330px);
+      display: flex; flex-direction: column; gap: 18px; align-items: center;
+    }
+    .rtable { width: 100%; border-collapse: collapse; }
+    .rtable th { font-size: 6.5px; color: var(--green); letter-spacing: 1px; padding-bottom: 8px; text-align: left; }
+    .rtable th:last-child { text-align: right; }
+    .rtable td { font-size: 6.5px; color: rgba(255,255,255,.55); padding: 4px 0; }
+    .rtable td:last-child { text-align: right; }
+    .rtable tr.you td { color: #fff; }
+    #go-best { font-size: 7.5px; color: var(--green); letter-spacing: 1px; text-align: center; }
+    #go-best span { color: #fff; }
+
+    /* ══════════ TUTORIAL ══════════ */
+    #tutorial { pointer-events: none; }
+    #touch-ring {
+      position: fixed;
+      width: 110px; height: 110px;
+      border: 2px dashed rgba(255,255,255,.65);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; letter-spacing: 1px; color: rgba(255,255,255,.8);
+      font-family: var(--font);
+      animation: tpulse 1.6s ease-in-out infinite;
+    }
+    @keyframes tpulse {
+      0%,100% { transform: scale(1); opacity: .7; }
+      50%      { transform: scale(1.1); opacity: 1; }
+    }
+
+    /* "TOUCH HIGH LARGE RADIUS" hint */
+    #touch-hi {
+      position: fixed; font-size: 6px; color: rgba(255,255,255,.5);
+      letter-spacing: 1px; text-align: center; display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Canvas ── -->
+<div id="wrap">
+  <div class="stack">
+    <canvas id="bg"></canvas>
+    <canvas id="gc"></canvas>
+  </div>
+</div>
+
+<!-- ── HUD ── -->
+<div id="hud">
+  <div class="hud-tl">
+    <div class="hud-lbl">SCORE</div>
+    <div class="hud-num" id="h-score">00000000</div>
+  </div>
+  <div class="hud-tr">
+    <div class="hud-lbl">YOUR BEST</div>
+    <div class="hud-num" id="h-best">00000000</div>
+  </div>
+  <div id="lb"></div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="screen active" id="home">
+  <canvas id="logo-canvas"></canvas>
+  <h1 id="title">ArcRise</h1>
+  <div class="menu">
+    <div class="rb-wrap" id="wrap-start">
+      <div class="rb-inner" id="btn-start">Start</div>
+    </div>
+    <button class="btn-gray" id="btn-settings">Settings</button>
+  </div>
+  <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">00000000</span></div>
+  <div id="credits">CREDITS</div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div class="screen" id="settings">
+  <div class="panel">
+    <h2>Settings</h2>
+
+    <div class="srow">
+      <span class="sicon">🔥</span>
+      <span class="slbl">Difficulty</span>
+      <div class="sctl" style="gap:6px">
+        <button class="darr" id="d-prev">&#60;</button>
+        <div class="dval" id="d-val">Normal</div>
+        <button class="darr" id="d-next">&#62;</button>
+      </div>
+    </div>
+
+    <div class="srow">
+      <span class="sicon">🔔</span>
+      <span class="slbl">SFX</span>
+      <div class="sctl">
+        <div class="rslide-wrap" style="width:155px">
+          <input type="range" id="sfx-sl" min="0" max="100" value="80">
+          <div class="rslide-thumb" id="sfx-th"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="srow">
+      <span class="sicon">🎵</span>
+      <span class="slbl">Music</span>
+      <div class="sctl">
+        <div class="rslide-wrap" style="width:95px">
+          <input type="range" id="mus-sl" min="0" max="100" value="50">
+          <div class="rslide-thumb" id="mus-th"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="srow">
+      <span class="sicon">⚙️</span>
+      <span class="slbl">Feedback</span>
+      <div class="sctl">
+        <div class="tog">
+          <button class="tog-btn active-on"  id="fb-on">On</button>
+          <button class="tog-btn active-off" id="fb-off">Off</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-gray" id="btn-back" style="margin-top:4px">Back</button>
+  </div>
+</div>
+
+<!-- ══ GAME OVER ══ -->
+<div class="screen" id="gameover">
+  <div class="panel">
+    <table class="rtable">
+      <thead>
+        <tr><th>RANK</th><th style="padding:0 10px">NAME</th><th>SCORE</th></tr>
+      </thead>
+      <tbody id="rank-rows"></tbody>
+    </table>
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div class="rb-wrap" id="wrap-again">
+        <div class="rb-inner" id="btn-again" style="font-size:18px">Again!</div>
+      </div>
+      <button class="btn-gray" id="btn-menu" style="font-size:11px">Back to Menu</button>
+    </div>
+    <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">00000000</span></div>
+  </div>
+</div>
+
+<!-- ══ TUTORIAL ══ -->
+<div class="screen" id="tutorial">
+  <div id="touch-ring" style="position:fixed;right:18%;bottom:32%">TOUCH</div>
+</div>
+
+<script>
+(() => {
+  // ── Canvas setup ──────────────────────────────────────────
+  const W = 600, H = 1066;
+  const gc = document.getElementById('gc');
+  const bg = document.getElementById('bg');
+  const ctx = gc.getContext('2d');
+  const bctx = bg.getContext('2d');
+  gc.width = bg.width = W;
+  gc.height = bg.height = H;
+
+  // ── Logo canvas ───────────────────────────────────────────
+  const lc = document.getElementById('logo-canvas');
+  const lctx = lc.getContext('2d');
+  const LW = 320, LH = 80;
+  lc.width = LW; lc.height = LH;
+  function drawLogo() {
+    lctx.clearRect(0, 0, LW, LH);
+    // arc path under ball
+    lctx.save();
+    lctx.strokeStyle = 'rgba(124,255,122,0.7)';
+    lctx.lineWidth = 1.5;
+    lctx.beginPath();
+    lctx.arc(LW * 0.52, LH * 1.6, LH * 1.3, Math.PI * 1.1, Math.PI * 1.55);
+    lctx.stroke();
+    lctx.restore();
+    // ball
+    const bx = LW * 0.525, by = LH * 0.38, br = 8;
+    const g = lctx.createRadialGradient(bx, by, 0, bx, by, br * 3);
+    g.addColorStop(0, 'rgba(124,255,122,0.5)');
+    g.addColorStop(1, 'rgba(124,255,122,0)');
+    lctx.fillStyle = g;
+    lctx.beginPath(); lctx.arc(bx, by, br * 3, 0, Math.PI * 2); lctx.fill();
+    lctx.fillStyle = '#000';
+    lctx.beginPath(); lctx.arc(bx, by, br, 0, Math.PI * 2); lctx.fill();
+    lctx.strokeStyle = 'rgba(124,255,122,0.9)';
+    lctx.lineWidth = 1.5;
+    lctx.beginPath(); lctx.arc(bx, by, br, 0, Math.PI * 2); lctx.stroke();
+  }
+  drawLogo();
+
+  // ── DOM refs ──────────────────────────────────────────────
+  const hudEl      = document.getElementById('hud');
+  const hScore     = document.getElementById('h-score');
+  const hBest      = document.getElementById('h-best');
+  const lbEl       = document.getElementById('lb');
+  const homeEl     = document.getElementById('home');
+  const settingsEl = document.getElementById('settings');
+  const gameoverEl = document.getElementById('gameover');
+  const tutorialEl = document.getElementById('tutorial');
+  const homeBestV  = document.getElementById('home-best-val');
+  const goBestV    = document.getElementById('go-best-val');
+  const rankRows   = document.getElementById('rank-rows');
+  const dValEl     = document.getElementById('d-val');
+  const sfxSl      = document.getElementById('sfx-sl');
+  const sfxTh      = document.getElementById('sfx-th');
+  const musSl      = document.getElementById('mus-sl');
+  const musTh      = document.getElementById('mus-th');
+
+  // ── State ────────────────────────────────────────────────
+  let scene   = 'home';
+  let running = false, started = false, firstPlay = true;
+  let score = 0, maxAscend = 0, camY = 0, energy = 1;
+  let best    = Number(localStorage.getItem('arc_best') || 0);
+
+  const DIFFS  = ['Easy', 'Normal', 'Hard', 'Extreme'];
+  const SPEEDS = [180, 220, 280, 350];
+  let diffIdx  = Number(localStorage.getItem('arc_diff_idx') || 1);
+  let feedbackOn = localStorage.getItem('arc_fb') !== '0';
+  sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
+  musSl.value  = localStorage.getItem('arc_mus')  || 50;
+
+  const ENERGY_DECAY = 1 / 10;
+
+  // ── Player ───────────────────────────────────────────────
+  const player = {
+    x: W/2, y: H - 60, r: 18,
+    dir: 0, speed: SPEEDS[diffIdx],
+    heading: -Math.PI/2,
+    radius: 120, cx: 0, cy: 0, ang: 0
+  };
+  const trail = [], obstacles = [], bonuses = [], ripples = [];
+  let nextSpawnY, lastBonusY;
+
+  // ── BG Arc animation ─────────────────────────────────────
+  const RAINBOW = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa'];
+  const bgArcs  = [];
+
+  function newBgArc(preAge) {
+    const color   = RAINBOW[Math.floor(Math.random() * RAINBOW.length)];
+    const radius  = 200 + Math.random() * 340;
+    const cx      = (Math.random() * 1.2 - 0.1) * W;
+    const cy      = (Math.random() * 1.2 - 0.1) * H;
+    const startA  = Math.random() * Math.PI * 2;
+    const arcLen  = Math.PI * (0.25 + Math.random() * 0.65);
+    const vx      = (Math.random() - 0.5) * 14;
+    const vy      = (Math.random() - 0.5) * 14;
+    const total   = 5 + Math.random() * 7;
+    return { cx, cy, radius, startA, arcLen, color, vx, vy, total, fade: 1.4, age: preAge ?? 0 };
+  }
+
+  function initBgArcs() {
+    bgArcs.length = 0;
+    for (let i = 0; i < 7; i++) bgArcs.push(newBgArc(Math.random() * 4));
+  }
+
+  function tickBgArcs(dt) {
+    for (let i = bgArcs.length - 1; i >= 0; i--) {
+      const a = bgArcs[i];
+      a.age += dt; a.cx += a.vx * dt; a.cy += a.vy * dt;
+      if (a.age >= a.total) { bgArcs.splice(i, 1); bgArcs.push(newBgArc()); }
+    }
+    while (bgArcs.length < 7) bgArcs.push(newBgArc());
+  }
+
+  function drawBgArcs(ctx2) {
+    ctx2.save();
+    for (const a of bgArcs) {
+      const t  = a.age / a.total;
+      const fi = a.fade / a.total, fo = a.fade / a.total;
+      let alpha = t < fi ? t / fi : t > 1 - fo ? (1 - t) / fo : 1;
+      alpha = Math.max(0, Math.min(1, alpha)) * 0.8;
+      ctx2.globalAlpha = alpha;
+      ctx2.strokeStyle = a.color;
+      ctx2.lineWidth   = 1.5;
+      ctx2.lineCap     = 'round';
+      ctx2.beginPath();
+      ctx2.arc(a.cx, a.cy, a.radius, a.startA, a.startA + a.arcLen);
+      ctx2.stroke();
+    }
+    ctx2.restore();
+  }
+
+  // ── Grid ─────────────────────────────────────────────────
+  function drawGrid(ctx2, oy = 0, alpha = 0.13, sz = 40) {
+    ctx2.save();
+    ctx2.globalAlpha  = alpha;
+    ctx2.strokeStyle  = '#fff';
+    ctx2.lineWidth    = 0.5;
+    const off = ((oy % sz) + sz) % sz;
+    for (let y = off; y < H; y += sz) { ctx2.beginPath(); ctx2.moveTo(0,y); ctx2.lineTo(W,y); ctx2.stroke(); }
+    for (let x = 0;   x < W; x += sz) { ctx2.beginPath(); ctx2.moveTo(x,0); ctx2.lineTo(x,H); ctx2.stroke(); }
+    ctx2.restore();
+  }
+
+  // ── Walls ────────────────────────────────────────────────
+  const walls = { left: 20, right: W - 20 };
+  function drawWalls() {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,51,85,.09)';
+    ctx.fillRect(0, 0, walls.left, H);
+    ctx.fillRect(walls.right, 0, W - walls.right, H);
+    ctx.fillStyle = '#ff3355';
+    ctx.fillRect(walls.left - 10, 0, 10, H);
+    ctx.fillRect(walls.right,     0, 10, H);
+    ctx.restore();
+  }
+
+  // ── Obstacles ────────────────────────────────────────────
+  function drawObstacles() {
+    for (const ob of obstacles) {
+      const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
+      if (sy < -100 || sy > H + 100) continue;
+      // soft glow
+      let g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r * 2.4);
+      g.addColorStop(0, 'rgba(255,80,110,.5)'); g.addColorStop(1, 'rgba(255,40,70,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, ob.r * 2.4, 0, Math.PI*2); ctx.fill();
+      // core
+      g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r);
+      g.addColorStop(0, 'rgba(255,140,160,.92)'); g.addColorStop(1, 'rgba(200,55,80,.78)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── Bonuses ──────────────────────────────────────────────
+  function drawBonuses() {
+    for (const b of bonuses) {
+      const sy = W2S(b.y);
+      if (sy < -100 || sy > H + 100) continue;
+      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 2.8);
+      g.addColorStop(0, 'rgba(124,255,122,.9)'); g.addColorStop(1, 'rgba(60,255,60,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, b.r * 2.8, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#7CFF7A'; ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── Trail ────────────────────────────────────────────────
+  function drawTrail(time) {
+    if (trail.length < 2) return;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 1; i < trail.length; i++) {
+      const a = trail[i-1], b = trail[i];
+      const t = i / (trail.length - 1);
+      const al = Math.pow(t, 1.4) * 0.9;
+      const w  = 1 + t * 3.8;
+      const h1 = ((time * 80) + i * 3) % 360;
+      const h2 = (h1 + 35) % 360;
+      const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
+      gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
+      gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
+      ctx.strokeStyle = gr; ctx.lineWidth = w; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Player ───────────────────────────────────────────────
+  function drawPlayer() {
+    const px = player.x, py = W2S(player.y), r = player.r;
+    // glow
+    let g = ctx.createRadialGradient(px, py, r * .3, px, py, r * 2.8);
+    g.addColorStop(0, `rgba(124,255,122,${.45 * energy})`);
+    g.addColorStop(1, 'rgba(124,255,122,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.8, 0, Math.PI*2); ctx.fill();
+    // body
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    // ring
+    ctx.strokeStyle = `rgba(124,255,122,${.88 * energy})`;
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
+    // score number inside
+    ctx.fillStyle = '#fff';
+    ctx.font = `${r < 20 ? 6 : 8}px 'Press Start 2P', monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(Math.floor(score)), px, py);
+  }
+
+  // ── Ripples ──────────────────────────────────────────────
+  function drawRipples() {
+    const now = performance.now() / 1000;
+    for (const rp of ripples) {
+      const age = now - rp.t; if (age > 1) continue;
+      ctx.save();
+      ctx.strokeStyle = `rgba(124,255,122,${(1-age)*.45})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(rp.x, W2S(rp.y), 20 + age * 80, 0, Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // ── Leaderboard ──────────────────────────────────────────
+  const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
+  let lbFrame = 0;
+  function refreshLB() {
+    lbFrame++;
+    if (lbFrame % 30 !== 0) return; // update every 30 frames
+    const sc = Math.floor(score);
+    const rows = LB_NAMES.map((n, i) => ({ n, s: Math.max(0, sc + (i-5)*3 + (Math.floor(Math.random()*3)-1)) }));
+    rows.sort((a,b) => b.s - a.s);
+    const youIdx = Math.min(Math.floor(rows.length/2), rows.length - 1);
+    rows.splice(youIdx, 0, { n: 'YOU', s: sc, you: true });
+    lbEl.innerHTML = rows.slice(0, 14).map(r =>
+      `<div class="lb-row${r.you?' you':''}">${r.n}</div>`
+    ).join('');
+  }
+
+  // ── World helpers ─────────────────────────────────────────
+  const W2S = y => y - camY;
+  const S2W = y => y + camY;
+
+  function mapRadius(sy) {
+    return H * 0.025 + (H * 0.10 - H * 0.025) * (1 - sy / H);
+  }
+  function beginArc(sign, radius) {
+    player.dir = sign; player.radius = radius;
+    const nx = -Math.sin(player.heading) * sign;
+    const ny =  Math.cos(player.heading) * sign;
+    player.cx = player.x + nx * radius;
+    player.cy = player.y + ny * radius;
+    player.ang = Math.atan2(player.y - player.cy, player.x - player.cx);
+  }
+
+  function resetGame() {
+    player.x = W/2; player.y = H - 60;
+    player.heading = -Math.PI/2; player.dir = 0;
+    player.speed = SPEEDS[diffIdx];
+    camY = 0; trail.length = 0; obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
+    nextSpawnY = player.y - 500; lastBonusY = player.y;
+    score = 0; maxAscend = 0; energy = 1;
+    started = false; running = false; lbFrame = 0;
+    initBgArcs();
+  }
+
+  function spawnAhead() {
+    while (nextSpawnY > player.y - 2200) {
+      const x   = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+      const gap = 250 + Math.random() * 250;
+      const needBonus = (lastBonusY - nextSpawnY) > 540;
+      if (needBonus || Math.random() < (score < 80 ? .36 : .52)) {
+        bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
+        lastBonusY = nextSpawnY;
+      } else {
+        const r = 15 + Math.random() * 22;
+        if (score >= 120 && Math.random() < .45) {
+          const orbitR = 16 + Math.random() * 28;
+          const omega  = (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * 1.2);
+          obstacles.push({ x, y: nextSpawnY, r, orbitR, omega, t: Math.random() * Math.PI * 2 });
+        } else {
+          obstacles.push({ x, y: nextSpawnY, r });
+        }
+      }
+      nextSpawnY -= gap;
+    }
+  }
+
+  function step(dt) {
+    if (!running) return;
+    const w  = player.speed / player.radius;
+    player.ang += w * dt * player.dir;
+    player.x    = player.cx + Math.cos(player.ang) * player.radius;
+    player.y    = player.cy + Math.sin(player.ang) * player.radius;
+    player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
+
+    energy = Math.max(0, energy - dt * ENERGY_DECAY);
+    if (energy <= 0) { endGame(); return; }
+
+    if (!trail.length || Math.hypot(player.x - trail.at(-1).x, player.y - trail.at(-1).y) > 2) {
+      trail.push({ x: player.x, y: player.y });
+      if (trail.length > 600) trail.shift();
+    }
+
+    const now = performance.now() / 1000;
+    for (let i = ripples.length - 1; i >= 0; i--) { if (now - ripples[i].t > 1) ripples.splice(i,1); }
+
+    const pyS = W2S(player.y);
+    if (pyS < H * .5) camY -= (H * .5 - pyS);
+
+    maxAscend = Math.max(maxAscend, -player.y);
+    score     = Math.floor(maxAscend / 200);
+
+    spawnAhead();
+
+    for (const ob of obstacles) {
+      if (ob.omega) { ob.t += ob.omega*dt; ob._ox = ob.x + Math.cos(ob.t)*ob.orbitR; ob._oy = ob.y + Math.sin(ob.t)*ob.orbitR; }
+      else           { ob._ox = ob.x; ob._oy = ob.y; }
+    }
+
+    if (player.x - player.r < walls.left || player.x + player.r > walls.right) { endGame(); return; }
+    for (const ob of obstacles) {
+      const dx = player.x - ob._ox, dy = player.y - ob._oy;
+      if (dx*dx + dy*dy < (player.r + ob.r)**2) { endGame(); return; }
+    }
+    for (let i = bonuses.length - 1; i >= 0; i--) {
+      const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
+      if (dx*dx + dy*dy < (player.r + b.r)**2) { bonuses.splice(i,1); energy = 1; }
+    }
+  }
+
+  function endGame() {
+    running = false; started = false;
+    best = Math.max(best, Math.floor(score));
+    localStorage.setItem('arc_best', String(best));
+
+    const sc = Math.floor(score);
+    const r1 = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
+    rankRows.innerHTML = [
+      { rk: '0000001.', name: 'USERUSER', sc: r1,  you: false },
+      { rk: '0000002.', name: 'YOU',      sc,       you: true  },
+      { rk: '0000003.', name: 'USERUSER', sc: r3,  you: false },
+    ].map(r =>
+      `<tr class="${r.you?'you':''}"><td>${r.rk}</td><td style="padding:0 10px">${r.name}</td><td>${pad(r.sc)}</td></tr>`
+    ).join('');
+    goBestV.textContent = pad(best);
+    showScene('over');
+  }
+
+  const pad = n => String(Math.max(0,n)).padStart(8,'0');
+
+  // ── Main draw loop ────────────────────────────────────────
+  let lastT = 0;
+  function loop(ts) {
+    const dt   = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
+    const time = ts / 1000;
+
+    // BG canvas: grid + arcs (home/settings)
+    bctx.clearRect(0, 0, W, H);
+    drawGrid(bctx, scene === 'play' || scene === 'over' ? camY : time * 22, .13);
+    if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
+
+    // Game canvas
+    ctx.clearRect(0, 0, W, H);
+    if (scene === 'play' || scene === 'over') {
+      drawWalls(); drawObstacles(); drawBonuses();
+      drawTrail(time); drawPlayer(); drawRipples();
+    }
+
+    if (scene === 'play' && running) {
+      step(dt);
+      hScore.textContent = pad(Math.floor(score));
+      hBest.textContent  = pad(best);
+      refreshLB();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // ── Scene management ─────────────────────────────────────
+  function showScene(s) {
+    scene = s;
+    homeEl.classList.toggle('active',     s === 'home');
+    settingsEl.classList.toggle('active', s === 'settings');
+    gameoverEl.classList.toggle('active', s === 'over');
+    hudEl.classList.toggle('active',      s === 'play');
+    tutorialEl.classList.remove('active');
+    if (s === 'home') homeBestV.textContent = pad(best);
+  }
+
+  // ── Input ────────────────────────────────────────────────
+  gc.addEventListener('pointerdown', e => {
+    if (scene !== 'play') return;
+    const rect = gc.getBoundingClientRect();
+    const sx = (e.clientX - rect.left) * (W / rect.width);
+    const sy = (e.clientY - rect.top)  * (H / rect.height);
+    const radius = mapRadius(sy);
+    ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
+
+    if (!started) {
+      beginArc(Math.random() < .5 ? -1 : 1, radius);
+      started = true; running = true;
+      tutorialEl.classList.remove('active');
+    } else if (running) {
+      beginArc(-player.dir, radius);
+    }
+  });
+  gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+  // ── Settings UI ───────────────────────────────────────────
+  function syncThumb(sl, th) {
+    const pct = (sl.value - sl.min) / (sl.max - sl.min);
+    th.style.left = `calc(${pct*100}% - 2.5px)`;
+  }
+  syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
+  sfxSl.addEventListener('input', () => syncThumb(sfxSl, sfxTh));
+  musSl.addEventListener('input', () => syncThumb(musSl, musTh));
+
+  document.getElementById('d-prev').addEventListener('click', () => { diffIdx = (diffIdx - 1 + DIFFS.length) % DIFFS.length; dValEl.textContent = DIFFS[diffIdx]; });
+  document.getElementById('d-next').addEventListener('click', () => { diffIdx = (diffIdx + 1) % DIFFS.length; dValEl.textContent = DIFFS[diffIdx]; });
+  dValEl.textContent = DIFFS[diffIdx];
+
+  const fbOn  = document.getElementById('fb-on');
+  const fbOff = document.getElementById('fb-off');
+  function setFeedback(v) {
+    feedbackOn = v;
+    fbOn.className  = 'tog-btn ' + (v  ? 'active-on'  : 'active-off');
+    fbOff.className = 'tog-btn ' + (!v ? 'active-on'  : 'active-off');
+  }
+  fbOn.addEventListener('click',  () => setFeedback(true));
+  fbOff.addEventListener('click', () => setFeedback(false));
+  setFeedback(feedbackOn);
+
+  // ── Nav buttons ───────────────────────────────────────────
+  function startGame() {
+    resetGame(); showScene('play');
+    if (firstPlay) { tutorialEl.classList.add('active'); firstPlay = false; }
+  }
+
+  document.getElementById('btn-start').addEventListener('click', startGame);
+  document.getElementById('wrap-start').addEventListener('click', startGame);
+
+  document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
+
+  document.getElementById('btn-back').addEventListener('click', () => {
+    localStorage.setItem('arc_diff_idx', diffIdx);
+    localStorage.setItem('arc_sfx', sfxSl.value);
+    localStorage.setItem('arc_mus', musSl.value);
+    localStorage.setItem('arc_fb', feedbackOn ? '1' : '0');
+    showScene('home');
+  });
+
+  document.getElementById('btn-again').addEventListener('click', startGame);
+  document.getElementById('wrap-again').addEventListener('click', startGame);
+  document.getElementById('btn-menu').addEventListener('click', () => showScene('home'));
+
+  // ── Boot ─────────────────────────────────────────────────
+  initBgArcs();
+  resetGame();
+  showScene('home');
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
