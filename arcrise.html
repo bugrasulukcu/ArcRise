@@ -572,47 +572,86 @@
   const RAINBOW = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa'];
   const bgArcs  = [];
 
+  // Her BG arc: bir "top" dairesel yay üzerinde hareket eder, arkasında iz bırakır.
+  // Tıpkı oyundaki topun yaptığı gibi — gerçek dairesel kinematik.
   function newBgArc(preAge) {
-    const color   = RAINBOW[Math.floor(Math.random() * RAINBOW.length)];
-    const radius  = 200 + Math.random() * 340;
-    const cx      = (Math.random() * 1.2 - 0.1) * W;
-    const cy      = (Math.random() * 1.2 - 0.1) * H;
-    const startA  = Math.random() * Math.PI * 2;
-    const arcLen  = Math.PI * (0.25 + Math.random() * 0.65);
-    const vx      = (Math.random() - 0.5) * 14;
-    const vy      = (Math.random() - 0.5) * 14;
-    const total   = 5 + Math.random() * 7;
-    return { cx, cy, radius, startA, arcLen, color, vx, vy, total, fade: 1.4, age: preAge ?? 0 };
+    const color  = RAINBOW[Math.floor(Math.random() * RAINBOW.length)];
+    const radius = 90 + Math.random() * 220;           // dairenin yarıçapı
+    const cx     = (Math.random() * 0.85 + 0.075) * W; // daire merkezi
+    const cy     = (Math.random() * 0.85 + 0.075) * H;
+    const startA = Math.random() * Math.PI * 2;        // başlangıç açısı
+    const dir    = Math.random() < 0.5 ? 1 : -1;       // CW / CCW
+    const speed  = 110 + Math.random() * 140;          // px/s yay boyunca
+    const omega  = dir * speed / radius;               // rad/s
+    const maxLen = Math.PI * (0.6 + Math.random() * 1.1); // kaç radyan çizilecek
+    const drawT  = maxLen / Math.abs(omega);           // çizim süresi
+    const age    = preAge ?? 0;
+    return { cx, cy, radius, startA, dir, omega, maxLen, drawT, color, age };
   }
 
   function initBgArcs() {
     bgArcs.length = 0;
-    for (let i = 0; i < 7; i++) bgArcs.push(newBgArc(Math.random() * 4));
+    // Aralarına dağıtılmış preAge ile başlatılsın ki hepsi aynı anda başlamasın
+    for (let i = 0; i < 8; i++) bgArcs.push(newBgArc(Math.random() * 4.5));
   }
 
   function tickBgArcs(dt) {
+    const FADE_OUT = 1.0; // çizim bittikten sonra solma süresi
     for (let i = bgArcs.length - 1; i >= 0; i--) {
       const a = bgArcs[i];
-      a.age += dt; a.cx += a.vx * dt; a.cy += a.vy * dt;
-      if (a.age >= a.total) { bgArcs.splice(i, 1); bgArcs.push(newBgArc()); }
+      a.age += dt;
+      if (a.age >= a.drawT + FADE_OUT) { bgArcs.splice(i, 1); bgArcs.push(newBgArc()); }
     }
-    while (bgArcs.length < 7) bgArcs.push(newBgArc());
+    while (bgArcs.length < 8) bgArcs.push(newBgArc());
   }
 
   function drawBgArcs(ctx2) {
+    const FADE_IN  = 0.35;
+    const FADE_OUT = 1.0;
     ctx2.save();
     for (const a of bgArcs) {
-      const t  = a.age / a.total;
-      const fi = a.fade / a.total, fo = a.fade / a.total;
-      let alpha = t < fi ? t / fi : t > 1 - fo ? (1 - t) / fo : 1;
-      alpha = Math.max(0, Math.min(1, alpha)) * 0.8;
-      ctx2.globalAlpha = alpha;
+      // Alpha: fade-in → tam → fade-out
+      let alpha;
+      if      (a.age < FADE_IN)   alpha = a.age / FADE_IN;
+      else if (a.age < a.drawT)   alpha = 1;
+      else alpha = Math.max(0, 1 - (a.age - a.drawT) / FADE_OUT);
+      if (alpha <= 0) continue;
+
+      // Şu ana kadar çizilen yay uzunluğu (radyan)
+      const drawn  = Math.min(a.maxLen, Math.abs(a.omega) * a.age);
+      // Topun şu anki açısı
+      const curAng = a.startA + a.dir * drawn;
+
+      // ── İz (trail) — büyüyen yay ───────────────────────────
+      ctx2.globalAlpha = alpha * 0.55;
       ctx2.strokeStyle = a.color;
       ctx2.lineWidth   = 1.5;
       ctx2.lineCap     = 'round';
       ctx2.beginPath();
-      ctx2.arc(a.cx, a.cy, a.radius, a.startA, a.startA + a.arcLen);
+      // dir=1 → CW (false), dir=-1 → CCW (true)
+      if (a.dir > 0) ctx2.arc(a.cx, a.cy, a.radius, a.startA, curAng, false);
+      else            ctx2.arc(a.cx, a.cy, a.radius, curAng, a.startA, false);
       ctx2.stroke();
+
+      // ── Top — sadece çizim aşamasında (fade-out'ta kaybolur) ─
+      if (a.age < a.drawT) {
+        const bx = a.cx + Math.cos(curAng) * a.radius;
+        const by = a.cy + Math.sin(curAng) * a.radius;
+        const br = 5;
+        // Yumuşak parıltı
+        ctx2.globalAlpha = alpha * 0.28;
+        ctx2.strokeStyle = a.color;
+        ctx2.lineWidth   = 1;
+        ctx2.beginPath(); ctx2.arc(bx, by, br * 2.8, 0, Math.PI * 2); ctx2.stroke();
+        // Siyah gövde
+        ctx2.globalAlpha = alpha * 0.9;
+        ctx2.fillStyle   = '#000';
+        ctx2.beginPath(); ctx2.arc(bx, by, br, 0, Math.PI * 2); ctx2.fill();
+        // Renkli kenar
+        ctx2.strokeStyle = a.color;
+        ctx2.lineWidth   = 1.5;
+        ctx2.beginPath(); ctx2.arc(bx, by, br, 0, Math.PI * 2); ctx2.stroke();
+      }
     }
     ctx2.restore();
   }
