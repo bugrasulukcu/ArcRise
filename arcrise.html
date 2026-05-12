@@ -362,16 +362,64 @@
 
     /* ══════════ SETTINGS profile (read-only) ══════════ */
     #settings-profile-ro {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: center; gap: 14px;
       padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.08);
+      cursor: pointer;
     }
     #settings-av-img {
-      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-      overflow: hidden; border: 2px solid rgba(255,255,255,.2);
+      width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+      overflow: hidden; border: 2px solid rgba(255,255,255,.25);
+      transition: border-color .2s, transform .18s;
+      position: relative;
     }
+    #settings-av-img:hover { border-color: var(--green); transform: scale(1.07); }
     #settings-av-img img { width: 100%; height: 100%; border-radius: 50%; display: block; }
-    #settings-name-lbl { font-size: 9px; letter-spacing: 2px; }
-    #settings-name-sub { font-size: 5.5px; color: rgba(255,255,255,.3); letter-spacing: 1px; margin-top: 5px; }
+    #settings-av-badge {
+      position: absolute; bottom: 0; right: 0;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--green); border: 2px solid #080a0e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7px; color: #000;
+    }
+    #settings-name-lbl { font-size: 10px; letter-spacing: 2px; }
+
+    /* ══════════ AVATAR MODAL ══════════ */
+    #av-modal {
+      position: fixed; inset: 0; z-index: 50;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(4,6,12,0.82);
+      backdrop-filter: blur(12px);
+    }
+    #av-modal.open { display: flex; }
+    #av-modal-box {
+      background: rgba(12,16,26,0.96);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      padding: 26px 22px 22px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 18px; align-items: center;
+    }
+    #av-modal-title { font-size: 12px; letter-spacing: 2px; color: #fff; }
+    #av-modal-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 10px; width: 100%;
+    }
+    .av-modal-opt {
+      width: 100%; aspect-ratio: 1; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: border-color .15s, transform .15s;
+      overflow: hidden;
+    }
+    .av-modal-opt img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+    .av-modal-opt.sel { border-color: #fff; transform: scale(1.1); }
+    #av-modal-close {
+      width: 100%; padding: 13px; border-radius: 13px;
+      border: 1.5px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.7); font-family: var(--font);
+      font-size: 10px; letter-spacing: 2px; cursor: pointer;
+    }
+    #av-modal-close:active { transform: scale(0.97); }
 
     /* av-picker in settings — image thumbnails */
     .av-opt {
@@ -466,19 +514,13 @@
   <div class="panel">
     <h2>Settings</h2>
 
-    <!-- ── Profile (read-only) ── -->
-    <div id="settings-profile-ro">
-      <div id="settings-av-img"><img id="settings-av-src" src="" alt=""></div>
-      <div>
-        <div id="settings-name-lbl">PLAYER</div>
-        <div id="settings-name-sub">NAME LOCKED</div>
+    <!-- ── Profile (avatar tıklanınca modal açar) ── -->
+    <div id="settings-profile-ro" title="Change avatar">
+      <div id="settings-av-img">
+        <img id="settings-av-src" src="" alt="">
+        <div id="settings-av-badge">✎</div>
       </div>
-    </div>
-
-    <!-- ── Avatar picker (still changeable) ── -->
-    <div class="profile-sect">
-      <div class="profile-lbl">AVATAR</div>
-      <div class="av-picker" id="av-picker"></div>
+      <div id="settings-name-lbl">PLAYER</div>
     </div>
 
     <div class="srow">
@@ -759,29 +801,48 @@ const ARC_DB = (() => {
     if (sLbl) sLbl.textContent = playerName || 'PLAYER';
   }
 
-  function renderAvPicker() {
-    ['av-picker', 'av-grid'].forEach(id => {
-      const p = document.getElementById(id);
-      if (!p) return;
-      const isGrid = id === 'av-grid';
-      p.innerHTML = '';
-      AVATARS.forEach((src, i) => {
-        const d = document.createElement('div');
-        d.className = (isGrid ? 'av-img-opt' : 'av-opt') + (i === avatarIdx ? ' sel' : '');
-        d.title = AVATAR_NAMES[i];
-        const img = document.createElement('img');
-        img.src = src; img.alt = AVATAR_NAMES[i];
-        d.appendChild(img);
-        d.addEventListener('click', () => {
-          avatarIdx = i;
-          localStorage.setItem('arc_avatar', i);
-          renderAvPicker();
-          applyProfile();
-        });
-        p.appendChild(d);
+  // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
+  function renderAvatarGrid(containerId, optClass, onPick) {
+    const p = document.getElementById(containerId);
+    if (!p) return;
+    p.innerHTML = '';
+    AVATARS.forEach((src, i) => {
+      const d = document.createElement('div');
+      d.className = optClass + (i === avatarIdx ? ' sel' : '');
+      d.title = AVATAR_NAMES[i];
+      const img = document.createElement('img');
+      img.src = src; img.alt = AVATAR_NAMES[i];
+      d.appendChild(img);
+      d.addEventListener('click', () => {
+        avatarIdx = i;
+        localStorage.setItem('arc_avatar', i);
+        onPick();
       });
+      p.appendChild(d);
     });
   }
+
+  function renderAvPicker() {
+    // Profile setup grid
+    renderAvatarGrid('av-grid', 'av-img-opt', () => { renderAvPicker(); applyProfile(); });
+    // Settings avatar modal grid
+    renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {
+      renderAvPicker(); applyProfile();
+    });
+  }
+
+  // ── Avatar modal ──────────────────────────────────────────
+  const avModal = document.getElementById('av-modal');
+  function openAvModal() {
+    renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {
+      renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {}); // refresh sel state
+      applyProfile();
+    });
+    avModal.classList.add('open');
+  }
+  document.getElementById('settings-profile-ro').addEventListener('click', openAvModal);
+  document.getElementById('av-modal-close').addEventListener('click', () => avModal.classList.remove('open'));
+  avModal.addEventListener('click', e => { if (e.target === avModal) avModal.classList.remove('open'); });
 
   // ── Profile setup ─────────────────────────────────────────
   document.getElementById('ps-confirm').addEventListener('click', () => {
@@ -1452,6 +1513,7 @@ const ARC_DB = (() => {
   }
 
   async function endGame() {
+    haptic(2000); // çarpışma titreşimi — 2 saniye
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
     ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
@@ -1618,8 +1680,11 @@ const ARC_DB = (() => {
   });
 
   // ── Input ────────────────────────────────────────────────
+  const haptic = (ms) => navigator.vibrate?.(ms); // sessizce desteklenmiyor ise atlar
+
   gc.addEventListener('pointerdown', e => {
     if (scene !== 'play') return;
+    haptic(40); // kısa dokunuş titreşimi
     const rect = gc.getBoundingClientRect();
     const sx = (e.clientX - rect.left) * (W / rect.width);
     const sy = (e.clientY - rect.top)  * (H / rect.height);
@@ -1721,5 +1786,14 @@ const ARC_DB = (() => {
   requestAnimationFrame(loop);
 })();
 </script>
+
+<!-- ══ AVATAR MODAL ══ -->
+<div id="av-modal">
+  <div id="av-modal-box">
+    <div id="av-modal-title">CHOOSE AVATAR</div>
+    <div id="av-modal-grid"></div>
+    <button id="av-modal-close">DONE</button>
+  </div>
+</div>
 </body>
 </html>
