@@ -1251,14 +1251,18 @@ const ARC_DB = (() => {
 
   // ── Obstacles ────────────────────────────────────────────
   function drawObstacles() {
+    ctx.save();
+    // Duvarın dışına taşan kısmı kırp — siyah duvar görünsün
+    ctx.beginPath();
+    ctx.rect(walls.left, 0, walls.right - walls.left, H);
+    ctx.clip();
     for (const ob of obstacles) {
       const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
       if (sy < -100 || sy > H + 100) continue;
-      ctx.save();
       ctx.fillStyle = '#ff3355';
       ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   // ── Bonuses ──────────────────────────────────────────────
@@ -1275,25 +1279,28 @@ const ARC_DB = (() => {
 
   // ── Gold Balls ───────────────────────────────────────────
   function drawGoldBalls() {
+    const now = performance.now() / 1000;
     for (const b of goldBalls) {
       const sy = W2S(b.y);
       if (sy < -80 || sy > H + 80) continue;
       ctx.save();
-      // Altın glow
-      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 2.5);
-      g.addColorStop(0, 'rgba(255,215,0,.9)'); g.addColorStop(1, 'rgba(255,165,0,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, b.r * 2.5, 0, Math.PI*2); ctx.fill();
-      // Core
-      ctx.fillStyle = '#FFD700';
+      // Büyük glow (görünür olmaları için r çok küçük, glow geniş tutulur)
+      const glowR = Math.max(12, b.r * 9);
+      const pulse = 0.8 + 0.2 * Math.sin(now * 5 + b.x);
+      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, glowR);
+      g.addColorStop(0,   `rgba(255,220,0,${.9 * pulse})`);
+      g.addColorStop(0.35,`rgba(255,180,0,${.5 * pulse})`);
+      g.addColorStop(1,   'rgba(255,140,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(b.x, sy, glowR, 0, Math.PI*2); ctx.fill();
+      // Minik core (r=1..2 px)
+      ctx.fillStyle = '#FFE44D';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Inner highlight
-      ctx.fillStyle = 'rgba(255,255,200,.6)';
-      ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, sy - b.r * 0.3, b.r * 0.45, 0, Math.PI*2); ctx.fill();
-      // Puan etiketi
-      ctx.fillStyle = '#000';
-      ctx.font = `${Math.max(5, Math.round(b.r * 0.65))}px 'Press Start 2P', monospace`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('+' + b.pts, b.x, sy);
+      // Puan (+100 / +50) — glowun üzerinde küçük yazı
+      ctx.fillStyle = 'rgba(255,240,120,0.9)';
+      ctx.font = `6px 'Press Start 2P', monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('+' + b.pts, b.x, sy - glowR * 0.55);
       ctx.restore();
     }
   }
@@ -1670,9 +1677,10 @@ const ARC_DB = (() => {
         // Altın veya mor topu yeşilin yakınına ekle (farklı x)
         if (spawnGold) {
           const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-          const gr = 8 + Math.random() * 10; // r=8..18
+          // r=1..2 (minik), en küçük=100 puan, en büyük=50 puan
+          const gr = 1 + Math.random(); // r=1..2
           goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
-            pts: Math.round(400 / gr) });
+            pts: Math.round(100 / gr) }); // r=1→100, r=2→50
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
@@ -1791,10 +1799,11 @@ const ARC_DB = (() => {
         if (tutStep === 1) advanceTut(2);
       }
     }
-    // Altın top toplama
+    // Altın top toplama (glow alanı kadar collision — minik core için)
     for (let i = goldBalls.length - 1; i >= 0; i--) {
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+      const hitR = player.r + Math.max(12, b.r * 9); // glow yarıçapı kadar
+      if (dx*dx + dy*dy < hitR * hitR) {
         goldBalls.splice(i, 1);
         scoreBonus += b.pts;
       }
