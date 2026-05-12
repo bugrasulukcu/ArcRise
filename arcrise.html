@@ -124,12 +124,6 @@
       text-align: center;
       position: relative;
     }
-    /* small ball on arc above title */
-    #logo-canvas {
-      display: block; margin: 0 auto 6px;
-      width: clamp(200px, 55vw, 320px);
-      height: clamp(50px, 13vw, 80px);
-    }
 
     /* rainbow border wrapper */
     @property --a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
@@ -444,7 +438,6 @@
 
 <!-- ══ HOME ══ -->
 <div class="screen" id="home">
-  <canvas id="logo-canvas"></canvas>
   <h1 id="title">ArcRise</h1>
   <div class="menu">
     <div class="rb-wrap" id="wrap-start">
@@ -587,20 +580,49 @@ const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
   const BASE = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
-  // Skor kaydet
+  // Skor kaydet — her oyuncu için sadece en yüksek skor tutulur
   async function submitScore(name, avatar, score) {
-    if (!projectId || projectId.startsWith('BURAYA')) return; // config yoksa sessizce atla
+    if (!projectId || projectId.startsWith('BURAYA')) return;
     try {
-      await fetch(`${BASE}/scores?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: {
-          name:   { stringValue: name  },
-          avatar: { integerValue: String(avatar) },
-          score:  { integerValue: String(score)  },
-          ts:     { integerValue: String(Date.now()) },
+      // Mevcut doc'u bul
+      const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'scores' }],
+          where: { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: name } } },
+          limit: 1,
         }}),
       });
+      const hits = (await qRes.json()).filter(r => r.document?.fields);
+
+      if (hits.length > 0) {
+        const oldScore = parseInt(hits[0].document.fields.score.integerValue ?? 0);
+        if (score <= oldScore) return; // eski skor daha iyi, atla
+        // PATCH: sadece score, avatar ve ts güncelle
+        const docId = hits[0].document.name.split('/').pop();
+        await fetch(
+          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts`,
+          {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: {
+              score:  { integerValue: String(score)  },
+              avatar: { integerValue: String(avatar) },
+              ts:     { integerValue: String(Date.now()) },
+            }}),
+          }
+        );
+      } else {
+        // Yeni kayıt
+        await fetch(`${BASE}/scores?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields: {
+            name:   { stringValue: name  },
+            avatar: { integerValue: String(avatar) },
+            score:  { integerValue: String(score)  },
+            ts:     { integerValue: String(Date.now()) },
+          }}),
+        });
+      }
     } catch(e) { console.warn('[ArcDB] submit failed', e); }
   }
 
@@ -641,35 +663,6 @@ const ARC_DB = (() => {
   gc.width = bg.width = W;
   gc.height = bg.height = H;
 
-  // ── Logo canvas ───────────────────────────────────────────
-  const lc = document.getElementById('logo-canvas');
-  const lctx = lc.getContext('2d');
-  const LW = 320, LH = 80;
-  lc.width = LW; lc.height = LH;
-  function drawLogo() {
-    lctx.clearRect(0, 0, LW, LH);
-    // arc path under ball
-    lctx.save();
-    lctx.strokeStyle = 'rgba(124,255,122,0.7)';
-    lctx.lineWidth = 1.5;
-    lctx.beginPath();
-    lctx.arc(LW * 0.52, LH * 1.6, LH * 1.3, Math.PI * 1.1, Math.PI * 1.55);
-    lctx.stroke();
-    lctx.restore();
-    // ball
-    const bx = LW * 0.525, by = LH * 0.38, br = 8;
-    const g = lctx.createRadialGradient(bx, by, 0, bx, by, br * 3);
-    g.addColorStop(0, 'rgba(124,255,122,0.5)');
-    g.addColorStop(1, 'rgba(124,255,122,0)');
-    lctx.fillStyle = g;
-    lctx.beginPath(); lctx.arc(bx, by, br * 3, 0, Math.PI * 2); lctx.fill();
-    lctx.fillStyle = '#000';
-    lctx.beginPath(); lctx.arc(bx, by, br, 0, Math.PI * 2); lctx.fill();
-    lctx.strokeStyle = 'rgba(124,255,122,0.9)';
-    lctx.lineWidth = 1.5;
-    lctx.beginPath(); lctx.arc(bx, by, br, 0, Math.PI * 2); lctx.stroke();
-  }
-  drawLogo();
 
   // ── DOM refs ──────────────────────────────────────────────
   const hudEl      = document.getElementById('hud');
@@ -887,18 +880,19 @@ const ARC_DB = (() => {
   // Her BG arc: bir "top" dairesel yay üzerinde hareket eder, arkasında iz bırakır.
   // Tıpkı oyundaki topun yaptığı gibi — gerçek dairesel kinematik.
   function newBgArc(preAge) {
-    const color  = RAINBOW[Math.floor(Math.random() * RAINBOW.length)];
-    const radius = 90 + Math.random() * 220;           // dairenin yarıçapı
-    const cx     = (Math.random() * 0.85 + 0.075) * W; // daire merkezi
+    const hueStart = Math.random() * 360;              // gökkuşağı başlangıç rengi
+    const radius = 90 + Math.random() * 220;
+    const cx     = (Math.random() * 0.85 + 0.075) * W;
     const cy     = (Math.random() * 0.85 + 0.075) * H;
-    const startA = Math.random() * Math.PI * 2;        // başlangıç açısı
-    const dir    = Math.random() < 0.5 ? 1 : -1;       // CW / CCW
-    const speed  = 110 + Math.random() * 140;          // px/s yay boyunca
-    const omega  = dir * speed / radius;               // rad/s
-    const maxLen = Math.PI * (0.6 + Math.random() * 1.1); // kaç radyan çizilecek
-    const drawT  = maxLen / Math.abs(omega);           // çizim süresi
+    const startA = Math.random() * Math.PI * 2;
+    const dir    = Math.random() < 0.5 ? 1 : -1;
+    const speed  = 110 + Math.random() * 140;
+    const omega  = dir * speed / radius;
+    const maxLen = Math.PI * (0.6 + Math.random() * 1.1);
+    const drawT  = maxLen / Math.abs(omega);
+    const FADE_OUT = 1.8;
     const age    = preAge ?? 0;
-    return { cx, cy, radius, startA, dir, omega, maxLen, drawT, color, age };
+    return { cx, cy, radius, startA, dir, omega, maxLen, drawT, hueStart, age, FADE_OUT };
   }
 
   function initBgArcs() {
@@ -908,61 +902,57 @@ const ARC_DB = (() => {
   }
 
   function tickBgArcs(dt) {
-    const FADE_OUT = 1.0; // çizim bittikten sonra solma süresi
     for (let i = bgArcs.length - 1; i >= 0; i--) {
       const a = bgArcs[i];
       a.age += dt;
-      if (a.age >= a.drawT + FADE_OUT) { bgArcs.splice(i, 1); bgArcs.push(newBgArc()); }
+      if (a.age >= a.drawT + a.FADE_OUT) { bgArcs.splice(i, 1); bgArcs.push(newBgArc()); }
     }
     while (bgArcs.length < 8) bgArcs.push(newBgArc());
   }
 
   function drawBgArcs(ctx2) {
-    const FADE_IN  = 0.35;
-    const FADE_OUT = 1.0;
+    const SEGS  = 20; // gökkuşağı segmenti sayısı
+    const FADE_IN = 0.35;
     ctx2.save();
+    ctx2.lineWidth = 1.6;
+    ctx2.lineCap   = 'round';
+
     for (const a of bgArcs) {
-      // Alpha: fade-in → tam → fade-out
-      let alpha;
-      if      (a.age < FADE_IN)   alpha = a.age / FADE_IN;
-      else if (a.age < a.drawT)   alpha = 1;
-      else alpha = Math.max(0, 1 - (a.age - a.drawT) / FADE_OUT);
-      if (alpha <= 0) continue;
+      // Çizim fazı: ne kadar radyan çizildi (0..maxLen)
+      const headFrac = Math.min(1, a.age / a.drawT); // 0→1 çizim ilerler
+      // Silme fazı: çizim bitti → kuyruk ilerler
+      const tailFrac = a.age > a.drawT
+        ? Math.min(1, (a.age - a.drawT) / a.FADE_OUT)
+        : 0;
+      if (tailFrac >= 1) continue;
 
-      // Şu ana kadar çizilen yay uzunluğu (radyan)
-      const drawn  = Math.min(a.maxLen, Math.abs(a.omega) * a.age);
-      // Topun şu anki açısı
-      const curAng = a.startA + a.dir * drawn;
+      // Genel opaklık: fade-in sırasında açılır
+      const alpha = Math.min(1, a.age / FADE_IN) * 0.6;
 
-      // ── İz (trail) — büyüyen yay ───────────────────────────
-      ctx2.globalAlpha = alpha * 0.55;
-      ctx2.strokeStyle = a.color;
-      ctx2.lineWidth   = 1.5;
-      ctx2.lineCap     = 'round';
-      ctx2.beginPath();
-      // dir=1 → CW (false), dir=-1 → CCW (true)
-      if (a.dir > 0) ctx2.arc(a.cx, a.cy, a.radius, a.startA, curAng, false);
-      else            ctx2.arc(a.cx, a.cy, a.radius, curAng, a.startA, false);
-      ctx2.stroke();
+      for (let s = 0; s < SEGS; s++) {
+        // Her segmentin [t0, t1] aralığı toplam uzunluk içinde (0..1)
+        const t0 = tailFrac + (headFrac - tailFrac) * (s / SEGS);
+        const t1 = tailFrac + (headFrac - tailFrac) * ((s + 1) / SEGS);
+        if (t1 <= t0) continue;
 
-      // ── Top — sadece çizim aşamasında (fade-out'ta kaybolur) ─
-      if (a.age < a.drawT) {
-        const bx = a.cx + Math.cos(curAng) * a.radius;
-        const by = a.cy + Math.sin(curAng) * a.radius;
-        const br = 5;
-        // Yumuşak parıltı
-        ctx2.globalAlpha = alpha * 0.28;
-        ctx2.strokeStyle = a.color;
-        ctx2.lineWidth   = 1;
-        ctx2.beginPath(); ctx2.arc(bx, by, br * 2.8, 0, Math.PI * 2); ctx2.stroke();
-        // Siyah gövde
-        ctx2.globalAlpha = alpha * 0.9;
-        ctx2.fillStyle   = '#000';
-        ctx2.beginPath(); ctx2.arc(bx, by, br, 0, Math.PI * 2); ctx2.fill();
-        // Renkli kenar
-        ctx2.strokeStyle = a.color;
-        ctx2.lineWidth   = 1.5;
-        ctx2.beginPath(); ctx2.arc(bx, by, br, 0, Math.PI * 2); ctx2.stroke();
+        // Segmentin açıları
+        const ang0 = a.startA + a.dir * a.maxLen * t0;
+        const ang1 = a.startA + a.dir * a.maxLen * t1;
+
+        // Gökkuşağı rengi — baş tarafa doğru daha parlak
+        const segT   = s / (SEGS - 1);
+        const hue    = (a.hueStart + segT * 280) % 360;
+        const bright = 55 + segT * 12;
+        // Kuyruk segmentleri daha soluk
+        const segA   = alpha * (0.25 + segT * 0.75);
+
+        ctx2.globalAlpha = segA;
+        ctx2.strokeStyle = `hsl(${hue},100%,${bright}%)`;
+
+        ctx2.beginPath();
+        if (a.dir > 0) ctx2.arc(a.cx, a.cy, a.radius, ang0, ang1, false);
+        else            ctx2.arc(a.cx, a.cy, a.radius, ang1, ang0, false);
+        ctx2.stroke();
       }
     }
     ctx2.restore();
@@ -1345,13 +1335,13 @@ const ARC_DB = (() => {
         bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
         lastBonusY = nextSpawnY;
       } else {
-        // Engel boyutu büyüyor
+        // Engel boyutu (x4 orijinal değerler)
         let rMin, rMax;
-        if      (sc < 50)  { rMin = 18; rMax = 30; }
-        else if (sc < 120) { rMin = 26; rMax = 42; }
-        else if (sc < 250) { rMin = 34; rMax = 54; }
-        else if (sc < 450) { rMin = 42; rMax = 65; }
-        else               { rMin = 50; rMax = 78; }
+        if      (sc < 50)  { rMin = 72;  rMax = 120; }
+        else if (sc < 120) { rMin = 104; rMax = 168; }
+        else if (sc < 250) { rMin = 136; rMax = 216; }
+        else if (sc < 450) { rMin = 168; rMax = 240; }
+        else               { rMin = 200; rMax = 260; }
         const r = rMin + Math.random() * (rMax - rMin);
 
         const ob = { x, y: nextSpawnY, r };
