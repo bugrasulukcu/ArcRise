@@ -949,15 +949,9 @@ const ARC_DB = (() => {
       return;
     }
     tutHudEl.classList.add('active');
-    // Adım 0, oyun başladı ama donduruldu → "tekrar dokun" mesajı
-    if (tutStep === 0 && tutPaused) {
-      tutBTitle.textContent = 'TAP TO CHANGE DIR';
-      tutBDesc.textContent  = 'Tekrar dokun — yön değişir';
-    } else {
-      const s = TUT_STEPS[tutStep];
-      tutBTitle.textContent = s.title;
-      tutBDesc.textContent  = s.desc;
-    }
+    const s = TUT_STEPS[tutStep];
+    tutBTitle.textContent = s.title;
+    tutBDesc.textContent  = s.desc;
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
@@ -1101,11 +1095,9 @@ const ARC_DB = (() => {
     for (const ob of obstacles) {
       const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
       if (sy < -100 || sy > H + 100) continue;
-      // core only — no glow
       ctx.save();
-      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r);
-      g.addColorStop(0, 'rgba(255,140,160,.92)'); g.addColorStop(1, 'rgba(200,55,80,.78)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff3355';
+      ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
       ctx.restore();
     }
   }
@@ -1550,12 +1542,6 @@ const ARC_DB = (() => {
       if (tutTimer < 0.5) tutAlpha = tutTimer / 0.5;
       else tutAlpha = 1;
 
-      // Adım 0: 1.8s sonra fizik durdur, "TAP TO CHANGE DIR" mesajı göster
-      if (tutStep === 0 && started && !tutPaused && tutTimer >= 1.8) {
-        tutPaused = true;
-        updateTutHud();
-      }
-
       // Zamanlı adımlar için otomatik ilerleme
       if (tutStep === 1 && tutTimer > 3.5) advanceTut(2);
       if (tutStep === 2 && tutTimer > 3.5) advanceTut(3);
@@ -1743,17 +1729,7 @@ const ARC_DB = (() => {
     const radius = mapRadius(sx); // yatay: sol=küçük, sağ=büyük
     ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
 
-    if (!started) {
-      // İlk dokunuş: yay başlar
-      beginArc(Math.random() < .5 ? -1 : 1, radius);
-      started = true; running = true;
-      if (tutStep === 0) updateTutHud();
-    } else if (tutPaused && tutStep === 0) {
-      // Tutorial freeze'den çıkış: yön değiştir, adım 1'e geç
-      tutPaused = false;
-      beginArc(-player.dir, radius);
-      advanceTut(1);
-    } else if (running) {
+    if (running) {
       beginArc(-player.dir, radius);
       // Adım 3: sol %35'e dokunulursa ilerle
       if (tutStep === 3 && sx < W * 0.35) advanceTut(4);
@@ -1796,12 +1772,15 @@ const ARC_DB = (() => {
   function startGame(withTutorial) {
     resetGame();
     showScene('play');
+    // Oyun hemen başlasın — ilk dokunuş bekleme
+    beginArc(Math.random() < .5 ? -1 : 1, W / 2);
+    started = true; running = true;
     if (withTutorial || firstPlay) {
       if (firstPlay) {
         firstPlay = false;
         localStorage.setItem('arc_firstplay', '0');
       }
-      advanceTut(0); // in-game tutorial: adım 0'dan başlat
+      advanceTut(1); // adım 0 (touch to begin) atlandı, direkt 1'den başlat
     }
   }
 
