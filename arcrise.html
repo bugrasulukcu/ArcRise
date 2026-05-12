@@ -648,8 +648,8 @@ const ARC_DB = (() => {
     { title: 'TOUCH ANYWHERE',          desc: 'Ekrana dokunarak oynamaya başla' },
     { title: 'COLLECT GREEN TO MOVE',   desc: 'Yeşil topları topla — enerjiyi doldurur' },
     { title: 'AVOID THE RED',           desc: 'Kırmızı engellere çarpma, oyun biter!' },
-    { title: 'TOUCH HIGH → WIDE ARC',   desc: 'Üste dokun → geniş yay — engelleri rahat geç' },
-    { title: 'TOUCH LOW → TIGHT ARC',   desc: 'Alta dokun → dar yay — dar geçişlerde kullan' },
+    { title: 'RIGHT → WIDE ARC',  desc: 'Sağa dokun → geniş yay — engelleri rahat geç' },
+    { title: 'LEFT → TIGHT ARC', desc: 'Sola dokun → dar yay — dar geçişlerde kullan' },
   ];
 
   function updateTutHud() {
@@ -658,9 +658,15 @@ const ARC_DB = (() => {
       return;
     }
     tutHudEl.classList.add('active');
-    const s = TUT_STEPS[tutStep];
-    tutBTitle.textContent = s.title;
-    tutBDesc.textContent  = s.desc;
+    // Adım 0, oyun başladı ama donduruldu → "tekrar dokun" mesajı
+    if (tutStep === 0 && started && !running) {
+      tutBTitle.textContent = 'TAP TO CHANGE DIR';
+      tutBDesc.textContent  = 'Tekrar dokun — yön değişir';
+    } else {
+      const s = TUT_STEPS[tutStep];
+      tutBTitle.textContent = s.title;
+      tutBDesc.textContent  = s.desc;
+    }
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
@@ -671,11 +677,11 @@ const ARC_DB = (() => {
   sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
   musSl.value  = localStorage.getItem('arc_mus')  || 50;
 
-  const ENERGY_DECAY = 1 / 10;
+  const ENERGY_DECAY = 1 / 9;   // 9 saniyelik geri sayım
 
   // ── Player ───────────────────────────────────────────────
   const player = {
-    x: W/2, y: H - 60, r: 18,
+    x: W/2, y: H - 200, r: 18,
     dir: 0, speed: SPEEDS[diffIdx],
     heading: -Math.PI/2,
     radius: 120, cx: 0, cy: 0, ang: 0
@@ -828,21 +834,19 @@ const ARC_DB = (() => {
   function drawGhostTrail() {
     if (ghostTrail.length < 2) return;
     ctx.save();
-    ctx.globalAlpha = 0.20;
-    ctx.strokeStyle = '#7CFF7A';
+    ctx.globalAlpha = 0.22;
     ctx.lineWidth   = 2;
     ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-    ctx.beginPath();
-    let penDown = false;
-    for (let i = 0; i < ghostTrail.length; i++) {
-      const p = ghostTrail[i];
-      const sy = W2S(p.y);
-      if (sy < -80 || sy > H + 80) { penDown = false; continue; }
-      if (!penDown) { ctx.moveTo(p.x, sy); penDown = true; }
-      else            ctx.lineTo(p.x, sy);
+    for (let i = 1; i < ghostTrail.length; i++) {
+      const a = ghostTrail[i-1], b = ghostTrail[i];
+      const ay = W2S(a.y), by = W2S(b.y);
+      if (Math.max(ay, by) < -80 || Math.min(ay, by) > H + 80) continue;
+      ctx.strokeStyle = `hsl(${a.h},100%,65%)`;
+      ctx.beginPath();
+      ctx.moveTo(a.x, ay);
+      ctx.lineTo(b.x, by);
+      ctx.stroke();
     }
-    ctx.stroke();
     ctx.restore();
   }
 
@@ -869,21 +873,36 @@ const ARC_DB = (() => {
   // ── Player ───────────────────────────────────────────────
   function drawPlayer() {
     const px = player.x, py = W2S(player.y), r = player.r;
-    // glow
-    let g = ctx.createRadialGradient(px, py, r * .3, px, py, r * 2.8);
-    g.addColorStop(0, `rgba(124,255,122,${.45 * energy})`);
+
+    // Güçlü glow — dış katman geniş ve parlak
+    let g = ctx.createRadialGradient(px, py, 0, px, py, r * 5.5);
+    g.addColorStop(0,   `rgba(124,255,122,${.75 * energy})`);
+    g.addColorStop(0.35,`rgba(124,255,122,${.45 * energy})`);
+    g.addColorStop(1,   'rgba(124,255,122,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 5.5, 0, Math.PI*2); ctx.fill();
+
+    // İç yoğun glow katmanı
+    g = ctx.createRadialGradient(px, py, 0, px, py, r * 2.2);
+    g.addColorStop(0, `rgba(180,255,180,${.6 * energy})`);
     g.addColorStop(1, 'rgba(124,255,122,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.8, 0, Math.PI*2); ctx.fill();
-    // body
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.2, 0, Math.PI*2); ctx.fill();
+
+    // Siyah gövde
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
-    // ring
-    ctx.strokeStyle = `rgba(124,255,122,${.88 * energy})`;
-    ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
-    // score number inside
-    ctx.fillStyle = '#fff';
-    ctx.font = `${r < 20 ? 6 : 8}px 'Press Start 2P', monospace`;
+
+    // Ring — trail son noktasıyla aynı kalınlık (trail w = 1 + 1*3.8 = 4.8px)
+    ctx.strokeStyle = `rgba(124,255,122,${.92 * energy})`;
+    ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
+
+    // Geri sayım: 9'dan 1'e (0 = oyun bitti)
+    const countdown = Math.ceil(energy * 9);
+    // Renk: 3 ve altında kırmızıya dön
+    const countCol = countdown <= 3 ? `rgba(255,${Math.floor(80 + countdown*40)},80,0.95)` : '#fff';
+    ctx.fillStyle = countCol;
+    ctx.font = `${r < 20 ? 7 : 9}px 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(Math.floor(score)), px, py);
+    ctx.fillText(String(countdown), px, py);
   }
 
   // ── Ripples ──────────────────────────────────────────────
@@ -926,8 +945,11 @@ const ARC_DB = (() => {
   const W2S = y => y - camY;
   const S2W = y => y + camY;
 
-  function mapRadius(sy) {
-    return H * 0.025 + (H * 0.10 - H * 0.025) * (1 - sy / H);
+  // Yatay: sol → küçük radius, sağ → büyük radius
+  function mapRadius(sx) {
+    const minR = H * 0.022; // ~23px
+    const maxR = H * 0.115; // ~122px
+    return minR + (maxR - minR) * (sx / W);
   }
   function beginArc(sign, radius) {
     player.dir = sign; player.radius = radius;
@@ -1050,26 +1072,26 @@ const ARC_DB = (() => {
       }
 
     } else if (tutStep === 3) {
-      // ── Adım 3: TOUCH HIGH LARGE RADIUS ────────────────────
-      const rx = W * 0.37, ry = H * 0.10;
+      // ── Adım 3: TOUCH RIGHT → WIDE ARC ──────────────────────
+      const rx = W * 0.82, ry = H * 0.42;
       ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
       ctx.setLineDash([10, 7]);
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
       ctx.beginPath(); ctx.arc(rx, ry, 68, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
-      tutLabel(rx, ry + 88, 'TOUCH HIGH', 'LARGE RADIUS');
+      tutLabel(rx - 90, ry, 'TOUCH RIGHT', 'WIDE ARC');
 
     } else if (tutStep === 4) {
-      // ── Adım 4: TOUCH LOW SMALL RADIUS ─────────────────────
-      const rx = W * 0.37, ry = H * 0.88;
+      // ── Adım 4: TOUCH LEFT → TIGHT ARC ─────────────────────
+      const rx = W * 0.18, ry = H * 0.42;
       ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
       ctx.setLineDash([10, 7]);
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
       ctx.beginPath(); ctx.arc(rx, ry, 52, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
-      tutLabel(rx, ry - 70, 'TOUCH LOW', 'SMALL RADIUS');
+      tutLabel(rx + 80, ry, 'TOUCH LEFT', 'TIGHT ARC');
     }
   }
 
@@ -1086,7 +1108,7 @@ const ARC_DB = (() => {
   }
 
   function resetGame() {
-    player.x = W/2; player.y = H - 60;
+    player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = SPEEDS[diffIdx];
     camY = 0; trail.length = 0; obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
@@ -1134,7 +1156,8 @@ const ARC_DB = (() => {
     if (energy <= 0) { endGame(); return; }
 
     if (!trail.length || Math.hypot(player.x - trail.at(-1).x, player.y - trail.at(-1).y) > 2) {
-      trail.push({ x: player.x, y: player.y });
+      const th = (now * 80 + trail.length * 3) % 360; // anlık ton rengi
+      trail.push({ x: player.x, y: player.y, h: th });
       if (trail.length > 600) trail.shift();
     }
 
@@ -1175,6 +1198,12 @@ const ARC_DB = (() => {
       if (tutTimer < 0.5) tutAlpha = tutTimer / 0.5;
       else tutAlpha = 1;
 
+      // Adım 0: 1.8s sonra freeze et, "TAP TO CHANGE DIR" mesajı göster
+      if (tutStep === 0 && started && tutTimer >= 1.8) {
+        running = false;
+        updateTutHud();
+      }
+
       // Zamanlı adımlar için otomatik ilerleme
       if (tutStep === 1 && tutTimer > 3.5) advanceTut(2);
       if (tutStep === 2 && tutTimer > 3.5) advanceTut(3);
@@ -1185,7 +1214,7 @@ const ARC_DB = (() => {
 
   async function endGame() {
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
-    ghostTrail = trail.map(p => ({ x: p.x, y: p.y }));
+    ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
     best = Math.max(best, Math.floor(score));
     localStorage.setItem('arc_best', String(best));
@@ -1308,20 +1337,25 @@ const ARC_DB = (() => {
     const rect = gc.getBoundingClientRect();
     const sx = (e.clientX - rect.left) * (W / rect.width);
     const sy = (e.clientY - rect.top)  * (H / rect.height);
-    const radius = mapRadius(sy);
+    const radius = mapRadius(sx); // yatay: sol=küçük, sağ=büyük
     ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
 
     if (!started) {
-      // Adım 0 → ilk dokunuşta oyunu başlat ve adım 1'e geç
+      // İlk dokunuş: yay başlar (tutorial adım 0 ise freeze bekler)
       beginArc(Math.random() < .5 ? -1 : 1, radius);
       started = true; running = true;
-      if (tutStep === 0) advanceTut(1);
+      if (tutStep === 0) updateTutHud(); // banner'ı güncelle ama adımı ilerletme
+    } else if (!running && tutStep === 0) {
+      // Tutorial adım 0 freeze'den çıkış: yön değiştir, adım 1'e geç
+      beginArc(-player.dir, radius);
+      running = true;
+      advanceTut(1);
     } else if (running) {
       beginArc(-player.dir, radius);
-      // Adım 3: üst %35'e dokunulursa ilerle
-      if (tutStep === 3 && sy < H * 0.35) advanceTut(4);
-      // Adım 4: alt %35'e dokunulursa ilerle
-      else if (tutStep === 4 && sy > H * 0.65) advanceTut(5);
+      // Adım 3: sol %35'e dokunulursa ilerle (dar yay = sol)
+      if (tutStep === 3 && sx < W * 0.35) advanceTut(4);
+      // Adım 4: sağ %35'e dokunulursa ilerle (geniş yay = sağ)
+      else if (tutStep === 4 && sx > W * 0.65) advanceTut(5);
     }
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
