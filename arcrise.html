@@ -1155,13 +1155,14 @@ const ARC_DB = (() => {
     energy = Math.max(0, energy - dt * ENERGY_DECAY);
     if (energy <= 0) { endGame(); return; }
 
+    const now = performance.now() / 1000;
+
     if (!trail.length || Math.hypot(player.x - trail.at(-1).x, player.y - trail.at(-1).y) > 2) {
       const th = (now * 80 + trail.length * 3) % 360; // anlık ton rengi
       trail.push({ x: player.x, y: player.y, h: th });
       if (trail.length > 600) trail.shift();
     }
 
-    const now = performance.now() / 1000;
     for (let i = ripples.length - 1; i >= 0; i--) { if (now - ripples[i].t > 1) ripples.splice(i,1); }
 
     const pyS = W2S(player.y);
