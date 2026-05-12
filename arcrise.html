@@ -377,6 +377,7 @@
       font-size: 8px; letter-spacing: 1px; color: #fff; min-width: 76px; text-align: center;
       background: rgba(0,180,160,.18); border: 1px solid rgba(0,210,180,.35);
       border-radius: 8px; padding: 7px 10px;
+      transition: color .3s, border-color .3s, background .3s;
     }
     #hd-mul {
       font-size: 6px; color: rgba(255,255,255,.4);
@@ -470,6 +471,82 @@
       display: none; font-size: 7px; color: rgba(255,255,255,.5);
       letter-spacing: 1px; text-align: center; margin-top: -10px;
     }
+
+    /* ══════════ HOME PROFILE CARD ══════════ */
+    #home-profile {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 18px;
+      padding: 12px 18px 12px 14px;
+      width: min(88vw, 310px);
+      margin-top: 22px;
+    }
+    #home-av-wrap {
+      position: relative; flex-shrink: 0;
+      width: 52px; height: 52px;
+    }
+    #home-av-wrap::before {
+      content: '';
+      position: absolute; inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      animation: spinA 3s linear infinite;
+      z-index: 0;
+    }
+    #home-av-wrap::after {
+      content: '';
+      position: absolute; inset: 1px;
+      border-radius: 50%;
+      background: var(--bg);
+      z-index: 1;
+    }
+    #home-av-img {
+      position: absolute; inset: 3px;
+      border-radius: 50%; z-index: 2;
+      width: calc(100% - 6px); height: calc(100% - 6px);
+      object-fit: cover;
+    }
+    #home-profile-info { flex: 1; min-width: 0; }
+    #home-pname {
+      font-size: 11px; letter-spacing: 2px;
+      color: #fff; margin-bottom: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #home-pbest-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    #home-pbest-lbl { font-size: 6px; color: var(--green); letter-spacing: 1px; }
+    #home-pbest-val { font-size: 10px; color: #fff; letter-spacing: 1px; }
+
+    /* ══════════ DIFFICULTY COLORS ══════════ */
+    #hd-label { transition: color .25s, border-color .25s, background .25s; }
+
+    /* ══════════ BOOSTER HUD ══════════ */
+    #booster-hud {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 16; pointer-events: none;
+      display: none;
+    }
+    #booster-hud.active { display: block; }
+    #booster-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(10,6,24,0.85);
+      border: 1px solid rgba(180,80,255,.5);
+      border-radius: 20px;
+      padding: 6px 14px 6px 10px;
+      backdrop-filter: blur(8px);
+    }
+    #booster-icon { font-size: 14px; }
+    #booster-name { font-size: 7px; letter-spacing: 1px; color: #cc88ff; }
+    #booster-bar-wrap {
+      width: 48px; height: 4px; background: rgba(255,255,255,.12);
+      border-radius: 2px; overflow: hidden;
+    }
+    #booster-bar {
+      height: 100%; background: #cc88ff; border-radius: 2px;
+      transition: width .1s linear;
+    }
   </style>
 </head>
 <body>
@@ -489,6 +566,14 @@
         <div class="hud-num" id="h-best">000</div>
       </div>
       <div id="lb"></div>
+      <!-- Booster indicator -->
+      <div id="booster-hud">
+        <div id="booster-pill">
+          <span id="booster-icon">⚡</span>
+          <span id="booster-name">BOOST</span>
+          <div id="booster-bar-wrap"><div id="booster-bar" style="width:100%"></div></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -510,7 +595,20 @@
 <!-- ══ HOME ══ -->
 <div class="screen" id="home">
   <h1 id="title">ArcRise</h1>
-  <div class="menu">
+  <!-- Profile card -->
+  <div id="home-profile">
+    <div id="home-av-wrap">
+      <img id="home-av-img" src="" alt="">
+    </div>
+    <div id="home-profile-info">
+      <div id="home-pname">PLAYER</div>
+      <div id="home-pbest-row">
+        <span id="home-pbest-lbl">BEST</span>
+        <span id="home-pbest-val">000</span>
+      </div>
+    </div>
+  </div>
+  <div class="menu" style="margin-top:18px">
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
@@ -524,7 +622,6 @@
     </div>
     <button class="darr" id="hd-next">&#62;</button>
   </div>
-  <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">000</span></div>
   <div id="home-links">
     <button class="home-link" id="btn-tutorial-link">TUTORIAL</button>
     <span style="color:rgba(255,255,255,.12);font-size:10px">·</span>
@@ -771,7 +868,7 @@ const ARC_DB = (() => {
   const tutBTitle  = document.getElementById('tut-banner-title');
   const tutBDesc   = document.getElementById('tut-banner-desc');
   const tutSDots   = document.querySelectorAll('.tut-sdot');
-  const homeBestV  = document.getElementById('home-best-val');
+  const homeBestV  = document.getElementById('home-pbest-val'); // profile card'daki best score
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
   const hdLabel    = document.getElementById('hd-label');
@@ -847,10 +944,18 @@ const ARC_DB = (() => {
   function applyProfile() {
     hudAvDot.style.background = AVATAR_COLORS[avatarIdx];
     const src = AVATARS[avatarIdx] ?? '';
+    // Settings panel
     const sImg = document.getElementById('settings-av-src');
     if (sImg) sImg.src = src;
     const sLbl = document.getElementById('settings-name-lbl');
     if (sLbl) sLbl.textContent = playerName || 'PLAYER';
+    // Home profile card
+    const hImg = document.getElementById('home-av-img');
+    if (hImg) hImg.src = src;
+    const hName = document.getElementById('home-pname');
+    if (hName) hName.textContent = playerName || 'PLAYER';
+    const hBest = document.getElementById('home-pbest-val');
+    if (hBest) hBest.textContent = pad(best);
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
@@ -917,6 +1022,53 @@ const ARC_DB = (() => {
   let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   let best    = Number(localStorage.getItem('arc_best') || 0);
+  let scoreBonus = 0; // altın toplardan gelen ek puan
+
+  // ── Booster state ────────────────────────────────────────
+  // types: 'wide','narrow','magnet','x2','x3','x4','ghost','shield','speed'
+  let boosterType = null, boosterTime = 0, boosterDur = 0;
+  let isGhost = false, hasShield = false;
+  const BOOSTER_EL   = document.getElementById('booster-hud');
+  const BOOSTER_ICON = document.getElementById('booster-icon');
+  const BOOSTER_NAME = document.getElementById('booster-name');
+  const BOOSTER_BAR  = document.getElementById('booster-bar');
+  const BOOSTER_INFO = {
+    wide:    { icon: '↔',  name: 'WIDE ARC',    dur: 8,  color: '#88ccff' },
+    narrow:  { icon: '↕',  name: 'TIGHT ARC',   dur: 8,  color: '#aaffdd' },
+    magnet:  { icon: '🎯', name: 'X-MAGNET',    dur: 8,  color: '#ffcc44' },
+    x2:      { icon: '×2', name: 'SCORE ×2',    dur: 8,  color: '#ff88ff' },
+    x3:      { icon: '×3', name: 'SCORE ×3',    dur: 8,  color: '#ff55ff' },
+    x4:      { icon: '×4', name: 'SCORE ×4',    dur: 8,  color: '#ff00ff' },
+    ghost:   { icon: '👻', name: 'GHOST',        dur: 6,  color: '#aa88ff' },
+    shield:  { icon: '🛡', name: 'SHIELD',       dur: 0,  color: '#44ddff' },
+    speed:   { icon: '⚡', name: 'SPEED BOOST', dur: 6,  color: '#ffee44' },
+  };
+
+  function activateBooster(type) {
+    const info = BOOSTER_INFO[type];
+    boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
+    isGhost   = (type === 'ghost');
+    hasShield = (type === 'shield');
+    if (type === 'speed') player.speed = SPEEDS[diffIdx] * 1.6;
+    BOOSTER_ICON.textContent = info.icon;
+    BOOSTER_NAME.textContent = info.name;
+    BOOSTER_NAME.style.color = info.color;
+    BOOSTER_BAR.style.background = info.color;
+    BOOSTER_EL.classList.add('active');
+  }
+
+  function clearBooster() {
+    boosterType = null; boosterTime = 0;
+    isGhost = false; hasShield = false;
+    player.speed = SPEEDS[diffIdx];
+    BOOSTER_EL.classList.remove('active');
+  }
+
+  function getRadius() {
+    if (boosterType === 'wide')   return W / 3;
+    if (boosterType === 'narrow') return W / 5;
+    return W / 4;
+  }
 
   // Ghost: önceki oyunun trail'i (world-space) — %20 alpha ile çizilir
   let ghostTrail = [];
@@ -955,15 +1107,21 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  const DIFFS     = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
-  const SPEEDS    = [180, 220, 280, 350];
-  const SCORE_MUL = [0.7, 1.0, 1.5, 2.5];
+  const DIFFS      = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
+  const SPEEDS     = [180, 220, 280, 350];
+  const SCORE_MUL  = [0.7, 1.0, 1.5, 2.5];
+  const DIFF_COLORS = ['#00ccff', '#7CFF7A', '#ff8800', '#ff3355'];
   let diffIdx  = Number(localStorage.getItem('arc_diff_idx') || 1);
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
 
   function updateHomeDiff() {
+    const c = DIFF_COLORS[diffIdx];
     hdLabel.textContent = DIFFS[diffIdx];
+    hdLabel.style.color = c;
+    hdLabel.style.borderColor = c + '88';
+    hdLabel.style.background  = c + '22';
     hdMul.textContent   = `SCORE ×${SCORE_MUL[diffIdx].toFixed(1)}`;
+    hdMul.style.color   = c + 'aa';
   }
   sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
   musSl.value  = localStorage.getItem('arc_mus')  || 50;
@@ -978,6 +1136,7 @@ const ARC_DB = (() => {
     radius: 120, cx: 0, cy: 0, ang: 0
   };
   const trail = [], obstacles = [], bonuses = [], ripples = [];
+  const goldBalls = [], purpleBalls = [];
   let nextSpawnY, lastBonusY;
 
   // ── BG Arc animation ─────────────────────────────────────
@@ -1114,6 +1273,57 @@ const ARC_DB = (() => {
     }
   }
 
+  // ── Gold Balls ───────────────────────────────────────────
+  function drawGoldBalls() {
+    for (const b of goldBalls) {
+      const sy = W2S(b.y);
+      if (sy < -80 || sy > H + 80) continue;
+      ctx.save();
+      // Altın glow
+      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 2.5);
+      g.addColorStop(0, 'rgba(255,215,0,.9)'); g.addColorStop(1, 'rgba(255,165,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, b.r * 2.5, 0, Math.PI*2); ctx.fill();
+      // Core
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+      // Inner highlight
+      ctx.fillStyle = 'rgba(255,255,200,.6)';
+      ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, sy - b.r * 0.3, b.r * 0.45, 0, Math.PI*2); ctx.fill();
+      // Puan etiketi
+      ctx.fillStyle = '#000';
+      ctx.font = `${Math.max(5, Math.round(b.r * 0.65))}px 'Press Start 2P', monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('+' + b.pts, b.x, sy);
+      ctx.restore();
+    }
+  }
+
+  // ── Purple Boosters ──────────────────────────────────────
+  const PURPLE_ICONS = { wide:'↔', narrow:'↕', magnet:'🎯', x2:'×2', x3:'×3', x4:'×4',
+                         ghost:'👻', shield:'🛡', speed:'⚡' };
+  function drawPurpleBalls() {
+    const now = performance.now() / 1000;
+    for (const b of purpleBalls) {
+      const sy = W2S(b.y);
+      if (sy < -80 || sy > H + 80) continue;
+      const pulse = 0.85 + 0.15 * Math.sin(now * 4);
+      ctx.save();
+      // Mor glow
+      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 3);
+      g.addColorStop(0, `rgba(180,80,255,${.85 * pulse})`);
+      g.addColorStop(1, 'rgba(100,0,200,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, b.r * 3, 0, Math.PI*2); ctx.fill();
+      // Core
+      ctx.fillStyle = '#b450ff';
+      ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+      // Icon
+      ctx.font = `${b.r * 0.9}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(PURPLE_ICONS[b.type] ?? '?', b.x, sy);
+      ctx.restore();
+    }
+  }
+
   // ── Ghost Trail (önceki oyun, %20 opaklık) ───────────────
   function drawGhostTrail() {
     if (ghostTrail.length < 2) return;
@@ -1159,26 +1369,43 @@ const ARC_DB = (() => {
     ctx.save();
     const px = player.x, py = W2S(player.y), r = player.r;
 
-    // Dar glow — 1/3 yarıçap (r*1.85)
-    let g = ctx.createRadialGradient(px, py, 0, px, py, r * 1.85);
-    g.addColorStop(0,   `rgba(124,255,122,${.75 * energy})`);
-    g.addColorStop(0.45,`rgba(124,255,122,${.35 * energy})`);
-    g.addColorStop(1,   'rgba(124,255,122,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 1.85, 0, Math.PI*2); ctx.fill();
+    // Renk: geri sayım değerine göre (9→green, 4→yellow, 1→red)
+    const countdown = Math.ceil(energy * 9);
+    let glowR, glowG, glowB;
+    if (countdown > 5)      { glowR = 124; glowG = 255; glowB = 122; }       // yeşil
+    else if (countdown > 3) { glowR = 255; glowG = 220; glowB = 60; }         // sarı
+    else if (countdown > 1) { glowR = 255; glowG = 140; glowB = 60; }         // turuncu
+    else                    { glowR = 255; glowG = 60;  glowB = 60; }          // kırmızı
+
+    // Ghost efekti — mor renk, yarı saydam
+    if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
+
+    const glowCol = `rgb(${glowR},${glowG},${glowB})`;
+    const glowA   = isGhost ? 0.5 : 1;
+
+    // Büyük glow (r*4.5)
+    let g = ctx.createRadialGradient(px, py, 0, px, py, r * 4.5);
+    g.addColorStop(0,   `rgba(${glowR},${glowG},${glowB},${.65 * energy * glowA})`);
+    g.addColorStop(0.4, `rgba(${glowR},${glowG},${glowB},${.30 * energy * glowA})`);
+    g.addColorStop(0.75,`rgba(${glowR},${glowG},${glowB},${.10 * energy * glowA})`);
+    g.addColorStop(1,   `rgba(${glowR},${glowG},${glowB},0)`);
+    ctx.globalAlpha = isGhost ? 0.65 : 1;
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 4.5, 0, Math.PI*2); ctx.fill();
 
     // Siyah gövde
-    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = isGhost ? 'rgba(40,0,80,0.7)' : '#000';
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
 
-    // Ring — neon near-white green stroke
-    ctx.strokeStyle = `rgba(220,255,220,${.95 * energy})`;
+    // Ring stroke — glow rengiyle aynı renk
+    ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${.95 * energy})`;
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
-    // Geri sayım: 9'dan 1'e (0 = oyun bitti)
-    const countdown = Math.ceil(energy * 9);
-    const countCol = countdown <= 3 ? `rgba(255,${Math.floor(80 + countdown*40)},80,0.95)` : '#fff';
+    // Geri sayım — %50 daha büyük font
+    const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
-    ctx.font = `${r < 20 ? 7 : 9}px 'Press Start 2P', monospace`;
+    ctx.globalAlpha = isGhost ? 0.65 : 1;
+    ctx.font = `${r < 20 ? 11 : 14}px 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(countdown), px, py);
     ctx.restore();
@@ -1245,12 +1472,6 @@ const ARC_DB = (() => {
   const W2S = y => y - camY;
   const S2W = y => y + camY;
 
-  // Yatay: sol → küçük radius, sağ → büyük radius
-  function mapRadius(sx) {
-    const minR = H * 0.022; // ~23px
-    const maxR = H * 0.115; // ~122px
-    return minR + (maxR - minR) * (sx / W);
-  }
   function beginArc(sign, radius) {
     player.dir = sign; player.radius = radius;
     const nx = -Math.sin(player.heading) * sign;
@@ -1413,9 +1634,11 @@ const ARC_DB = (() => {
     player.speed = SPEEDS[diffIdx];
     camY = 0; trail.length = 0; obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     nextSpawnY = player.y - 500; lastBonusY = player.y;
-    score = 0; maxAscend = 0; energy = 1;
+    score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
+    goldBalls.length = 0; purpleBalls.length = 0;
+    clearBooster();
     // Firestore'dan gerçek skorları arka planda çek
     fetchLiveScores();
     initBgArcs();
@@ -1436,9 +1659,27 @@ const ARC_DB = (() => {
       const gap = gMin + Math.random() * (gMax - gMin);
 
       const needBonus = (lastBonusY - nextSpawnY) > 540;
+      // Altın top: %12 şans (sc >= 20'den sonra)
+      const spawnGold   = sc >= 20  && Math.random() < 0.12;
+      // Mor booster: %8 şans (sc >= 50'den sonra)
+      const spawnPurple = sc >= 50  && Math.random() < 0.08;
+
       if (needBonus || Math.random() < (sc < 80 ? .36 : .52)) {
         bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
         lastBonusY = nextSpawnY;
+        // Altın veya mor topu yeşilin yakınına ekle (farklı x)
+        if (spawnGold) {
+          const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+          const gr = 8 + Math.random() * 10; // r=8..18
+          goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
+            pts: Math.round(400 / gr) });
+        }
+        if (spawnPurple && !spawnGold) {
+          const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+          const PURPLE_TYPES = ['wide','narrow','magnet','x2','x3','x4','ghost','shield','speed'];
+          const ptype = PURPLE_TYPES[Math.floor(Math.random() * PURPLE_TYPES.length)];
+          purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
+        }
       } else {
         // Engel boyutu (x4 orijinal değerler)
         let rMin, rMax;
@@ -1502,7 +1743,18 @@ const ARC_DB = (() => {
     if (pyS < H * .5) camY -= (H * .5 - pyS);
 
     maxAscend = Math.max(maxAscend, -player.y);
-    score     = Math.floor(maxAscend / 200 * SCORE_MUL[diffIdx]);
+    // Booster puanı çarpanı + scoreBonus
+    const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
+    score = Math.floor(maxAscend / 200 * SCORE_MUL[diffIdx] * scoreMulBoost) + scoreBonus;
+
+    // Booster sayacı
+    if (boosterType && boosterDur > 0) {
+      boosterTime -= dt;
+      if (boosterTime <= 0) { clearBooster(); }
+      else {
+        BOOSTER_BAR.style.width = Math.round(boosterTime / boosterDur * 100) + '%';
+      }
+    }
 
     spawnAhead();
 
@@ -1521,17 +1773,38 @@ const ARC_DB = (() => {
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
-    if (player.x - player.r < walls.left || player.x + player.r > walls.right) { endGame(); return; }
-    for (const ob of obstacles) {
-      const dx = player.x - ob._ox, dy = player.y - ob._oy;
-      if (dx*dx + dy*dy < (player.r + ob.r)**2) { endGame(); return; }
+    if (!isGhost) {
+      if (player.x - player.r < walls.left || player.x + player.r > walls.right) {
+        if (hasShield) { clearBooster(); } else { endGame(); return; }
+      }
+      for (const ob of obstacles) {
+        const dx = player.x - ob._ox, dy = player.y - ob._oy;
+        if (dx*dx + dy*dy < (player.r + ob.r)**2) {
+          if (hasShield) { clearBooster(); break; } else { endGame(); return; }
+        }
+      }
     }
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         bonuses.splice(i,1); energy = 1;
-        // Adım 1 aktifken bonus toplandığında ilerle
         if (tutStep === 1) advanceTut(2);
+      }
+    }
+    // Altın top toplama
+    for (let i = goldBalls.length - 1; i >= 0; i--) {
+      const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
+      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        goldBalls.splice(i, 1);
+        scoreBonus += b.pts;
+      }
+    }
+    // Mor booster toplama
+    for (let i = purpleBalls.length - 1; i >= 0; i--) {
+      const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
+      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        purpleBalls.splice(i, 1);
+        activateBooster(b.type);
       }
     }
 
@@ -1659,7 +1932,7 @@ const ARC_DB = (() => {
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
-      drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses();
+      drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawPlayer(); drawRipples();
       // Tutorial katmanı — her zaman oyun üzerine çiz
       if (scene === 'play') drawTutorial(time);
@@ -1683,7 +1956,7 @@ const ARC_DB = (() => {
     settingsEl.classList.toggle('active',     s === 'settings');
     gameoverEl.classList.toggle('active',     s === 'over');
     hudEl.classList.toggle('active',          s === 'play');
-    if (s === 'home') { homeBestV.textContent = pad(best); updateHomeDiff(); endTutorial(); }
+    if (s === 'home') { applyProfile(); updateHomeDiff(); endTutorial(); }
     if (s !== 'play') tutHudEl.classList.remove('active');
   }
 
@@ -1705,7 +1978,7 @@ const ARC_DB = (() => {
     best = 0; diffIdx = 1; firstPlay = true;
     playerName = ''; avatarIdx = 0;
     updateHomeDiff();
-    homeBestV.textContent = pad(0);
+    if (homeBestV) homeBestV.textContent = pad(0);
     sfxSl.value = 80; musSl.value = 50;
     syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
     renderAvPicker(); applyProfile();
@@ -1726,11 +1999,12 @@ const ARC_DB = (() => {
     const rect = gc.getBoundingClientRect();
     const sx = (e.clientX - rect.left) * (W / rect.width);
     const sy = (e.clientY - rect.top)  * (H / rect.height);
-    const radius = mapRadius(sx); // yatay: sol=küçük, sağ=büyük
     ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
 
     if (running) {
-      beginArc(-player.dir, radius);
+      // Magnet booster: player.x'i parmak x'ine ışınla
+      if (boosterType === 'magnet') player.x = sx;
+      beginArc(-player.dir, getRadius());
       // Adım 3: sol %35'e dokunulursa ilerle
       if (tutStep === 3 && sx < W * 0.35) advanceTut(4);
       // Adım 4: sağ %35'e dokunulursa ilerle
@@ -1773,7 +2047,7 @@ const ARC_DB = (() => {
     resetGame();
     showScene('play');
     // Oyun hemen başlasın — ilk dokunuş bekleme
-    beginArc(Math.random() < .5 ? -1 : 1, W / 2);
+    beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
     if (withTutorial || firstPlay) {
       if (firstPlay) {
