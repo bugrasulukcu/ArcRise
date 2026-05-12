@@ -811,14 +811,12 @@ const ARC_DB = (() => {
     for (const ob of obstacles) {
       const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
       if (sy < -100 || sy > H + 100) continue;
-      // soft glow
-      let g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r * 2.4);
-      g.addColorStop(0, 'rgba(255,80,110,.5)'); g.addColorStop(1, 'rgba(255,40,70,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, ob.r * 2.4, 0, Math.PI*2); ctx.fill();
-      // core
-      g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r);
+      // core only — no glow
+      ctx.save();
+      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, ob.r);
       g.addColorStop(0, 'rgba(255,140,160,.92)'); g.addColorStop(1, 'rgba(200,55,80,.78)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -886,17 +884,11 @@ const ARC_DB = (() => {
     g.addColorStop(1,   'rgba(124,255,122,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 5.5, 0, Math.PI*2); ctx.fill();
 
-    // İç yoğun glow katmanı
-    g = ctx.createRadialGradient(px, py, 0, px, py, r * 2.2);
-    g.addColorStop(0, `rgba(180,255,180,${.6 * energy})`);
-    g.addColorStop(1, 'rgba(124,255,122,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 2.2, 0, Math.PI*2); ctx.fill();
-
     // Siyah gövde
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
 
-    // Ring — trail son noktasıyla aynı kalınlık (trail w = 1 + 1*3.8 = 4.8px)
-    ctx.strokeStyle = `rgba(124,255,122,${.92 * energy})`;
+    // Ring — neon near-white green stroke
+    ctx.strokeStyle = `rgba(220,255,220,${.95 * energy})`;
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
@@ -926,6 +918,27 @@ const ARC_DB = (() => {
   // ── Leaderboard ──────────────────────────────────────────
   const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
   let lbFrame = 0;
+
+  // Firestore'dan canlı skorları çek, lbNPCScores'u doldur
+  async function fetchLiveScores() {
+    try {
+      const rows = await ARC_DB.getTopScores(20);
+      if (rows && rows.length > 0) {
+        // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
+        lbNPCScores = rows
+          .filter(r => r.name !== playerName)
+          .map(r => ({ n: r.name, s: r.score }));
+      } else {
+        // Firebase boş / ulaşılamadı → sahte NPC'ler
+        lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
+        lbNPCScores.sort((a, b) => b.s - a.s);
+      }
+    } catch (e) {
+      lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
+      lbNPCScores.sort((a, b) => b.s - a.s);
+    }
+  }
+
   function refreshLB() {
     lbFrame++;
     if (lbFrame % 30 !== 0) return; // update every 30 frames
@@ -1121,9 +1134,8 @@ const ARC_DB = (() => {
     score = 0; maxAscend = 0; energy = 1;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
-    // NPC sabit skorlarını her oyun başında rastgele üret
-    lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
-    lbNPCScores.sort((a, b) => b.s - a.s);
+    // Firestore'dan gerçek skorları arka planda çek
+    fetchLiveScores();
     initBgArcs();
   }
 
@@ -1251,20 +1263,43 @@ const ARC_DB = (() => {
       );
     }
 
-    // Kendi satırını işaretle (aynı skor + aynı isimden ilkini bul)
+    // Oyuncunun sırasını bul (aynı isim + aynı skor → ilk eşleşme)
     let markedYou = false;
-    rankRows.innerHTML = topRows.map((r, i) => {
+    const annotated = topRows.map((r, i) => {
       const isYou = !markedYou && r.name === playerName && r.score === sc;
       if (isYou) markedYou = true;
+      return { ...r, rank: i, isYou };
+    });
+    const youIdx = annotated.findIndex(r => r.isYou);
+
+    // Gösterilecek sıra indeksleri: #1 (0) + oyuncu±1
+    const showSet = new Set([0]);
+    if (youIdx >= 0) {
+      if (youIdx - 1 >= 0) showSet.add(youIdx - 1);
+      showSet.add(youIdx);
+      if (youIdx + 1 < annotated.length) showSet.add(youIdx + 1);
+    }
+    const showArr = [...showSet].sort((a, b) => a - b);
+
+    // Satırları oluştur; boşluk varsa ··· ayırıcı ekle
+    let html = '';
+    let prevIdx = -1;
+    for (const idx of showArr) {
+      if (prevIdx >= 0 && idx > prevIdx + 1) {
+        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.25);font-size:7px;padding:2px 0">···</td></tr>`;
+      }
+      const r = annotated[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
-      return `<tr class="${isYou?'you':''}" ${isYou ? `style="color:${avc}"` : ''}>
-        <td>${String(i+1).padStart(7,'0')}.</td>
+      html += `<tr class="${r.isYou?'you':''}" ${r.isYou ? `style="color:${avc}"` : ''}>
+        <td>${String(r.rank + 1).padStart(7,'0')}.</td>
         <td style="padding:0 10px">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:5px"></span>${r.name}
         </td>
         <td>${pad(r.score)}</td>
       </tr>`;
-    }).join('');
+      prevIdx = idx;
+    }
+    rankRows.innerHTML = html;
   }
 
   // Dinamik hane: 0-999 → 3 hane | 1000-999999 → 6 | 1000000+ → 9
