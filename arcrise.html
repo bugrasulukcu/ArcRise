@@ -309,6 +309,86 @@
     }
     .home-link:hover { color: rgba(255,255,255,.6); }
 
+    /* ══════════ PROFILE SETUP (ilk açılış) ══════════ */
+    #profile-setup .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 22px;
+      padding: 28px 22px 24px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 20px; align-items: center;
+    }
+    #profile-setup h2 { font-size: 14px; letter-spacing: 2px; text-align: center; }
+    #profile-setup .ps-sub { font-size: 6px; color: rgba(255,255,255,.35); letter-spacing: 1px; text-align: center; }
+    #av-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 8px; width: 100%;
+    }
+    .av-img-opt {
+      width: 100%; aspect-ratio: 1; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: border-color .18s, transform .15s;
+      background-size: cover; background-position: center;
+      overflow: hidden;
+    }
+    .av-img-opt img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+    .av-img-opt.sel { border-color: #fff; transform: scale(1.12); }
+    #ps-name-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+    #ps-name-input {
+      flex: 1; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
+      color: #fff; font-family: var(--font); font-size: 9px;
+      letter-spacing: 2px; padding: 12px 14px;
+      text-transform: uppercase; min-width: 0; text-align: center;
+    }
+    #ps-name-input:focus { outline: none; border-color: var(--green); }
+    #ps-confirm {
+      width: 100%; padding: 15px; border-radius: 13px;
+      border: 1.5px solid var(--green); background: rgba(124,255,122,.12);
+      color: var(--green); font-family: var(--font);
+      font-size: 12px; letter-spacing: 3px; cursor: pointer;
+    }
+    #ps-confirm:active { transform: scale(0.97); }
+
+    /* ══════════ HOME DIFFICULTY SELECTOR ══════════ */
+    #home-diff {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 18px;
+    }
+    #home-diff .darr { font-size: 14px; }
+    #hd-label {
+      font-size: 8px; letter-spacing: 1px; color: #fff; min-width: 76px; text-align: center;
+      background: rgba(0,180,160,.18); border: 1px solid rgba(0,210,180,.35);
+      border-radius: 8px; padding: 7px 10px;
+    }
+    #hd-mul {
+      font-size: 6px; color: rgba(255,255,255,.4);
+      letter-spacing: 1px; text-align: center; margin-top: 4px;
+    }
+
+    /* ══════════ SETTINGS profile (read-only) ══════════ */
+    #settings-profile-ro {
+      display: flex; align-items: center; gap: 12px;
+      padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    #settings-av-img {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      overflow: hidden; border: 2px solid rgba(255,255,255,.2);
+    }
+    #settings-av-img img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+    #settings-name-lbl { font-size: 9px; letter-spacing: 2px; }
+    #settings-name-sub { font-size: 5.5px; color: rgba(255,255,255,.3); letter-spacing: 1px; margin-top: 5px; }
+
+    /* av-picker in settings — image thumbnails */
+    .av-opt {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: border-color .18s, transform .15s;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .av-opt img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+    .av-opt.sel { border-color: #fff; transform: scale(1.18); }
+
     /* ── RESET butonu (Settings'te) ── */
     .btn-danger {
       padding: 12px 24px; border-radius: 13px;
@@ -348,8 +428,22 @@
   </div>
 </div>
 
+<!-- ══ PROFILE SETUP ══ -->
+<div class="screen" id="profile-setup">
+  <div class="panel">
+    <h2>CREATE PROFILE</h2>
+    <div class="ps-sub">Your name cannot be changed later.</div>
+    <div id="av-grid"></div>
+    <div id="ps-name-row">
+      <input type="text" id="ps-name-input" maxlength="8" placeholder="YOUR NAME"
+             spellcheck="false" autocomplete="off">
+    </div>
+    <button id="ps-confirm">CONFIRM</button>
+  </div>
+</div>
+
 <!-- ══ HOME ══ -->
-<div class="screen active" id="home">
+<div class="screen" id="home">
   <canvas id="logo-canvas"></canvas>
   <h1 id="title">ArcRise</h1>
   <div class="menu">
@@ -357,6 +451,14 @@
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
+  </div>
+  <div id="home-diff">
+    <button class="darr" id="hd-prev">&#60;</button>
+    <div>
+      <div id="hd-label">NORMAL</div>
+      <div id="hd-mul">SCORE ×1.0</div>
+    </div>
+    <button class="darr" id="hd-next">&#62;</button>
   </div>
   <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">000</span></div>
   <div id="home-links">
@@ -371,24 +473,19 @@
   <div class="panel">
     <h2>Settings</h2>
 
-    <!-- ── Profil ── -->
-    <div class="profile-sect">
-      <div class="profile-lbl">PROFILE</div>
-      <div class="av-picker" id="av-picker"></div>
-      <div class="name-row">
-        <input type="text" id="name-input" maxlength="8" placeholder="PLAYER" spellcheck="false" autocomplete="off">
-        <button id="name-save">SAVE</button>
+    <!-- ── Profile (read-only) ── -->
+    <div id="settings-profile-ro">
+      <div id="settings-av-img"><img id="settings-av-src" src="" alt=""></div>
+      <div>
+        <div id="settings-name-lbl">PLAYER</div>
+        <div id="settings-name-sub">NAME LOCKED</div>
       </div>
     </div>
 
-    <div class="srow">
-      <span class="sicon">🔥</span>
-      <span class="slbl">Difficulty</span>
-      <div class="sctl" style="gap:6px">
-        <button class="darr" id="d-prev">&#60;</button>
-        <div class="dval" id="d-val">Normal</div>
-        <button class="darr" id="d-next">&#62;</button>
-      </div>
+    <!-- ── Avatar picker (still changeable) ── -->
+    <div class="profile-sect">
+      <div class="profile-lbl">AVATAR</div>
+      <div class="av-picker" id="av-picker"></div>
     </div>
 
     <div class="srow">
@@ -590,39 +687,123 @@ const ARC_DB = (() => {
   const homeBestV  = document.getElementById('home-best-val');
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
-  const dValEl     = document.getElementById('d-val');
+  const hdLabel    = document.getElementById('hd-label');
+  const hdMul      = document.getElementById('hd-mul');
+  const profileSetupEl = document.getElementById('profile-setup');
   const sfxSl      = document.getElementById('sfx-sl');
   const sfxTh      = document.getElementById('sfx-th');
   const musSl      = document.getElementById('mus-sl');
   const musTh      = document.getElementById('mus-th');
 
+  // ── 20 Avatar ────────────────────────────────────────────
+  const AVATAR_COLORS = [
+    '#7CFF7A','#ff2255','#00ccff','#ff7700','#4488ff',
+    '#ffdd00','#9944ff','#ff3355','#44ff88','#ffffff',
+    '#00ccaa','#ff44cc','#ffcc00','#ff5500','#6644ff',
+    '#00eeff','#ff8800','#ff66aa','#bbbbee','#99aabb'
+  ];
+  const AVATAR_NAMES = [
+    'ARC','VOID','STORM','NOVA','ORBIT',
+    'FLUX','ECHO','NEXUS','BYTE','ZERO',
+    'SIGMA','PRISM','APEX','DELTA','OMEGA',
+    'ZENITH','SPARK','CORE','GHOST','TITAN'
+  ];
+  const _avSVGs = [
+    // 0 ARC
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="19" fill="none" stroke="#7CFF7A" stroke-width="4" stroke-dasharray="90 30" stroke-linecap="round"/><circle cx="32" cy="13" r="6" fill="#7CFF7A"/></svg>`,
+    // 1 VOID
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="22" fill="#160008"/><circle cx="32" cy="32" r="11" fill="#ff2255"/><circle cx="27" cy="28" r="3.5" fill="#fff" opacity=".75"/></svg>`,
+    // 2 STORM
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="37,8 24,36 35,36 27,56 46,28 34,28" fill="#00ccff"/></svg>`,
+    // 3 NOVA
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,8 35,25 51,22 40,34 47,49 32,40 17,49 24,34 13,22 29,25" fill="#ff7700"/></svg>`,
+    // 4 ORBIT
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="11" fill="#4488ff"/><ellipse cx="32" cy="32" rx="24" ry="9" fill="none" stroke="#4488ff" stroke-width="3" opacity=".65" transform="rotate(-30 32 32)"/></svg>`,
+    // 5 FLUX
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M32 9 L43 27 H37 V37 H43 L32 55 L21 37 H27 V27 H21 Z" fill="#ffdd00"/></svg>`,
+    // 6 ECHO
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="6" fill="#9944ff"/><circle cx="32" cy="32" r="13" fill="none" stroke="#9944ff" stroke-width="3" opacity=".65"/><circle cx="32" cy="32" r="21" fill="none" stroke="#9944ff" stroke-width="2" opacity=".3"/></svg>`,
+    // 7 NEXUS
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,8 56,32 32,56 8,32" fill="none" stroke="#ff3355" stroke-width="3"/><line x1="19" y1="19" x2="45" y2="45" stroke="#ff3355" stroke-width="3"/><line x1="45" y1="19" x2="19" y2="45" stroke="#ff3355" stroke-width="3"/></svg>`,
+    // 8 BYTE
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><g fill="#44ff88"><rect x="15" y="15" width="9" height="9" rx="2"/><rect x="27" y="15" width="9" height="9" rx="2" opacity=".45"/><rect x="39" y="15" width="9" height="9" rx="2"/><rect x="15" y="27" width="9" height="9" rx="2" opacity=".45"/><rect x="27" y="27" width="9" height="9" rx="2"/><rect x="39" y="27" width="9" height="9" rx="2" opacity=".45"/><rect x="15" y="39" width="9" height="9" rx="2"/><rect x="27" y="39" width="9" height="9" rx="2" opacity=".45"/><rect x="39" y="39" width="9" height="9" rx="2"/></g></svg>`,
+    // 9 ZERO
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><ellipse cx="32" cy="32" rx="15" ry="21" fill="none" stroke="#fff" stroke-width="4"/><line x1="15" y1="32" x2="49" y2="32" stroke="#080a0e" stroke-width="6"/><line x1="20" y1="32" x2="44" y2="32" stroke="#fff" stroke-width="2.5"/></svg>`,
+    // 10 SIGMA
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="20" fill="none" stroke="#00ccaa" stroke-width="3" stroke-dasharray="9 5.5" stroke-linecap="round"/><circle cx="32" cy="32" r="5" fill="#00ccaa"/></svg>`,
+    // 11 PRISM
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 54,49 10,49" fill="none" stroke="#ff44cc" stroke-width="3"/><line x1="32" y1="10" x2="32" y2="49" stroke="#ff44cc" stroke-width="1.5" opacity=".5"/><line x1="21" y1="30" x2="43" y2="30" stroke="#ff44cc" stroke-width="1.5" opacity=".5"/></svg>`,
+    // 12 APEX
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 51,51 13,51" fill="#ffcc00" opacity=".85"/><polygon points="32,23 45,51 19,51" fill="#080a0e"/></svg>`,
+    // 13 DELTA
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 54,51 10,51" fill="none" stroke="#ff5500" stroke-width="4"/><polygon points="32,25 47,51 17,51" fill="#ff5500" opacity=".28"/></svg>`,
+    // 14 OMEGA
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M13 45 Q13 13 32 13 Q51 13 51 45" fill="none" stroke="#6644ff" stroke-width="4"/><rect x="11" y="45" width="15" height="6" rx="2" fill="#6644ff"/><rect x="38" y="45" width="15" height="6" rx="2" fill="#6644ff"/></svg>`,
+    // 15 ZENITH
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><line x1="32" y1="8" x2="32" y2="56" stroke="#00eeff" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#00eeff" stroke-width="4" stroke-linecap="round"/><line x1="17" y1="17" x2="47" y2="47" stroke="#00eeff" stroke-width="2" stroke-linecap="round" opacity=".45"/><line x1="47" y1="17" x2="17" y2="47" stroke="#00eeff" stroke-width="2" stroke-linecap="round" opacity=".45"/></svg>`,
+    // 16 SPARK
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M32 8 C41 18 45 28 37 34 C46 27 48 41 32 56 C16 41 18 27 27 34 C19 28 23 18 32 8Z" fill="#ff8800"/></svg>`,
+    // 17 CORE
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="21" fill="none" stroke="#ff66aa" stroke-width="1.5" opacity=".3"/><circle cx="32" cy="32" r="14" fill="none" stroke="#ff66aa" stroke-width="2.5" opacity=".6"/><circle cx="32" cy="32" r="7" fill="#ff66aa"/></svg>`,
+    // 18 GHOST
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M20 51 L20 30 Q20 13 32 13 Q44 13 44 30 L44 51 L39 44 L34 51 L29 44 L24 51 Z" fill="#bbbbee"/><circle cx="26" cy="29" r="3" fill="#080a0e"/><circle cx="38" cy="29" r="3" fill="#080a0e"/></svg>`,
+    // 19 TITAN
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="#99aabb" stroke-width="3"/><polygon points="32,20 44,27 44,37 32,44 20,37 20,27" fill="#99aabb" opacity=".28"/></svg>`,
+  ];
+  const AVATARS = _avSVGs.map(s => 'data:image/svg+xml,' + encodeURIComponent(s));
+
   // ── Profil ───────────────────────────────────────────────
-  const AVATAR_COLORS = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa','#ffffff'];
-  let playerName = (localStorage.getItem('arc_name') || 'PLAYER').toUpperCase().slice(0, 8);
-  let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 3); // varsayılan yeşil
+  let playerName = (localStorage.getItem('arc_name') || '').toUpperCase().slice(0, 8);
+  let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 0);
+  const nameIsLocked = !!localStorage.getItem('arc_name');
 
   function applyProfile() {
-    // HUD avatar dot rengi
     hudAvDot.style.background = AVATAR_COLORS[avatarIdx];
+    const src = AVATARS[avatarIdx] ?? '';
+    const sImg = document.getElementById('settings-av-src');
+    if (sImg) sImg.src = src;
+    const sLbl = document.getElementById('settings-name-lbl');
+    if (sLbl) sLbl.textContent = playerName || 'PLAYER';
   }
 
   function renderAvPicker() {
-    const p = document.getElementById('av-picker');
-    p.innerHTML = '';
-    AVATAR_COLORS.forEach((c, i) => {
-      const d = document.createElement('div');
-      d.className = 'av-opt' + (i === avatarIdx ? ' sel' : '');
-      d.style.background = c;
-      d.title = c;
-      d.addEventListener('click', () => {
-        avatarIdx = i;
-        localStorage.setItem('arc_avatar', i);
-        renderAvPicker();
-        applyProfile();
+    ['av-picker', 'av-grid'].forEach(id => {
+      const p = document.getElementById(id);
+      if (!p) return;
+      const isGrid = id === 'av-grid';
+      p.innerHTML = '';
+      AVATARS.forEach((src, i) => {
+        const d = document.createElement('div');
+        d.className = (isGrid ? 'av-img-opt' : 'av-opt') + (i === avatarIdx ? ' sel' : '');
+        d.title = AVATAR_NAMES[i];
+        const img = document.createElement('img');
+        img.src = src; img.alt = AVATAR_NAMES[i];
+        d.appendChild(img);
+        d.addEventListener('click', () => {
+          avatarIdx = i;
+          localStorage.setItem('arc_avatar', i);
+          renderAvPicker();
+          applyProfile();
+        });
+        p.appendChild(d);
       });
-      p.appendChild(d);
     });
   }
+
+  // ── Profile setup ─────────────────────────────────────────
+  document.getElementById('ps-confirm').addEventListener('click', () => {
+    const raw = document.getElementById('ps-name-input').value
+      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
+    if (!raw) { document.getElementById('ps-name-input').style.borderColor = '#ff3355'; return; }
+    playerName = raw;
+    localStorage.setItem('arc_name', playerName);
+    localStorage.setItem('arc_avatar', avatarIdx);
+    applyProfile();
+    showScene('home');
+  });
+  document.getElementById('ps-name-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('ps-confirm').click();
+  });
 
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
@@ -674,10 +855,16 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  const DIFFS  = ['Easy', 'Normal', 'Hard', 'Extreme'];
-  const SPEEDS = [180, 220, 280, 350];
+  const DIFFS     = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
+  const SPEEDS    = [180, 220, 280, 350];
+  const SCORE_MUL = [0.7, 1.0, 1.5, 2.5];
   let diffIdx  = Number(localStorage.getItem('arc_diff_idx') || 1);
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
+
+  function updateHomeDiff() {
+    hdLabel.textContent = DIFFS[diffIdx];
+    hdMul.textContent   = `SCORE ×${SCORE_MUL[diffIdx].toFixed(1)}`;
+  }
   sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
   musSl.value  = localStorage.getItem('arc_mus')  || 50;
 
@@ -1141,21 +1328,55 @@ const ARC_DB = (() => {
 
   function spawnAhead() {
     while (nextSpawnY > player.y - 2200) {
-      const x   = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-      const gap = 250 + Math.random() * 250;
+      const sc = score;
+      const x  = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+
+      // Gap azalıyor
+      let gMin, gMax;
+      if      (sc < 50)  { gMin = 280; gMax = 430; }
+      else if (sc < 120) { gMin = 240; gMax = 370; }
+      else if (sc < 250) { gMin = 200; gMax = 320; }
+      else if (sc < 450) { gMin = 170; gMax = 280; }
+      else               { gMin = 150; gMax = 250; }
+      const gap = gMin + Math.random() * (gMax - gMin);
+
       const needBonus = (lastBonusY - nextSpawnY) > 540;
-      if (needBonus || Math.random() < (score < 80 ? .36 : .52)) {
+      if (needBonus || Math.random() < (sc < 80 ? .36 : .52)) {
         bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
         lastBonusY = nextSpawnY;
       } else {
-        const r = 15 + Math.random() * 22;
-        if (score >= 120 && Math.random() < .45) {
-          const orbitR = 16 + Math.random() * 28;
-          const omega  = (Math.random() < .5 ? -1 : 1) * (.5 + Math.random() * 1.2);
-          obstacles.push({ x, y: nextSpawnY, r, orbitR, omega, t: Math.random() * Math.PI * 2 });
-        } else {
-          obstacles.push({ x, y: nextSpawnY, r });
+        // Engel boyutu büyüyor
+        let rMin, rMax;
+        if      (sc < 50)  { rMin = 18; rMax = 30; }
+        else if (sc < 120) { rMin = 26; rMax = 42; }
+        else if (sc < 250) { rMin = 34; rMax = 54; }
+        else if (sc < 450) { rMin = 42; rMax = 65; }
+        else               { rMin = 50; rMax = 78; }
+        const r = rMin + Math.random() * (rMax - rMin);
+
+        const ob = { x, y: nextSpawnY, r };
+
+        // Hareket sistemi (250 puan üstü)
+        if (sc >= 250) {
+          const tier = Math.floor((sc - 250) / 250) + 1; // her 250 puan +1
+          ob.ma  = tier * 0.1 * 2 * r;           // genlik: çapın %10'u × tier
+          ob.mf  = 0.6 + Math.random() * 0.8;    // frekans (rad/s)
+          ob.mt  = Math.random() * Math.PI * 2;   // faz ofseti
+
+          if (sc >= 1000) {
+            ob.mk    = 'rand';
+            ob.mang  = Math.random() * Math.PI * 2;
+            ob.mnext = 1.5 + Math.random() * 2;
+            ob.mct   = 0;
+          } else if (sc >= 500) {
+            ob.mk   = 'diag';
+            ob.mang = Math.random() * Math.PI * 2;
+          } else {
+            ob.mk = Math.random() < 0.5 ? 'h' : 'v';
+          }
         }
+
+        obstacles.push(ob);
       }
       nextSpawnY -= gap;
     }
@@ -1186,13 +1407,23 @@ const ARC_DB = (() => {
     if (pyS < H * .5) camY -= (H * .5 - pyS);
 
     maxAscend = Math.max(maxAscend, -player.y);
-    score     = Math.floor(maxAscend / 200);
+    score     = Math.floor(maxAscend / 200 * SCORE_MUL[diffIdx]);
 
     spawnAhead();
 
     for (const ob of obstacles) {
-      if (ob.omega) { ob.t += ob.omega*dt; ob._ox = ob.x + Math.cos(ob.t)*ob.orbitR; ob._oy = ob.y + Math.sin(ob.t)*ob.orbitR; }
-      else           { ob._ox = ob.x; ob._oy = ob.y; }
+      if (ob.mk) {
+        ob.mt += dt;
+        const s = Math.sin(ob.mt * ob.mf) * ob.ma;
+        if      (ob.mk === 'h')    { ob._ox = ob.x + s;                            ob._oy = ob.y; }
+        else if (ob.mk === 'v')    { ob._ox = ob.x;                                ob._oy = ob.y + s; }
+        else if (ob.mk === 'diag') { ob._ox = ob.x + Math.cos(ob.mang) * s;        ob._oy = ob.y + Math.sin(ob.mang) * s; }
+        else { // rand
+          ob.mct += dt;
+          if (ob.mct >= ob.mnext) { ob.mang = Math.random() * Math.PI * 2; ob.mnext = 1.5 + Math.random() * 2; ob.mct = 0; }
+          ob._ox = ob.x + Math.cos(ob.mang) * s; ob._oy = ob.y + Math.sin(ob.mang) * s;
+        }
+      } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
     if (player.x - player.r < walls.left || player.x + player.r > walls.right) { endGame(); return; }
@@ -1357,12 +1588,20 @@ const ARC_DB = (() => {
   // ── Scene management ─────────────────────────────────────
   function showScene(s) {
     scene = s;
-    homeEl.classList.toggle('active',     s === 'home');
-    settingsEl.classList.toggle('active', s === 'settings');
-    gameoverEl.classList.toggle('active', s === 'over');
-    hudEl.classList.toggle('active',      s === 'play');
-    if (s === 'home') { homeBestV.textContent = pad(best); endTutorial(); }
+    profileSetupEl.classList.toggle('active', s === 'profile-setup');
+    homeEl.classList.toggle('active',         s === 'home');
+    settingsEl.classList.toggle('active',     s === 'settings');
+    gameoverEl.classList.toggle('active',     s === 'over');
+    hudEl.classList.toggle('active',          s === 'play');
+    if (s === 'home') { homeBestV.textContent = pad(best); updateHomeDiff(); endTutorial(); }
     if (s !== 'play') tutHudEl.classList.remove('active');
+  }
+
+  // İlk açılışta profil oluşturma ekranını göster
+  if (!localStorage.getItem('arc_name')) {
+    showScene('profile-setup');
+  } else {
+    showScene('home');
   }
 
   // ── Tutorial HUD: SKIP butonu ──────────────────────────────
@@ -1374,16 +1613,18 @@ const ARC_DB = (() => {
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_diff_idx','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar'].forEach(k => localStorage.removeItem(k));
     best = 0; diffIdx = 1; firstPlay = true;
-    playerName = 'PLAYER'; avatarIdx = 3;
-    dValEl.textContent = DIFFS[diffIdx];
+    playerName = ''; avatarIdx = 0;
+    updateHomeDiff();
     homeBestV.textContent = pad(0);
     sfxSl.value = 80; musSl.value = 50;
     syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
-    document.getElementById('name-input').value = playerName;
     renderAvPicker(); applyProfile();
     const confirm = document.getElementById('reset-confirm');
     confirm.style.display = 'block';
-    setTimeout(() => { confirm.style.display = 'none'; }, 2500);
+    setTimeout(() => {
+      confirm.style.display = 'none';
+      showScene('profile-setup'); // isim sıfırlandı → yeniden oluştur
+    }, 2000);
   });
 
   // ── Input ────────────────────────────────────────────────
@@ -1418,24 +1659,6 @@ const ARC_DB = (() => {
   // ── Profil UI ─────────────────────────────────────────────
   renderAvPicker();
   applyProfile();
-  document.getElementById('name-input').value = playerName;
-
-  document.getElementById('name-save').addEventListener('click', () => {
-    const raw = document.getElementById('name-input').value
-      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
-    playerName = raw || 'PLAYER';
-    localStorage.setItem('arc_name', playerName);
-    document.getElementById('name-input').value = playerName;
-    // Kısa flash: buton rengi yeşile döner
-    const btn = document.getElementById('name-save');
-    btn.textContent = '✓';
-    setTimeout(() => { btn.textContent = 'SAVE'; }, 1200);
-  });
-
-  // Enter tuşu kaydet
-  document.getElementById('name-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('name-save').click();
-  });
 
   // ── Settings UI ───────────────────────────────────────────
   function syncThumb(sl, th) {
@@ -1446,9 +1669,10 @@ const ARC_DB = (() => {
   sfxSl.addEventListener('input', () => syncThumb(sfxSl, sfxTh));
   musSl.addEventListener('input', () => syncThumb(musSl, musTh));
 
-  document.getElementById('d-prev').addEventListener('click', () => { diffIdx = (diffIdx - 1 + DIFFS.length) % DIFFS.length; dValEl.textContent = DIFFS[diffIdx]; });
-  document.getElementById('d-next').addEventListener('click', () => { diffIdx = (diffIdx + 1) % DIFFS.length; dValEl.textContent = DIFFS[diffIdx]; });
-  dValEl.textContent = DIFFS[diffIdx];
+  // Difficulty — home screen
+  document.getElementById('hd-prev').addEventListener('click', () => { diffIdx = (diffIdx - 1 + DIFFS.length) % DIFFS.length; updateHomeDiff(); localStorage.setItem('arc_diff_idx', diffIdx); });
+  document.getElementById('hd-next').addEventListener('click', () => { diffIdx = (diffIdx + 1) % DIFFS.length; updateHomeDiff(); localStorage.setItem('arc_diff_idx', diffIdx); });
+  updateHomeDiff();
 
   const fbOn  = document.getElementById('fb-on');
   const fbOff = document.getElementById('fb-off');
@@ -1503,7 +1727,7 @@ const ARC_DB = (() => {
   initBgArcs();
   resetGame();
   applyProfile();
-  showScene('home');
+  // showScene is called by the profile-setup check above (or after ps-confirm)
   requestAnimationFrame(loop);
 })();
 </script>
