@@ -337,11 +337,11 @@
     <div id="hud">
       <div class="hud-tl">
         <div class="hud-lbl">SCORE</div>
-        <div class="hud-num" id="h-score">00000000</div>
+        <div class="hud-num" id="h-score">000</div>
       </div>
       <div class="hud-tr">
         <div class="hud-lbl">YOUR BEST <span id="hud-av"></span></div>
-        <div class="hud-num" id="h-best">00000000</div>
+        <div class="hud-num" id="h-best">000</div>
       </div>
       <div id="lb"></div>
     </div>
@@ -358,7 +358,7 @@
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
   </div>
-  <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">00000000</span></div>
+  <div id="home-best">YOUR BEST&nbsp;&nbsp;<span id="home-best-val">000</span></div>
   <div id="home-links">
     <button class="home-link" id="btn-tutorial-link">TUTORIAL</button>
     <span style="color:rgba(255,255,255,.12);font-size:10px">·</span>
@@ -445,7 +445,7 @@
       </div>
       <button class="btn-gray" id="btn-menu" style="font-size:11px">Back to Menu</button>
     </div>
-    <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">00000000</span></div>
+    <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">000</span></div>
   </div>
 </div>
 
@@ -630,6 +630,12 @@ const ARC_DB = (() => {
   let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   let best    = Number(localStorage.getItem('arc_best') || 0);
+
+  // Ghost: önceki oyunun trail'i (world-space) — %20 alpha ile çizilir
+  let ghostTrail = [];
+
+  // LB NPC sabit skorları (her oyun başında yeniden çekilir)
+  let lbNPCScores = [];
 
   // ── Tutorial state ───────────────────────────────────────
   // -1 = kapalı, 0 = ilk dokunuş bekle, 1..4 = adımlar, 5 = bitti
@@ -818,6 +824,28 @@ const ARC_DB = (() => {
     }
   }
 
+  // ── Ghost Trail (önceki oyun, %20 opaklık) ───────────────
+  function drawGhostTrail() {
+    if (ghostTrail.length < 2) return;
+    ctx.save();
+    ctx.globalAlpha = 0.20;
+    ctx.strokeStyle = '#7CFF7A';
+    ctx.lineWidth   = 2;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.beginPath();
+    let penDown = false;
+    for (let i = 0; i < ghostTrail.length; i++) {
+      const p = ghostTrail[i];
+      const sy = W2S(p.y);
+      if (sy < -80 || sy > H + 80) { penDown = false; continue; }
+      if (!penDown) { ctx.moveTo(p.x, sy); penDown = true; }
+      else            ctx.lineTo(p.x, sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // ── Trail ────────────────────────────────────────────────
   function drawTrail(time) {
     if (trail.length < 2) return;
@@ -879,11 +907,15 @@ const ARC_DB = (() => {
     if (lbFrame % 30 !== 0) return; // update every 30 frames
     const sc  = Math.floor(score);
     const avc = AVATAR_COLORS[avatarIdx];
-    const rows = LB_NAMES.map((n, i) => ({ n, s: Math.max(0, sc + (i-5)*3 + (Math.floor(Math.random()*3)-1)) }));
-    rows.sort((a,b) => b.s - a.s);
-    const youIdx = Math.min(Math.floor(rows.length/2), rows.length - 1);
-    rows.splice(youIdx, 0, { n: playerName, s: sc, you: true });
-    lbEl.innerHTML = rows.slice(0, 14).map(r =>
+    // NPC'leri ve oyuncuyu birleştir, skora göre sırala
+    const rows = [...lbNPCScores, { n: playerName, s: sc, you: true }];
+    rows.sort((a, b) => b.s - a.s);
+    // Oyuncunun sırası
+    const youIdx = rows.findIndex(r => r.you);
+    // Oyuncu ortada kalacak şekilde 12 satır dilim
+    const start = Math.max(0, youIdx - 5);
+    const slice = rows.slice(start, start + 13);
+    lbEl.innerHTML = slice.map(r =>
       r.you
         ? `<div class="lb-row you" style="color:${avc}">▶ ${r.n}</div>`
         : `<div class="lb-row">${r.n}</div>`
@@ -1062,6 +1094,9 @@ const ARC_DB = (() => {
     score = 0; maxAscend = 0; energy = 1;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0;
+    // NPC sabit skorlarını her oyun başında rastgele üret
+    lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
+    lbNPCScores.sort((a, b) => b.s - a.s);
     initBgArcs();
   }
 
@@ -1149,6 +1184,8 @@ const ARC_DB = (() => {
   }
 
   async function endGame() {
+    // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
+    ghostTrail = trail.map(p => ({ x: p.x, y: p.y }));
     running = false; started = false;
     best = Math.max(best, Math.floor(score));
     localStorage.setItem('arc_best', String(best));
@@ -1195,7 +1232,13 @@ const ARC_DB = (() => {
     }).join('');
   }
 
-  const pad = n => String(Math.max(0,n)).padStart(8,'0');
+  // Dinamik hane: 0-999 → 3 hane | 1000-999999 → 6 | 1000000+ → 9
+  const pad = n => {
+    const v = Math.max(0, Math.floor(n));
+    if (v < 1000)    return String(v).padStart(3, '0');
+    if (v < 1000000) return String(v).padStart(6, '0');
+    return             String(v).padStart(9, '0');
+  };
 
   // ── Main draw loop ────────────────────────────────────────
   let lastT = 0;
@@ -1211,7 +1254,7 @@ const ARC_DB = (() => {
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
-      drawWalls(); drawObstacles(); drawBonuses();
+      drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses();
       drawTrail(time); drawPlayer(); drawRipples();
       // Tutorial katmanı — her zaman oyun üzerine çiz
       if (scene === 'play') drawTutorial(time);
