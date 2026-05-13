@@ -592,6 +592,47 @@
 
     #reset-confirm { font-size: 7px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
+    /* ══════════ EXTREME MODE POPUP ══════════ */
+    #extreme-modal {
+      position: fixed; inset: 0; z-index: 60;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(4,6,12,0.88);
+      backdrop-filter: blur(14px);
+    }
+    #extreme-modal.open { display: flex; }
+    #extreme-modal-box {
+      background: rgba(14,8,22,0.97);
+      border: 1.5px solid rgba(255,51,85,.4);
+      border-radius: 26px;
+      padding: 28px 24px 22px;
+      width: min(90vw, 340px);
+      display: flex; flex-direction: column; gap: 14px; align-items: center;
+      box-shadow: 0 0 40px rgba(255,51,85,.15);
+    }
+    #extreme-icon { font-size: 32px; line-height: 1; }
+    #extreme-title { font-size: 14px; letter-spacing: 3px; color: #ff3355; }
+    #extreme-desc { width: 100%; display: flex; flex-direction: column; gap: 8px;
+      background: rgba(255,255,255,.04); border-radius: 12px; padding: 14px 16px; }
+    .extreme-row { display: flex; justify-content: space-between; align-items: center; }
+    .extreme-lbl { font-size: 7px; color: rgba(255,255,255,.5); letter-spacing: 1px; }
+    .extreme-val { font-size: 9px; color: #ff7755; letter-spacing: 1px; }
+    #extreme-warn {
+      font-size: 6.5px; color: rgba(255,255,255,.35); letter-spacing: 1px;
+      text-align: center; line-height: 1.8;
+    }
+    #extreme-confirm {
+      width: 100%; padding: 14px; border-radius: 13px;
+      border: 1.5px solid #ff3355; background: rgba(255,51,85,.15);
+      color: #ff5577; font-family: var(--font);
+      font-size: 11px; letter-spacing: 2px; cursor: pointer;
+    }
+    #extreme-confirm:active { transform: scale(0.97); }
+    #extreme-back {
+      background: none; border: none;
+      color: rgba(255,255,255,.28); font-family: var(--font);
+      font-size: 7px; letter-spacing: 1px; cursor: pointer;
+    }
+
     /* ══════════ GAME MODE SELECTOR ══════════ */
     #mode-sel {
       display: flex; gap: 0;
@@ -870,6 +911,22 @@
   </div>
 </div>
 
+<!-- ══ EXTREME MODE POPUP ══ -->
+<div id="extreme-modal">
+  <div id="extreme-modal-box">
+    <div id="extreme-icon">⚡</div>
+    <div id="extreme-title">EXTREME MODE</div>
+    <div id="extreme-desc">
+      <div class="extreme-row"><span class="extreme-lbl">Speed</span><span class="extreme-val">×2 (600)</span></div>
+      <div class="extreme-row"><span class="extreme-lbl">Score ×</span><span class="extreme-val">3.0</span></div>
+      <div class="extreme-row"><span class="extreme-lbl">Acceleration</span><span class="extreme-val">On</span></div>
+    </div>
+    <div id="extreme-warn">High speed — for experienced players only.</div>
+    <button id="extreme-confirm">LET'S GO ⚡</button>
+    <button id="extreme-back">Stay Normal</button>
+  </div>
+</div>
+
 <!-- ══ PROFILE EDIT MODAL ══ -->
 <div id="prof-modal">
   <div id="prof-modal-box">
@@ -894,7 +951,6 @@
              spellcheck="false" autocomplete="off">
     </div>
     <button id="prof-modal-save">SAVE</button>
-    <button id="prof-modal-cancel">cancel</button>
   </div>
 </div>
 
@@ -1282,16 +1338,18 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  // Game mode: 'normal' (280 base, static) | 'extreme' (350 base, dynamic acceleration)
+  // Game mode: 'normal' (300 base) | 'extreme' (600 base, 2×, dynamic +)
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
-  let GAME_SPEED = gameMode === 'extreme' ? 350 : 280; // updated on mode change
-  function getScoreMul() { return gameMode === 'extreme' ? 2.5 : 1.5; }
-  function getBaseSpeed() { return gameMode === 'extreme' ? 350 : 280; }
+  let GAME_SPEED = gameMode === 'extreme' ? 600 : 300;
+  function getScoreMul() { return gameMode === 'extreme' ? 3.0 : 1.5; }
+  function getBaseSpeed() { return gameMode === 'extreme' ? 600 : 300; }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
-  let coins  = Number(localStorage.getItem('arc_coins') || 0);
+  // XP-based coin system: every 1000 total XP = 1 coin (accumulates across games)
+  let xpTotal   = Number(localStorage.getItem('arc_xp') || 0);
+  let coins     = Math.floor(xpTotal / 1000); // always derived from xpTotal
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   // Float texts (combo bonuses)
@@ -2254,13 +2312,15 @@ const ARC_DB = (() => {
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
     ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
-    // Save last score + award coins (10 per 1000 pts)
+    // XP-based coins: accumulate score across all games, 1 coin per 1000 XP
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
-    const earned = Math.floor(lastScore / 1000) * 10;
     const prevCoins = coins;
-    coins += earned;
+    xpTotal += lastScore;
+    localStorage.setItem('arc_xp', String(xpTotal));
+    coins = Math.floor(xpTotal / 1000);
     localStorage.setItem('arc_coins', String(coins));
+    const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
 
@@ -2287,9 +2347,9 @@ const ARC_DB = (() => {
 
     // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    const coinMod = sc % 1000; // bu oyunun skoru 1000'in neresinde
-    const barPct  = Math.round(coinMod / 10); // % (0-100)
-    document.getElementById('go-coin-progress').textContent = `${coinMod} / 1000`;
+    const xpMod  = xpTotal % 1000; // birikimli XP'nin 1000'e kalan kısmı
+    const barPct = Math.round(xpMod / 10); // % (0-100)
+    document.getElementById('go-coin-progress').textContent = `${xpMod} / 1000`;
     // Animate bar after short delay
     setTimeout(() => {
       document.getElementById('go-coin-bar').style.width = barPct + '%';
@@ -2430,8 +2490,8 @@ const ARC_DB = (() => {
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_last','arc_avatar_custom','arc_mode'].forEach(k => localStorage.removeItem(k));
-    best = 0; firstPlay = true; coins = 0; lastScore = 0;
+     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp'].forEach(k => localStorage.removeItem(k));
+    best = 0; firstPlay = true; coins = 0; lastScore = 0; xpTotal = 0;
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
@@ -2594,9 +2654,6 @@ const ARC_DB = (() => {
     profModal.classList.remove('open');
   });
 
-  document.getElementById('prof-modal-cancel').addEventListener('click', () => {
-    profModal.classList.remove('open');
-  });
   profModal.addEventListener('click', e => {
     if (e.target === profModal) profModal.classList.remove('open');
   });
@@ -2619,7 +2676,9 @@ const ARC_DB = (() => {
     }
   }
 
-  // ── Mode selector ─────────────────────────────────────────
+  // ── Mode selector + Extreme popup ────────────────────────
+  const extremeModal = document.getElementById('extreme-modal');
+
   function setGameMode(m) {
     gameMode = m;
     localStorage.setItem('arc_mode', m);
@@ -2627,8 +2686,23 @@ const ARC_DB = (() => {
     document.getElementById('mode-btn-normal').className = 'mode-btn' + (m === 'normal' ? ' active-normal' : '');
     document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
   }
-  document.getElementById('mode-btn-normal').addEventListener('click',  () => setGameMode('normal'));
-  document.getElementById('mode-btn-extreme').addEventListener('click', () => setGameMode('extreme'));
+
+  document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
+  document.getElementById('mode-btn-extreme').addEventListener('click', () => {
+    if (gameMode === 'extreme') return; // already extreme, do nothing
+    extremeModal.classList.add('open');
+  });
+  document.getElementById('extreme-confirm').addEventListener('click', () => {
+    setGameMode('extreme');
+    extremeModal.classList.remove('open');
+  });
+  document.getElementById('extreme-back').addEventListener('click', () => {
+    extremeModal.classList.remove('open');
+  });
+  extremeModal.addEventListener('click', e => {
+    if (e.target === extremeModal) extremeModal.classList.remove('open');
+  });
+
   setGameMode(gameMode); // init buttons
 
   document.getElementById('btn-start').addEventListener('click', () => startGame());
