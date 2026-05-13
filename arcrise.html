@@ -628,10 +628,14 @@
     }
     #extreme-confirm:active { transform: scale(0.97); }
     #extreme-back {
-      background: none; border: none;
-      color: rgba(255,255,255,.28); font-family: var(--font);
-      font-size: 7px; letter-spacing: 1px; cursor: pointer;
+      width: 100%; padding: 13px; border-radius: 13px;
+      border: 1.5px solid rgba(68,136,255,.5);
+      background: rgba(68,136,255,.12);
+      color: #4499ff; font-family: var(--font);
+      font-size: 9px; letter-spacing: 2px; cursor: pointer;
+      margin-top: 4px;
     }
+    #extreme-back:active { transform: scale(0.97); }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
     #mode-sel {
@@ -917,7 +921,6 @@
     <div id="extreme-icon">⚡</div>
     <div id="extreme-title">EXTREME MODE</div>
     <div id="extreme-desc">
-      <div class="extreme-row"><span class="extreme-lbl">Speed</span><span class="extreme-val">×2 (600)</span></div>
       <div class="extreme-row"><span class="extreme-lbl">Score ×</span><span class="extreme-val">3.0</span></div>
       <div class="extreme-row"><span class="extreme-lbl">Acceleration</span><span class="extreme-val">On</span></div>
     </div>
@@ -1338,11 +1341,11 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  // Game mode: 'normal' (300 base) | 'extreme' (600 base, 2×, dynamic +)
+  // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2×, dynamic +)
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
-  let GAME_SPEED = gameMode === 'extreme' ? 600 : 300;
+  let GAME_SPEED = gameMode === 'extreme' ? 800 : 400;
   function getScoreMul() { return gameMode === 'extreme' ? 3.0 : 1.5; }
-  function getBaseSpeed() { return gameMode === 'extreme' ? 600 : 300; }
+  function getBaseSpeed() { return gameMode === 'extreme' ? 800 : 400; }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
@@ -1357,6 +1360,9 @@ const ARC_DB = (() => {
 
   // Audio Visualizer (AudioContext + AnalyserNode)
   let audioCtx = null, analyser = null, vizData = null;
+  // Beat flash state
+  let beatAvg = 0, beatFlashHue = 0, beatFlashAlpha = 0;
+
   function initAudioViz() {
     if (audioCtx) return;
     try {
@@ -1364,11 +1370,49 @@ const ARC_DB = (() => {
       const src = audioCtx.createMediaElementSource(bgAudio);
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.82;
+      analyser.smoothingTimeConstant = 0.80;
       src.connect(analyser);
       analyser.connect(audioCtx.destination);
       vizData = new Uint8Array(analyser.frequencyBinCount); // 64 bins
     } catch(e) { console.warn('[Viz]', e); }
+  }
+
+  // Background beat flash — drawn on bctx (bg canvas)
+  function drawBgFlash() {
+    // Get bass energy
+    let bass = 0;
+    if (analyser && vizData && musOn) {
+      analyser.getByteFrequencyData(vizData);
+      for (let i = 0; i < 6; i++) bass += vizData[i] / 255;
+      bass /= 6;
+    } else {
+      // No analyser: energy-based slow pulse
+      bass = 0.15 + 0.1 * Math.sin(performance.now() / 600);
+    }
+
+    // Beat detection: spike above rolling average
+    beatAvg = beatAvg * 0.94 + bass * 0.06;
+    if (musOn && bass > beatAvg * 1.35 && bass > 0.25) {
+      // New beat hit → pick a new hue and set flash alpha
+      beatFlashHue = Math.floor(Math.random() * 6) * 60; // red/yellow/green/cyan/blue/magenta
+      const intensity = Math.min(1, (bass - beatAvg * 1.35) * 4);
+      beatFlashAlpha = 0.10 + intensity * 0.12;
+    }
+
+    // Draw flash if active
+    if (beatFlashAlpha > 0.004) {
+      const flashA = beatFlashAlpha * energy; // dim with health
+      bctx.save();
+      // Radial burst from center
+      const gr = bctx.createRadialGradient(W/2, H * 0.42, 0, W/2, H * 0.42, W * 0.85);
+      gr.addColorStop(0,    `hsla(${beatFlashHue},100%,65%,${flashA})`);
+      gr.addColorStop(0.45, `hsla(${beatFlashHue},100%,50%,${flashA * 0.35})`);
+      gr.addColorStop(1,    `hsla(${beatFlashHue},100%,40%,0)`);
+      bctx.fillStyle = gr;
+      bctx.fillRect(0, 0, W, H);
+      bctx.restore();
+      beatFlashAlpha *= 0.78; // decay per frame
+    }
   }
 
   const ENERGY_DECAY = 1 / 9;   // 9 saniyelik geri sayım
@@ -1408,14 +1452,20 @@ const ARC_DB = (() => {
 
   function playBgMusic() {
     if (!musOn || !audioStarted) return;
-    initAudioViz(); // connect analyser on first play
-    bgAudio.currentTime = 0;
-    bgAudio.play().catch(e => console.warn('[Audio] BG:', e));
+    initAudioViz();
+    // Resume suspended AudioContext (happens on mobile after tab switch / multiple plays)
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    // Only reset position if the audio has fully ended (don't cut mid-song on restart)
+    if (bgAudio.paused || bgAudio.ended) {
+      bgAudio.play().catch(e => console.warn('[Audio] BG:', e));
+    }
   }
 
   function stopBgMusic() {
     bgAudio.pause();
-    bgAudio.currentTime = 0;
+    // Don't reset currentTime — resume from same position next game
   }
 
   function playTouchSound() {
@@ -2440,10 +2490,11 @@ const ARC_DB = (() => {
     const dt   = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
     const time = ts / 1000;
 
-    // BG canvas: grid + arcs (home/settings)
+    // BG canvas: grid + arcs + beat flash
     bctx.clearRect(0, 0, W, H);
     drawGrid(bctx, scene === 'play' || scene === 'over' ? camY : time * 22, .13);
     if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
+    if (scene === 'play') { drawBgFlash(); } // beat-synced color flash on bg canvas
 
     // Game canvas
     ctx.clearRect(0, 0, W, H);
