@@ -246,6 +246,21 @@ const FIREBASE_CONFIG = {
 - ArcRiseDead.wav → endGame
 - Beat-synced bg flash (centered önce, sonra multi-blob)
 
+### v7 — Mobile zoom lock, mode-split leaderboard, high-score popup, hold-to-menu
+- **Mobil zoom kilidi**: viewport meta'ya `maximum-scale=1, user-scalable=no` eklendi; body'ye `touch-action: manipulation`; `gesturestart/change/end`, çift dokunma (350ms tolerans) ve 2+ parmaklı `touchmove` event'leri preventDefault edildi
+- **Leaderboard mode-split**: Firestore `scores` koleksiyonuna `mode` alanı eklendi (`normal`/`extreme`)
+  - `submitScore(name, avatar, score, mode)` — aynı (name, mode) için tek kayıt
+  - `getTopScores(n, mode)` — fetch+local filter (Firestore composite index gerektirmeden)
+  - parseRows: mode alanı yoksa `null` → eski mode'suz kayıtlar her iki leaderboard'da da gözükmez (kullanıcı "eski skorları temizle" istedi)
+  - In-game LB ve game-over LB de gameMode'a göre filtreli
+- **High Scores popup** (`#lb-modal`): home'a "High Scores" butonu eklendi
+  - Normal/Extreme tab'ları
+  - ALL-TIME, TODAY, MONTH kart sıralaması (ts ile yerel hesaplama: `startOfDay`, `startOfMonth`)
+  - Your Position: oyuncu yoksa top-5; varsa 2 üst + kendin + 2 alt + en tepe (eğer top'a 0 dahil değilse divider ile)
+  - Cache: tab değiştirince yeniden fetch yok (popup açıldıkça temizleniyor)
+- **Back to Menu 2s basılı tutma**: `pointerdown`'da hold başlar, `width: 0% → 100%` linear 2s fill animasyonu (`.hold-fill`); pointerup/leave/cancel iptal ediyor (250ms ease-out reverse); click event suppress; 2s dolarsa `showScene('home')`
+- "HOLD 2s" alt-yazı eklendi; .holding class ile yeşil border + hint rengi
+
 ### v6 — Popup flame, home frame tune, beat-flash off, SFX latency fix
 - **Home flame frame**: Hızlı flicker kaldırıldı → 2.6s breathe animasyonu, yarı yoğunlukta soft glow
 - **Extreme popup**: Açıkken `#extreme-modal-deco` içinde alev partikülleri spawn eder; kapanınca temizlenir (`tickPopupDeco`)
@@ -334,4 +349,4 @@ GitHub Pages `main`'ten serve ediyor — feature branch'e push yeterli değil, m
 
 ---
 
-**Son güncelleme**: 2026-05-13 (v6). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-05-13 (v7). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>ArcRise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
       --font:  'Press Start 2P', monospace;
     }
     html, body { height: 100%; overflow: hidden; background: var(--bg); }
-    body { font-family: var(--font); color: #fff; }
+    body { font-family: var(--font); color: #fff; touch-action: manipulation; -ms-touch-action: manipulation; }
 
     /* ── Canvas layer ── */
     #wrap {
@@ -157,6 +157,130 @@
       cursor: pointer; width: 100%;
     }
     .btn-gray:active { transform: scale(0.97); }
+
+    /* ══════════ LEADERBOARD POPUP ══════════ */
+    #lb-modal {
+      position: fixed; inset: 0; z-index: 55;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(4,6,12,0.88);
+      backdrop-filter: blur(14px);
+    }
+    #lb-modal.open { display: flex; }
+    #lb-modal-box {
+      background: rgba(12,16,26,0.97);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      width: min(92vw, 380px);
+      display: flex; flex-direction: column; gap: 12px;
+      max-height: 88vh; overflow: hidden;
+    }
+    #lb-modal-title {
+      font-size: 12px; letter-spacing: 3px; text-align: center;
+      color: var(--green);
+    }
+    #lb-tabs { display: flex; gap: 0; border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.12); }
+    .lb-tab {
+      flex: 1; padding: 9px 0; background: rgba(255,255,255,0.02);
+      border: none; color: rgba(255,255,255,.45);
+      font-family: var(--font); font-size: 9px; letter-spacing: 2px; cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .lb-tab.active-normal { background: rgba(68,136,255,.18); color: #88aaff; }
+    .lb-tab.active-extreme { background: rgba(255,80,40,.22); color: #ff8866; }
+
+    .lb-section-lbl {
+      font-size: 6px; letter-spacing: 2px; color: rgba(255,255,255,.4);
+      margin-top: 4px; margin-bottom: 2px;
+    }
+    .lb-bests-row {
+      display: flex; gap: 8px;
+    }
+    .lb-best-card {
+      flex: 1; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px; padding: 9px 8px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .lb-best-lbl { font-size: 6px; letter-spacing: 1.5px; color: rgba(255,255,255,.4); }
+    .lb-best-name { font-size: 8px; letter-spacing: 1px; color: #fff;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-best-score { font-size: 11px; letter-spacing: 1px; color: var(--green); }
+    .lb-best-empty { font-size: 8px; color: rgba(255,255,255,.25); letter-spacing: 1px; }
+
+    #lb-list {
+      display: flex; flex-direction: column; gap: 4px;
+      overflow-y: auto; max-height: 46vh;
+    }
+    .lb-list-row {
+      display: grid; grid-template-columns: 36px 1fr auto;
+      align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 8px;
+      font-size: 8px; letter-spacing: 1px;
+      background: rgba(255,255,255,0.025);
+      color: rgba(255,255,255,.75);
+    }
+    .lb-list-row.you {
+      background: rgba(124,255,122,.10);
+      border: 1px solid rgba(124,255,122,.3);
+      color: var(--green);
+    }
+    .lb-list-row.top { background: rgba(255,210,80,.10); color: #ffd866; }
+    .lb-list-row.divider {
+      grid-template-columns: 1fr; justify-content: center; text-align: center;
+      background: none; color: rgba(255,255,255,.18); letter-spacing: 3px; padding: 2px 0;
+      font-size: 8px;
+    }
+    .lb-row-rank { font-size: 7px; opacity: .7; }
+    .lb-row-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      display: inline-block; margin-right: 5px; vertical-align: middle;
+    }
+    .lb-empty {
+      text-align: center; padding: 30px 0;
+      color: rgba(255,255,255,.3); font-size: 8px; letter-spacing: 1.5px;
+    }
+    #lb-modal-close {
+      width: 100%; padding: 12px; border-radius: 11px;
+      border: 1.5px solid rgba(255,255,255,.22);
+      background: rgba(18,22,32,.85);
+      color: #fff; font-family: var(--font);
+      font-size: 10px; letter-spacing: 2px; cursor: pointer;
+    }
+    #lb-modal-close:active { transform: scale(0.97); }
+
+    /* Home leaderboard button (small, alongside Settings) */
+    #btn-lb {
+      width: 70%; align-self: center;
+    }
+
+    /* ══════════ HOLD-TO-CONFIRM BACK TO MENU ══════════ */
+    #btn-menu {
+      position: relative; overflow: hidden;
+    }
+    #btn-menu .hold-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: linear-gradient(90deg, rgba(124,255,122,0.18), rgba(124,255,122,0.32));
+      transition: width 0s linear;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #btn-menu .hold-label {
+      position: relative; z-index: 1;
+      display: inline-block;
+    }
+    #btn-menu .hold-hint {
+      display: block;
+      font-size: 5.5px;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,.35);
+      margin-top: 4px;
+      position: relative; z-index: 1;
+    }
+    #btn-menu.holding { border-color: rgba(124,255,122,.6); }
+    #btn-menu.holding .hold-hint { color: rgba(124,255,122,.8); }
 
     #home-best {
       font-size: 8px; letter-spacing: 1px; margin-top: 20px;
@@ -906,6 +1030,7 @@
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
+    <button class="btn-gray" id="btn-lb">High Scores</button>
     <!-- Mode selector (wrapper holds floating deco particles) -->
     <div id="mode-fx-wrap">
       <div id="mode-sel">
@@ -1012,7 +1137,11 @@
       <div class="rb-wrap" id="wrap-again">
         <div class="rb-inner" id="btn-again" style="font-size:18px">Again!</div>
       </div>
-      <button class="btn-gray" id="btn-menu" style="font-size:11px">Back to Menu</button>
+      <button class="btn-gray" id="btn-menu" style="font-size:11px">
+        <div class="hold-fill"></div>
+        <span class="hold-label">Back to Menu</span>
+        <span class="hold-hint">HOLD 2s</span>
+      </button>
     </div>
     <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">00000</span></div>
   </div>
@@ -1031,6 +1160,40 @@
     <div id="extreme-warn">High speed — for experienced players only.</div>
     <button id="extreme-confirm">LET'S GO ⚡</button>
     <button id="extreme-back">Stay Normal</button>
+  </div>
+</div>
+
+<!-- ══ HIGH SCORES MODAL ══ -->
+<div id="lb-modal">
+  <div id="lb-modal-box">
+    <div id="lb-modal-title">HIGH SCORES</div>
+    <div id="lb-tabs">
+      <button class="lb-tab active-normal" id="lb-tab-normal">Normal</button>
+      <button class="lb-tab" id="lb-tab-extreme">Extreme</button>
+    </div>
+    <div class="lb-section-lbl">RECORDS</div>
+    <div class="lb-bests-row">
+      <div class="lb-best-card">
+        <div class="lb-best-lbl">ALL-TIME</div>
+        <div class="lb-best-name" id="lb-best-name">—</div>
+        <div class="lb-best-score" id="lb-best-score">00000</div>
+      </div>
+      <div class="lb-best-card">
+        <div class="lb-best-lbl">TODAY</div>
+        <div class="lb-best-name" id="lb-daily-name">—</div>
+        <div class="lb-best-score" id="lb-daily-score">—</div>
+      </div>
+      <div class="lb-best-card">
+        <div class="lb-best-lbl">MONTH</div>
+        <div class="lb-best-name" id="lb-monthly-name">—</div>
+        <div class="lb-best-score" id="lb-monthly-score">—</div>
+      </div>
+    </div>
+    <div class="lb-section-lbl">YOUR POSITION</div>
+    <div id="lb-list">
+      <div class="lb-empty">Loading...</div>
+    </div>
+    <button id="lb-modal-close">Close</button>
   </div>
 </div>
 
@@ -1111,39 +1274,49 @@ const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
   const BASE = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
-  // Skor kaydet — her oyuncu için sadece en yüksek skor tutulur
-  async function submitScore(name, avatar, score) {
+  // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
+  function normMode(m) { return (m === 'extreme') ? 'extreme' : 'normal'; }
+
+  // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
+  // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
+  async function submitScore(name, avatar, score, mode) {
     if (!projectId || projectId.startsWith('BURAYA')) return;
+    mode = normMode(mode);
     try {
-      // Mevcut doc'u bul
+      // Aynı isimle var olan tüm doc'ları çek; mode'u eşleşeni bul
       const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
           from: [{ collectionId: 'scores' }],
           where: { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: name } } },
-          limit: 1,
+          limit: 20,
         }}),
       });
       const hits = (await qRes.json()).filter(r => r.document?.fields);
+      // Aynı (name, mode) kombinasyonundaki ilk doc'u bul
+      const match = hits.find(r => {
+        const m = r.document.fields.mode?.stringValue;
+        // Eski kayıt (mode yok) → 'normal' say
+        return (m || 'normal') === mode;
+      });
 
-      if (hits.length > 0) {
-        const oldScore = parseInt(hits[0].document.fields.score.integerValue ?? 0);
+      if (match) {
+        const oldScore = parseInt(match.document.fields.score.integerValue ?? 0);
         if (score <= oldScore) return; // eski skor daha iyi, atla
-        // PATCH: sadece score, avatar ve ts güncelle
-        const docId = hits[0].document.name.split('/').pop();
+        const docId = match.document.name.split('/').pop();
         await fetch(
-          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts`,
+          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts&updateMask.fieldPaths=mode`,
           {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fields: {
               score:  { integerValue: String(score)  },
               avatar: { integerValue: String(avatar) },
               ts:     { integerValue: String(Date.now()) },
+              mode:   { stringValue: mode },
             }}),
           }
         );
       } else {
-        // Yeni kayıt
         await fetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields: {
@@ -1151,33 +1324,53 @@ const ARC_DB = (() => {
             avatar: { integerValue: String(avatar) },
             score:  { integerValue: String(score)  },
             ts:     { integerValue: String(Date.now()) },
+            mode:   { stringValue: mode },
           }}),
         });
       }
     } catch(e) { console.warn('[ArcDB] submit failed', e); }
   }
 
-  // Top-N skor çek
-  async function getTopScores(n = 10) {
+  // Yardımcı: Firestore yanıtını {name, avatar, score, ts, mode} listesine dönüştür.
+  // mode alanı olmayan ESKİ kayıtlar `mode: null` olarak gelir — getTopScores bunları filtreler.
+  function parseRows(rows) {
+    return rows
+      .filter(r => r.document?.fields)
+      .map(r => {
+        const f = r.document.fields;
+        return {
+          name:   f.name.stringValue,
+          avatar: parseInt(f.avatar.integerValue ?? 3),
+          score:  parseInt(f.score.integerValue ?? 0),
+          ts:     parseInt(f.ts?.integerValue ?? 0),
+          mode:   f.mode?.stringValue || null,
+        };
+      });
+  }
+
+  // Top-N skor çek. mode girilmişse yerelde filtreler.
+  // (Firestore'da where+orderBy composite index gerektirdiği için filtreyi
+  // app tarafında yapıyoruz — daha geniş query çekip mode'a göre süzüyoruz.)
+  async function getTopScores(n = 10, mode) {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
     try {
+      // Mode filtreliyse daha geniş çek ki yeterli mode-match bulalım
+      const fetchN = mode ? Math.max(n * 4, 200) : n;
       const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
           from:    [{ collectionId: 'scores' }],
           orderBy: [{ field: { fieldPath: 'score' }, direction: 'DESCENDING' }],
-          limit:   n,
+          limit:   fetchN,
         }}),
       });
-      const rows = await res.json();
-      return rows
-        .filter(r => r.document?.fields)
-        .map(r => ({
-          name:   r.document.fields.name.stringValue,
-          avatar: parseInt(r.document.fields.avatar.integerValue ?? 3),
-          score:  parseInt(r.document.fields.score.integerValue ?? 0),
-        }));
+      let rows = parseRows(await res.json());
+      if (mode) {
+        const target = normMode(mode);
+        rows = rows.filter(r => r.mode === target).slice(0, n);
+      }
+      return rows;
     } catch(e) { console.warn('[ArcDB] fetch failed', e); return []; }
   }
 
@@ -1185,6 +1378,23 @@ const ARC_DB = (() => {
 })();
 
 (() => {
+  // ── Mobile zoom kilidi ───────────────────────────────────
+  // viewport meta + touch-action yetmediği iOS Safari sürümleri için gesture event'lerini blokla.
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
+    document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  });
+  // Çift dokunma zoom'unu engelle (iOS)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  // İki parmak pinch'i her durumda engelle
+  document.addEventListener('touchmove', e => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
   // ── Canvas setup ──────────────────────────────────────────
   const W = 600, H = 1066;
   const gc = document.getElementById('gc');
@@ -2302,7 +2512,7 @@ const ARC_DB = (() => {
   // Firestore'dan canlı skorları çek, lbNPCScores'u doldur
   async function fetchLiveScores() {
     try {
-      const rows = await ARC_DB.getTopScores(20);
+      const rows = await ARC_DB.getTopScores(20, gameMode);
       if (rows && rows.length > 0) {
         // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
         lbNPCScores = rows
@@ -2805,10 +3015,10 @@ const ARC_DB = (() => {
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size:6px;padding:12px 0">LOADING...</td></tr>`;
 
     // Skoru Firestore'a gönder (config yoksa no-op)
-    await ARC_DB.submitScore(playerName, avatarIdx, sc);
+    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode);
 
     // Yeterli satır çek (player sıralamayı bulmak için)
-    const topRows = await ARC_DB.getTopScores(50);
+    const topRows = await ARC_DB.getTopScores(50, gameMode);
 
     if (topRows.length === 0) {
       // Firebase config yok → yerel fallback
@@ -3010,6 +3220,118 @@ const ARC_DB = (() => {
   fbOn.addEventListener('click',  () => setFeedback(true));
   fbOff.addEventListener('click', () => setFeedback(false));
   setFeedback(feedbackOn);
+
+  // ── High Scores Modal ─────────────────────────────────────
+  const lbModal = document.getElementById('lb-modal');
+  let lbCurrentMode = 'normal';
+  let lbCache = { normal: null, extreme: null }; // {top, daily, monthly, rows}
+
+  function startOfDay(ts) { const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+  function startOfMonth(ts) { const d = new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
+
+  async function loadLbData(mode) {
+    if (lbCache[mode]) return lbCache[mode];
+    // 500 satır yeter — top/daily/monthly + oyuncu çevresi yerelde işlenir
+    const rows = await ARC_DB.getTopScores(500, mode);
+    const now = Date.now();
+    const dayStart = startOfDay(now);
+    const monthStart = startOfMonth(now);
+    const top     = rows[0] || null;
+    const daily   = rows.filter(r => r.ts >= dayStart).sort((a,b)=>b.score-a.score)[0] || null;
+    const monthly = rows.filter(r => r.ts >= monthStart).sort((a,b)=>b.score-a.score)[0] || null;
+    const data = { rows, top, daily, monthly };
+    lbCache[mode] = data;
+    return data;
+  }
+
+  function renderLbCard(prefix, entry, fallback) {
+    document.getElementById('lb-' + prefix + '-name').textContent =
+      entry ? entry.name : (fallback || '—');
+    document.getElementById('lb-' + prefix + '-score').textContent =
+      entry ? pad(entry.score) : '—';
+  }
+
+  function renderLbPosition(rows, mode) {
+    const listEl = document.getElementById('lb-list');
+    if (!rows || rows.length === 0) {
+      listEl.innerHTML = `<div class="lb-empty">No scores yet for ${mode.toUpperCase()}</div>`;
+      return;
+    }
+    // Oyuncunun bu mode'daki kaydını bul; yoksa "henüz yok" göster
+    let youIdx = rows.findIndex(r => r.name === playerName);
+    let show = [];
+    if (youIdx === -1) {
+      // Oyuncu listede yok → sadece top 5'i göster
+      show = rows.slice(0, 5).map((r, i) => ({ ...r, rank: i }));
+    } else {
+      // 2 üst + kendin + 2 alt
+      const start = Math.max(0, youIdx - 2);
+      const end   = Math.min(rows.length, youIdx + 3);
+      show = rows.slice(start, end).map((r, i) => ({ ...r, rank: start + i }));
+      // En tepeyi her zaman göster (eğer 0 dahil değilse, en başa ekle + divider)
+      if (start > 0) {
+        const top0 = { ...rows[0], rank: 0, _markTop: true };
+        if (start > 1) {
+          show = [top0, { _divider: true }, ...show];
+        } else {
+          show = [top0, ...show];
+        }
+      }
+    }
+    listEl.innerHTML = show.map(r => {
+      if (r._divider) return `<div class="lb-list-row divider">···</div>`;
+      const isYou = r.name === playerName;
+      const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop && !isYou ? ' top' : ''}`;
+      const col = AVATAR_COLORS[r.avatar] || '#fff';
+      const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
+      return `<div class="${cls}">
+        <span class="lb-row-rank">${rankStr}</span>
+        <span><span class="lb-row-dot" style="background:${col}"></span>${r.name}</span>
+        <span>${pad(r.score)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  async function refreshLbView() {
+    const mode = lbCurrentMode;
+    document.getElementById('lb-tab-normal').className  = 'lb-tab' + (mode === 'normal'  ? ' active-normal'  : '');
+    document.getElementById('lb-tab-extreme').className = 'lb-tab' + (mode === 'extreme' ? ' active-extreme' : '');
+    // Loading state
+    renderLbCard('best',    null);
+    renderLbCard('daily',   null);
+    renderLbCard('monthly', null);
+    document.getElementById('lb-list').innerHTML = `<div class="lb-empty">Loading...</div>`;
+    const data = await loadLbData(mode);
+    // Eğer kullanıcı bu sırada tab değiştirdiyse, sonuçları yazma
+    if (lbCurrentMode !== mode) return;
+    renderLbCard('best',    data.top);
+    renderLbCard('daily',   data.daily);
+    renderLbCard('monthly', data.monthly);
+    renderLbPosition(data.rows, mode);
+  }
+
+  function openLbModal() {
+    lbCurrentMode = gameMode || 'normal'; // mevcut moddan başla
+    // Cache'i temizle ki açılışta taze veri çekilsin
+    lbCache = { normal: null, extreme: null };
+    lbModal.classList.add('open');
+    refreshLbView();
+  }
+  function closeLbModal() { lbModal.classList.remove('open'); }
+
+  document.getElementById('btn-lb').addEventListener('click', openLbModal);
+  document.getElementById('lb-modal-close').addEventListener('click', closeLbModal);
+  document.getElementById('lb-tab-normal').addEventListener('click', () => {
+    if (lbCurrentMode === 'normal') return;
+    lbCurrentMode = 'normal'; refreshLbView();
+  });
+  document.getElementById('lb-tab-extreme').addEventListener('click', () => {
+    if (lbCurrentMode === 'extreme') return;
+    lbCurrentMode = 'extreme'; refreshLbView();
+  });
+  lbModal.addEventListener('click', e => {
+    if (e.target === lbModal) closeLbModal();
+  });
 
   // ── Profile Edit Modal ────────────────────────────────────
   const profModal = document.getElementById('prof-modal');
@@ -3262,7 +3584,52 @@ const ARC_DB = (() => {
 
   document.getElementById('btn-again').addEventListener('click', () => startGame());
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
-  document.getElementById('btn-menu').addEventListener('click', () => showScene('home'));
+  // ── Back to Menu: 2s hold required (with visual fill) ─────
+  (() => {
+    const HOLD_MS = 2000;
+    const btn  = document.getElementById('btn-menu');
+    const fill = btn.querySelector('.hold-fill');
+    let holdTimer = null;
+    let holding   = false;
+
+    function startHold(e) {
+      if (holding) return;
+      holding = true;
+      btn.classList.add('holding');
+      // Reset to 0 instantly, then animate to 100%
+      fill.style.transition = 'width 0s linear';
+      fill.style.width = '0%';
+      // Force reflow so the next transition takes effect
+      void fill.offsetWidth;
+      fill.style.transition = `width ${HOLD_MS}ms linear`;
+      fill.style.width = '100%';
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        holding = false;
+        btn.classList.remove('holding');
+        fill.style.transition = 'width 0.2s ease';
+        fill.style.width = '0%';
+        showScene('home');
+      }, HOLD_MS);
+      if (e && e.preventDefault) e.preventDefault();
+    }
+
+    function cancelHold() {
+      if (!holding) return;
+      holding = false;
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      btn.classList.remove('holding');
+      fill.style.transition = 'width 0.25s ease';
+      fill.style.width = '0%';
+    }
+
+    btn.addEventListener('pointerdown', startHold);
+    btn.addEventListener('pointerup',     cancelHold);
+    btn.addEventListener('pointerleave',  cancelHold);
+    btn.addEventListener('pointercancel', cancelHold);
+    // Avoid synthetic click acting as instant trigger
+    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
+  })();
 
   // ── Boot ─────────────────────────────────────────────────
   initBgArcs();
