@@ -16,3 +16,7 @@ dist/
 
 # Claude Code (kişisel ayarlar commit'lenmez)
 .claude/settings.local.json
+
+# Ham kaynak ses dosyaları (sadece AUDIO/ klasörü commit'lenir)
+RESOURCES/
+*.zip

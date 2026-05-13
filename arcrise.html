@@ -1111,6 +1111,9 @@ const ARC_DB = (() => {
   const touchAudio = new Audio('AUDIO/ArcRiseTouch.wav');
   touchAudio.volume = 0.55;
 
+  const deadAudio  = new Audio('AUDIO/ArcRiseDead.wav');
+  deadAudio.volume = 0.8;
+
   let audioStarted = false;
 
   function initAudio() {
@@ -1896,6 +1899,7 @@ const ARC_DB = (() => {
 
   async function endGame() {
     haptic(2000); // çarpışma titreşimi — 2 saniye
+    const _d = deadAudio.cloneNode(); _d.volume = deadAudio.volume; _d.play().catch(() => {});
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
     ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
