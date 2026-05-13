@@ -246,6 +246,12 @@ const FIREBASE_CONFIG = {
 - ArcRiseDead.wav → endGame
 - Beat-synced bg flash (centered önce, sonra multi-blob)
 
+### v6 — Popup flame, home frame tune, beat-flash off, SFX latency fix
+- **Home flame frame**: Hızlı flicker kaldırıldı → 2.6s breathe animasyonu, yarı yoğunlukta soft glow
+- **Extreme popup**: Açıkken `#extreme-modal-deco` içinde alev partikülleri spawn eder; kapanınca temizlenir (`tickPopupDeco`)
+- **Beat-synced bg flash**: Şimdilik tamamen kaldırıldı (`drawBgFlash` sadece gold vignette); `beatAvg/beatPeak/beatCooldown/flashBlobs` değişkenleri silindi
+- **Touch/dead ses gecikmesi**: `cloneNode()` → `AudioBuffer` + `BufferSourceNode`. Ayrı `sfxCtx` AudioContext ile (bgAudio analyser'ından bağımsız). İlk user gesture'da `fetch` + `decodeAudioData` ile pre-decode; buffer hazır değilse `cloneNode` fallback. Mobil gecikme ~80-200ms → ~1-5ms
+
 ### v5 — Mode-conscious home + cilalı flash/gold animation
 - **Home deco artık mod'a duyarlı**: Normal'da sadece kar, Extreme'de sadece alev (önceden ikisi de aynı anda spawn oluyordu)
 - **Home flame frame**: Extreme seçildiğinde ekranın çerçevesi animasyonlu alev haline geçiyor (`#home-flame-frame` div, `home.extreme-mode` toggle ile)
@@ -328,4 +334,4 @@ GitHub Pages `main`'ten serve ediyor — feature branch'e push yeterli değil, m
 
 ---
 
-**Son güncelleme**: 2026-05-13 (v5). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-05-13 (v6). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
