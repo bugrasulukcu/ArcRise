@@ -449,6 +449,7 @@
       color: #ff3355; font-family: var(--font);
       font-size: 8px; letter-spacing: 1px;
       cursor: pointer; white-space: nowrap;
+      min-width: min(72vw, 260px);
     }
     .btn-danger:active { transform: scale(0.97); }
 
@@ -457,7 +458,6 @@
       position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
-    #btn-reset { /* inherits .btn-danger */ }
     #reset-confirm {
       display: none; font-size: 7px; color: rgba(255,255,255,.45);
       letter-spacing: 1px; text-align: center;
@@ -590,12 +590,6 @@
     }
     #prof-av-grid.open { display: grid; }
 
-    /* Reset button — outside panel, at bottom of settings screen */
-    #reset-outer {
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      margin-top: 18px;
-    }
-    #btn-reset { width: 50%; font-size: 7px; padding: 12px; }
     #reset-confirm { font-size: 7px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
@@ -603,7 +597,7 @@
       display: flex; gap: 0;
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px; overflow: hidden;
-      width: 100%;
+      width: 70%; align-self: center;
     }
     .mode-btn {
       flex: 1; padding: 10px 0; font-family: var(--font);
