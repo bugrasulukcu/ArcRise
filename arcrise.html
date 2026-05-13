@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px !important; }
     :root {
       --green: #7CFF7A;
       --red:   #ff3355;
@@ -504,6 +505,94 @@
     #home-pbest-lbl { font-size: 6px; color: var(--green); letter-spacing: 1px; }
     #home-pbest-val { font-size: 10px; color: #fff; letter-spacing: 1px; }
 
+    /* Settings button narrower */
+    #btn-settings { width: 70%; align-self: center; }
+
+    /* Home profile card — stat row */
+    #home-profile { cursor: pointer; }
+    .home-stat-row { display: flex; gap: 0; margin-top: 8px; }
+    .home-stat { flex: 1; text-align: center; padding: 0 4px; border-right: 1px solid rgba(255,255,255,.08); }
+    .home-stat:last-child { border-right: none; }
+    .home-stat-lbl { font-size: 5px; color: var(--green); letter-spacing: 1px; margin-bottom: 4px; }
+    .home-stat-val { font-size: 9px; letter-spacing: 1px; }
+    #home-edit-hint { font-size: 5.5px; color: rgba(255,255,255,.22); letter-spacing: 1px; margin-top: 6px; }
+
+    /* ══════════ PROFILE EDIT MODAL ══════════ */
+    #prof-modal {
+      position: fixed; inset: 0; z-index: 50;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(4,6,12,0.85);
+      backdrop-filter: blur(14px);
+    }
+    #prof-modal.open { display: flex; }
+    #prof-modal-box {
+      background: rgba(12,16,26,0.97);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 26px;
+      padding: 26px 22px 22px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 16px; align-items: center;
+    }
+    #prof-modal-title { font-size: 12px; letter-spacing: 2px; }
+    /* Avatar preview with rainbow ring */
+    #prof-av-ring {
+      width: 80px; height: 80px; border-radius: 50%;
+      padding: 2.5px;
+      background: conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      animation: spinA 3s linear infinite;
+      cursor: pointer; position: relative;
+    }
+    #prof-av-ring-inner {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: #080a0e; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #prof-modal-av-img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
+    #prof-av-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .prof-av-btn {
+      padding: 8px 14px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.7); font-family: var(--font);
+      font-size: 6.5px; letter-spacing: 1px; cursor: pointer;
+    }
+    .prof-av-btn:active { transform: scale(0.95); }
+    #prof-name-row { width: 100%; }
+    #prof-name-input {
+      width: 100%; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
+      color: #fff; font-family: var(--font);
+      letter-spacing: 2px; padding: 12px 14px;
+      text-transform: uppercase; text-align: center;
+    }
+    #prof-name-input:focus { outline: none; border-color: var(--green); }
+    #prof-modal-save {
+      width: 100%; padding: 14px; border-radius: 13px;
+      border: 1.5px solid var(--green); background: rgba(124,255,122,.12);
+      color: var(--green); font-family: var(--font);
+      font-size: 11px; letter-spacing: 2px; cursor: pointer;
+    }
+    #prof-modal-save:active { transform: scale(0.97); }
+    #prof-modal-cancel {
+      background: none; border: none;
+      color: rgba(255,255,255,.28); font-family: var(--font);
+      font-size: 6.5px; letter-spacing: 1px; cursor: pointer;
+    }
+    /* Avatar sub-grid inside profile modal */
+    #prof-av-grid {
+      display: none; grid-template-columns: repeat(5, 1fr);
+      gap: 8px; width: 100%;
+    }
+    #prof-av-grid.open { display: grid; }
+
+    /* Reset button — outside panel, at bottom of settings screen */
+    #reset-outer {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin-top: 18px;
+    }
+    #btn-reset { width: 50%; font-size: 7px; padding: 12px; }
+    #reset-confirm { font-size: 7px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
+
     /* ══════════ DIFFICULTY COLORS ══════════ */
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
 
@@ -580,17 +669,28 @@
 <!-- ══ HOME ══ -->
 <div class="screen" id="home">
   <h1 id="title">ArcRise</h1>
-  <!-- Profile card -->
-  <div id="home-profile">
+  <!-- Profile card (tap to edit) -->
+  <div id="home-profile" title="Tap to edit profile">
     <div id="home-av-wrap">
       <img id="home-av-img" src="" alt="">
     </div>
     <div id="home-profile-info">
       <div id="home-pname">PLAYER</div>
-      <div id="home-pbest-row">
-        <span id="home-pbest-lbl">BEST</span>
-        <span id="home-pbest-val">000</span>
+      <div class="home-stat-row">
+        <div class="home-stat">
+          <div class="home-stat-lbl">LAST</div>
+          <div class="home-stat-val" id="home-plast">—</div>
+        </div>
+        <div class="home-stat">
+          <div class="home-stat-lbl">BEST</div>
+          <div class="home-stat-val" id="home-pbest-val">000</div>
+        </div>
+        <div class="home-stat">
+          <div class="home-stat-lbl">COINS</div>
+          <div class="home-stat-val" id="home-pcoins">0</div>
+        </div>
       </div>
+      <div id="home-edit-hint">tap to edit ✏</div>
     </div>
   </div>
   <div class="menu" style="margin-top:18px">
@@ -601,8 +701,6 @@
   </div>
   <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
-    <button class="home-link" id="btn-tutorial-link">TUTORIAL</button>
-    <span style="color:rgba(255,255,255,.12);font-size:10px">·</span>
     <button class="home-link" id="btn-credits">CREDITS</button>
   </div>
 </div>
@@ -611,17 +709,6 @@
 <div class="screen" id="settings">
   <div class="panel">
     <h2>Settings</h2>
-
-    <!-- ── Profile (avatar tıklayınca modal) ── -->
-    <div id="settings-profile-ro" title="Change avatar">
-      <div id="settings-av-img">
-        <img id="settings-av-src" src="" alt="">
-        <div id="settings-av-badge">
-          <svg viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round"><path d="M9 1.5L10.5 3 4.5 9H3V7.5L9 1.5Z"/></svg>
-        </div>
-      </div>
-      <div id="settings-name-lbl">PLAYER</div>
-    </div>
 
     <!-- ── SFX ── -->
     <div class="srow">
@@ -632,10 +719,10 @@
         </svg>
       </span>
       <span class="slbl">SFX</span>
-      <div class="sctl" style="flex:1">
-        <div class="rslide-wrap" style="width:100%">
-          <input type="range" id="sfx-sl" min="0" max="100" value="80">
-          <div class="rslide-thumb" id="sfx-th"></div>
+      <div class="sctl">
+        <div class="tog">
+          <button class="tog-btn active-on"  id="sfx-on">On</button>
+          <button class="tog-btn active-off" id="sfx-off">Off</button>
         </div>
       </div>
     </div>
@@ -649,10 +736,10 @@
         </svg>
       </span>
       <span class="slbl">Music</span>
-      <div class="sctl" style="flex:1">
-        <div class="rslide-wrap" style="width:100%">
-          <input type="range" id="mus-sl" min="0" max="100" value="50">
-          <div class="rslide-thumb" id="mus-th"></div>
+      <div class="sctl">
+        <div class="tog">
+          <button class="tog-btn active-on"  id="mus-on">On</button>
+          <button class="tog-btn active-off" id="mus-off">Off</button>
         </div>
       </div>
     </div>
@@ -675,6 +762,9 @@
     </div>
 
     <button class="btn-gray" id="btn-back" style="margin-top:6px">Back</button>
+  </div>
+  <!-- Reset button outside panel -->
+  <div id="reset-outer">
     <button class="btn-danger" id="btn-reset">Reset Data</button>
     <div id="reset-confirm">Reset complete ✓</div>
   </div>
@@ -696,6 +786,34 @@
       <button class="btn-gray" id="btn-menu" style="font-size:11px">Back to Menu</button>
     </div>
     <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">000</span></div>
+  </div>
+</div>
+
+<!-- ══ PROFILE EDIT MODAL ══ -->
+<div id="prof-modal">
+  <div id="prof-modal-box">
+    <div id="prof-modal-title">PROFILE</div>
+    <!-- Avatar ring preview -->
+    <div id="prof-av-ring">
+      <div id="prof-av-ring-inner">
+        <img id="prof-modal-av-img" src="" alt="">
+      </div>
+    </div>
+    <!-- Avatar action buttons -->
+    <div id="prof-av-btns">
+      <button class="prof-av-btn" id="prof-av-choose">Choose Avatar</button>
+      <button class="prof-av-btn" id="prof-av-upload">Upload Photo</button>
+      <input type="file" id="prof-av-file" accept="image/*" style="display:none">
+    </div>
+    <!-- Collapsible avatar grid -->
+    <div id="prof-av-grid"></div>
+    <!-- Name input -->
+    <div id="prof-name-row">
+      <input type="text" id="prof-name-input" maxlength="8" placeholder="YOUR NAME"
+             spellcheck="false" autocomplete="off">
+    </div>
+    <button id="prof-modal-save">SAVE</button>
+    <button id="prof-modal-cancel">cancel</button>
   </div>
 </div>
 
@@ -850,10 +968,7 @@ const ARC_DB = (() => {
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
   const profileSetupEl = document.getElementById('profile-setup');
-  const sfxSl      = document.getElementById('sfx-sl');
-  const sfxTh      = document.getElementById('sfx-th');
-  const musSl      = document.getElementById('mus-sl');
-  const musTh      = document.getElementById('mus-th');
+  // SFX/Music are now on/off toggles (no sliders)
 
   // ── 20 Avatar ────────────────────────────────────────────
   const AVATAR_COLORS = [
@@ -917,21 +1032,24 @@ const ARC_DB = (() => {
   let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 0);
   const nameIsLocked = !!localStorage.getItem('arc_name');
 
+  function avatarSrc() {
+    return customAvatarSrc || AVATARS[avatarIdx] || '';
+  }
+
   function applyProfile() {
     hudAvDot.style.background = AVATAR_COLORS[avatarIdx];
-    const src = AVATARS[avatarIdx] ?? '';
-    // Settings panel
-    const sImg = document.getElementById('settings-av-src');
-    if (sImg) sImg.src = src;
-    const sLbl = document.getElementById('settings-name-lbl');
-    if (sLbl) sLbl.textContent = playerName || 'PLAYER';
+    const src = avatarSrc();
     // Home profile card
     const hImg = document.getElementById('home-av-img');
     if (hImg) hImg.src = src;
     const hName = document.getElementById('home-pname');
     if (hName) hName.textContent = playerName || 'PLAYER';
-    const hBest = document.getElementById('home-pbest-val');
-    if (hBest) hBest.textContent = pad(best);
+    const hBestEl = document.getElementById('home-pbest-val');
+    if (hBestEl) hBestEl.textContent = pad(best);
+    const hLastEl = document.getElementById('home-plast');
+    if (hLastEl) hLastEl.textContent = lastScore > 0 ? pad(lastScore) : '—';
+    const hCoinsEl = document.getElementById('home-pcoins');
+    if (hCoinsEl) hCoinsEl.textContent = String(coins);
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
@@ -973,7 +1091,7 @@ const ARC_DB = (() => {
     });
     avModal.classList.add('open');
   }
-  document.getElementById('settings-profile-ro').addEventListener('click', openAvModal);
+  // settings-profile-ro removed — profile editing is now on home card
   document.getElementById('av-modal-close').addEventListener('click', () => avModal.classList.remove('open'));
   avModal.addEventListener('click', e => { if (e.target === avModal) avModal.classList.remove('open'); });
 
@@ -1087,8 +1205,10 @@ const ARC_DB = (() => {
   const GAME_SPEED = 350;
   const SCORE_MUL  = 2.5;
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
-  sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
-  musSl.value  = localStorage.getItem('arc_mus')  || 50;
+  let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
+  let musOn  = localStorage.getItem('arc_mus') !== '0';
+  let coins  = Number(localStorage.getItem('arc_coins') || 0);
+  let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   const ENERGY_DECAY = 1 / 9;   // 9 saniyelik geri sayım
 
@@ -1115,21 +1235,33 @@ const ARC_DB = (() => {
   deadAudio.volume = 0.8;
 
   let audioStarted = false;
+  // Custom avatar: base64 data URL stored in localStorage
+  let customAvatarSrc = (() => {
+    try { return localStorage.getItem('arc_avatar_custom') || null; } catch { return null; }
+  })();
 
   function initAudio() {
-    if (audioStarted) return;
+    // Just marks audio context as unlocked — bgAudio starts only on game start
     audioStarted = true;
+  }
+
+  function playBgMusic() {
+    if (!musOn || !audioStarted) return;
+    bgAudio.currentTime = 0;
     bgAudio.play().catch(e => console.warn('[Audio] BG:', e));
   }
 
+  function stopBgMusic() {
+    bgAudio.pause();
+    bgAudio.currentTime = 0;
+  }
+
   function playTouchSound() {
-    // cloneNode → aynı anda birden fazla çalabilir
+    if (!sfxOn) return;
     const s = touchAudio.cloneNode();
     s.volume = touchAudio.volume;
     s.play().catch(() => {});
   }
-
-  function setMusicVolume(v) { bgAudio.volume = (v / 100) * 0.7; }
   let nextSpawnY, lastBonusY;
 
   // ── BG Arc animation ─────────────────────────────────────
@@ -1324,20 +1456,23 @@ const ARC_DB = (() => {
     }
   }
 
-  // ── Green Particles ──────────────────────────────────────
+  // ── Green Particles (polygonal) ──────────────────────────
   function spawnGreenParticles(wx, wy) {
-    const count = 24;
+    const count = 28;
     for (let i = 0; i < count; i++) {
-      const ang  = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-      const spd  = 120 + Math.random() * 220;
+      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+      // 2× spread: speed doubled → twice the radius of dispersion
+      const spd = 240 + Math.random() * 440;
       particles.push({
         wx, wy,
         x: wx, y: wy,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd,
-        r: 5 + Math.random() * 9,      // r=5..14 (çok daha büyük)
+        r:    6 + Math.random() * 10,
         life: 1,
-        hue: 110 + Math.random() * 40,
+        hue:  110 + Math.random() * 40,
+        sides: 3 + Math.floor(Math.random() * 4),  // triangle→hexagon
+        rot:   Math.random() * Math.PI * 2,
       });
     }
   }
@@ -1345,31 +1480,46 @@ const ARC_DB = (() => {
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.vx *= Math.pow(0.84, dt * 60);
-      p.vy *= Math.pow(0.84, dt * 60);
+      p.vx *= Math.pow(0.80, dt * 60);   // slightly less drag for wider spread
+      p.vy *= Math.pow(0.80, dt * 60);
       p.x  += p.vx * dt;
       p.y  += p.vy * dt;
-      p.life -= dt * 1.4;              // ~0.7s ömür
+      p.rot += dt * (2 + Math.random()); // spin
+      p.life -= dt * 1.2;               // ~0.8s ömür
       if (p.life <= 0) particles.splice(i, 1);
     }
+  }
+
+  function drawPolygon(cx, cy, r, sides, rot) {
+    ctx.beginPath();
+    for (let i = 0; i < sides; i++) {
+      const a = rot + (i / sides) * Math.PI * 2;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
   }
 
   function drawParticles() {
     if (!particles.length) return;
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter'; // parlak blend
+    ctx.globalCompositeOperation = 'lighter';
     for (const p of particles) {
       const sy = W2S(p.y);
-      if (sy < -40 || sy > H + 40) continue;
+      if (sy < -80 || sy > H + 80) continue;
       const a  = Math.max(0, p.life);
-      // Glow halkası
-      const gR = p.r * 2.2;
-      const g  = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, gR);
-      g.addColorStop(0,   `hsla(${p.hue},100%,72%,${a * 0.9})`);
-      g.addColorStop(0.5, `hsla(${p.hue},100%,60%,${a * 0.4})`);
+      const gR = p.r * 2.8;
+      // Soft glow halo behind the polygon
+      const g = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, gR * 1.5);
+      g.addColorStop(0,   `hsla(${p.hue},100%,70%,${a * 0.4})`);
       g.addColorStop(1,   `hsla(${p.hue},100%,50%,0)`);
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(p.x, sy, gR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, sy, gR * 1.5, 0, Math.PI * 2); ctx.fill();
+      // Solid polygon
+      ctx.fillStyle = `hsla(${p.hue},100%,75%,${a * 0.92})`;
+      drawPolygon(p.x, sy, gR, p.sides, p.rot);
+      ctx.fill();
     }
     ctx.restore();
   }
@@ -1898,12 +2048,19 @@ const ARC_DB = (() => {
   }
 
   async function endGame() {
+    stopBgMusic();
     haptic(2000); // çarpışma titreşimi — 2 saniye
-    const _d = deadAudio.cloneNode(); _d.volume = deadAudio.volume; _d.play().catch(() => {});
+    if (sfxOn) { const _d = deadAudio.cloneNode(); _d.volume = deadAudio.volume; _d.play().catch(() => {}); }
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
     ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
-    best = Math.max(best, Math.floor(score));
+    // Save last score + award coins (1 per 10 pts)
+    lastScore = Math.floor(score);
+    localStorage.setItem('arc_last', String(lastScore));
+    const earned = Math.floor(lastScore / 10);
+    coins += earned;
+    localStorage.setItem('arc_coins', String(coins));
+    best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
 
     const sc  = Math.floor(score);
@@ -2049,18 +2206,17 @@ const ARC_DB = (() => {
 
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
-    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar'].forEach(k => localStorage.removeItem(k));
-    best = 0; firstPlay = true;
-    playerName = ''; avatarIdx = 0;
-    if (homeBestV) homeBestV.textContent = pad(0);
-    sfxSl.value = 80; musSl.value = 50;
-    syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
+    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
+     'arc_coins','arc_last','arc_avatar_custom'].forEach(k => localStorage.removeItem(k));
+    best = 0; firstPlay = true; coins = 0; lastScore = 0;
+    playerName = ''; avatarIdx = 0; customAvatarSrc = null;
+    setSfx(true); setMus(true);
     renderAvPicker(); applyProfile();
     const confirm = document.getElementById('reset-confirm');
     confirm.style.display = 'block';
     setTimeout(() => {
       confirm.style.display = 'none';
-      showScene('profile-setup'); // isim sıfırlandı → yeniden oluştur
+      showScene('profile-setup');
     }, 2000);
   });
 
@@ -2092,16 +2248,25 @@ const ARC_DB = (() => {
   renderAvPicker();
   applyProfile();
 
-  // ── Settings UI ───────────────────────────────────────────
-  function syncThumb(sl, th) {
-    const pct = (sl.value - sl.min) / (sl.max - sl.min);
-    th.style.left = `calc(${pct*100}% - 2.5px)`;
+  // ── Settings UI — toggles ─────────────────────────────────
+  function setSfx(v) {
+    sfxOn = v;
+    touchAudio.volume = v ? 0.55 : 0;
+    document.getElementById('sfx-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
+    document.getElementById('sfx-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
   }
-  syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
-  sfxSl.addEventListener('input', () => syncThumb(sfxSl, sfxTh));
-  musSl.addEventListener('input', () => { syncThumb(musSl, musTh); setMusicVolume(Number(musSl.value)); });
-
-  // Zorluk seviyesi kaldırıldı — sabit EXTREME
+  function setMus(v) {
+    musOn = v;
+    document.getElementById('mus-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
+    document.getElementById('mus-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
+    // If turned off mid-game, pause; if turned on mid-game, resume
+    if (scene === 'play') { v ? bgAudio.play().catch(() => {}) : bgAudio.pause(); }
+  }
+  document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
+  document.getElementById('sfx-off').addEventListener('click', () => setSfx(false));
+  document.getElementById('mus-on').addEventListener('click',  () => setMus(true));
+  document.getElementById('mus-off').addEventListener('click', () => setMus(false));
+  setSfx(sfxOn); setMus(musOn);
 
   const fbOn  = document.getElementById('fb-on');
   const fbOff = document.getElementById('fb-off');
@@ -2114,10 +2279,110 @@ const ARC_DB = (() => {
   fbOff.addEventListener('click', () => setFeedback(false));
   setFeedback(feedbackOn);
 
+  // ── Profile Edit Modal ────────────────────────────────────
+  const profModal = document.getElementById('prof-modal');
+  let profAvatarGridOpen = false;
+
+  function openProfModal() {
+    // Sync preview
+    const img = document.getElementById('prof-modal-av-img');
+    if (img) img.src = avatarSrc();
+    const inp = document.getElementById('prof-name-input');
+    if (inp) inp.value = playerName;
+    // Reset avatar grid
+    profAvatarGridOpen = false;
+    const grid = document.getElementById('prof-av-grid');
+    if (grid) grid.classList.remove('open');
+    profModal.classList.add('open');
+  }
+
+  document.getElementById('home-profile').addEventListener('click', openProfModal);
+
+  document.getElementById('prof-av-choose').addEventListener('click', () => {
+    profAvatarGridOpen = !profAvatarGridOpen;
+    const grid = document.getElementById('prof-av-grid');
+    if (profAvatarGridOpen) {
+      // Render avatar options
+      grid.innerHTML = '';
+      AVATARS.forEach((src, i) => {
+        const d = document.createElement('div');
+        d.className = 'av-modal-opt' + (i === avatarIdx ? ' sel' : '');
+        d.title = AVATAR_NAMES[i];
+        const img = document.createElement('img'); img.src = src; img.alt = AVATAR_NAMES[i];
+        d.appendChild(img);
+        d.addEventListener('click', () => {
+          avatarIdx = i;
+          customAvatarSrc = null; // preset overrides custom
+          try { localStorage.removeItem('arc_avatar_custom'); } catch {}
+          localStorage.setItem('arc_avatar', i);
+          // Update preview and sel state
+          const pImg = document.getElementById('prof-modal-av-img');
+          if (pImg) pImg.src = avatarSrc();
+          grid.querySelectorAll('.av-modal-opt').forEach((el, j) => {
+            el.classList.toggle('sel', j === i);
+          });
+          applyProfile();
+        });
+        grid.appendChild(d);
+      });
+      grid.classList.add('open');
+    } else {
+      grid.classList.remove('open');
+    }
+  });
+
+  document.getElementById('prof-av-upload').addEventListener('click', () => {
+    document.getElementById('prof-av-file').click();
+  });
+
+  document.getElementById('prof-av-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // Resize to ≤256px before storing to keep localStorage usage low
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const tmpImg = new Image();
+      tmpImg.onload = () => {
+        const size = 256;
+        const cvs = document.createElement('canvas');
+        cvs.width = cvs.height = size;
+        const cctx = cvs.getContext('2d');
+        const scale = Math.min(size / tmpImg.width, size / tmpImg.height);
+        const w2 = tmpImg.width * scale, h2 = tmpImg.height * scale;
+        cctx.drawImage(tmpImg, (size - w2) / 2, (size - h2) / 2, w2, h2);
+        customAvatarSrc = cvs.toDataURL('image/jpeg', 0.8);
+        try { localStorage.setItem('arc_avatar_custom', customAvatarSrc); } catch {}
+        const pImg = document.getElementById('prof-modal-av-img');
+        if (pImg) pImg.src = customAvatarSrc;
+        applyProfile();
+      };
+      tmpImg.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // reset so same file can be re-selected
+  });
+
+  document.getElementById('prof-modal-save').addEventListener('click', () => {
+    const raw = (document.getElementById('prof-name-input').value || '')
+      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
+    if (raw) { playerName = raw; localStorage.setItem('arc_name', playerName); }
+    localStorage.setItem('arc_avatar', avatarIdx);
+    applyProfile();
+    profModal.classList.remove('open');
+  });
+
+  document.getElementById('prof-modal-cancel').addEventListener('click', () => {
+    profModal.classList.remove('open');
+  });
+  profModal.addEventListener('click', e => {
+    if (e.target === profModal) profModal.classList.remove('open');
+  });
+
   // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
-    initAudio(); // ilk etkileşim → AudioContext başlat / devam ettir
+    initAudio(); // AudioContext unlock
     resetGame();
+    playBgMusic();
     showScene('play');
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
@@ -2134,10 +2399,6 @@ const ARC_DB = (() => {
   document.getElementById('btn-start').addEventListener('click', () => startGame());
   document.getElementById('wrap-start').addEventListener('click', () => startGame());
 
-  // Home alt bağlantılar
-  document.getElementById('btn-tutorial-link').addEventListener('click', () => {
-    startGame(true); // tutorial ile başlat
-  });
   document.getElementById('btn-credits').addEventListener('click', () => {
     alert('ArcRise\nv1.0 — 2025\nDesign & Code: Buğra Sulukcu');
   });
@@ -2145,8 +2406,8 @@ const ARC_DB = (() => {
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
   document.getElementById('btn-back').addEventListener('click', () => {
-    localStorage.setItem('arc_sfx', sfxSl.value);
-    localStorage.setItem('arc_mus', musSl.value);
+    localStorage.setItem('arc_sfx', sfxOn ? '1' : '0');
+    localStorage.setItem('arc_mus', musOn ? '1' : '0');
     localStorage.setItem('arc_fb', feedbackOn ? '1' : '0');
     showScene('home');
   });
