@@ -367,22 +367,7 @@
     }
     #ps-confirm:active { transform: scale(0.97); }
 
-    /* ══════════ HOME DIFFICULTY SELECTOR ══════════ */
-    #home-diff {
-      display: flex; align-items: center; gap: 10px;
-      margin-top: 18px;
-    }
-    #home-diff .darr { font-size: 14px; }
-    #hd-label {
-      font-size: 8px; letter-spacing: 1px; color: #fff; min-width: 76px; text-align: center;
-      background: rgba(0,180,160,.18); border: 1px solid rgba(0,210,180,.35);
-      border-radius: 8px; padding: 7px 10px;
-      transition: color .3s, border-color .3s, background .3s;
-    }
-    #hd-mul {
-      font-size: 6px; color: rgba(255,255,255,.4);
-      letter-spacing: 1px; text-align: center; margin-top: 4px;
-    }
+    /* Difficulty selector kaldırıldı — tek seviye: EXTREME */
 
     /* ══════════ SETTINGS profile (read-only) ══════════ */
     #settings-profile-ro {
@@ -614,14 +599,7 @@
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
   </div>
-  <div id="home-diff">
-    <button class="darr" id="hd-prev">&#60;</button>
-    <div>
-      <div id="hd-label">NORMAL</div>
-      <div id="hd-mul">SCORE ×1.0</div>
-    </div>
-    <button class="darr" id="hd-next">&#62;</button>
-  </div>
+  <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
     <button class="home-link" id="btn-tutorial-link">TUTORIAL</button>
     <span style="color:rgba(255,255,255,.12);font-size:10px">·</span>
@@ -871,8 +849,6 @@ const ARC_DB = (() => {
   const homeBestV  = document.getElementById('home-pbest-val'); // profile card'daki best score
   const goBestV    = document.getElementById('go-best-val');
   const rankRows   = document.getElementById('rank-rows');
-  const hdLabel    = document.getElementById('hd-label');
-  const hdMul      = document.getElementById('hd-mul');
   const profileSetupEl = document.getElementById('profile-setup');
   const sfxSl      = document.getElementById('sfx-sl');
   const sfxTh      = document.getElementById('sfx-th');
@@ -1049,7 +1025,7 @@ const ARC_DB = (() => {
     boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
     isGhost   = (type === 'ghost');
     hasShield = (type === 'shield');
-    if (type === 'speed') player.speed = SPEEDS[diffIdx] * 1.6;
+    if (type === 'speed') player.speed = GAME_SPEED * 1.6;
     BOOSTER_ICON.textContent = info.icon;
     BOOSTER_NAME.textContent = info.name;
     BOOSTER_NAME.style.color = info.color;
@@ -1060,7 +1036,7 @@ const ARC_DB = (() => {
   function clearBooster() {
     boosterType = null; boosterTime = 0;
     isGhost = false; hasShield = false;
-    player.speed = SPEEDS[diffIdx];
+    player.speed = GAME_SPEED;
     BOOSTER_EL.classList.remove('active');
   }
 
@@ -1107,22 +1083,10 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  const DIFFS      = ['EASY', 'NORMAL', 'HARD', 'EXTREME'];
-  const SPEEDS     = [180, 220, 280, 350];
-  const SCORE_MUL  = [0.7, 1.0, 1.5, 2.5];
-  const DIFF_COLORS = ['#00ccff', '#7CFF7A', '#ff8800', '#ff3355'];
-  let diffIdx  = Number(localStorage.getItem('arc_diff_idx') || 1);
+  // Tek zorluk seviyesi: EXTREME
+  const GAME_SPEED = 350;
+  const SCORE_MUL  = 2.5;
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
-
-  function updateHomeDiff() {
-    const c = DIFF_COLORS[diffIdx];
-    hdLabel.textContent = DIFFS[diffIdx];
-    hdLabel.style.color = c;
-    hdLabel.style.borderColor = c + '88';
-    hdLabel.style.background  = c + '22';
-    hdMul.textContent   = `SCORE ×${SCORE_MUL[diffIdx].toFixed(1)}`;
-    hdMul.style.color   = c + 'aa';
-  }
   sfxSl.value  = localStorage.getItem('arc_sfx')  || 80;
   musSl.value  = localStorage.getItem('arc_mus')  || 50;
 
@@ -1131,7 +1095,7 @@ const ARC_DB = (() => {
   // ── Player ───────────────────────────────────────────────
   const player = {
     x: W/2, y: H - 200, r: 18,
-    dir: 0, speed: SPEEDS[diffIdx],
+    dir: 0, speed: GAME_SPEED,
     heading: -Math.PI/2,
     radius: 120, cx: 0, cy: 0, ang: 0
   };
@@ -1139,35 +1103,30 @@ const ARC_DB = (() => {
   const goldBalls = [], purpleBalls = [], particles = [];
 
   // ── Audio ──────────────────────────────────────────────────
-  let audioCtx = null, bgMusicGain = null, bgMusicSource = null, bgMusicBuffer = null;
+  // new Audio() her protokolde (file://, http://) çalışır — fetch'in aksine.
+  const bgAudio    = new Audio('AUDIO/ArcRiseBGMusic.wav');
+  bgAudio.loop     = true;
+  bgAudio.volume   = 0.7;
 
-  async function initAudio() {
-    if (audioCtx) { audioCtx.resume(); return; }
-    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
-    bgMusicGain = audioCtx.createGain();
-    bgMusicGain.gain.value = (Number(musSl.value) / 100) * 0.7;
-    bgMusicGain.connect(audioCtx.destination);
-    try {
-      const res = await fetch('ArcRiseBGMusic.wav');
-      const ab  = await res.arrayBuffer();
-      bgMusicBuffer = await audioCtx.decodeAudioData(ab);
-      playBGMusic();
-    } catch(e) { console.warn('[Audio] müzik yüklenemedi:', e); }
+  const touchAudio = new Audio('AUDIO/ArcRiseTouch.wav');
+  touchAudio.volume = 0.55;
+
+  let audioStarted = false;
+
+  function initAudio() {
+    if (audioStarted) return;
+    audioStarted = true;
+    bgAudio.play().catch(e => console.warn('[Audio] BG:', e));
   }
 
-  function playBGMusic() {
-    if (!audioCtx || !bgMusicBuffer) return;
-    if (bgMusicSource) { try { bgMusicSource.stop(); } catch(e){} bgMusicSource = null; }
-    bgMusicSource = audioCtx.createBufferSource();
-    bgMusicSource.buffer = bgMusicBuffer;
-    bgMusicSource.loop   = true;
-    bgMusicSource.connect(bgMusicGain);
-    bgMusicSource.start(0);
+  function playTouchSound() {
+    // cloneNode → aynı anda birden fazla çalabilir
+    const s = touchAudio.cloneNode();
+    s.volume = touchAudio.volume;
+    s.play().catch(() => {});
   }
 
-  function setMusicVolume(v) { // v: 0..100
-    if (bgMusicGain) bgMusicGain.gain.value = (v / 100) * 0.7;
-  }
+  function setMusicVolume(v) { bgAudio.volume = (v / 100) * 0.7; }
   let nextSpawnY, lastBonusY;
 
   // ── BG Arc animation ─────────────────────────────────────
@@ -1364,17 +1323,17 @@ const ARC_DB = (() => {
 
   // ── Green Particles ──────────────────────────────────────
   function spawnGreenParticles(wx, wy) {
-    const count = 18;
+    const count = 24;
     for (let i = 0; i < count; i++) {
-      const ang  = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      const spd  = 80 + Math.random() * 140;
+      const ang  = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const spd  = 120 + Math.random() * 220;
       particles.push({
-        wx, wy,                       // world-space doğum noktası
-        x: wx, y: wy,                 // world-space güncel konum
+        wx, wy,
+        x: wx, y: wy,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd,
-        r: 1.5 + Math.random() * 2.5,
-        life: 1,                      // 1→0 azalır
+        r: 5 + Math.random() * 9,      // r=5..14 (çok daha büyük)
+        life: 1,
         hue: 110 + Math.random() * 40,
       });
     }
@@ -1383,11 +1342,11 @@ const ARC_DB = (() => {
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.vx *= Math.pow(0.88, dt * 60); // sürtünme (frame-rate bağımsız)
-      p.vy *= Math.pow(0.88, dt * 60);
+      p.vx *= Math.pow(0.84, dt * 60);
+      p.vy *= Math.pow(0.84, dt * 60);
       p.x  += p.vx * dt;
       p.y  += p.vy * dt;
-      p.life -= dt * 1.8;              // ~0.55s ömür
+      p.life -= dt * 1.4;              // ~0.7s ömür
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -1395,13 +1354,19 @@ const ARC_DB = (() => {
   function drawParticles() {
     if (!particles.length) return;
     ctx.save();
+    ctx.globalCompositeOperation = 'lighter'; // parlak blend
     for (const p of particles) {
       const sy = W2S(p.y);
-      if (sy < -20 || sy > H + 20) continue;
-      ctx.globalAlpha = Math.max(0, p.life) * 0.9;
-      ctx.fillStyle   = `hsl(${p.hue},100%,65%)`;
-      const cr = p.r * Math.max(0.1, p.life);
-      ctx.beginPath(); ctx.arc(p.x, sy, cr, 0, Math.PI * 2); ctx.fill();
+      if (sy < -40 || sy > H + 40) continue;
+      const a  = Math.max(0, p.life);
+      // Glow halkası
+      const gR = p.r * 2.2;
+      const g  = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, gR);
+      g.addColorStop(0,   `hsla(${p.hue},100%,72%,${a * 0.9})`);
+      g.addColorStop(0.5, `hsla(${p.hue},100%,60%,${a * 0.4})`);
+      g.addColorStop(1,   `hsla(${p.hue},100%,50%,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(p.x, sy, gR, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
@@ -1733,7 +1698,7 @@ const ARC_DB = (() => {
   function resetGame() {
     player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
-    player.speed = SPEEDS[diffIdx];
+    player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     nextSpawnY = player.y - 500; lastBonusY = player.y;
     score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
@@ -1784,13 +1749,13 @@ const ARC_DB = (() => {
           purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
         }
       } else {
-        // Engel boyutu (x4 orijinal değerler)
+        // Engel boyutu: min çap=W/10 (r=30), max çap=W/3 (r=100)
         let rMin, rMax;
-        if      (sc < 50)  { rMin = 72;  rMax = 120; }
-        else if (sc < 120) { rMin = 104; rMax = 168; }
-        else if (sc < 250) { rMin = 136; rMax = 216; }
-        else if (sc < 450) { rMin = 168; rMax = 240; }
-        else               { rMin = 200; rMax = 260; }
+        if      (sc < 50)  { rMin = 30; rMax = 50; }
+        else if (sc < 120) { rMin = 38; rMax = 62; }
+        else if (sc < 250) { rMin = 45; rMax = 75; }
+        else if (sc < 450) { rMin = 55; rMax = 88; }
+        else               { rMin = 65; rMax = 100; }
         const r = rMin + Math.random() * (rMax - rMin);
 
         const ob = { x, y: nextSpawnY, r };
@@ -1848,7 +1813,7 @@ const ARC_DB = (() => {
     maxAscend = Math.max(maxAscend, -player.y);
     // Booster puanı çarpanı + scoreBonus
     const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
-    score = Math.floor(maxAscend / 200 * SCORE_MUL[diffIdx] * scoreMulBoost) + scoreBonus;
+    score = Math.floor(maxAscend / 200 * SCORE_MUL * scoreMulBoost) + scoreBonus;
 
     // Booster sayacı
     if (boosterType && boosterDur > 0) {
@@ -2062,7 +2027,7 @@ const ARC_DB = (() => {
     settingsEl.classList.toggle('active',     s === 'settings');
     gameoverEl.classList.toggle('active',     s === 'over');
     hudEl.classList.toggle('active',          s === 'play');
-    if (s === 'home') { applyProfile(); updateHomeDiff(); endTutorial(); }
+    if (s === 'home') { applyProfile(); endTutorial(); }
     if (s !== 'play') tutHudEl.classList.remove('active');
   }
 
@@ -2080,10 +2045,9 @@ const ARC_DB = (() => {
 
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
-    ['arc_best','arc_diff_idx','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar'].forEach(k => localStorage.removeItem(k));
-    best = 0; diffIdx = 1; firstPlay = true;
+    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar'].forEach(k => localStorage.removeItem(k));
+    best = 0; firstPlay = true;
     playerName = ''; avatarIdx = 0;
-    updateHomeDiff();
     if (homeBestV) homeBestV.textContent = pad(0);
     sfxSl.value = 80; musSl.value = 50;
     syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
@@ -2101,7 +2065,8 @@ const ARC_DB = (() => {
 
   gc.addEventListener('pointerdown', e => {
     if (scene !== 'play') return;
-    haptic(40); // kısa dokunuş titreşimi
+    haptic(40);
+    playTouchSound();
     const rect = gc.getBoundingClientRect();
     const sx = (e.clientX - rect.left) * (W / rect.width);
     const sy = (e.clientY - rect.top)  * (H / rect.height);
@@ -2132,10 +2097,7 @@ const ARC_DB = (() => {
   sfxSl.addEventListener('input', () => syncThumb(sfxSl, sfxTh));
   musSl.addEventListener('input', () => { syncThumb(musSl, musTh); setMusicVolume(Number(musSl.value)); });
 
-  // Difficulty — home screen
-  document.getElementById('hd-prev').addEventListener('click', () => { diffIdx = (diffIdx - 1 + DIFFS.length) % DIFFS.length; updateHomeDiff(); localStorage.setItem('arc_diff_idx', diffIdx); });
-  document.getElementById('hd-next').addEventListener('click', () => { diffIdx = (diffIdx + 1) % DIFFS.length; updateHomeDiff(); localStorage.setItem('arc_diff_idx', diffIdx); });
-  updateHomeDiff();
+  // Zorluk seviyesi kaldırıldı — sabit EXTREME
 
   const fbOn  = document.getElementById('fb-on');
   const fbOff = document.getElementById('fb-off');
@@ -2179,7 +2141,6 @@ const ARC_DB = (() => {
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
   document.getElementById('btn-back').addEventListener('click', () => {
-    localStorage.setItem('arc_diff_idx', diffIdx);
     localStorage.setItem('arc_sfx', sfxSl.value);
     localStorage.setItem('arc_mus', musSl.value);
     localStorage.setItem('arc_fb', feedbackOn ? '1' : '0');
