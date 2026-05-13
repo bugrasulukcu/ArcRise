@@ -2287,8 +2287,8 @@ const ARC_DB = (() => {
 
     // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    const coinMod = coins % 1000; // progress within current 1000
-    const barPct  = Math.round(coinMod / 10); // %  (0-100)
+    const coinMod = sc % 1000; // bu oyunun skoru 1000'in neresinde
+    const barPct  = Math.round(coinMod / 10); // % (0-100)
     document.getElementById('go-coin-progress').textContent = `${coinMod} / 1000`;
     // Animate bar after short delay
     setTimeout(() => {
