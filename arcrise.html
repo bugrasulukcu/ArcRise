@@ -601,6 +601,7 @@
     }
     #extreme-modal.open { display: flex; }
     #extreme-modal-box {
+      position: relative;
       background: rgba(14,8,22,0.97);
       border: 1.5px solid rgba(255,51,85,.4);
       border-radius: 26px;
@@ -2982,7 +2983,7 @@ const ARC_DB = (() => {
   // ── Settings UI — toggles ─────────────────────────────────
   function setSfx(v) {
     sfxOn = v;
-    touchAudio.volume = v ? 0.55 : 0;
+    touchAudioFallback.volume = v ? 0.55 : 0;
     document.getElementById('sfx-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('sfx-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
   }
