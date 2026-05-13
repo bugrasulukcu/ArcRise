@@ -1136,7 +1136,38 @@ const ARC_DB = (() => {
     radius: 120, cx: 0, cy: 0, ang: 0
   };
   const trail = [], obstacles = [], bonuses = [], ripples = [];
-  const goldBalls = [], purpleBalls = [];
+  const goldBalls = [], purpleBalls = [], particles = [];
+
+  // ── Audio ──────────────────────────────────────────────────
+  let audioCtx = null, bgMusicGain = null, bgMusicSource = null, bgMusicBuffer = null;
+
+  async function initAudio() {
+    if (audioCtx) { audioCtx.resume(); return; }
+    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    bgMusicGain = audioCtx.createGain();
+    bgMusicGain.gain.value = (Number(musSl.value) / 100) * 0.7;
+    bgMusicGain.connect(audioCtx.destination);
+    try {
+      const res = await fetch('ArcRiseBGMusic.wav');
+      const ab  = await res.arrayBuffer();
+      bgMusicBuffer = await audioCtx.decodeAudioData(ab);
+      playBGMusic();
+    } catch(e) { console.warn('[Audio] müzik yüklenemedi:', e); }
+  }
+
+  function playBGMusic() {
+    if (!audioCtx || !bgMusicBuffer) return;
+    if (bgMusicSource) { try { bgMusicSource.stop(); } catch(e){} bgMusicSource = null; }
+    bgMusicSource = audioCtx.createBufferSource();
+    bgMusicSource.buffer = bgMusicBuffer;
+    bgMusicSource.loop   = true;
+    bgMusicSource.connect(bgMusicGain);
+    bgMusicSource.start(0);
+  }
+
+  function setMusicVolume(v) { // v: 0..100
+    if (bgMusicGain) bgMusicGain.gain.value = (v / 100) * 0.7;
+  }
   let nextSpawnY, lastBonusY;
 
   // ── BG Arc animation ─────────────────────────────────────
@@ -1331,6 +1362,50 @@ const ARC_DB = (() => {
     }
   }
 
+  // ── Green Particles ──────────────────────────────────────
+  function spawnGreenParticles(wx, wy) {
+    const count = 18;
+    for (let i = 0; i < count; i++) {
+      const ang  = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+      const spd  = 80 + Math.random() * 140;
+      particles.push({
+        wx, wy,                       // world-space doğum noktası
+        x: wx, y: wy,                 // world-space güncel konum
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        r: 1.5 + Math.random() * 2.5,
+        life: 1,                      // 1→0 azalır
+        hue: 110 + Math.random() * 40,
+      });
+    }
+  }
+
+  function updateParticles(dt) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.vx *= Math.pow(0.88, dt * 60); // sürtünme (frame-rate bağımsız)
+      p.vy *= Math.pow(0.88, dt * 60);
+      p.x  += p.vx * dt;
+      p.y  += p.vy * dt;
+      p.life -= dt * 1.8;              // ~0.55s ömür
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+
+  function drawParticles() {
+    if (!particles.length) return;
+    ctx.save();
+    for (const p of particles) {
+      const sy = W2S(p.y);
+      if (sy < -20 || sy > H + 20) continue;
+      ctx.globalAlpha = Math.max(0, p.life) * 0.9;
+      ctx.fillStyle   = `hsl(${p.hue},100%,65%)`;
+      const cr = p.r * Math.max(0.1, p.life);
+      ctx.beginPath(); ctx.arc(p.x, sy, cr, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
   // ── Ghost Trail (önceki oyun, %20 opaklık) ───────────────
   function drawGhostTrail() {
     if (ghostTrail.length < 2) return;
@@ -1429,6 +1504,26 @@ const ARC_DB = (() => {
       ctx.beginPath(); ctx.arc(rp.x, W2S(rp.y), 20 + age * 80, 0, Math.PI*2); ctx.stroke();
       ctx.restore();
     }
+  }
+
+  // ── Booster Border ───────────────────────────────────────
+  function drawBoosterBorder() {
+    if (!boosterType || boosterDur <= 0) return;
+    const frac  = Math.max(0, boosterTime / boosterDur);
+    if (frac < 0.01) return;
+    const maxLW = 22;
+    const lw    = maxLW * frac;
+    const info  = BOOSTER_INFO[boosterType];
+    const color = info?.color ?? '#b450ff';
+    // pulse hızlı son 20%'de
+    const now   = performance.now() / 1000;
+    const pulse = frac < 0.2 ? 0.5 + 0.5 * Math.abs(Math.sin(now * 8)) : 1;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = lw;
+    ctx.globalAlpha = (0.45 + 0.45 * frac) * pulse;
+    ctx.strokeRect(lw / 2, lw / 2, W - lw, H - lw);
+    ctx.restore();
   }
 
   // ── Leaderboard ──────────────────────────────────────────
@@ -1644,7 +1739,7 @@ const ARC_DB = (() => {
     score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
-    goldBalls.length = 0; purpleBalls.length = 0;
+    goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0;
     clearBooster();
     // Firestore'dan gerçek skorları arka planda çek
     fetchLiveScores();
@@ -1765,6 +1860,7 @@ const ARC_DB = (() => {
     }
 
     spawnAhead();
+    updateParticles(dt);
 
     for (const ob of obstacles) {
       if (ob.mk) {
@@ -1796,6 +1892,7 @@ const ARC_DB = (() => {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         bonuses.splice(i,1); energy = 1;
+        spawnGreenParticles(b.x, b.y); // ← yeşil partiküller
         if (tutStep === 1) advanceTut(2);
       }
     }
@@ -1942,9 +2039,9 @@ const ARC_DB = (() => {
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
       drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
-      drawTrail(time); drawPlayer(); drawRipples();
+      drawTrail(time); drawParticles(); drawPlayer(); drawRipples();
       // Tutorial katmanı — her zaman oyun üzerine çiz
-      if (scene === 'play') drawTutorial(time);
+      if (scene === 'play') { drawTutorial(time); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
@@ -2033,7 +2130,7 @@ const ARC_DB = (() => {
   }
   syncThumb(sfxSl, sfxTh); syncThumb(musSl, musTh);
   sfxSl.addEventListener('input', () => syncThumb(sfxSl, sfxTh));
-  musSl.addEventListener('input', () => syncThumb(musSl, musTh));
+  musSl.addEventListener('input', () => { syncThumb(musSl, musTh); setMusicVolume(Number(musSl.value)); });
 
   // Difficulty — home screen
   document.getElementById('hd-prev').addEventListener('click', () => { diffIdx = (diffIdx - 1 + DIFFS.length) % DIFFS.length; updateHomeDiff(); localStorage.setItem('arc_diff_idx', diffIdx); });
@@ -2053,6 +2150,7 @@ const ARC_DB = (() => {
 
   // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
+    initAudio(); // ilk etkileşim → AudioContext başlat / devam ettir
     resetGame();
     showScene('play');
     // Oyun hemen başlasın — ilk dokunuş bekleme
