@@ -638,45 +638,90 @@
     #extreme-back:active { transform: scale(0.97); }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
+    /* Wrapper allows particles to escape rounded mode-sel container */
+    #mode-fx-wrap {
+      width: 70%; align-self: center;
+      position: relative;
+      padding: 14px 18px;  /* room for floating particles outside */
+    }
     #mode-sel {
       display: flex; gap: 0;
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px; overflow: hidden;
-      width: 70%; align-self: center;
-      position: relative;
+      width: 100%;
+      position: relative; z-index: 1;
     }
     .mode-btn {
-      flex: 1; padding: 10px 0; font-family: var(--font);
+      flex: 1; padding: 11px 0; font-family: var(--font);
       font-size: 8px; letter-spacing: 1.5px;
       border: none; cursor: pointer;
-      transition: background .18s, color .18s;
-      background: rgba(255,255,255,.04); color: rgba(255,255,255,.4);
+      transition: filter .2s;
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.42);
       position: relative;
     }
-    .mode-btn.active-normal { background: #4488ff; color: #fff; }
 
-    /* Extreme button: flame background + flicker glow */
+    /* Normal button (active): icy blue gradient with shimmer */
+    .mode-btn.active-normal {
+      color: #fff;
+      text-shadow: 0 0 6px rgba(180,230,255,.8), 0 0 2px rgba(255,255,255,.9);
+      background:
+        radial-gradient(circle 14px at 20% 30%, rgba(220,240,255,.45), transparent 60%),
+        radial-gradient(circle 10px at 70% 70%, rgba(180,220,255,.4),  transparent 60%),
+        linear-gradient(135deg, #2255bb 0%, #4499ee 50%, #66ccff 100%);
+      box-shadow:
+        0 0 14px rgba(100,180,255,.45),
+        inset 0 -6px 12px rgba(255,255,255,.18),
+        inset 0 4px 8px rgba(20,60,140,.35);
+      animation: iceShimmer 2.2s ease-in-out infinite alternate;
+    }
+    @keyframes iceShimmer {
+      0%   { background-position: 0 0,    0 0,   0 0; filter: brightness(1.0) hue-rotate(0deg); }
+      100% { background-position: 3px 2px, -2px 3px, 0 0; filter: brightness(1.12) hue-rotate(8deg); }
+    }
+
+    /* Extreme button (active): roaring flame */
     .mode-btn.active-extreme {
       color: #fff;
-      text-shadow: 0 0 6px rgba(255,200,80,.7), 0 0 2px rgba(255,255,255,.8);
+      text-shadow: 0 0 8px rgba(255,220,80,.9), 0 0 3px rgba(255,255,255,.9);
       background:
-        radial-gradient(circle 10px at 12% 95%, rgba(255,220,80,.95), transparent 65%),
-        radial-gradient(circle 8px  at 30% 105%, rgba(255,150,40,.95), transparent 65%),
-        radial-gradient(circle 12px at 50% 90%,  rgba(255,200,70,.95), transparent 65%),
-        radial-gradient(circle 9px  at 72% 105%, rgba(255,130,30,.95), transparent 65%),
-        radial-gradient(circle 11px at 90% 95%,  rgba(255,210,80,.95), transparent 65%),
-        linear-gradient(180deg, #aa1122 0%, #ff4422 70%, #ff7733 100%);
-      animation: flameFlicker 0.45s ease-in-out infinite alternate;
+        radial-gradient(circle 14px at 12% 92%, rgba(255,240,160,.98), transparent 65%),
+        radial-gradient(circle 11px at 30% 105%, rgba(255,170,40,.98), transparent 65%),
+        radial-gradient(circle 16px at 50% 90%,  rgba(255,220,80,.98), transparent 65%),
+        radial-gradient(circle 12px at 72% 105%, rgba(255,140,30,.98), transparent 65%),
+        radial-gradient(circle 15px at 90% 92%,  rgba(255,230,90,.98), transparent 65%),
+        linear-gradient(180deg, #881122 0%, #dd2211 50%, #ff5522 80%, #ff8833 100%);
       box-shadow:
-        0 0 14px rgba(255,80,30,.55),
-        inset 0 -8px 14px rgba(255,200,80,.35),
-        inset 0 4px 8px rgba(170,0,30,.4);
+        0 0 20px rgba(255,80,30,.7),
+        inset 0 -10px 18px rgba(255,210,80,.45),
+        inset 0 5px 10px rgba(140,0,20,.55);
+      animation: flameFlicker 0.35s ease-in-out infinite alternate;
     }
     @keyframes flameFlicker {
-      0%   { background-position: 0 0,    0 0,   0 0,   0 0,    0 0,   0 0;
-             filter: brightness(1.0) hue-rotate(0deg); }
-      100% { background-position: 4px -3px, -3px -2px, 2px -5px, -3px -2px, 4px -4px, 0 0;
-             filter: brightness(1.15) hue-rotate(-6deg); }
+      0%   { background-position: 0 0,    0 0,    0 0,    0 0,    0 0,    0 0;
+             filter: brightness(1.05) hue-rotate(0deg) saturate(1.0); }
+      100% { background-position: 5px -4px, -4px -3px, 3px -6px, -4px -3px, 5px -5px, 0 0;
+             filter: brightness(1.22) hue-rotate(-8deg) saturate(1.15); }
+    }
+
+    /* Floating decoration particles (ice crystals + flames around buttons) */
+    .mode-deco {
+      position: absolute; pointer-events: none;
+      font-size: 12px; will-change: transform, opacity;
+      z-index: 2;
+    }
+    .ice-deco { color: #aaddff; text-shadow: 0 0 6px rgba(140,200,255,.9); }
+    .flame-deco { font-size: 14px; text-shadow: 0 0 8px rgba(255,180,40,.9); }
+    @keyframes iceFloat {
+      0%   { transform: translate(0, 0)    rotate(0deg);   opacity: 0; }
+      15%  { opacity: .9; }
+      85%  { opacity: .9; }
+      100% { transform: translate(var(--dx,8px), var(--dy,-30px)) rotate(var(--rot,180deg)); opacity: 0; }
+    }
+    @keyframes flameRise {
+      0%   { transform: translate(0, 0)    scale(0.6); opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: .8; transform: translate(var(--dx,3px), -28px) scale(1.0); }
+      100% { transform: translate(var(--dx,5px), -50px) scale(0.4); opacity: 0; }
     }
 
     /* ══════════ COMBO HUD ══════════ */
@@ -830,10 +875,12 @@
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
-    <!-- Mode selector -->
-    <div id="mode-sel">
-      <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
-      <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
+    <!-- Mode selector (wrapper holds floating deco particles) -->
+    <div id="mode-fx-wrap">
+      <div id="mode-sel">
+        <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
+        <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
+      </div>
     </div>
   </div>
   <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
@@ -1387,10 +1434,18 @@ const ARC_DB = (() => {
   const flameParticles = [];
   let flameSpawnAcc = 0;
 
+  // Flying score animations (gold ball points → score HUD)
+  // Items: {x, y (screen-space), tx, ty (HUD target), text, life}
+  const flyScores = [];
+
   // Audio Visualizer (AudioContext + AnalyserNode)
   let audioCtx = null, analyser = null, vizData = null;
   // Beat flash state
-  let beatAvg = 0, beatFlashHue = 0, beatFlashAlpha = 0;
+  let beatAvg = 0;
+  // Multi-position scene flash blobs: {x, y, hue, alpha, r}
+  const flashBlobs = [];
+  // Gold flash (vignette from edges) state
+  let goldFlashAlpha = 0;
 
   function initAudioViz() {
     if (audioCtx) return;
@@ -1406,42 +1461,115 @@ const ARC_DB = (() => {
     } catch(e) { console.warn('[Viz]', e); }
   }
 
-  // Background beat flash — drawn on bctx (bg canvas)
+  // Trigger a yellow vignette flash from screen edges (gold ball collected)
+  function triggerGoldFlash(intensity) {
+    goldFlashAlpha = Math.min(0.5, goldFlashAlpha + intensity);
+  }
+
+  // Background beat flash — multi-blob, scene-covering, drawn on bctx
   function drawBgFlash() {
-    // Get bass energy
+    // Sample bass energy from analyser
     let bass = 0;
     if (analyser && vizData && musOn) {
       analyser.getByteFrequencyData(vizData);
       for (let i = 0; i < 6; i++) bass += vizData[i] / 255;
       bass /= 6;
     } else {
-      // No analyser: energy-based slow pulse
-      bass = 0.15 + 0.1 * Math.sin(performance.now() / 600);
+      bass = 0.12 + 0.08 * Math.sin(performance.now() / 600);
     }
 
-    // Beat detection: spike above rolling average
+    // Rolling average for beat detection
     beatAvg = beatAvg * 0.94 + bass * 0.06;
-    if (musOn && bass > beatAvg * 1.35 && bass > 0.25) {
-      // New beat hit → pick a new hue and set flash alpha
-      beatFlashHue = Math.floor(Math.random() * 6) * 60; // red/yellow/green/cyan/blue/magenta
-      const intensity = Math.min(1, (bass - beatAvg * 1.35) * 4);
-      beatFlashAlpha = 0.10 + intensity * 0.12;
+
+    // Beat detected → push 2-3 flash blobs at random scene positions
+    if (musOn && bass > beatAvg * 1.30 && bass > 0.22) {
+      const intensity = Math.min(1, (bass - beatAvg * 1.30) * 4);
+      const count = 2 + Math.floor(Math.random() * 2); // 2-3 blobs
+      const baseHue = Math.floor(Math.random() * 6) * 60;
+      for (let k = 0; k < count; k++) {
+        flashBlobs.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          hue: (baseHue + Math.random() * 30) % 360,
+          alpha: 0.12 + intensity * 0.18,
+          r: W * (0.4 + Math.random() * 0.5),
+        });
+      }
     }
 
-    // Draw flash if active
-    if (beatFlashAlpha > 0.004) {
-      const flashA = beatFlashAlpha * energy; // dim with health
+    // Draw all blobs (energy-dim) and decay
+    if (flashBlobs.length) {
       bctx.save();
-      // Radial burst from center
-      const gr = bctx.createRadialGradient(W/2, H * 0.42, 0, W/2, H * 0.42, W * 0.85);
-      gr.addColorStop(0,    `hsla(${beatFlashHue},100%,65%,${flashA})`);
-      gr.addColorStop(0.45, `hsla(${beatFlashHue},100%,50%,${flashA * 0.35})`);
-      gr.addColorStop(1,    `hsla(${beatFlashHue},100%,40%,0)`);
+      bctx.globalCompositeOperation = 'lighter';
+      for (let i = flashBlobs.length - 1; i >= 0; i--) {
+        const b = flashBlobs[i];
+        const aDim = b.alpha * energy; // dim with health
+        const gr = bctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        gr.addColorStop(0,    `hsla(${b.hue},100%,65%,${aDim})`);
+        gr.addColorStop(0.55, `hsla(${b.hue},100%,50%,${aDim * 0.3})`);
+        gr.addColorStop(1,    `hsla(${b.hue},100%,40%,0)`);
+        bctx.fillStyle = gr;
+        bctx.fillRect(0, 0, W, H);
+        b.alpha *= 0.80;
+        if (b.alpha < 0.004) flashBlobs.splice(i, 1);
+      }
+      bctx.restore();
+    }
+
+    // Gold vignette flash (edges → center)
+    if (goldFlashAlpha > 0.005) {
+      const gA = goldFlashAlpha * energy;
+      bctx.save();
+      const gr = bctx.createRadialGradient(W/2, H/2, W * 0.25, W/2, H/2, W * 0.9);
+      gr.addColorStop(0,    'rgba(255,220,80,0)');
+      gr.addColorStop(0.55, `rgba(255,210,60,${gA * 0.35})`);
+      gr.addColorStop(1,    `rgba(255,180,30,${gA})`);
       bctx.fillStyle = gr;
       bctx.fillRect(0, 0, W, H);
       bctx.restore();
-      beatFlashAlpha *= 0.78; // decay per frame
+      goldFlashAlpha *= 0.90;
     }
+  }
+
+  // ── Flying Score (gold ball points → HUD score) ──────────
+  function spawnFlyScore(sx, sy, points) {
+    // Compute screen-space target (top-left score HUD)
+    const hudRect    = hScore.getBoundingClientRect();
+    const canvasRect = gc.getBoundingClientRect();
+    if (canvasRect.width < 1) return; // not yet laid out
+    const tx = (hudRect.left + hudRect.width  * 0.5 - canvasRect.left) * (W / canvasRect.width);
+    const ty = (hudRect.top  + hudRect.height * 0.5 - canvasRect.top ) * (H / canvasRect.height);
+    flyScores.push({ x: sx, y: sy, tx, ty, text: '+' + points, life: 1 });
+  }
+
+  function updateFlyScores(dt) {
+    for (let i = flyScores.length - 1; i >= 0; i--) {
+      const f = flyScores[i];
+      // Ease toward target (faster as life decreases)
+      const k = 5 * dt;
+      f.x += (f.tx - f.x) * k;
+      f.y += (f.ty - f.y) * k;
+      f.life -= dt * 0.7; // ~1.4s total
+      const dist = Math.hypot(f.tx - f.x, f.ty - f.y);
+      if (dist < 25 || f.life <= 0) flyScores.splice(i, 1);
+    }
+  }
+
+  function drawFlyScores() {
+    if (!flyScores.length) return;
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const f of flyScores) {
+      const a = Math.max(0, Math.min(1, f.life * 1.5));
+      ctx.globalAlpha = a;
+      ctx.shadowColor = '#ffcc44';
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#fff0a0';
+      ctx.font = `bold 12px 'Press Start 2P', monospace`;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   // ── Flame Particles (Extreme mode frame effect) ──────────
@@ -1670,12 +1798,46 @@ const ARC_DB = (() => {
   const walls = { left: 20, right: W - 20 };
   function drawWalls() {
     ctx.save();
-    ctx.fillStyle = 'rgba(255,51,85,.09)';
-    ctx.fillRect(0, 0, walls.left, H);
-    ctx.fillRect(walls.right, 0, W - walls.right, H);
-    ctx.fillStyle = '#ff3355';
-    ctx.fillRect(walls.left - 10, 0, 10, H);
-    ctx.fillRect(walls.right,     0, 10, H);
+    if (gameMode === 'extreme') {
+      // Flame walls — animated gradient with flickering highlights
+      const t = performance.now() / 220;
+      const lg1 = ctx.createLinearGradient(0, 0, 0, H);
+      lg1.addColorStop(0,    '#aa1122');
+      lg1.addColorStop(0.5,  '#ff4422');
+      lg1.addColorStop(1,    '#ff7733');
+      // Faint inner area
+      ctx.fillStyle = 'rgba(255,80,30,.10)';
+      ctx.fillRect(0, 0, walls.left, H);
+      ctx.fillRect(walls.right, 0, W - walls.right, H);
+      // Solid wall bars
+      ctx.fillStyle = lg1;
+      ctx.fillRect(walls.left - 10, 0, 10, H);
+      ctx.fillRect(walls.right,     0, 10, H);
+      // Flickering ember highlights along the wall edges
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 12; i++) {
+        const y  = (i * H / 12 + (t * 30 % H)) % H;
+        const a  = 0.35 + 0.25 * Math.sin(t + i * 1.3);
+        const g  = ctx.createRadialGradient(walls.left - 5, y, 0, walls.left - 5, y, 22);
+        g.addColorStop(0, `rgba(255,220,80,${a})`);
+        g.addColorStop(1, 'rgba(255,80,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(walls.left - 30, y - 22, 50, 44);
+        const g2 = ctx.createRadialGradient(walls.right + 5, y + 30, 0, walls.right + 5, y + 30, 22);
+        g2.addColorStop(0, `rgba(255,200,60,${a * 0.9})`);
+        g2.addColorStop(1, 'rgba(255,80,0,0)');
+        ctx.fillStyle = g2;
+        ctx.fillRect(walls.right - 20, y + 8, 50, 44);
+      }
+    } else {
+      // Normal mode: original red walls
+      ctx.fillStyle = 'rgba(255,51,85,.09)';
+      ctx.fillRect(0, 0, walls.left, H);
+      ctx.fillRect(walls.right, 0, W - walls.right, H);
+      ctx.fillStyle = '#ff3355';
+      ctx.fillRect(walls.left - 10, 0, 10, H);
+      ctx.fillRect(walls.right,     0, 10, H);
+    }
     ctx.restore();
   }
 
@@ -1686,11 +1848,34 @@ const ARC_DB = (() => {
     ctx.beginPath();
     ctx.rect(walls.left, 0, walls.right - walls.left, H);
     ctx.clip();
+    const flame = (gameMode === 'extreme');
+    const t = performance.now() / 250;
     for (const ob of obstacles) {
       const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
       if (sy < -100 || sy > H + 100) continue;
-      ctx.fillStyle = '#ff3355';
-      ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+      if (flame) {
+        // Flame obstacle — animated radial gradient with shimmer
+        const wobble = 1 + 0.05 * Math.sin(t + ob.x * 0.05);
+        const R = ob.r * wobble;
+        // Outer glow (red-orange)
+        const g1 = ctx.createRadialGradient(sx, sy, 0, sx, sy, R * 1.5);
+        g1.addColorStop(0,    'rgba(255,200,80,0.95)');
+        g1.addColorStop(0.45, 'rgba(255,100,40,0.85)');
+        g1.addColorStop(1,    'rgba(180,30,20,0)');
+        ctx.fillStyle = g1;
+        ctx.beginPath(); ctx.arc(sx, sy, R * 1.5, 0, Math.PI*2); ctx.fill();
+        // Core (yellow-white center, shifted upward)
+        const g2 = ctx.createRadialGradient(sx, sy - R*0.25, 0, sx, sy, R);
+        g2.addColorStop(0,    'rgba(255,250,200,0.98)');
+        g2.addColorStop(0.3,  'rgba(255,200,80,0.9)');
+        g2.addColorStop(0.7,  'rgba(255,90,30,0.92)');
+        g2.addColorStop(1,    'rgba(180,30,20,1)');
+        ctx.fillStyle = g2;
+        ctx.beginPath(); ctx.arc(sx, sy, R, 0, Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#ff3355';
+        ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -1795,19 +1980,19 @@ const ARC_DB = (() => {
     ctx.restore();
   }
 
-  // ── Green Particles (polygonal, wide spread) ─────────────
+  // ── Green Particles (polygonal, very wide spread, small size) ──
   function spawnGreenParticles(wx, wy) {
-    const count = 32;
+    const count = 48; // more particles
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      // Very wide spread — initial speed ×4 of original
-      const spd = 500 + Math.random() * 900;
+      // Huge spread — wide velocity range
+      const spd = 1200 + Math.random() * 1600;
       particles.push({
         wx, wy,
         x: wx, y: wy,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd,
-        r:    7 + Math.random() * 11,
+        r:    2.5 + Math.random() * 4.5, // smaller (was 7-18, now 2.5-7)
         life: 1,
         hue:  110 + Math.random() * 40,
         sides: 3 + Math.floor(Math.random() * 4),
@@ -1819,9 +2004,9 @@ const ARC_DB = (() => {
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      // Low friction → particles travel far
-      p.vx *= Math.pow(0.75, dt * 60);
-      p.vy *= Math.pow(0.75, dt * 60);
+      // Very low friction → particles travel further across scene
+      p.vx *= Math.pow(0.86, dt * 60);
+      p.vy *= Math.pow(0.86, dt * 60);
       p.x  += p.vx * dt;
       p.y  += p.vy * dt;
       p.rot += dt * 4;
@@ -2232,9 +2417,9 @@ const ARC_DB = (() => {
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
-    flameParticles.length = 0;
-    // Reset beat-flash state so flashes resume from clean slate every game
-    beatAvg = 0; beatFlashAlpha = 0; beatFlashHue = 0;
+    flameParticles.length = 0; flyScores.length = 0;
+    // Reset visual-flash state so they resume from clean slate every game
+    beatAvg = 0; flashBlobs.length = 0; goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
     // Firestore'dan gerçek skorları arka planda çek
@@ -2380,6 +2565,7 @@ const ARC_DB = (() => {
     updateFloatTexts(dt);
     spawnFlameParticles(dt);
     updateFlameParticles(dt);
+    updateFlyScores(dt);
 
     // Cull obstacles/bonuses/etc. far below view to prevent memory growth
     const cullY = player.y + H * 1.5;
@@ -2427,13 +2613,21 @@ const ARC_DB = (() => {
         if (tutStep === 1) advanceTut(2);
       }
     }
-    // Altın top toplama (glow alanı kadar collision — minik core için)
+    // Altın top toplama — combo çarpanlı + flying score + sahne flash
     for (let i = goldBalls.length - 1; i >= 0; i--) {
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
-      const hitR = player.r + Math.max(12, b.r * 9); // glow yarıçapı kadar
+      const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
+        // Combo çarpanı (timer/2)
+        const cd = Math.ceil(energy * 9);
+        const mul = Math.max(0.5, cd / 2);
+        const finalPts = Math.round((b.pts * mul) / 10) * 10; // 10'un katı
+        scoreBonus += finalPts;
+        // Sarı flash sahne kenarlarında (puana göre intensity)
+        triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
+        // Skor HUD'una doğru uçan "+N" animasyonu
+        spawnFlyScore(b.x, W2S(b.y), finalPts);
         goldBalls.splice(i, 1);
-        scoreBonus += b.pts;
       }
     }
     // Mor booster toplama
@@ -2599,14 +2793,15 @@ const ARC_DB = (() => {
     bctx.clearRect(0, 0, W, H);
     drawGrid(bctx, scene === 'play' || scene === 'over' ? camY : time * 22, .13);
     if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
-    if (scene === 'play') { drawBgFlash(); } // beat-synced color flash on bg canvas
+    if (scene === 'home') tickModeDeco(dt);
+    if (scene === 'play') { drawBgFlash(); } // beat-synced multi-blob + gold flash
 
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
       drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
-      if (scene === 'play') { drawFlameParticles(); drawVisualizer(); drawTutorial(time); drawBoosterBorder(); }
+      if (scene === 'play') { drawFlameParticles(); drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
@@ -2829,6 +3024,55 @@ const ARC_DB = (() => {
         localStorage.setItem('arc_firstplay', '0');
       }
       advanceTut(1); // adım 0 (touch to begin) atlandı, direkt 1'den başlat
+    }
+  }
+
+  // ── Mode button decorations (ice crystals / flames) ──────
+  // Spawns small floating elements around the mode-fx-wrap that animate via CSS.
+  const ICE_GLYPHS    = ['❄','❅','❆','✦','✧'];
+  const FLAME_GLYPHS  = ['🔥','✦'];
+  let modeDecoTimer = 0;
+  function tickModeDeco(dt) {
+    if (scene !== 'home') return;
+    modeDecoTimer += dt;
+    if (modeDecoTimer < 0.18) return;
+    modeDecoTimer = 0;
+    const wrap = document.getElementById('mode-fx-wrap');
+    if (!wrap || wrap.offsetParent === null) return;
+    const w = wrap.offsetWidth, h = wrap.offsetHeight;
+    if (w < 10) return;
+
+    // Spawn one ICE deco on the left half (Normal button area)
+    {
+      const el = document.createElement('span');
+      el.className = 'mode-deco ice-deco';
+      el.textContent = ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)];
+      const startX = Math.random() * (w * 0.5 - 10);
+      const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
+      el.style.left = startX + 'px';
+      el.style.top  = startY + 'px';
+      el.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
+      el.style.setProperty('--dy',  -(20 + Math.random() * 30) + 'px');
+      el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      el.style.animation = `iceFloat ${1.6 + Math.random()}s linear forwards`;
+      el.style.fontSize = (10 + Math.random() * 6) + 'px';
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+    // Spawn one FLAME deco on the right half (Extreme button area)
+    {
+      const el = document.createElement('span');
+      el.className = 'mode-deco flame-deco';
+      el.textContent = FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)];
+      const startX = w * 0.5 + Math.random() * (w * 0.5 - 10);
+      const startY = h * 0.95;
+      el.style.left = startX + 'px';
+      el.style.top  = startY + 'px';
+      el.style.setProperty('--dx', (Math.random() * 16 - 8) + 'px');
+      el.style.animation = `flameRise ${0.9 + Math.random() * 0.6}s ease-out forwards`;
+      el.style.fontSize = (12 + Math.random() * 6) + 'px';
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 2000);
     }
   }
 
