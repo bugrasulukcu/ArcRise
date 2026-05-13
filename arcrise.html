@@ -643,6 +643,7 @@
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px; overflow: hidden;
       width: 70%; align-self: center;
+      position: relative;
     }
     .mode-btn {
       flex: 1; padding: 10px 0; font-family: var(--font);
@@ -650,9 +651,33 @@
       border: none; cursor: pointer;
       transition: background .18s, color .18s;
       background: rgba(255,255,255,.04); color: rgba(255,255,255,.4);
+      position: relative;
     }
     .mode-btn.active-normal { background: #4488ff; color: #fff; }
-    .mode-btn.active-extreme { background: #ff3355; color: #fff; }
+
+    /* Extreme button: flame background + flicker glow */
+    .mode-btn.active-extreme {
+      color: #fff;
+      text-shadow: 0 0 6px rgba(255,200,80,.7), 0 0 2px rgba(255,255,255,.8);
+      background:
+        radial-gradient(circle 10px at 12% 95%, rgba(255,220,80,.95), transparent 65%),
+        radial-gradient(circle 8px  at 30% 105%, rgba(255,150,40,.95), transparent 65%),
+        radial-gradient(circle 12px at 50% 90%,  rgba(255,200,70,.95), transparent 65%),
+        radial-gradient(circle 9px  at 72% 105%, rgba(255,130,30,.95), transparent 65%),
+        radial-gradient(circle 11px at 90% 95%,  rgba(255,210,80,.95), transparent 65%),
+        linear-gradient(180deg, #aa1122 0%, #ff4422 70%, #ff7733 100%);
+      animation: flameFlicker 0.45s ease-in-out infinite alternate;
+      box-shadow:
+        0 0 14px rgba(255,80,30,.55),
+        inset 0 -8px 14px rgba(255,200,80,.35),
+        inset 0 4px 8px rgba(170,0,30,.4);
+    }
+    @keyframes flameFlicker {
+      0%   { background-position: 0 0,    0 0,   0 0,   0 0,    0 0,   0 0;
+             filter: brightness(1.0) hue-rotate(0deg); }
+      100% { background-position: 4px -3px, -3px -2px, 2px -5px, -3px -2px, 4px -4px, 0 0;
+             filter: brightness(1.15) hue-rotate(-6deg); }
+    }
 
     /* ══════════ COMBO HUD ══════════ */
     #combo-hud {
@@ -1358,6 +1383,10 @@ const ARC_DB = (() => {
   // Float texts (combo bonuses)
   const floatTexts = [];
 
+  // Flame particles (extreme mode frame effect)
+  const flameParticles = [];
+  let flameSpawnAcc = 0;
+
   // Audio Visualizer (AudioContext + AnalyserNode)
   let audioCtx = null, analyser = null, vizData = null;
   // Beat flash state
@@ -1413,6 +1442,70 @@ const ARC_DB = (() => {
       bctx.restore();
       beatFlashAlpha *= 0.78; // decay per frame
     }
+  }
+
+  // ── Flame Particles (Extreme mode frame effect) ──────────
+  // Emit from wall edges (and top during play). Screen-space, drift inward+up.
+  function spawnFlameParticles(dt) {
+    if (gameMode !== 'extreme') return;
+    flameSpawnAcc += dt;
+    const spawnInterval = 0.025; // ~40 particles/sec total
+    while (flameSpawnAcc >= spawnInterval) {
+      flameSpawnAcc -= spawnInterval;
+      // Pick edge: 0=left, 1=right, 2=top
+      const edge = Math.floor(Math.random() * 3);
+      let x, y, vx, vy;
+      if (edge === 0) { // left wall
+        x = walls.left + 2; y = Math.random() * H;
+        vx = 40 + Math.random() * 60; vy = -20 - Math.random() * 40;
+      } else if (edge === 1) { // right wall
+        x = walls.right - 2; y = Math.random() * H;
+        vx = -(40 + Math.random() * 60); vy = -20 - Math.random() * 40;
+      } else { // top
+        x = walls.left + Math.random() * (walls.right - walls.left);
+        y = 4; vx = (Math.random() - 0.5) * 50; vy = 30 + Math.random() * 40;
+      }
+      flameParticles.push({
+        x, y, vx, vy,
+        r: 5 + Math.random() * 9,
+        life: 1,
+        hue: 8 + Math.random() * 35, // red→orange→yellow
+      });
+    }
+  }
+
+  function updateFlameParticles(dt) {
+    for (let i = flameParticles.length - 1; i >= 0; i--) {
+      const p = flameParticles[i];
+      p.vx *= Math.pow(0.94, dt * 60);
+      p.vy *= Math.pow(0.94, dt * 60);
+      p.vy -= dt * 80; // buoyancy (flames rise)
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.r *= Math.pow(0.988, dt * 60); // shrink
+      p.life -= dt * 1.4;
+      if (p.life <= 0 || p.r < 1) flameParticles.splice(i, 1);
+    }
+  }
+
+  function drawFlameParticles() {
+    if (!flameParticles.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of flameParticles) {
+      if (p.y < -50 || p.y > H + 50) continue;
+      const a  = Math.max(0, p.life);
+      const gR = p.r * 2.5;
+      const g  = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, gR);
+      g.addColorStop(0,   `hsla(${p.hue + 25},100%,80%,${a * 0.9})`);
+      g.addColorStop(0.4, `hsla(${p.hue + 10},100%,55%,${a * 0.55})`);
+      g.addColorStop(1,   `hsla(${p.hue},100%,40%,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, gR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   const ENERGY_DECAY = 1 / 9;   // 9 saniyelik geri sayım
@@ -2139,6 +2232,9 @@ const ARC_DB = (() => {
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
+    flameParticles.length = 0;
+    // Reset beat-flash state so flashes resume from clean slate every game
+    beatAvg = 0; beatFlashAlpha = 0; beatFlashHue = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
     // Firestore'dan gerçek skorları arka planda çek
@@ -2282,6 +2378,15 @@ const ARC_DB = (() => {
     spawnAhead();
     updateParticles(dt);
     updateFloatTexts(dt);
+    spawnFlameParticles(dt);
+    updateFlameParticles(dt);
+
+    // Cull obstacles/bonuses/etc. far below view to prevent memory growth
+    const cullY = player.y + H * 1.5;
+    for (let i = obstacles.length - 1; i >= 0; i--) if (obstacles[i].y > cullY) obstacles.splice(i, 1);
+    for (let i = bonuses.length   - 1; i >= 0; i--) if (bonuses[i].y   > cullY) bonuses.splice(i, 1);
+    for (let i = goldBalls.length - 1; i >= 0; i--) if (goldBalls[i].y > cullY) goldBalls.splice(i, 1);
+    for (let i = purpleBalls.length - 1; i >= 0; i--) if (purpleBalls[i].y > cullY) purpleBalls.splice(i, 1);
 
     for (const ob of obstacles) {
       if (ob.mk) {
@@ -2501,7 +2606,7 @@ const ARC_DB = (() => {
     if (scene === 'play' || scene === 'over') {
       drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
-      if (scene === 'play') { drawVisualizer(); drawTutorial(time); drawBoosterBorder(); }
+      if (scene === 'play') { drawFlameParticles(); drawVisualizer(); drawTutorial(time); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
