@@ -443,19 +443,24 @@
 
     /* ── RESET butonu (Settings'te) ── */
     .btn-danger {
-      padding: 12px 24px; border-radius: 13px;
+      padding: 13px 32px; border-radius: 13px;
       border: 1.5px solid rgba(255,51,85,.45);
       background: rgba(255,51,85,.08);
       color: #ff3355; font-family: var(--font);
       font-size: 8px; letter-spacing: 1px;
-      cursor: pointer; width: 100%;
+      cursor: pointer; white-space: nowrap;
     }
     .btn-danger:active { transform: scale(0.97); }
 
-    /* Onay baloncuğu */
+    /* Reset outer — ekranın en altına */
+    #reset-outer {
+      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    #btn-reset { /* inherits .btn-danger */ }
     #reset-confirm {
-      display: none; font-size: 7px; color: rgba(255,255,255,.5);
-      letter-spacing: 1px; text-align: center; margin-top: -10px;
+      display: none; font-size: 7px; color: rgba(255,255,255,.45);
+      letter-spacing: 1px; text-align: center;
     }
 
     /* ══════════ HOME PROFILE CARD ══════════ */
@@ -593,6 +598,65 @@
     #btn-reset { width: 50%; font-size: 7px; padding: 12px; }
     #reset-confirm { font-size: 7px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
+    /* ══════════ GAME MODE SELECTOR ══════════ */
+    #mode-sel {
+      display: flex; gap: 0; margin-top: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px; overflow: hidden;
+      width: min(88vw, 220px);
+    }
+    .mode-btn {
+      flex: 1; padding: 10px 0; font-family: var(--font);
+      font-size: 8px; letter-spacing: 1.5px;
+      border: none; cursor: pointer;
+      transition: background .18s, color .18s;
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.4);
+    }
+    .mode-btn.active-normal { background: #4488ff; color: #fff; }
+    .mode-btn.active-extreme { background: #ff3355; color: #fff; }
+
+    /* ══════════ COMBO HUD ══════════ */
+    #combo-hud {
+      position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%);
+      z-index: 16; pointer-events: none;
+      display: none; align-items: center; gap: 4px;
+    }
+    #combo-hud.active { display: flex; }
+    #combo-pill {
+      background: rgba(10,24,10,0.85); border: 1px solid rgba(124,255,122,.4);
+      border-radius: 16px; padding: 5px 12px;
+      font-size: 9px; letter-spacing: 1px; color: var(--green);
+    }
+
+    /* ══════════ FLOAT TEXTS (combo points) ══════════ */
+    /* drawn on canvas — no CSS needed */
+
+    /* ══════════ GAME OVER EXTRAS ══════════ */
+    #go-score-row {
+      text-align: center;
+    }
+    #go-score-lbl { font-size: 7px; color: var(--green); letter-spacing: 2px; margin-bottom: 8px; }
+    #go-score-val { font-size: 22px; letter-spacing: 3px; }
+    /* Coin progress bar */
+    #go-coin-row { width: 100%; }
+    #go-coin-top {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 6px;
+    }
+    #go-coin-lbl { font-size: 6px; color: #ffcc44; letter-spacing: 1px; }
+    #go-coin-earned { font-size: 8px; color: #ffcc44; }
+    #go-coin-progress { font-size: 6px; color: rgba(255,255,255,.4); letter-spacing: 1px; }
+    #go-coin-bar-wrap {
+      width: 100%; height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,.08); overflow: hidden;
+    }
+    #go-coin-bar {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(to right, #ffaa00, #ffee44);
+      transition: width .8s cubic-bezier(.22,.68,0,1.2);
+      width: 0%;
+    }
+
     /* ══════════ DIFFICULTY COLORS ══════════ */
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
 
@@ -640,6 +704,10 @@
         <div class="hud-num" id="h-best">000</div>
       </div>
       <div id="lb"></div>
+      <!-- Combo indicator -->
+      <div id="combo-hud">
+        <div id="combo-pill">×<span id="combo-val">1.0</span></div>
+      </div>
       <!-- Booster indicator -->
       <div id="booster-hud">
         <div id="booster-pill">
@@ -693,7 +761,12 @@
       <div id="home-edit-hint">tap to edit ✏</div>
     </div>
   </div>
-  <div class="menu" style="margin-top:18px">
+  <!-- Mode selector -->
+  <div id="mode-sel">
+    <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
+    <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
+  </div>
+  <div class="menu" style="margin-top:14px">
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
@@ -773,6 +846,20 @@
 <!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
   <div class="panel">
+    <!-- Animated score -->
+    <div id="go-score-row">
+      <div id="go-score-lbl">SCORE</div>
+      <div id="go-score-val">00000</div>
+    </div>
+    <!-- Coin progress -->
+    <div id="go-coin-row">
+      <div id="go-coin-top">
+        <span id="go-coin-lbl">COINS &nbsp;<span id="go-coin-earned">+0</span></span>
+        <span id="go-coin-progress">0 / 1000</span>
+      </div>
+      <div id="go-coin-bar-wrap"><div id="go-coin-bar"></div></div>
+    </div>
+    <!-- Leaderboard -->
     <table class="rtable">
       <thead>
         <tr><th>RANK</th><th style="padding:0 10px">NAME</th><th>SCORE</th></tr>
@@ -785,7 +872,7 @@
       </div>
       <button class="btn-gray" id="btn-menu" style="font-size:11px">Back to Menu</button>
     </div>
-    <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">000</span></div>
+    <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">00000</span></div>
   </div>
 </div>
 
@@ -1154,7 +1241,7 @@ const ARC_DB = (() => {
   function clearBooster() {
     boosterType = null; boosterTime = 0;
     isGhost = false; hasShield = false;
-    player.speed = GAME_SPEED;
+    player.speed = GAME_SPEED; // GAME_SPEED is already dynamic in extreme
     BOOSTER_EL.classList.remove('active');
   }
 
@@ -1201,14 +1288,36 @@ const ARC_DB = (() => {
     tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
   }
 
-  // Tek zorluk seviyesi: EXTREME
-  const GAME_SPEED = 350;
-  const SCORE_MUL  = 2.5;
+  // Game mode: 'normal' (280 base, static) | 'extreme' (350 base, dynamic acceleration)
+  let gameMode = localStorage.getItem('arc_mode') || 'normal';
+  let GAME_SPEED = gameMode === 'extreme' ? 350 : 280; // updated on mode change
+  function getScoreMul() { return gameMode === 'extreme' ? 2.5 : 1.5; }
+  function getBaseSpeed() { return gameMode === 'extreme' ? 350 : 280; }
+
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
   let coins  = Number(localStorage.getItem('arc_coins') || 0);
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
+
+  // Float texts (combo bonuses)
+  const floatTexts = [];
+
+  // Audio Visualizer (AudioContext + AnalyserNode)
+  let audioCtx = null, analyser = null, vizData = null;
+  function initAudioViz() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaElementSource(bgAudio);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.82;
+      src.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      vizData = new Uint8Array(analyser.frequencyBinCount); // 64 bins
+    } catch(e) { console.warn('[Viz]', e); }
+  }
 
   const ENERGY_DECAY = 1 / 9;   // 9 saniyelik geri sayım
 
@@ -1247,6 +1356,7 @@ const ARC_DB = (() => {
 
   function playBgMusic() {
     if (!musOn || !audioStarted) return;
+    initAudioViz(); // connect analyser on first play
     bgAudio.currentTime = 0;
     bgAudio.play().catch(e => console.warn('[Audio] BG:', e));
   }
@@ -1456,22 +1566,56 @@ const ARC_DB = (() => {
     }
   }
 
-  // ── Green Particles (polygonal) ──────────────────────────
+  // ── Float Texts (combo bonuses) ──────────────────────────
+  function spawnFloatText(wx, wy, text, hue) {
+    floatTexts.push({ x: wx, y: wy, text, hue, life: 1 });
+  }
+
+  function updateFloatTexts(dt) {
+    for (let i = floatTexts.length - 1; i >= 0; i--) {
+      floatTexts[i].y -= dt * 80; // drift upward (world-space)
+      floatTexts[i].life -= dt * 1.6;
+      if (floatTexts[i].life <= 0) floatTexts.splice(i, 1);
+    }
+  }
+
+  function drawFloatTexts() {
+    if (!floatTexts.length) return;
+    ctx.save();
+    for (const t of floatTexts) {
+      const sy = W2S(t.y);
+      if (sy < -40 || sy > H + 40) continue;
+      const a = Math.max(0, t.life);
+      const sc = 0.6 + 0.4 * (1 - t.life); // grows a bit as it fades
+      ctx.globalAlpha = a;
+      ctx.font = `bold ${Math.round(14 * sc)}px 'Press Start 2P', monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // glow
+      ctx.shadowColor = `hsl(${t.hue},100%,60%)`;
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = `hsl(${t.hue},100%,80%)`;
+      ctx.fillText(t.text, t.x, sy);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ── Green Particles (polygonal, wide spread) ─────────────
   function spawnGreenParticles(wx, wy) {
-    const count = 28;
+    const count = 32;
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      // 2× spread: speed doubled → twice the radius of dispersion
-      const spd = 240 + Math.random() * 440;
+      // Very wide spread — initial speed ×4 of original
+      const spd = 500 + Math.random() * 900;
       particles.push({
         wx, wy,
         x: wx, y: wy,
         vx: Math.cos(ang) * spd,
         vy: Math.sin(ang) * spd,
-        r:    6 + Math.random() * 10,
+        r:    7 + Math.random() * 11,
         life: 1,
         hue:  110 + Math.random() * 40,
-        sides: 3 + Math.floor(Math.random() * 4),  // triangle→hexagon
+        sides: 3 + Math.floor(Math.random() * 4),
         rot:   Math.random() * Math.PI * 2,
       });
     }
@@ -1480,12 +1624,13 @@ const ARC_DB = (() => {
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.vx *= Math.pow(0.80, dt * 60);   // slightly less drag for wider spread
-      p.vy *= Math.pow(0.80, dt * 60);
+      // Low friction → particles travel far
+      p.vx *= Math.pow(0.75, dt * 60);
+      p.vy *= Math.pow(0.75, dt * 60);
       p.x  += p.vx * dt;
       p.y  += p.vy * dt;
-      p.rot += dt * (2 + Math.random()); // spin
-      p.life -= dt * 1.2;               // ~0.8s ömür
+      p.rot += dt * 4;
+      p.life -= dt * 1.0;   // 1s ömür
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -1521,6 +1666,39 @@ const ARC_DB = (() => {
       drawPolygon(p.x, sy, gR, p.sides, p.rot);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  // ── Audio Visualizer ─────────────────────────────────────
+  function drawVisualizer() {
+    if (!analyser || !vizData) return;
+    analyser.getByteFrequencyData(vizData);
+    // Alpha tied to energy level AND music on
+    const baseAlpha = musOn ? energy * 0.55 : energy * 0.15;
+    if (baseAlpha < 0.02) return;
+    const BARS = 24;
+    const barW = 9;
+    const gap  = 5;
+    const totalW = BARS * (barW + gap) - gap;
+    const startX = (W - totalW) / 2;
+    const baseY  = H - 28; // fixed screen position
+    ctx.save();
+    for (let i = 0; i < BARS; i++) {
+      // Sample lower 60% of spectrum (bass + mids)
+      const dIdx = Math.floor(i / BARS * vizData.length * 0.6);
+      const fakeV = musOn ? vizData[dIdx] / 255 : (0.1 + 0.05 * Math.sin(performance.now()/400 + i));
+      const barH  = Math.max(3, fakeV * 55);
+      const hue   = 130 - i * 1.5; // green→cyan
+      const alpha = baseAlpha * (0.55 + fakeV * 0.45);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `hsl(${hue},100%,65%)`;
+      // Main bar (up)
+      ctx.fillRect(startX + i * (barW + gap), baseY - barH, barW, barH);
+      // Mirror (down, dimmer)
+      ctx.globalAlpha = alpha * 0.3;
+      ctx.fillRect(startX + i * (barW + gap), baseY, barW, barH * 0.35);
+    }
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -1849,6 +2027,7 @@ const ARC_DB = (() => {
   }
 
   function resetGame() {
+    GAME_SPEED = getBaseSpeed(); // reset to mode base (no dynamic boost yet)
     player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
@@ -1857,8 +2036,9 @@ const ARC_DB = (() => {
     score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
-    goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0;
+    goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
     clearBooster();
+    document.getElementById('combo-hud').classList.remove('active');
     // Firestore'dan gerçek skorları arka planda çek
     fetchLiveScores();
     initBgArcs();
@@ -1964,9 +2144,29 @@ const ARC_DB = (() => {
     if (pyS < H * .5) camY -= (H * .5 - pyS);
 
     maxAscend = Math.max(maxAscend, -player.y);
-    // Booster puanı çarpanı + scoreBonus
+    // Extreme mode: dynamic speed increase (+8 per 50 pts, capped at 2×)
+    if (gameMode === 'extreme' && !boosterType) {
+      player.speed = Math.min(getBaseSpeed() + Math.floor(score / 50) * 8, getBaseSpeed() * 2);
+      GAME_SPEED = player.speed; // keep in sync for clearBooster
+    }
+    // Score: base altitude + scoreBonus (combo points from greens)
     const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
-    score = Math.floor(maxAscend / 200 * SCORE_MUL * scoreMulBoost) + scoreBonus;
+    score = Math.floor(maxAscend / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
+    // Combo HUD: show current multiplier
+    const countdown = Math.ceil(energy * 9);
+    const comboMul = countdown / 2;
+    const comboEl  = document.getElementById('combo-hud');
+    const comboVal = document.getElementById('combo-val');
+    if (energy > 0.01) {
+      comboEl.classList.add('active');
+      comboVal.textContent = Number.isInteger(comboMul) ? comboMul.toFixed(1) : comboMul.toFixed(1);
+      // Color: cool (high) → warm (low)
+      const comboHue = 120 * (energy);
+      document.getElementById('combo-pill').style.borderColor = `hsl(${comboHue},100%,55%)`;
+      document.getElementById('combo-pill').style.color = `hsl(${comboHue},100%,70%)`;
+    } else {
+      comboEl.classList.remove('active');
+    }
 
     // Booster sayacı
     if (boosterType && boosterDur > 0) {
@@ -1979,6 +2179,7 @@ const ARC_DB = (() => {
 
     spawnAhead();
     updateParticles(dt);
+    updateFloatTexts(dt);
 
     for (const ob of obstacles) {
       if (ob.mk) {
@@ -2009,8 +2210,13 @@ const ARC_DB = (() => {
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
-        bonuses.splice(i,1); energy = 1;
-        spawnGreenParticles(b.x, b.y); // ← yeşil partiküller
+        // Combo bonus based on current energy timer
+        const cd = Math.ceil(energy * 9);
+        const comboBonus = Math.round(cd / 2) * 10; // ×(cd/2), in multiples of 10
+        scoreBonus += comboBonus;
+        spawnFloatText(b.x, b.y - b.r - 8, '+' + comboBonus, 120); // float green text
+        bonuses.splice(i, 1); energy = 1;
+        spawnGreenParticles(b.x, b.y);
         if (tutStep === 1) advanceTut(2);
       }
     }
@@ -2054,21 +2260,46 @@ const ARC_DB = (() => {
     // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
     ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
     running = false; started = false;
-    // Save last score + award coins (1 per 10 pts)
+    // Save last score + award coins (10 per 1000 pts)
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
-    const earned = Math.floor(lastScore / 10);
+    const earned = Math.floor(lastScore / 1000) * 10;
+    const prevCoins = coins;
     coins += earned;
     localStorage.setItem('arc_coins', String(coins));
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
 
-    const sc  = Math.floor(score);
+    const sc  = lastScore;
     const avc = AVATAR_COLORS[avatarIdx];
 
     goBestV.textContent = pad(best);
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
+
+    // ── Score animation (count up from 0 to sc) ───────────
+    const scoreValEl = document.getElementById('go-score-val');
+    scoreValEl.textContent = pad(0);
+    const animDur = Math.min(1400, Math.max(600, sc / 4));
+    const animStart = performance.now();
+    function animScore() {
+      const elapsed = performance.now() - animStart;
+      const t = Math.min(1, elapsed / animDur);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      scoreValEl.textContent = pad(Math.floor(sc * eased));
+      if (t < 1) requestAnimationFrame(animScore);
+    }
+    requestAnimationFrame(animScore);
+
+    // ── Coin progress bar ─────────────────────────────────
+    document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
+    const coinMod = coins % 1000; // progress within current 1000
+    const barPct  = Math.round(coinMod / 10); // %  (0-100)
+    document.getElementById('go-coin-progress').textContent = `${coinMod} / 1000`;
+    // Animate bar after short delay
+    setTimeout(() => {
+      document.getElementById('go-coin-bar').style.width = barPct + '%';
+    }, 200);
 
     // Geçici "yükleniyor" satırları
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size:6px;padding:12px 0">LOADING...</td></tr>`;
@@ -2142,12 +2373,11 @@ const ARC_DB = (() => {
     rankRows.innerHTML = html;
   }
 
-  // Dinamik hane: 0-999 → 3 hane | 1000-999999 → 6 | 1000000+ → 9
+  // 5 haneli skor gösterimi (00000 → 99999+)
   const pad = n => {
     const v = Math.max(0, Math.floor(n));
-    if (v < 1000)    return String(v).padStart(3, '0');
-    if (v < 1000000) return String(v).padStart(6, '0');
-    return             String(v).padStart(9, '0');
+    if (v < 100000)    return String(v).padStart(5, '0');
+    return String(v); // above 99999: show as-is
   };
 
   // ── Main draw loop ────────────────────────────────────────
@@ -2165,9 +2395,8 @@ const ARC_DB = (() => {
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
       drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
-      drawTrail(time); drawParticles(); drawPlayer(); drawRipples();
-      // Tutorial katmanı — her zaman oyun üzerine çiz
-      if (scene === 'play') { drawTutorial(time); drawBoosterBorder(); }
+      drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
+      if (scene === 'play') { drawVisualizer(); drawTutorial(time); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
@@ -2207,10 +2436,10 @@ const ARC_DB = (() => {
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_last','arc_avatar_custom'].forEach(k => localStorage.removeItem(k));
+     'arc_coins','arc_last','arc_avatar_custom','arc_mode'].forEach(k => localStorage.removeItem(k));
     best = 0; firstPlay = true; coins = 0; lastScore = 0;
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
-    setSfx(true); setMus(true);
+    setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
     const confirm = document.getElementById('reset-confirm');
     confirm.style.display = 'block';
@@ -2395,6 +2624,18 @@ const ARC_DB = (() => {
       advanceTut(1); // adım 0 (touch to begin) atlandı, direkt 1'den başlat
     }
   }
+
+  // ── Mode selector ─────────────────────────────────────────
+  function setGameMode(m) {
+    gameMode = m;
+    localStorage.setItem('arc_mode', m);
+    GAME_SPEED = getBaseSpeed();
+    document.getElementById('mode-btn-normal').className = 'mode-btn' + (m === 'normal' ? ' active-normal' : '');
+    document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
+  }
+  document.getElementById('mode-btn-normal').addEventListener('click',  () => setGameMode('normal'));
+  document.getElementById('mode-btn-extreme').addEventListener('click', () => setGameMode('extreme'));
+  setGameMode(gameMode); // init buttons
 
   document.getElementById('btn-start').addEventListener('click', () => startGame());
   document.getElementById('wrap-start').addEventListener('click', () => startGame());
