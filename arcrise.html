@@ -600,10 +600,10 @@
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
     #mode-sel {
-      display: flex; gap: 0; margin-top: 14px;
+      display: flex; gap: 0;
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px; overflow: hidden;
-      width: min(88vw, 220px);
+      width: 100%;
     }
     .mode-btn {
       flex: 1; padding: 10px 0; font-family: var(--font);
@@ -761,16 +761,16 @@
       <div id="home-edit-hint">tap to edit ✏</div>
     </div>
   </div>
-  <!-- Mode selector -->
-  <div id="mode-sel">
-    <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
-    <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
-  </div>
   <div class="menu" style="margin-top:14px">
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
     <button class="btn-gray" id="btn-settings">Settings</button>
+    <!-- Mode selector -->
+    <div id="mode-sel">
+      <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
+      <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
+    </div>
   </div>
   <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
