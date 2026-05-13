@@ -703,6 +703,52 @@
              filter: brightness(1.22) hue-rotate(-8deg) saturate(1.15); }
     }
 
+    /* ══════════ HOME EXTREME FLAME FRAME ══════════ */
+    /* Pointer-events: none — overlays the home screen edges with an animated flame border
+       when Extreme mode is selected. Toggled by .extreme-mode class on #home. */
+    #home-flame-frame {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      z-index: 21;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      /* layered radial gradients painting glow along all four edges */
+      background:
+        radial-gradient(ellipse 120% 18% at 50% 0%,   rgba(255,180,40,0.55), rgba(255,80,20,0.25) 40%, transparent 70%),
+        radial-gradient(ellipse 120% 18% at 50% 100%, rgba(255,180,40,0.55), rgba(255,80,20,0.25) 40%, transparent 70%),
+        radial-gradient(ellipse 18% 120% at 0% 50%,   rgba(255,180,40,0.55), rgba(255,80,20,0.25) 40%, transparent 70%),
+        radial-gradient(ellipse 18% 120% at 100% 50%, rgba(255,180,40,0.55), rgba(255,80,20,0.25) 40%, transparent 70%);
+      mix-blend-mode: screen;
+      animation: flameFrameFlicker 0.18s steps(2,end) infinite;
+    }
+    #home-flame-frame::before, #home-flame-frame::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    /* Hard inner ring of flame */
+    #home-flame-frame::before {
+      box-shadow:
+        inset 0  0 18px rgba(255,150,30,0.85),
+        inset 0  0 42px rgba(255,80,10,0.55),
+        inset 0  0 90px rgba(255,40,0,0.30);
+      animation: flameFrameBreathe 1.4s ease-in-out infinite;
+    }
+    /* Subtle outer dark vignette to anchor the flames */
+    #home-flame-frame::after {
+      box-shadow: inset 0 0 140px rgba(120,20,0,0.30);
+    }
+    #home.extreme-mode #home-flame-frame { opacity: 1; }
+    @keyframes flameFrameFlicker {
+      0%, 100% { filter: brightness(1.0)  hue-rotate(0deg)  saturate(1.05); }
+      50%      { filter: brightness(1.18) hue-rotate(-8deg) saturate(1.20); }
+    }
+    @keyframes flameFrameBreathe {
+      0%,100% { box-shadow: inset 0 0 18px rgba(255,150,30,0.85), inset 0 0 42px rgba(255,80,10,0.55), inset 0 0 90px rgba(255,40,0,0.30); }
+      50%     { box-shadow: inset 0 0 26px rgba(255,180,50,0.95), inset 0 0 60px rgba(255,100,20,0.65), inset 0 0 120px rgba(255,60,0,0.35); }
+    }
+
     /* Floating decoration particles (ice crystals + flames around buttons) */
     .mode-deco {
       position: absolute; pointer-events: none;
@@ -845,6 +891,7 @@
 
 <!-- ══ HOME ══ -->
 <div class="screen" id="home">
+  <div id="home-flame-frame"></div>
   <h1 id="title">ArcRise</h1>
   <!-- Profile card (tap to edit) -->
   <div id="home-profile" title="Tap to edit profile">
@@ -1442,6 +1489,8 @@ const ARC_DB = (() => {
   let audioCtx = null, analyser = null, vizData = null;
   // Beat flash state
   let beatAvg = 0;
+  let beatPeak = 0;          // slow envelope of recent peaks — keeps detection self-calibrating
+  let beatCooldown = 0;      // seconds since last flash, prevents over-firing
   // Multi-position scene flash blobs: {x, y, hue, alpha, r}
   const flashBlobs = [];
   // Gold flash (vignette from edges) state
@@ -1466,8 +1515,15 @@ const ARC_DB = (() => {
     goldFlashAlpha = Math.min(0.5, goldFlashAlpha + intensity);
   }
 
-  // Background beat flash — multi-blob, scene-covering, drawn on bctx
+  // Background beat flash — single soft blob per beat, scene-covering, drawn on bctx.
+  // Toned down for less eye strain and self-calibrated so it keeps firing
+  // throughout the song instead of dying after the first few beats.
   function drawBgFlash() {
+    const now = performance.now();
+    const dtFlash = Math.min(0.1, (drawBgFlash._t ? (now - drawBgFlash._t) / 1000 : 0.016));
+    drawBgFlash._t = now;
+    beatCooldown += dtFlash;
+
     // Sample bass energy from analyser
     let bass = 0;
     if (analyser && vizData && musOn) {
@@ -1478,23 +1534,25 @@ const ARC_DB = (() => {
       bass = 0.12 + 0.08 * Math.sin(performance.now() / 600);
     }
 
-    // Rolling average for beat detection
-    beatAvg = beatAvg * 0.94 + bass * 0.06;
+    // Rolling average for the noise floor; slow envelope of peaks for the ceiling.
+    beatAvg = beatAvg * 0.92 + bass * 0.08;
+    beatPeak = Math.max(beatPeak * 0.985, bass);
 
-    // Beat detected → push 2-3 flash blobs at random scene positions
-    if (musOn && bass > beatAvg * 1.30 && bass > 0.22) {
-      const intensity = Math.min(1, (bass - beatAvg * 1.30) * 4);
-      const count = 2 + Math.floor(Math.random() * 2); // 2-3 blobs
-      const baseHue = Math.floor(Math.random() * 6) * 60;
-      for (let k = 0; k < count; k++) {
-        flashBlobs.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          hue: (baseHue + Math.random() * 30) % 360,
-          alpha: 0.12 + intensity * 0.18,
-          r: W * (0.4 + Math.random() * 0.5),
-        });
-      }
+    // Adaptive threshold: somewhere between floor and recent peak.
+    // Ensures we keep detecting beats even when overall bass energy stays high.
+    const threshold = Math.max(beatAvg + 0.04, beatAvg * 1.12, beatPeak * 0.72);
+
+    // Beat detected → spawn ONE soft flash. Cooldown prevents back-to-back stacking.
+    if (musOn && bass > threshold && bass > 0.18 && beatCooldown > 0.45) {
+      beatCooldown = 0;
+      const intensity = Math.min(1, (bass - threshold) * 5);
+      flashBlobs.push({
+        x: W * (0.2 + Math.random() * 0.6),
+        y: H * (0.2 + Math.random() * 0.6),
+        hue: Math.floor(Math.random() * 360),
+        alpha: 0.05 + intensity * 0.07,   // ~half of the previous max
+        r: W * (0.5 + Math.random() * 0.35),
+      });
     }
 
     // Draw all blobs (energy-dim) and decay
@@ -1510,8 +1568,8 @@ const ARC_DB = (() => {
         gr.addColorStop(1,    `hsla(${b.hue},100%,40%,0)`);
         bctx.fillStyle = gr;
         bctx.fillRect(0, 0, W, H);
-        b.alpha *= 0.80;
-        if (b.alpha < 0.004) flashBlobs.splice(i, 1);
+        b.alpha *= 0.86; // slightly slower decay so the dim flashes still register
+        if (b.alpha < 0.003) flashBlobs.splice(i, 1);
       }
       bctx.restore();
     }
@@ -1532,26 +1590,89 @@ const ARC_DB = (() => {
   }
 
   // ── Flying Score (gold ball points → HUD score) ──────────
-  function spawnFlyScore(sx, sy, points) {
-    // Compute screen-space target (top-left score HUD)
+  // Gold pickup animation. Three stages:
+  //   1) GROW    — big "+basePts" pops in at the canvas center, scales from 0 to full.
+  //   2) MULTIPLY — combo multiplier is applied; the value snaps from basePts → finalPts
+  //                 with a brief scale pulse + "× N" badge so the player feels the bonus.
+  //   3) FLY     — the final value eases toward the score HUD at the top-left.
+  function spawnFlyScore(sx, sy, basePts, mul, finalPts) {
     const hudRect    = hScore.getBoundingClientRect();
     const canvasRect = gc.getBoundingClientRect();
     if (canvasRect.width < 1) return; // not yet laid out
     const tx = (hudRect.left + hudRect.width  * 0.5 - canvasRect.left) * (W / canvasRect.width);
     const ty = (hudRect.top  + hudRect.height * 0.5 - canvasRect.top ) * (H / canvasRect.height);
-    flyScores.push({ x: sx, y: sy, tx, ty, text: '+' + points, life: 1 });
+    // Center of the play area, slightly above midline so it reads as "in your face"
+    const cx = W * 0.5, cy = H * 0.45;
+    flyScores.push({
+      stage: 'grow',
+      t: 0,
+      // Per-stage durations (seconds)
+      growDur: 0.35,
+      mulDur:  (mul && Math.abs(mul - 1) > 0.05) ? 0.55 : 0.20, // skip the multiplier beat when mul≈1
+      // Positions
+      sx, sy,   // world spawn (where the gold ball was) — used as origin for grow
+      cx, cy,   // center anchor
+      tx, ty,   // HUD target
+      x: cx, y: cy,
+      // Values
+      basePts: basePts | 0,
+      mul: mul || 1,
+      finalPts: finalPts | 0,
+      shownPts: basePts | 0,
+      // Visuals
+      scale: 0,
+      alpha: 0,
+      pulse: 0,    // multiplier pulse 0..1..0
+    });
   }
 
   function updateFlyScores(dt) {
     for (let i = flyScores.length - 1; i >= 0; i--) {
       const f = flyScores[i];
-      // Ease toward target (faster as life decreases)
-      const k = 5 * dt;
-      f.x += (f.tx - f.x) * k;
-      f.y += (f.ty - f.y) * k;
-      f.life -= dt * 0.7; // ~1.4s total
-      const dist = Math.hypot(f.tx - f.x, f.ty - f.y);
-      if (dist < 25 || f.life <= 0) flyScores.splice(i, 1);
+      f.t += dt;
+
+      if (f.stage === 'grow') {
+        const p = Math.min(1, f.t / f.growDur);
+        // Ease-out cubic for snappy pop
+        const eo = 1 - Math.pow(1 - p, 3);
+        f.scale = eo * 1.0;
+        f.alpha = eo;
+        f.x = f.cx;
+        f.y = f.cy;
+        if (p >= 1) { f.stage = 'multiply'; f.t = 0; }
+
+      } else if (f.stage === 'multiply') {
+        const p = Math.min(1, f.t / f.mulDur);
+        if (Math.abs(f.mul - 1) > 0.05) {
+          // Snap to final value at midpoint, with a scale-pulse
+          if (p < 0.45) {
+            f.shownPts = f.basePts;
+            f.pulse = p / 0.45;       // 0 → 1 building tension
+            f.scale = 1.0 + 0.15 * Math.sin(p * Math.PI / 0.45);
+          } else {
+            f.shownPts = f.finalPts;
+            const k = (p - 0.45) / 0.55;
+            f.pulse = 1 - k;          // 1 → 0 release
+            f.scale = 1.4 - 0.4 * k;  // pulse out from 1.4 → 1.0
+          }
+        } else {
+          f.shownPts = f.finalPts;
+          f.scale = 1.0;
+        }
+        f.x = f.cx; f.y = f.cy;
+        if (p >= 1) { f.stage = 'fly'; f.t = 0; f.pulse = 0; }
+
+      } else { // fly
+        // Ease toward target; faster as time passes
+        const k = (3 + f.t * 3) * dt;
+        f.x += (f.tx - f.x) * k;
+        f.y += (f.ty - f.y) * k;
+        // Shrink during flight
+        f.scale = Math.max(0.45, 1.0 - f.t * 0.6);
+        f.alpha = Math.max(0, 1 - f.t * 0.7);
+        const dist = Math.hypot(f.tx - f.x, f.ty - f.y);
+        if (dist < 25 || f.alpha <= 0.02) flyScores.splice(i, 1);
+      }
     }
   }
 
@@ -1560,13 +1681,30 @@ const ARC_DB = (() => {
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const f of flyScores) {
-      const a = Math.max(0, Math.min(1, f.life * 1.5));
+      const a = Math.max(0, Math.min(1, f.alpha));
+      const s = Math.max(0, f.scale);
+      // Base font sizes: huge while front-and-center, small while flying to HUD.
+      const baseSize = (f.stage === 'fly') ? 14 : 26;
+      const size = baseSize * s;
+      if (size < 2) continue;
+
+      ctx.save();
+      ctx.translate(f.x, f.y);
       ctx.globalAlpha = a;
       ctx.shadowColor = '#ffcc44';
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = (f.stage === 'fly') ? 12 : 22;
       ctx.fillStyle = '#fff0a0';
-      ctx.font = `bold 12px 'Press Start 2P', monospace`;
-      ctx.fillText(f.text, f.x, f.y);
+      ctx.font = `bold ${size.toFixed(1)}px 'Press Start 2P', monospace`;
+      ctx.fillText('+' + f.shownPts, 0, 0);
+
+      // Multiplier badge during the multiply stage
+      if (f.stage === 'multiply' && Math.abs(f.mul - 1) > 0.05 && f.pulse > 0.02) {
+        ctx.shadowColor = '#ff6'; ctx.shadowBlur = 18;
+        ctx.fillStyle = `rgba(255,210,80,${f.pulse})`;
+        ctx.font = `bold ${(14 * s).toFixed(1)}px 'Press Start 2P', monospace`;
+        ctx.fillText('× ' + f.mul.toFixed(1), 0, size * 0.95);
+      }
+      ctx.restore();
     }
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     ctx.restore();
@@ -2419,7 +2557,7 @@ const ARC_DB = (() => {
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
     flameParticles.length = 0; flyScores.length = 0;
     // Reset visual-flash state so they resume from clean slate every game
-    beatAvg = 0; flashBlobs.length = 0; goldFlashAlpha = 0;
+    beatAvg = 0; beatPeak = 0; beatCooldown = 0; flashBlobs.length = 0; goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
     // Firestore'dan gerçek skorları arka planda çek
@@ -2625,8 +2763,8 @@ const ARC_DB = (() => {
         scoreBonus += finalPts;
         // Sarı flash sahne kenarlarında (puana göre intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
-        // Skor HUD'una doğru uçan "+N" animasyonu
-        spawnFlyScore(b.x, W2S(b.y), finalPts);
+        // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
+        spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
         goldBalls.splice(i, 1);
       }
     }
@@ -3042,12 +3180,13 @@ const ARC_DB = (() => {
     const w = wrap.offsetWidth, h = wrap.offsetHeight;
     if (w < 10) return;
 
-    // Spawn one ICE deco on the left half (Normal button area)
-    {
+    // Only spawn deco for the SELECTED mode — keeps ice off in Extreme and flames off in Normal.
+    if (gameMode === 'normal') {
+      // ICE deco — spread across full width above the mode selector
       const el = document.createElement('span');
       el.className = 'mode-deco ice-deco';
       el.textContent = ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)];
-      const startX = Math.random() * (w * 0.5 - 10);
+      const startX = Math.random() * (w - 10);
       const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
       el.style.left = startX + 'px';
       el.style.top  = startY + 'px';
@@ -3058,13 +3197,12 @@ const ARC_DB = (() => {
       el.style.fontSize = (10 + Math.random() * 6) + 'px';
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 3000);
-    }
-    // Spawn one FLAME deco on the right half (Extreme button area)
-    {
+    } else if (gameMode === 'extreme') {
+      // FLAME deco — spread across full width rising from the bottom
       const el = document.createElement('span');
       el.className = 'mode-deco flame-deco';
       el.textContent = FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)];
-      const startX = w * 0.5 + Math.random() * (w * 0.5 - 10);
+      const startX = Math.random() * (w - 10);
       const startY = h * 0.95;
       el.style.left = startX + 'px';
       el.style.top  = startY + 'px';
@@ -3085,6 +3223,12 @@ const ARC_DB = (() => {
     GAME_SPEED = getBaseSpeed();
     document.getElementById('mode-btn-normal').className = 'mode-btn' + (m === 'normal' ? ' active-normal' : '');
     document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
+    // Clear any in-flight deco particles from the previous mode so the screen flips cleanly
+    const wrap = document.getElementById('mode-fx-wrap');
+    if (wrap) wrap.querySelectorAll('.mode-deco').forEach(el => el.remove());
+    // Toggle the home frame's extreme-flame look
+    const home = document.getElementById('home');
+    if (home) home.classList.toggle('extreme-mode', m === 'extreme');
   }
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));

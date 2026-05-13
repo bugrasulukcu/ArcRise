@@ -246,6 +246,22 @@ const FIREBASE_CONFIG = {
 - ArcRiseDead.wav → endGame
 - Beat-synced bg flash (centered önce, sonra multi-blob)
 
+### v5 — Mode-conscious home + cilalı flash/gold animation
+- **Home deco artık mod'a duyarlı**: Normal'da sadece kar, Extreme'de sadece alev (önceden ikisi de aynı anda spawn oluyordu)
+- **Home flame frame**: Extreme seçildiğinde ekranın çerçevesi animasyonlu alev haline geçiyor (`#home-flame-frame` div, `home.extreme-mode` toggle ile)
+- **Beat flash overhaul**: 
+  - Adaptif eşik (`beatAvg + 0.04` / `beatAvg * 1.12` / `beatPeak * 0.72` max'ı) — artık şarkı boyunca tetikleniyor, sadece başta değil
+  - `beatPeak` slow envelope (decay 0.985)
+  - 0.45s cooldown — back-to-back stacking yok
+  - 2-3 blob yerine 1 blob, alpha %50 azaltıldı (0.05 + 0.07 intensity)
+  - Daha az göz yorucu
+- **Gold pickup animation 3-aşamalı**:
+  1. `grow` (0.35s): "+basePts" merkez yakınında 0→1.0 scale, ease-out cubic
+  2. `multiply` (0.55s, mul≠1 ise): scale pulse 1.0→1.4→1.0, midpoint'te `shownPts` `basePts`'den `finalPts`'e snap, "× N.N" badge görünür
+  3. `fly`: HUD'a easing, scale shrink (1.0→0.45), alpha fade
+  - `spawnFlyScore` artık `(sx, sy, basePts, mul, finalPts)` alır
+  - Combo=1 olduğunda multiply stage 0.20s'e düşüyor (es geçiliyor)
+
 ### v4 — Görsel cilalar
 - Hızlar 400/800 (Normal/Extreme)
 - Extreme button: alev gradient + flicker
@@ -312,4 +328,4 @@ GitHub Pages `main`'ten serve ediyor — feature branch'e push yeterli değil, m
 
 ---
 
-**Son güncelleme**: 2026-05-13. Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-05-13 (v5). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
