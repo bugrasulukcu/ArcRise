@@ -167,13 +167,74 @@
     }
     #lb-modal.open { display: flex; }
     #lb-modal-box {
+      position: relative;
       background: rgba(12,16,26,0.97);
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1.5px solid rgba(255,255,255,.14);
       border-radius: 22px;
       padding: 22px 18px 18px;
       width: min(92vw, 380px);
       display: flex; flex-direction: column; gap: 12px;
-      max-height: 88vh; overflow: hidden;
+      max-height: 88vh; overflow: visible;
+      transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
+    }
+    /* Animated frame layers — sit behind the box, fade in/out per mode */
+    #lb-modal-box::before,
+    #lb-modal-box::after {
+      content: ""; position: absolute; inset: -2px;
+      border-radius: 24px; pointer-events: none;
+      opacity: 0; transition: opacity .55s ease;
+      z-index: -1;
+    }
+    /* Blue ring for Normal */
+    #lb-modal-box::before {
+      border: 1.5px solid rgba(110,170,255,.55);
+      box-shadow:
+        0 0 0 1px rgba(110,170,255,.18),
+        0 0 22px 2px rgba(80,140,255,.35),
+        inset 0 0 16px rgba(120,180,255,.18);
+      background: linear-gradient(140deg,
+        rgba(60,120,255,.10) 0%,
+        rgba(40,80,200,.04) 50%,
+        rgba(80,160,255,.10) 100%);
+    }
+    /* Flaming ring for Extreme — animated conic flicker */
+    #lb-modal-box::after {
+      border: 1.5px solid rgba(255,120,40,.0);
+      box-shadow:
+        0 0 0 1px rgba(255,90,30,.35),
+        0 0 26px 4px rgba(255,90,30,.55),
+        0 0 60px 6px rgba(255,40,10,.28),
+        inset 0 0 20px rgba(255,140,40,.25);
+      background:
+        conic-gradient(from 0deg,
+          rgba(255,60,20,.55), rgba(255,140,40,.35),
+          rgba(255,210,60,.55), rgba(255,80,20,.40),
+          rgba(255,40,10,.55), rgba(255,160,50,.35),
+          rgba(255,60,20,.55));
+      filter: blur(3px) saturate(1.2);
+      animation: lbFlameSpin 6s linear infinite;
+    }
+    @keyframes lbFlameSpin {
+      0%   { transform: rotate(0deg)   scale(1.005); }
+      50%  { transform: rotate(180deg) scale(1.02); }
+      100% { transform: rotate(360deg) scale(1.005); }
+    }
+    /* Mode toggles — fade rings in/out */
+    #lb-modal-box.mode-normal {
+      border-color: rgba(110,170,255,.45);
+      box-shadow: 0 0 24px rgba(80,140,255,.35);
+    }
+    #lb-modal-box.mode-normal::before { opacity: 1; }
+    #lb-modal-box.mode-extreme {
+      border-color: rgba(255,120,40,.0);
+      box-shadow: 0 0 28px rgba(255,80,20,.55), 0 0 60px rgba(255,40,0,.32);
+    }
+    #lb-modal-box.mode-extreme::after { opacity: 1; }
+    /* Subtle inner flame flicker overlay in extreme */
+    #lb-modal-box.mode-extreme {
+      background:
+        radial-gradient(120% 80% at 50% 100%, rgba(255,80,20,.10), transparent 60%),
+        rgba(14,10,12,0.97);
     }
     #lb-modal-title {
       font-size: 12px; letter-spacing: 3px; text-align: center;
@@ -250,10 +311,17 @@
     }
     #lb-modal-close:active { transform: scale(0.97); }
 
-    /* Home leaderboard button (small, alongside Settings) */
-    #btn-lb {
-      width: 70%; align-self: center;
+    /* Settings + High Scores side-by-side, equal weight */
+    .menu-row {
+      display: flex !important; flex-direction: row !important;
+      gap: 8px; width: 100%; align-self: stretch;
     }
+    .menu-row > .btn-gray {
+      flex: 1 1 0 !important; width: auto !important; min-width: 0;
+      padding: 14px 8px; font-size: 11px; letter-spacing: 1.4px;
+      white-space: nowrap;
+    }
+    #btn-lb { /* legacy reset — sizing handled by .menu-row */ }
 
     /* ══════════ HOLD-TO-CONFIRM BACK TO MENU ══════════ */
     #btn-menu {
@@ -634,8 +702,8 @@
     #home-pbest-lbl { font-size: 6px; color: var(--green); letter-spacing: 1px; }
     #home-pbest-val { font-size: 10px; color: #fff; letter-spacing: 1px; }
 
-    /* Settings button narrower */
-    #btn-settings { width: 70%; align-self: center; }
+    /* Settings button — sizing handled by .menu-row when paired */
+    #btn-settings { /* legacy: width applied via .menu-row */ }
 
     /* Home profile card — stat row */
     #home-profile { cursor: pointer; }
@@ -1029,8 +1097,10 @@
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">Start</div>
     </div>
-    <button class="btn-gray" id="btn-settings">Settings</button>
-    <button class="btn-gray" id="btn-lb">High Scores</button>
+    <div class="menu-row">
+      <button class="btn-gray" id="btn-settings">Settings</button>
+      <button class="btn-gray" id="btn-lb">High Scores</button>
+    </div>
     <!-- Mode selector (wrapper holds floating deco particles) -->
     <div id="mode-fx-wrap">
       <div id="mode-sel">
@@ -1140,7 +1210,7 @@
       <button class="btn-gray" id="btn-menu" style="font-size:11px">
         <div class="hold-fill"></div>
         <span class="hold-label">Back to Menu</span>
-        <span class="hold-hint">HOLD 2s</span>
+        <span class="hold-hint">HOLD</span>
       </button>
     </div>
     <div id="go-best">YOUR BEST&nbsp;&nbsp;<span id="go-best-val">00000</span></div>
@@ -1280,8 +1350,18 @@ const ARC_DB = (() => {
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
   async function submitScore(name, avatar, score, mode) {
-    if (!projectId || projectId.startsWith('BURAYA')) return;
+    if (!projectId || projectId.startsWith('BURAYA')) {
+      console.warn('[ArcDB] no projectId configured — score not saved');
+      return;
+    }
+    // Boş/whitespace isim → kayıt anlamsız, atla
+    name = (name || '').toString().trim();
+    if (!name) { console.warn('[ArcDB] empty name — score not saved'); return; }
+    score = Number(score) || 0;
+    if (score <= 0) { console.warn('[ArcDB] score <= 0 — skip'); return; }
+    avatar = Number(avatar) || 0;
     mode = normMode(mode);
+    console.log('[ArcDB] submitScore', { name, avatar, score, mode });
     try {
       // Aynı isimle var olan tüm doc'ları çek; mode'u eşleşeni bul
       const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
@@ -1302,9 +1382,9 @@ const ARC_DB = (() => {
 
       if (match) {
         const oldScore = parseInt(match.document.fields.score.integerValue ?? 0);
-        if (score <= oldScore) return; // eski skor daha iyi, atla
+        if (score <= oldScore) { console.log('[ArcDB] existing score higher, skip', { oldScore, newScore: score }); return; }
         const docId = match.document.name.split('/').pop();
-        await fetch(
+        const upd = await fetch(
           `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts&updateMask.fieldPaths=mode`,
           {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -1316,8 +1396,10 @@ const ARC_DB = (() => {
             }}),
           }
         );
+        if (!upd.ok) { console.warn('[ArcDB] PATCH failed', upd.status, await upd.text()); return; }
+        console.log('[ArcDB] score updated', { docId, score });
       } else {
-        await fetch(`${BASE}/scores?key=${apiKey}`, {
+        const ins = await fetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields: {
             name:   { stringValue: name  },
@@ -1327,6 +1409,8 @@ const ARC_DB = (() => {
             mode:   { stringValue: mode },
           }}),
         });
+        if (!ins.ok) { console.warn('[ArcDB] POST failed', ins.status, await ins.text()); return; }
+        console.log('[ArcDB] score created');
       }
     } catch(e) { console.warn('[ArcDB] submit failed', e); }
   }
@@ -2304,6 +2388,42 @@ const ARC_DB = (() => {
     }
   }
 
+  // Gold pickup burst (yellow/amber polygons)
+  function spawnGoldParticles(wx, wy) {
+    const count = 56;
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+      const spd = 1100 + Math.random() * 1800;
+      particles.push({
+        wx, wy, x: wx, y: wy,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r:    2 + Math.random() * 5,
+        life: 1,
+        hue:  44 + Math.random() * 16,   // 44–60 (gold→amber)
+        sides: 3 + Math.floor(Math.random() * 4),
+        rot:   Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  // Purple booster burst (violet/magenta polygons)
+  function spawnPurpleParticles(wx, wy) {
+    const count = 64; // a bit more — booster is a big event
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+      const spd = 1300 + Math.random() * 2000;
+      particles.push({
+        wx, wy, x: wx, y: wy,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r:    3 + Math.random() * 5,
+        life: 1.1,
+        hue:  275 + Math.random() * 30,  // 275–305 (violet→magenta)
+        sides: 3 + Math.floor(Math.random() * 4),
+        rot:   Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
@@ -2930,6 +3050,7 @@ const ARC_DB = (() => {
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
+        spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
       }
     }
@@ -2937,6 +3058,7 @@ const ARC_DB = (() => {
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        spawnPurpleParticles(b.x, b.y);
         purpleBalls.splice(i, 1);
         activateBooster(b.type);
       }
@@ -3296,6 +3418,12 @@ const ARC_DB = (() => {
     const mode = lbCurrentMode;
     document.getElementById('lb-tab-normal').className  = 'lb-tab' + (mode === 'normal'  ? ' active-normal'  : '');
     document.getElementById('lb-tab-extreme').className = 'lb-tab' + (mode === 'extreme' ? ' active-extreme' : '');
+    // Mode-themed frame (animated transition)
+    const box = document.getElementById('lb-modal-box');
+    if (box) {
+      box.classList.toggle('mode-normal',  mode === 'normal');
+      box.classList.toggle('mode-extreme', mode === 'extreme');
+    }
     // Loading state
     renderLbCard('best',    null);
     renderLbCard('daily',   null);
@@ -3432,6 +3560,12 @@ const ARC_DB = (() => {
   // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
     initAudio(); // AudioContext unlock
+    // Skor kaydı için boş isim olmasın — varsayılan PLAYER
+    if (!playerName || !playerName.trim()) {
+      playerName = 'PLAYER';
+      localStorage.setItem('arc_name', playerName);
+      try { applyProfile(); } catch(_){}
+    }
     resetGame();
     playBgMusic();
     showScene('play');
@@ -3586,7 +3720,7 @@ const ARC_DB = (() => {
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
   // ── Back to Menu: 2s hold required (with visual fill) ─────
   (() => {
-    const HOLD_MS = 2000;
+    const HOLD_MS = 500;
     const btn  = document.getElementById('btn-menu');
     const fill = btn.querySelector('.hold-fill');
     let holdTimer = null;
