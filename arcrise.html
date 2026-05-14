@@ -177,15 +177,15 @@
       max-height: 88vh; overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
     }
-    /* Animated frame layers — sit behind the box, fade in/out per mode */
+    /* Themed frame layers — fade in/out per mode, no rotation, no blur */
     #lb-modal-box::before,
     #lb-modal-box::after {
-      content: ""; position: absolute; inset: -2px;
-      border-radius: 24px; pointer-events: none;
+      content: ""; position: absolute; inset: -3px;
+      border-radius: 25px; pointer-events: none;
       opacity: 0; transition: opacity .55s ease;
       z-index: -1;
     }
-    /* Blue ring for Normal */
+    /* Blue ring for Normal — static, soft glow */
     #lb-modal-box::before {
       border: 1.5px solid rgba(110,170,255,.55);
       box-shadow:
@@ -197,27 +197,39 @@
         rgba(40,80,200,.04) 50%,
         rgba(80,160,255,.10) 100%);
     }
-    /* Flaming ring for Extreme — animated conic flicker */
+    /* Flame ring for Extreme — flickering rising-flame gradients, no rotation */
     #lb-modal-box::after {
-      border: 1.5px solid rgba(255,120,40,.0);
-      box-shadow:
-        0 0 0 1px rgba(255,90,30,.35),
-        0 0 26px 4px rgba(255,90,30,.55),
-        0 0 60px 6px rgba(255,40,10,.28),
-        inset 0 0 20px rgba(255,140,40,.25);
+      border: 1.5px solid rgba(255,120,40,.7);
       background:
-        conic-gradient(from 0deg,
-          rgba(255,60,20,.55), rgba(255,140,40,.35),
-          rgba(255,210,60,.55), rgba(255,80,20,.40),
-          rgba(255,40,10,.55), rgba(255,160,50,.35),
-          rgba(255,60,20,.55));
-      filter: blur(3px) saturate(1.2);
-      animation: lbFlameSpin 6s linear infinite;
+        radial-gradient(60% 70% at 15% 110%, rgba(255,80,20,.65), transparent 65%),
+        radial-gradient(70% 80% at 50% 115%, rgba(255,140,40,.75), transparent 60%),
+        radial-gradient(60% 70% at 85% 110%, rgba(255,60,10,.70), transparent 65%),
+        radial-gradient(40% 50% at 50% -10%, rgba(255,160,60,.35), transparent 70%),
+        linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
     }
-    @keyframes lbFlameSpin {
-      0%   { transform: rotate(0deg)   scale(1.005); }
-      50%  { transform: rotate(180deg) scale(1.02); }
-      100% { transform: rotate(360deg) scale(1.005); }
+    /* Flicker animates ONLY box-shadow — opacity stays class-controlled */
+    @keyframes lbFlameFlicker {
+      0%, 100% {
+        box-shadow:
+          0 0 0 1px rgba(255,90,30,.45),
+          0 0 28px 4px rgba(255,90,30,.65),
+          0 0 70px 10px rgba(255,40,10,.40),
+          inset 0 -18px 26px rgba(255,140,40,.40);
+      }
+      35% {
+        box-shadow:
+          0 0 0 1px rgba(255,120,40,.55),
+          0 0 36px 6px rgba(255,120,40,.80),
+          0 0 80px 14px rgba(255,60,20,.50),
+          inset 0 -22px 30px rgba(255,170,60,.55);
+      }
+      70% {
+        box-shadow:
+          0 0 0 1px rgba(255,70,20,.50),
+          0 0 24px 3px rgba(255,80,20,.70),
+          0 0 60px 8px rgba(255,40,10,.45),
+          inset 0 -14px 22px rgba(255,120,40,.45);
+      }
     }
     /* Mode toggles — fade rings in/out */
     #lb-modal-box.mode-normal {
@@ -227,29 +239,58 @@
     #lb-modal-box.mode-normal::before { opacity: 1; }
     #lb-modal-box.mode-extreme {
       border-color: rgba(255,120,40,.0);
-      box-shadow: 0 0 28px rgba(255,80,20,.55), 0 0 60px rgba(255,40,0,.32);
-    }
-    #lb-modal-box.mode-extreme::after { opacity: 1; }
-    /* Subtle inner flame flicker overlay in extreme */
-    #lb-modal-box.mode-extreme {
       background:
-        radial-gradient(120% 80% at 50% 100%, rgba(255,80,20,.10), transparent 60%),
+        radial-gradient(140% 90% at 50% 100%, rgba(255,80,20,.14), transparent 65%),
         rgba(14,10,12,0.97);
     }
+    #lb-modal-box.mode-extreme::after {
+      opacity: 1;
+      animation: lbFlameFlicker 1.6s ease-in-out infinite;
+    }
     #lb-modal-title {
-      font-size: 12px; letter-spacing: 3px; text-align: center;
-      color: var(--green);
+      font-size: 16px; letter-spacing: 3px; text-align: center;
+      color: #fff; margin-bottom: 2px;
     }
-    #lb-tabs { display: flex; gap: 0; border-radius: 10px; overflow: hidden;
+    #lb-tabs { display: flex; gap: 0; border-radius: 12px; overflow: hidden;
       border: 1px solid rgba(255,255,255,.12); }
+    /* Popup tabs reuse the home mode-btn look (icy blue / flame) */
     .lb-tab {
-      flex: 1; padding: 9px 0; background: rgba(255,255,255,0.02);
-      border: none; color: rgba(255,255,255,.45);
-      font-family: var(--font); font-size: 9px; letter-spacing: 2px; cursor: pointer;
-      transition: background .2s, color .2s;
+      flex: 1; padding: 11px 0; font-family: var(--font);
+      font-size: 9px; letter-spacing: 2px;
+      border: none; cursor: pointer;
+      transition: filter .2s;
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.42);
+      position: relative;
     }
-    .lb-tab.active-normal { background: rgba(68,136,255,.18); color: #88aaff; }
-    .lb-tab.active-extreme { background: rgba(255,80,40,.22); color: #ff8866; }
+    .lb-tab.active-normal {
+      color: #fff;
+      text-shadow: 0 0 6px rgba(180,230,255,.8), 0 0 2px rgba(255,255,255,.9);
+      background:
+        radial-gradient(circle 14px at 20% 30%, rgba(220,240,255,.45), transparent 60%),
+        radial-gradient(circle 10px at 70% 70%, rgba(180,220,255,.4),  transparent 60%),
+        linear-gradient(135deg, #2255bb 0%, #4499ee 50%, #66ccff 100%);
+      box-shadow:
+        0 0 14px rgba(100,180,255,.45),
+        inset 0 -6px 12px rgba(255,255,255,.18),
+        inset 0 4px 8px rgba(20,60,140,.35);
+      animation: iceShimmer 2.2s ease-in-out infinite alternate;
+    }
+    .lb-tab.active-extreme {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255,220,80,.9), 0 0 3px rgba(255,255,255,.9);
+      background:
+        radial-gradient(circle 14px at 12% 92%, rgba(255,240,160,.98), transparent 65%),
+        radial-gradient(circle 11px at 30% 105%, rgba(255,170,40,.98), transparent 65%),
+        radial-gradient(circle 16px at 50% 90%,  rgba(255,220,80,.98), transparent 65%),
+        radial-gradient(circle 12px at 72% 105%, rgba(255,140,30,.98), transparent 65%),
+        radial-gradient(circle 15px at 90% 92%,  rgba(255,230,90,.98), transparent 65%),
+        linear-gradient(180deg, #881122 0%, #dd2211 50%, #ff5522 80%, #ff8833 100%);
+      box-shadow:
+        0 0 20px rgba(255,80,30,.7),
+        inset 0 -10px 18px rgba(255,210,80,.45),
+        inset 0 5px 10px rgba(140,0,20,.55);
+      animation: flameFlicker 0.35s ease-in-out infinite alternate;
+    }
 
     .lb-section-lbl {
       font-size: 6px; letter-spacing: 2px; color: rgba(255,255,255,.4);
@@ -261,18 +302,29 @@
     .lb-best-card {
       flex: 1; background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,.08);
-      border-radius: 10px; padding: 9px 8px;
-      display: flex; flex-direction: column; gap: 3px;
+      border-radius: 12px; padding: 12px 8px;
+      aspect-ratio: 1 / 1;
+      display: flex; flex-direction: column;
+      justify-content: space-between; gap: 8px;
+      text-align: center; align-items: center;
     }
-    .lb-best-lbl { font-size: 6px; letter-spacing: 1.5px; color: rgba(255,255,255,.4); }
-    .lb-best-name { font-size: 8px; letter-spacing: 1px; color: #fff;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-best-score { font-size: 11px; letter-spacing: 1px; color: var(--green); }
+    .lb-best-lbl   { font-size: 6.5px; letter-spacing: 2.2px; color: rgba(255,255,255,.4); }
+    .lb-best-name  { font-size: 9px;  letter-spacing: 1.8px; color: #fff;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .lb-best-score { font-size: 11px; letter-spacing: 1.6px; color: var(--green); }
     .lb-best-empty { font-size: 8px; color: rgba(255,255,255,.25); letter-spacing: 1px; }
+    /* Themed record cards */
+    .lb-best-card.card-alltime  { border-color: rgba(255,210,80,.35); background: rgba(255,210,80,.06); }
+    .lb-best-card.card-alltime  .lb-best-lbl { color: #ffd866; }
+    .lb-best-card.card-today    { border-color: rgba(124,255,122,.35); background: rgba(124,255,122,.06); }
+    .lb-best-card.card-today    .lb-best-lbl { color: #7CFF7A; }
+    .lb-best-card.card-month    { border-color: rgba(170,120,255,.40); background: rgba(170,120,255,.07); }
+    .lb-best-card.card-month    .lb-best-lbl { color: #c099ff; }
 
     #lb-list {
       display: flex; flex-direction: column; gap: 4px;
-      overflow-y: auto; max-height: 46vh;
+      overflow-y: auto;
+      max-height: 46vh;
     }
     .lb-list-row {
       display: grid; grid-template-columns: 36px 1fr auto;
@@ -287,11 +339,21 @@
       border: 1px solid rgba(124,255,122,.3);
       color: var(--green);
     }
-    .lb-list-row.top { background: rgba(255,210,80,.10); color: #ffd866; }
+    .lb-list-row.top {
+      background: rgba(255,210,80,.12);
+      border: 1px solid rgba(255,210,80,.55);
+      color: #ffd866;
+      box-shadow: 0 0 14px rgba(255,210,80,.20);
+    }
     .lb-list-row.divider {
       grid-template-columns: 1fr; justify-content: center; text-align: center;
       background: none; color: rgba(255,255,255,.18); letter-spacing: 3px; padding: 2px 0;
       font-size: 8px;
+    }
+    .lb-list-row.you-placeholder {
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.18);
+      color: rgba(255,255,255,.5); font-style: italic;
     }
     .lb-row-rank { font-size: 7px; opacity: .7; }
     .lb-row-dot {
@@ -311,7 +373,7 @@
     }
     #lb-modal-close:active { transform: scale(0.97); }
 
-    /* Settings + High Scores side-by-side, equal weight */
+    /* Settings + High Scores side-by-side, equal weight (plain gray, no stroke) */
     .menu-row {
       display: flex !important; flex-direction: row !important;
       gap: 8px; width: 100%; align-self: stretch;
@@ -363,6 +425,7 @@
 
     /* ══════════ SETTINGS ══════════ */
     #settings .panel {
+      position: relative;
       background: rgba(10,13,22,0.78);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
@@ -372,6 +435,21 @@
       width: min(92vw, 350px);
       display: flex; flex-direction: column; gap: 20px;
     }
+    /* Rotating rainbow gradient stroke around Settings panel (same vibe as Start) */
+    #settings .panel::before {
+      content: ""; position: absolute; inset: -2.5px;
+      border-radius: 28px; padding: 2.5px;
+      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      animation: spinA 3s linear infinite;
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #settings .panel > * { position: relative; z-index: 1; }
     #settings h2 { font-size: 16px; text-align: center; letter-spacing: 3px; margin-bottom: 2px; }
 
     .srow { display: flex; align-items: center; gap: 12px; }
@@ -794,13 +872,28 @@
     #extreme-modal.open { display: flex; }
     #extreme-modal-box {
       position: relative;
-      background: rgba(14,8,22,0.97);
-      border: 1.5px solid rgba(255,51,85,.4);
+      background:
+        radial-gradient(140% 90% at 50% 100%, rgba(255,80,20,.14), transparent 65%),
+        rgba(14,8,12,0.97);
+      border: 1.5px solid rgba(255,120,40,.0);
       border-radius: 26px;
       padding: 28px 24px 22px;
       width: min(90vw, 340px);
       display: flex; flex-direction: column; gap: 14px; align-items: center;
-      box-shadow: 0 0 40px rgba(255,51,85,.15);
+      overflow: visible;
+    }
+    /* Flame frame for the extreme popup — same flicker system as HS popup */
+    #extreme-modal-box::after {
+      content: ""; position: absolute; inset: -3px;
+      border-radius: 29px; pointer-events: none; z-index: -1;
+      border: 1.5px solid rgba(255,120,40,.7);
+      background:
+        radial-gradient(60% 70% at 15% 110%, rgba(255,80,20,.65), transparent 65%),
+        radial-gradient(70% 80% at 50% 115%, rgba(255,140,40,.75), transparent 60%),
+        radial-gradient(60% 70% at 85% 110%, rgba(255,60,10,.70), transparent 65%),
+        radial-gradient(40% 50% at 50% -10%, rgba(255,160,60,.35), transparent 70%),
+        linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
+      animation: lbFlameFlicker 1.6s ease-in-out infinite;
     }
     #extreme-icon { font-size: 32px; line-height: 1; }
     #extreme-title { font-size: 14px; letter-spacing: 3px; color: #ff3355; }
@@ -1241,25 +1334,23 @@
       <button class="lb-tab active-normal" id="lb-tab-normal">Normal</button>
       <button class="lb-tab" id="lb-tab-extreme">Extreme</button>
     </div>
-    <div class="lb-section-lbl">RECORDS</div>
     <div class="lb-bests-row">
-      <div class="lb-best-card">
+      <div class="lb-best-card card-alltime">
         <div class="lb-best-lbl">ALL-TIME</div>
         <div class="lb-best-name" id="lb-best-name">—</div>
         <div class="lb-best-score" id="lb-best-score">00000</div>
       </div>
-      <div class="lb-best-card">
+      <div class="lb-best-card card-today">
         <div class="lb-best-lbl">TODAY</div>
         <div class="lb-best-name" id="lb-daily-name">—</div>
         <div class="lb-best-score" id="lb-daily-score">—</div>
       </div>
-      <div class="lb-best-card">
+      <div class="lb-best-card card-month">
         <div class="lb-best-lbl">MONTH</div>
         <div class="lb-best-name" id="lb-monthly-name">—</div>
         <div class="lb-best-score" id="lb-monthly-score">—</div>
       </div>
     </div>
-    <div class="lb-section-lbl">YOUR POSITION</div>
     <div id="lb-list">
       <div class="lb-empty">Loading...</div>
     </div>
@@ -3379,29 +3470,42 @@ const ARC_DB = (() => {
       listEl.innerHTML = `<div class="lb-empty">No scores yet for ${mode.toUpperCase()}</div>`;
       return;
     }
-    // Oyuncunun bu mode'daki kaydını bul; yoksa "henüz yok" göster
-    let youIdx = rows.findIndex(r => r.name === playerName);
+    // Layout: 1. (gold) + divider + 2 üst + sen (yeşil) + 2 alt = 6 satır
+    const youIdx = rows.findIndex(r => r.name === playerName);
+    const top0 = rows[0] ? { ...rows[0], rank: 0, _markTop: true } : null;
     let show = [];
     if (youIdx === -1) {
-      // Oyuncu listede yok → sadece top 5'i göster
-      show = rows.slice(0, 5).map((r, i) => ({ ...r, rank: i }));
+      // Oyuncu listede yok → 1. + boşluk + sıralanmamış placeholder + alttaki en yakın 4
+      if (top0) show.push(top0);
+      show.push({ _divider: true });
+      // İlk 4 (1. hariç) — bağlam için
+      const tail = rows.slice(1, 5).map((r, i) => ({ ...r, rank: i + 1 }));
+      show = show.concat(tail);
+      show.push({ _youPlaceholder: true });
+    } else if (youIdx === 0) {
+      // Oyuncu zaten 1. → altın çerçeve + altındaki 5 oyuncu
+      if (top0) { top0._markTop = true; show.push(top0); }
+      const below = rows.slice(1, 6).map((r, i) => ({ ...r, rank: i + 1 }));
+      show = show.concat(below);
     } else {
-      // 2 üst + kendin + 2 alt
-      const start = Math.max(0, youIdx - 2);
+      // Normal durum: 2 üst + sen + 2 alt
+      const start = Math.max(1, youIdx - 2); // 1.'i ayrıca göstereceğiz
       const end   = Math.min(rows.length, youIdx + 3);
-      show = rows.slice(start, end).map((r, i) => ({ ...r, rank: start + i }));
-      // En tepeyi her zaman göster (eğer 0 dahil değilse, en başa ekle + divider)
-      if (start > 0) {
-        const top0 = { ...rows[0], rank: 0, _markTop: true };
-        if (start > 1) {
-          show = [top0, { _divider: true }, ...show];
-        } else {
-          show = [top0, ...show];
-        }
-      }
+      const middle = rows.slice(start, end).map((r, i) => ({ ...r, rank: start + i }));
+      if (top0) show.push(top0);
+      // Boşluk: eğer 1. ile orta grup arasında atlama varsa divider
+      if (start > 1) show.push({ _divider: true });
+      show = show.concat(middle);
     }
     listEl.innerHTML = show.map(r => {
       if (r._divider) return `<div class="lb-list-row divider">···</div>`;
+      if (r._youPlaceholder) {
+        return `<div class="lb-list-row you-placeholder">
+          <span class="lb-row-rank">—</span>
+          <span>${playerName || 'YOU'}  ·  not ranked yet</span>
+          <span>—</span>
+        </div>`;
+      }
       const isYou = r.name === playerName;
       const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop && !isYou ? ' top' : ''}`;
       const col = AVATAR_COLORS[r.avatar] || '#fff';
