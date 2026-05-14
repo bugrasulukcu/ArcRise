@@ -27,8 +27,12 @@
     }
     .stack {
       position: relative;
-      width: min(100vw, 56.25vh);
-      height: 100vh;
+      /* Canvas iç çözünürlük 600x1066 (≈9:16). Hem genişliği hem
+         yüksekliği bu orana göre kıs — yoksa 19.5:9 / 20:9 Android
+         ekranlarda canvas dikey eziliyor, daireler oval görünüyor.
+         56.285vh = (600/1066)*100 ; 177.667vw = (1066/600)*100 */
+      width:  min(100vw, 56.285vh);
+      height: min(100vh, 177.667vw);
     }
     canvas {
       position: absolute; inset: 0;
@@ -806,7 +810,8 @@
       border-radius: 26px;
       padding: 26px 22px 22px;
       width: min(92vw, 360px);
-      display: flex; flex-direction: column; gap: 16px; align-items: center;
+      max-height: 92vh; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
     #prof-modal-title { font-size: 12px; letter-spacing: 2px; }
     /* Avatar preview with rainbow ring */
@@ -841,6 +846,40 @@
       text-transform: uppercase; text-align: center;
     }
     #prof-name-input:focus { outline: none; border-color: var(--green); }
+    /* ── Profile stats panel ─────────────────────────────── */
+    #prof-stats {
+      width: 100%; display: flex; flex-direction: column; gap: 8px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .prof-stats-title {
+      font-size: 7px; letter-spacing: 2.5px; color: rgba(255,255,255,.45);
+      text-align: center;
+    }
+    .prof-stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 6px;
+    }
+    .prof-stat {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 4px; background: rgba(255,255,255,.025);
+      border-radius: 8px;
+    }
+    .prof-stat-lbl { font-size: 5.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.4);
+      text-align: center; }
+    .prof-stat-val { font-size: 11px; letter-spacing: 1px; color: #fff; }
+    .ps-blue   { color: #66ccff; }
+    .ps-flame  { color: #ff8866; }
+    .ps-green  { color: var(--green); }
+    .ps-gold   { color: #ffd866; }
+    .ps-purple { color: #c099ff; }
+    .prof-stats-foot {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 6px 0;
+      font-size: 7px; letter-spacing: 1.5px; color: rgba(255,255,255,.5);
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .prof-stats-foot > span:last-child { font-size: 10px; letter-spacing: 1px; }
     #prof-modal-save {
       width: 100%; padding: 14px; border-radius: 13px;
       border: 1.5px solid var(--green); background: rgba(124,255,122,.12);
@@ -1381,6 +1420,22 @@
       <input type="text" id="prof-name-input" maxlength="8" placeholder="YOUR NAME"
              spellcheck="false" autocomplete="off">
     </div>
+    <!-- ── Stats ───────────────────────────────────────── -->
+    <div id="prof-stats">
+      <div class="prof-stats-title">STATS</div>
+      <div class="prof-stats-grid">
+        <div class="prof-stat"><div class="prof-stat-lbl">GAMES</div><div class="prof-stat-val" id="ps-games">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">BEST NORMAL</div><div class="prof-stat-val ps-blue" id="ps-best-n">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">BEST EXTREME</div><div class="prof-stat-val ps-flame" id="ps-best-x">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">MAX COMBO</div><div class="prof-stat-val ps-green" id="ps-combo">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">GOLD BALLS</div><div class="prof-stat-val ps-gold" id="ps-gold">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">BOOSTERS</div><div class="prof-stat-val ps-purple" id="ps-boost">0</div></div>
+      </div>
+      <div class="prof-stats-foot">
+        <span>TOTAL XP</span>
+        <span id="ps-xp" class="ps-green">0</span>
+      </div>
+    </div>
     <button id="prof-modal-save">SAVE</button>
   </div>
 </div>
@@ -1843,6 +1898,31 @@ const ARC_DB = (() => {
   let xpTotal   = Number(localStorage.getItem('arc_xp') || 0);
   let coins     = Math.floor(xpTotal / 1000); // always derived from xpTotal
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
+
+  // ── Profile stats (persisted) ─────────────────────────────
+  // Single localStorage key holding JSON — easy to extend later.
+  const STATS_KEY = 'arc_stats_v1';
+  function loadStats() {
+    try {
+      const raw = localStorage.getItem(STATS_KEY);
+      if (raw) return Object.assign({
+        gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
+        bestNormal: 0, bestExtreme: 0,
+        goldsCollected: 0, boostersCollected: 0,
+        maxCombo: 0,
+      }, JSON.parse(raw));
+    } catch(_){}
+    return {
+      gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
+      bestNormal: 0, bestExtreme: 0,
+      goldsCollected: 0, boostersCollected: 0,
+      maxCombo: 0,
+    };
+  }
+  let stats = loadStats();
+  function saveStats() {
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(_){}
+  }
 
   // Float texts (combo bonuses)
   const floatTexts = [];
@@ -3057,6 +3137,8 @@ const ARC_DB = (() => {
     if (energy > 0.01) {
       comboEl.classList.add('active');
       comboVal.textContent = Number.isInteger(comboMul) ? comboMul.toFixed(1) : comboMul.toFixed(1);
+      // Track max combo (countdown reflects raw streak count)
+      if (countdown > stats.maxCombo) { stats.maxCombo = countdown; saveStats(); }
       // Color: cool (high) → warm (low)
       const comboHue = 120 * (energy);
       document.getElementById('combo-pill').style.borderColor = `hsl(${comboHue},100%,55%)`;
@@ -3142,6 +3224,7 @@ const ARC_DB = (() => {
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
         spawnGoldParticles(b.x, b.y);
+        stats.goldsCollected++; saveStats();
         goldBalls.splice(i, 1);
       }
     }
@@ -3150,6 +3233,7 @@ const ARC_DB = (() => {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         spawnPurpleParticles(b.x, b.y);
+        stats.boostersCollected++; saveStats();
         purpleBalls.splice(i, 1);
         activateBooster(b.type);
       }
@@ -3192,6 +3276,16 @@ const ARC_DB = (() => {
     const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
+    // ── Stats güncelle ────────────────────────────────────
+    stats.gamesTotal++;
+    if (gameMode === 'extreme') {
+      stats.gamesExtreme++;
+      if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
+    } else {
+      stats.gamesNormal++;
+      if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
+    }
+    saveStats();
 
     const sc  = lastScore;
     const avc = AVATAR_COLORS[avatarIdx];
@@ -3362,8 +3456,9 @@ const ARC_DB = (() => {
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp'].forEach(k => localStorage.removeItem(k));
+     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp', STATS_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; firstPlay = true; coins = 0; lastScore = 0; xpTotal = 0;
+    stats = loadStats();
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
@@ -3579,7 +3674,20 @@ const ARC_DB = (() => {
     profAvatarGridOpen = false;
     const grid = document.getElementById('prof-av-grid');
     if (grid) grid.classList.remove('open');
+    // Stats değerlerini doldur
+    renderProfStats();
     profModal.classList.add('open');
+  }
+
+  function renderProfStats() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+    set('ps-games',  stats.gamesTotal);
+    set('ps-best-n', pad(stats.bestNormal));
+    set('ps-best-x', pad(stats.bestExtreme));
+    set('ps-combo',  stats.maxCombo);
+    set('ps-gold',   stats.goldsCollected);
+    set('ps-boost',  stats.boostersCollected);
+    set('ps-xp',     xpTotal.toLocaleString());
   }
 
   document.getElementById('home-profile').addEventListener('click', openProfModal);
