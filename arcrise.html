@@ -1969,7 +1969,47 @@ const ARC_DB = (() => {
   }
 
   // Ghost: önceki oyunun trail'i (world-space) — %20 alpha ile çizilir
-  let ghostTrail = [];
+  let ghostTrail = [];          // legacy single-ghost (unused after the
+                                // multi-trace refactor below, kept to avoid
+                                // touching unrelated callsites)
+
+  // ── Multi-trace ghosts ───────────────────────────────────
+  // ghostSampled = current game's sparsely-sampled trail (no shift), used
+  // to capture a ghost at endGame. Sampling cadence ~every 20 world-px
+  // upward — keeps each saved trace under ~150 points.
+  const ghostSampled = [];
+  // allGhosts = up to 1000 traces from prior games, loaded at game start.
+  let allGhosts = [];
+  // Performance cap for the per-frame render — last N most-recent traces.
+  const GHOSTS_RENDER_MAX = 80;
+  const GHOSTS_STORE_MAX  = 1000;
+  const GHOSTS_KEY        = 'arc_traces_v1';
+
+  function loadGhostTraces() {
+    try {
+      const raw = localStorage.getItem(GHOSTS_KEY);
+      return raw ? (JSON.parse(raw) || []) : [];
+    } catch(_) { return []; }
+  }
+  function saveGhostTrace(trace) {
+    // Add bounding y so off-screen traces can be skipped cheaply on render.
+    let yMin = Infinity, yMax = -Infinity;
+    for (const p of trace.points) {
+      if (p.y < yMin) yMin = p.y;
+      if (p.y > yMax) yMax = p.y;
+    }
+    trace.yMin = yMin; trace.yMax = yMax;
+    const arr = loadGhostTraces();
+    arr.push(trace);
+    if (arr.length > GHOSTS_STORE_MAX) arr.splice(0, arr.length - GHOSTS_STORE_MAX);
+    // localStorage might quota-error on very large payloads; drop oldest
+    // half and retry once before giving up silently.
+    try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); }
+    catch(_) {
+      arr.splice(0, Math.floor(arr.length / 2));
+      try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); } catch(__){}
+    }
+  }
 
   // LB NPC sabit skorları (her oyun başında yeniden çekilir)
   let lbNPCScores = [];
@@ -2060,18 +2100,26 @@ const ARC_DB = (() => {
   // Gold vignette flash state (altın toptan kenar parlaması)
   let goldFlashAlpha = 0;
 
+  // The bg-flash viz used to read frequency bins from an AnalyserNode that
+  // routed bgAudio through an AudioContext. That created a class of bugs
+  // where a suspended ctx (autoplay policy, tab switch) silently ate the
+  // music even though bgAudio.play() succeeded. We now play bgAudio
+  // natively (zero context coupling) and synthesise a fake spectrum so the
+  // bg flash still has motion.
   function initAudioViz() {
-    if (audioCtx) return;
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = audioCtx.createMediaElementSource(bgAudio);
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.80;
-      src.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      vizData = new Uint8Array(analyser.frequencyBinCount); // 64 bins
-    } catch(e) { console.warn('[Viz]', e); }
+    if (vizData) return;
+    // 64 fake bins — same length as the old analyser frequencyBinCount.
+    vizData = new Uint8Array(64);
+  }
+  // Drive fake viz data each frame so musOn-gated visuals still animate.
+  function updateFakeViz() {
+    if (!vizData) return;
+    const t = performance.now() / 280;
+    const energyHere = 130 + 60 * Math.sin(t * 0.7);
+    for (let i = 0; i < vizData.length; i++) {
+      const v = energyHere + 70 * Math.sin(t + i * 0.6) + 30 * Math.sin(t * 1.7 + i * 0.21);
+      vizData[i] = Math.max(0, Math.min(255, v));
+    }
   }
 
   // Trigger a yellow vignette flash from screen edges (gold ball collected)
@@ -2346,18 +2394,15 @@ const ARC_DB = (() => {
     return true;
   }
 
-  async function playBgMusic() {
+  // Synchronous + gesture-friendly. We deliberately don't await anything
+  // here — iOS Safari requires the .play() call to land inside the
+  // original click handler frame, and an await before it breaks the
+  // gesture chain.
+  function playBgMusic() {
     if (!musOn || !audioStarted) return;
     initAudioViz();
-    // Resume suspended AudioContext BEFORE play — bgAudio routes through it,
-    // so if ctx is suspended audio goes to void even though .play() succeeds.
-    if (audioCtx && audioCtx.state === 'suspended') {
-      try { await audioCtx.resume(); }
-      catch(e) { console.warn('[Audio] resume:', e); }
-    }
     if (bgAudio.paused || bgAudio.ended) {
-      try { await bgAudio.play(); }
-      catch(e) { console.warn('[Audio] BG play:', e); }
+      bgAudio.play().catch(e => console.warn('[Audio] BG play:', e));
     }
   }
 
@@ -2798,21 +2843,39 @@ const ARC_DB = (() => {
     ctx.restore();
   }
 
-  // ── Ghost Trail (önceki oyun, %20 opaklık) ───────────────
+  // ── Ghost Trails — render last N stored traces from prior games ───────
+  // All traces start at spawn (H - 200) because ghostSampled never shifts.
+  // Per-trace opacity is low so 80 stacked traces add up to visible motion
+  // history without overpowering the live trail.
   function drawGhostTrail() {
-    if (ghostTrail.length < 2) return;
+    if (!allGhosts.length) return;
+    const start = Math.max(0, allGhosts.length - GHOSTS_RENDER_MAX);
     ctx.save();
-    ctx.globalAlpha = 0.22;
-    ctx.lineWidth   = 2;
-    ctx.lineCap     = 'round';
-    for (let i = 1; i < ghostTrail.length; i++) {
-      const a = ghostTrail[i-1], b = ghostTrail[i];
-      const ay = W2S(a.y), by = W2S(b.y);
-      if (Math.max(ay, by) < -80 || Math.min(ay, by) > H + 80) continue;
-      ctx.strokeStyle = `hsl(${a.h},100%,65%)`;
+    ctx.lineWidth = 1.6;
+    ctx.lineCap   = 'round';
+    ctx.lineJoin  = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    for (let gi = start; gi < allGhosts.length; gi++) {
+      const g = allGhosts[gi];
+      const pts = g.points;
+      if (!pts || pts.length < 2) continue;
+      // Cheap world-y bounding-cull: if entire trace is off-screen, skip.
+      const topY = W2S(g.yMin ?? -1e9);
+      const botY = W2S(g.yMax ?? 1e9);
+      if (botY < -80 || topY > H + 80) continue;
+      // Newer traces a touch brighter — last 10 in list shine slightly more.
+      const recent = (gi >= allGhosts.length - 10);
+      ctx.globalAlpha = recent ? 0.14 : 0.07;
+      ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
       ctx.beginPath();
-      ctx.moveTo(a.x, ay);
-      ctx.lineTo(b.x, by);
+      let drew = false;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const sy = W2S(p.y);
+        if (sy < -80 || sy > H + 80) { drew = false; continue; }
+        if (!drew) { ctx.moveTo(p.x, sy); drew = true; }
+        else       { ctx.lineTo(p.x, sy); }
+      }
       ctx.stroke();
     }
     ctx.restore();
@@ -3127,7 +3190,10 @@ const ARC_DB = (() => {
     player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
-    camY = 0; trail.length = 0; obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
+    camY = 0; trail.length = 0; ghostSampled.length = 0;
+    obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
+    // Load ghost traces fresh each game so the next save shows up next run.
+    allGhosts = loadGhostTraces();
     nextSpawnY = player.y - 500; lastBonusY = player.y;
     score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
     started = false; running = false; lbFrame = 0;
@@ -3236,6 +3302,11 @@ const ARC_DB = (() => {
       trail.push({ x: player.x, y: player.y, h: th });
       if (trail.length > 600) trail.shift();
     }
+    // Sparse sample for ghost capture — every ~20 world-px upward.
+    // No shift, so the trace keeps its true start at H - 200 (spawn).
+    if (!ghostSampled.length || (ghostSampled.at(-1).y - player.y) > 20) {
+      ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
+    }
 
     for (let i = ripples.length - 1; i >= 0; i--) { if (now - ripples[i].t > 1) ripples.splice(i,1); }
 
@@ -3283,6 +3354,7 @@ const ARC_DB = (() => {
     updateFloatTexts(dt);
     spawnFlameParticles(dt);
     updateFlameParticles(dt);
+    updateFakeViz();
     updateFlyScores(dt);
 
     // Cull obstacles/bonuses/etc. far below view to prevent memory growth
@@ -3384,8 +3456,18 @@ const ARC_DB = (() => {
         const _d = deadAudioFallback.cloneNode(); _d.volume = 0.8; _d.play().catch(() => {});
       }
     }
-    // Ghost: bu oyunun trail'ini bir sonraki oyun için sakla
-    ghostTrail = trail.map(p => ({ x: p.x, y: p.y, h: p.h ?? 120 }));
+    // Ghost: save this run's sparse sample into the persistent ring buffer
+    // (max 1000 traces, oldest dropped). All traces include the spawn point.
+    if (ghostSampled.length >= 2) {
+      saveGhostTrace({
+        mode:   gameMode,
+        score:  Math.floor(score),
+        ts:     Date.now(),
+        points: ghostSampled.slice(), // shallow copy
+      });
+      // Refresh allGhosts so the next render includes the just-played run.
+      allGhosts = loadGhostTraces();
+    }
     running = false; started = false;
     // XP-based coins: accumulate score across all games, 1 coin per 1000 XP
     lastScore = Math.floor(score);
@@ -3578,9 +3660,10 @@ const ARC_DB = (() => {
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp', STATS_KEY].forEach(k => localStorage.removeItem(k));
+     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp', STATS_KEY, GHOSTS_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; firstPlay = true; coins = 0; lastScore = 0; xpTotal = 0;
     stats = loadStats();
+    allGhosts = [];
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
