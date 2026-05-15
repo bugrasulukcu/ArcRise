@@ -1065,15 +1065,29 @@
       z-index: 0;
     }
     #coins-modal-box > * { position: relative; z-index: 1; }
-    #coins-modal-title {
-      font-size: 22px; letter-spacing: 3px;
-      /* Use the coin-bar gradient on the text itself. */
-      background: linear-gradient(90deg, #ffaa00, #ffee44, #ffd866);
-      -webkit-background-clip: text;
-              background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 12px rgba(255,210,80,.35);
-      text-align: center;
+    /* Row: coin icon + balance number */
+    #coins-modal-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; padding: 6px 0 2px;
+    }
+    .coin-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
+      box-shadow:
+        0 0 14px rgba(255,210,80,.55),
+        inset 0 1.5px 0 rgba(255,255,255,.55),
+        inset 0 -3px 6px rgba(120,80,0,.45);
+      border: 2px solid #b8860b;
+      flex-shrink: 0;
+    }
+    .coin-icon-inner {
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 22px;
+      color: #4a2c00;
+      transform: translateY(-1px);
     }
     #coins-modal-value {
       font-size: 38px; letter-spacing: 2px;
@@ -1083,24 +1097,95 @@
       color: transparent;
       text-shadow: 0 0 16px rgba(255,180,40,.45);
     }
+
+    /* Purchase tier buttons */
+    #coins-buy-row {
+      display: flex; gap: 8px; width: 100%;
+    }
+    .coins-buy {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 6px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255,210,80,.5);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
+        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
+      color: #ffd866; font-family: var(--font);
+      cursor: pointer;
+      box-shadow:
+        0 0 12px rgba(255,170,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.16);
+      transition: transform .12s, box-shadow .2s, border-color .2s;
+    }
+    .coins-buy:hover { border-color: rgba(255,210,80,.85); box-shadow: 0 0 16px rgba(255,170,0,.35), inset 0 1px 0 rgba(255,255,255,.22); }
+    .coins-buy:active { transform: scale(0.96); }
+    .coins-buy-amount {
+      font-size: 14px; letter-spacing: 1.4px;
+      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    .coins-buy-price {
+      font-size: 9px; letter-spacing: 1.2px;
+      color: rgba(255,210,140,.7);
+    }
+
+    /* UPGRADES jumper — primary action, bigger than Close. */
+    #coins-to-upgrades {
+      width: 100%; padding: 18px; border-radius: 14px;
+      border: 1.5px solid rgba(170,120,255,.7);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(190,150,255,.30), transparent 60%),
+        linear-gradient(180deg, rgba(80,50,140,.60), rgba(30,15,60,.72));
+      color: #e6d5ff; font-family: var(--font);
+      font-size: 16px; letter-spacing: 2.6px; font-weight: 600; cursor: pointer;
+      box-shadow:
+        0 0 22px rgba(170,120,255,.40),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -6px 12px rgba(20,10,40,.30);
+      transition: transform .12s, box-shadow .2s;
+    }
+    #coins-to-upgrades:active { transform: scale(0.97); }
     #coins-modal-sub {
       font-size: 9.5px; color: rgba(255,210,140,.55); letter-spacing: 1.6px;
       text-align: center; padding: 6px 8px;
     }
-    #coins-modal-close {
-      width: 100%; padding: 14px; border-radius: 11px;
-      border: 1.5px solid rgba(255,210,80,.7);
-      background:
-        radial-gradient(120% 70% at 50% 0%, rgba(255,238,68,.30), transparent 55%),
-        linear-gradient(180deg, #ffaa00 0%, #ffee44 50%, #d68a00 100%);
-      color: #3a2400; font-family: var(--font); font-weight: 600;
-      font-size: 14.5px; letter-spacing: 2.2px; cursor: pointer;
-      box-shadow:
-        0 0 22px rgba(255,170,0,.40),
-        inset 0 1px 0 rgba(255,255,255,.35),
-        inset 0 -6px 12px rgba(120,60,0,.30);
-      transition: transform .12s, box-shadow .2s;
+    /* Next-coin XP progress bar inside the coin popup */
+    #coins-modal-progress { width: 100%; padding: 0 4px; }
+    #coins-progress-top {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 8px;
+      font-family: var(--font);
     }
+    #coins-progress-label { font-size: 10px; color: #ffd866; letter-spacing: 1.6px; }
+    #coins-progress-val   { font-size: 10px; color: rgba(255,210,140,.65); letter-spacing: 1.2px; }
+    #coins-progress-bar-wrap {
+      width: 100%; height: 8px; border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.30);
+    }
+    #coins-progress-bar {
+      height: 100%; width: 0%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #ffaa00 0%, #ffee44 60%, #ffd866 100%);
+      box-shadow: 0 0 10px rgba(255,210,80,.5);
+      transition: width .8s cubic-bezier(.22,.68,0,1.2);
+    }
+    #coins-modal-close {
+      width: 70%; align-self: center;
+      padding: 9px 14px; border-radius: 10px;
+      border: 1.5px solid rgba(255,210,80,.45);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,238,68,.18), transparent 55%),
+        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
+      color: #ffd866; font-family: var(--font);
+      font-size: 11px; letter-spacing: 2px; cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+      transition: transform .12s, border-color .2s;
+    }
+    #coins-modal-close:hover { border-color: rgba(255,210,80,.7); }
     #coins-modal-close:active { transform: scale(0.97); }
 
     /* ══════════ PROFILE EDIT MODAL ══════════ */
@@ -1121,88 +1206,246 @@
       max-height: 92vh; overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
-    #prof-modal-title { font-size: 21px; letter-spacing: 3px; color: #fff; }
-    /* Avatar preview with rainbow ring */
+    #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
+
+    /* Avatar row: badge slot ─ avatar ─ badge slot */
+    #prof-av-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; width: 100%;
+    }
+    .prof-eq-slot {
+      width: 48px; height: 48px; border-radius: 12px;
+      border: 1.5px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.55), rgba(14,18,28,.70));
+      cursor: pointer; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .12s, border-color .2s, box-shadow .2s;
+    }
+    .prof-eq-slot.filled {
+      border-color: rgba(255,210,80,.55);
+      box-shadow: 0 0 10px rgba(255,210,80,.25);
+    }
+    .prof-eq-slot:active { transform: scale(0.94); }
+    .prof-eq-icon { font-size: 22px; line-height: 1; }
+    .prof-eq-empty { font-size: 20px; color: rgba(255,255,255,.30); }
+    .prof-eq-slot.filled .prof-eq-empty { display: none; }
+    .prof-eq-slot:not(.filled) .prof-eq-icon { display: none; }
+
+    /* Avatar preview with rainbow ring (now a button — tap to open picker) */
     #prof-av-ring {
-      width: 80px; height: 80px; border-radius: 50%;
-      padding: 2.5px;
+      width: 76px; height: 76px; border-radius: 50%;
+      padding: 2.5px; border: 0;
       background: conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
       animation: spinA 3s linear infinite;
       cursor: pointer; position: relative;
+      flex-shrink: 0;
     }
     #prof-av-ring-inner {
       width: 100%; height: 100%; border-radius: 50%;
       background: #080a0e; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
     }
-    #prof-modal-av-img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
-    #prof-av-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-    .prof-av-btn {
-      padding: 8px 14px; border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.05);
-      color: rgba(255,255,255,.7); font-family: var(--font);
-      font-size: 8.5px; letter-spacing: 1px; cursor: pointer;
+    #prof-modal-av-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+    /* Static name (no input — first-launch setup is the only way to set it) */
+    #prof-name-static {
+      width: 100%;
+      font-size: 15px; letter-spacing: 2.4px;
+      color: #fff; text-align: center;
+      padding: 2px 0;
+      text-transform: uppercase;
     }
-    .prof-av-btn:active { transform: scale(0.95); }
-    #prof-name-row { width: 100%; }
-    #prof-name-input {
-      width: 100%; background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
-      color: #fff; font-family: var(--font);
-      letter-spacing: 2px; padding: 12px 14px;
-      text-transform: uppercase; text-align: center;
+    #prof-name-divider {
+      width: 60%; height: 1px;
+      background: rgba(255,255,255,.18);
+      margin: 0 auto;
     }
-    #prof-name-input:focus { outline: none; border-color: var(--green); }
-    /* ── Profile stats panel ─────────────────────────────── */
-    #prof-stats {
-      width: 100%; display: flex; flex-direction: column; gap: 12px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 12px; padding: 16px 16px 14px;
+
+    /* Horizontal stats row: XP / BEST / DIST / COINS */
+    #prof-summary {
+      display: flex; align-items: stretch;
+      width: 100%;
+      gap: 0;
     }
-    .prof-stats-title {
-      font-size: 11.5px; letter-spacing: 3px; color: rgba(255,255,255,.55);
-      text-align: center;
+    .prof-sum {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 6px 4px;
+      border-right: 1px solid rgba(255,255,255,.08);
     }
-    .prof-stats-grid {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 8px;
-    }
-    .prof-stat {
-      display: flex; flex-direction: column; align-items: center; gap: 7px;
-      padding: 10px 6px; background: rgba(255,255,255,.025);
-      border-radius: 8px;
-    }
-    .prof-stat-lbl { font-size: 9px; letter-spacing: 1.6px; color: rgba(255,255,255,.5);
-      text-align: center; line-height: 1.3; }
-    .prof-stat-val { font-size: 17px; letter-spacing: 1.2px; color: #fff; }
+    .prof-sum:last-child { border-right: none; }
+    .prof-sum-lbl  { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.5);
+                     text-align: center; line-height: 1.2; }
+    .prof-sum-val  { font-size: 14.5px; letter-spacing: 1px; text-align: center; }
+
     .ps-blue   { color: #66ccff; }
     .ps-flame  { color: #ff8866; }
     .ps-green  { color: var(--green); }
     .ps-gold   { color: #ffd866; }
     .ps-purple { color: #c099ff; }
-    .prof-stats-foot {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 6px 0;
-      font-size: 11.5px; letter-spacing: 1.8px; color: rgba(255,255,255,.6);
-      border-top: 1px solid rgba(255,255,255,.08);
+
+    /* Avatar picker sub-grid (toggled when avatar is tapped) */
+    #prof-av-grid {
+      display: none; grid-template-columns: repeat(5, 1fr);
+      gap: 8px; width: 100%;
     }
-    .prof-stats-foot > span:last-child { font-size: 15.5px; letter-spacing: 1px; }
+    #prof-av-grid.open { display: grid; }
+    .prof-av-upload-tile {
+      grid-column: 1 / -1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255,255,255,.25);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.7);
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.5px;
+      cursor: pointer; text-align: center;
+    }
+    .prof-av-upload-tile:active { transform: scale(0.98); }
+
+    /* UPGRADES sits on its own line, above BACK/SAVE */
+    #prof-upgrade-btn {
+      width: 100%; padding: 13px; border-radius: 12px;
+      font-family: var(--font);
+      font-size: 12px; letter-spacing: 2.4px; cursor: pointer;
+      border: 1.5px solid rgba(170,120,255,.6);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(190,150,255,.28), transparent 60%),
+        linear-gradient(180deg, rgba(80,50,140,.55), rgba(30,15,60,.65));
+      color: #cfb5ff;
+      box-shadow:
+        0 0 18px rgba(170,120,255,.30),
+        inset 0 1px 0 rgba(255,255,255,.16);
+      transition: transform .12s, box-shadow .2s;
+    }
+    #prof-upgrade-btn:active { transform: scale(0.97); }
+
+    /* Footer actions: BACK + SAVE side by side */
+    #prof-actions {
+      display: flex; gap: 10px; width: 100%;
+    }
+    #prof-modal-back, #prof-modal-save {
+      flex: 1; padding: 12px; border-radius: 12px;
+      font-family: var(--font);
+      font-size: 12px; letter-spacing: 2.2px; cursor: pointer;
+      transition: transform .12s, box-shadow .2s;
+    }
+    #prof-modal-back {
+      border: 1.5px solid rgba(255,255,255,.25);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.78), rgba(14,18,28,.85));
+      color: rgba(255,255,255,.75);
+    }
     #prof-modal-save {
-      width: 100%; padding: 14px; border-radius: 13px;
       border: 1.5px solid rgba(124,255,122,.7);
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.30), transparent 60%),
         linear-gradient(180deg, rgba(60,180,80,.45), rgba(20,80,30,.55));
-      color: #d4ffd0; font-family: var(--font);
-      font-size: 14.5px; letter-spacing: 2px; cursor: pointer;
+      color: #d4ffd0;
       box-shadow:
-        0 0 22px rgba(124,255,122,.30),
-        inset 0 1px 0 rgba(255,255,255,.20),
-        inset 0 -6px 12px rgba(0,40,10,.30);
-      transition: transform .12s, box-shadow .2s;
+        0 0 18px rgba(124,255,122,.28),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -5px 10px rgba(0,40,10,.25);
     }
-    #prof-modal-save:active { transform: scale(0.97); }
+    #prof-modal-back:active, #prof-modal-save:active { transform: scale(0.97); }
+
+    /* Badges modal (opened from equip slots) */
+    #badges-modal {
+      position: fixed; inset: 0; z-index: 59;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #badges-modal.open { display: flex; }
+    #badges-modal-box {
+      background: rgba(12,16,26,0.96);
+      border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
+      width: min(92vw, 360px);
+      max-height: 88vh;
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+    }
+    #badges-modal-title {
+      font-size: 18px; letter-spacing: 2px; color: #fff; text-align: center;
+    }
+    #badges-modal-sub {
+      font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.5);
+      text-align: center;
+    }
+    #badges-modal-grid {
+      width: 100%;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      max-height: 58vh; overflow-y: auto;
+      padding: 2px;
+    }
+    .prof-badge {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 4px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      cursor: pointer;
+      transition: transform .12s, border-color .2s, box-shadow .2s;
+    }
+    .prof-badge:active { transform: scale(0.95); }
+    .prof-badge.sel {
+      border-color: rgba(255,210,80,.65);
+      box-shadow: 0 0 12px rgba(255,210,80,.25), inset 0 1px 0 rgba(255,255,255,.15);
+      background: rgba(255,210,80,.08);
+    }
+    .prof-badge-icon { font-size: 22px; line-height: 1; }
+    .prof-badge-name { font-size: 7px; letter-spacing: 1px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.2; }
+    #badges-modal-close {
+      width: 100%; padding: 13px; border-radius: 11px;
+      border: 1.5px solid rgba(255,255,255,.28);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.90), rgba(14,18,28,.92));
+      color: #fff; font-family: var(--font);
+      font-size: 12px; letter-spacing: 2px; cursor: pointer;
+    }
+    #badges-modal-close:active { transform: scale(0.97); }
+
+    /* Upgrades modal (placeholder until catalog is finalised) */
+    #upgrades-modal {
+      position: fixed; inset: 0; z-index: 58;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #upgrades-modal.open { display: flex; }
+    #upgrades-modal-box {
+      background: rgba(12,16,26,0.96);
+      border: 1.5px solid rgba(170,120,255,.45);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
+      width: min(92vw, 360px);
+      max-height: 88vh; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 14px; align-items: center;
+      box-shadow: 0 0 28px rgba(170,120,255,.18);
+    }
+    #upgrades-modal-title {
+      font-size: 21px; letter-spacing: 2px; color: #cfb5ff; text-align: center;
+    }
+    #upgrades-modal-sub {
+      font-size: 10px; letter-spacing: 1.4px;
+      color: rgba(255,255,255,.5); text-align: center; padding: 4px 0;
+    }
+    #upgrades-modal-close {
+      width: 100%; padding: 14px; border-radius: 11px;
+      border: 1.5px solid rgba(255,255,255,.28);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.90), rgba(14,18,28,.92));
+      color: #fff; font-family: var(--font);
+      font-size: 13px; letter-spacing: 2px; cursor: pointer;
+    }
     #prof-modal-cancel {
       background: none; border: none;
       color: rgba(255,255,255,.28); font-family: var(--font);
@@ -1498,6 +1741,44 @@
       height: 100%; background: #cc88ff; border-radius: 3px;
       transition: width .1s linear;
     }
+    /* ══════════ EQUIPPABLE BOOSTER SLOTS ══════════ */
+    /* Two slots anchored to the bottom-center of the play canvas.
+       Tap to activate when filled (manual boosters); auto-trigger
+       boosters consume themselves on the relevant event. */
+    #slot-hud {
+      position: absolute; bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 16;
+      display: none; gap: 12px;
+      pointer-events: auto;
+    }
+    #hud.active #slot-hud { display: flex; }
+    .slot {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.65), rgba(14,18,28,.78));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow:
+        0 0 10px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.10);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+      transition: transform .12s, border-color .2s, box-shadow .2s;
+      position: relative;
+    }
+    .slot:active { transform: scale(0.94); }
+    .slot.filled { border-color: rgba(170,120,255,.55); box-shadow: 0 0 14px rgba(170,120,255,.30), inset 0 1px 0 rgba(255,255,255,.15); }
+    .slot-icon { font-size: 24px; line-height: 1; }
+    .slot-empty {
+      font-size: 22px; line-height: 1;
+      color: rgba(255,255,255,.30); font-weight: 300;
+    }
+    .slot.filled .slot-empty { display: none; }
+    .slot:not(.filled) .slot-icon { display: none; }
   </style>
 </head>
 <body>
@@ -1533,13 +1814,24 @@
       <div id="combo-hud">
         <div id="combo-pill">×<span id="combo-val">1.0</span></div>
       </div>
-      <!-- Booster indicator -->
+      <!-- Booster indicator (active mid-game purple pickup) -->
       <div id="booster-hud">
         <div id="booster-pill">
           <span id="booster-icon">⚡</span>
           <span id="booster-name">BOOST</span>
           <div id="booster-bar-wrap"><div id="booster-bar" style="width:100%"></div></div>
         </div>
+      </div>
+      <!-- Equippable booster slots (filled from the Upgrades catalog) -->
+      <div id="slot-hud">
+        <button class="slot" id="slot-1" data-slot="0" aria-label="Slot 1">
+          <span class="slot-icon"></span>
+          <span class="slot-empty">+</span>
+        </button>
+        <button class="slot" id="slot-2" data-slot="1" aria-label="Slot 2">
+          <span class="slot-icon"></span>
+          <span class="slot-empty">+</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1766,12 +2058,55 @@
   </div>
 </div>
 
+<!-- ══ UPGRADES MODAL (placeholder until catalog finalised) ══ -->
+<div id="upgrades-modal">
+  <div id="upgrades-modal-box">
+    <div id="upgrades-modal-title">UPGRADES</div>
+    <div id="upgrades-modal-sub">Catalog incoming.<br>Pick passives, actives and slot-boosters.</div>
+    <div id="upgrades-list" style="width:100%"></div>
+    <button id="upgrades-modal-close">Close</button>
+  </div>
+</div>
+
 <!-- ══ COINS MODAL ══ -->
 <div id="coins-modal">
   <div id="coins-modal-box">
-    <div id="coins-modal-title">COINS</div>
-    <div id="coins-modal-value"><span id="coins-modal-count">0</span></div>
-    <div id="coins-modal-sub">1 COIN PER 1000 XP · MORE SOON…</div>
+    <!-- Current balance: coin icon + number -->
+    <div id="coins-modal-row">
+      <span class="coin-icon" aria-hidden="true">
+        <span class="coin-icon-inner">¢</span>
+      </span>
+      <div id="coins-modal-value"><span id="coins-modal-count">0</span></div>
+    </div>
+
+    <!-- Next-coin XP progress bar -->
+    <div id="coins-modal-progress">
+      <div id="coins-progress-top">
+        <span id="coins-progress-label">NEXT COIN</span>
+        <span id="coins-progress-val">0 / 1000</span>
+      </div>
+      <div id="coins-progress-bar-wrap">
+        <div id="coins-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Purchase tier buttons (IAP placeholders) -->
+    <div id="coins-buy-row">
+      <button class="coins-buy" data-amount="50">
+        <span class="coins-buy-amount">+50</span>
+        <span class="coins-buy-price">$0.99</span>
+      </button>
+      <button class="coins-buy" data-amount="100">
+        <span class="coins-buy-amount">+100</span>
+        <span class="coins-buy-price">$1.79</span>
+      </button>
+      <button class="coins-buy" data-amount="200">
+        <span class="coins-buy-amount">+200</span>
+        <span class="coins-buy-price">$2.99</span>
+      </button>
+    </div>
+
+    <button id="coins-to-upgrades">UPGRADES</button>
     <button id="coins-modal-close">Close</button>
   </div>
 </div>
@@ -1816,43 +2151,64 @@
 <!-- ══ PROFILE EDIT MODAL ══ -->
 <div id="prof-modal">
   <div id="prof-modal-box">
-    <div id="prof-modal-title">PROFILE</div>
-    <!-- Avatar ring preview -->
-    <div id="prof-av-ring">
-      <div id="prof-av-ring-inner">
-        <img id="prof-modal-av-img" src="" alt="">
+    <!-- Avatar + two equipped-badge slots (left / right) -->
+    <div id="prof-av-row">
+      <button class="prof-eq-slot" id="prof-eq-slot-l" data-slot="0" aria-label="Badge slot 1">
+        <span class="prof-eq-icon"></span>
+        <span class="prof-eq-empty">+</span>
+      </button>
+      <button id="prof-av-ring" type="button" title="Tap to change avatar">
+        <div id="prof-av-ring-inner">
+          <img id="prof-modal-av-img" src="" alt="">
+        </div>
+      </button>
+      <button class="prof-eq-slot" id="prof-eq-slot-r" data-slot="1" aria-label="Badge slot 2">
+        <span class="prof-eq-icon"></span>
+        <span class="prof-eq-empty">+</span>
+      </button>
+    </div>
+
+    <!-- Static name (no editing here — first-launch profile setup only) -->
+    <div id="prof-name-static" data-name>PLAYER</div>
+    <div id="prof-name-divider"></div>
+
+    <!-- Horizontal stats: BEST SCORE / BEST DISTANCE / COINS (mode-aware) -->
+    <div id="prof-summary">
+      <div class="prof-sum">
+        <div class="prof-sum-lbl" id="ps-bestscore-lbl">BEST</div>
+        <div class="prof-sum-val ps-blue" id="ps-bestscore">0</div>
+      </div>
+      <div class="prof-sum">
+        <div class="prof-sum-lbl" id="ps-bestdist-lbl">DIST.</div>
+        <div class="prof-sum-val ps-blue" id="ps-bestdist">0</div>
+      </div>
+      <div class="prof-sum">
+        <div class="prof-sum-lbl">COINS</div>
+        <div class="prof-sum-val ps-gold" id="ps-coins">0</div>
       </div>
     </div>
-    <!-- Avatar action buttons -->
-    <div id="prof-av-btns">
-      <button class="prof-av-btn" id="prof-av-choose">Choose Avatar</button>
-      <button class="prof-av-btn" id="prof-av-upload">Upload Photo</button>
-      <input type="file" id="prof-av-file" accept="image/*" style="display:none">
-    </div>
-    <!-- Collapsible avatar grid -->
+
+    <!-- Avatar picker (hidden until avatar tapped). Upload tile sits first. -->
     <div id="prof-av-grid"></div>
-    <!-- Name input -->
-    <div id="prof-name-row">
-      <input type="text" id="prof-name-input" maxlength="8" placeholder="YOUR NAME"
-             spellcheck="false" autocomplete="off">
+    <input type="file" id="prof-av-file" accept="image/*" style="display:none">
+
+    <!-- UPGRADES — sits on its own line, above the BACK/SAVE pair -->
+    <button id="prof-upgrade-btn">UPGRADES</button>
+    <!-- Footer: Back + Save -->
+    <div id="prof-actions">
+      <button id="prof-modal-back">BACK</button>
+      <button id="prof-modal-save">SAVE</button>
     </div>
-    <!-- ── Stats ───────────────────────────────────────── -->
-    <div id="prof-stats">
-      <div class="prof-stats-title">STATS</div>
-      <div class="prof-stats-grid">
-        <div class="prof-stat"><div class="prof-stat-lbl">GAMES</div><div class="prof-stat-val" id="ps-games">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">BEST CHILL</div><div class="prof-stat-val ps-blue" id="ps-best-n">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">BEST EXTREME</div><div class="prof-stat-val ps-flame" id="ps-best-x">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">MAX COMBO</div><div class="prof-stat-val ps-green" id="ps-combo">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">GOLD BALLS</div><div class="prof-stat-val ps-gold" id="ps-gold">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">BOOSTERS</div><div class="prof-stat-val ps-purple" id="ps-boost">0</div></div>
-      </div>
-      <div class="prof-stats-foot">
-        <span>TOTAL XP</span>
-        <span id="ps-xp" class="ps-green">0</span>
-      </div>
-    </div>
-    <button id="prof-modal-save">SAVE</button>
+  </div>
+</div>
+
+<!-- ══ BADGES MODAL (opened from equip slots) ══ -->
+<div id="badges-modal">
+  <div id="badges-modal-box">
+    <div id="badges-modal-title">Badges</div>
+    <div id="badges-modal-sub">Tap to equip · re-tap to remove</div>
+    <div id="badges-modal-grid"></div>
+    <button id="badges-modal-close">Close</button>
   </div>
 </div>
 
@@ -1911,21 +2267,22 @@ const ARC_DB = (() => {
 
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
-  async function submitScore(name, avatar, score, mode) {
+  async function submitScore(name, avatar, score, mode, distance) {
     if (!projectId || projectId.startsWith('BURAYA')) {
       console.warn('[ArcDB] no projectId configured — score not saved');
       return;
     }
-    // Boş/whitespace isim → kayıt anlamsız, atla
     name = (name || '').toString().trim();
     if (!name) { console.warn('[ArcDB] empty name — score not saved'); return; }
     score = Number(score) || 0;
     if (score <= 0) { console.warn('[ArcDB] score <= 0 — skip'); return; }
     avatar = Number(avatar) || 0;
     mode = normMode(mode);
-    console.log('[ArcDB] submitScore', { name, avatar, score, mode });
+    // Distance — float meters (3 dp). Stored alongside the score so the
+    // leaderboard can sort either metric from the same single doc.
+    const distNum = Math.max(0, Math.round((Number(distance) || 0) * 1000) / 1000);
+    console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum });
     try {
-      // Aynı isimle var olan tüm doc'ları çek; mode'u eşleşeni bul
       const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
@@ -1935,40 +2292,49 @@ const ARC_DB = (() => {
         }}),
       });
       const hits = (await qRes.json()).filter(r => r.document?.fields);
-      // Aynı (name, mode) kombinasyonundaki ilk doc'u bul
       const match = hits.find(r => {
         const m = r.document.fields.mode?.stringValue;
-        // Eski kayıt (mode yok) → 'normal' say
         return (m || 'normal') === mode;
       });
 
       if (match) {
         const oldScore = parseInt(match.document.fields.score.integerValue ?? 0);
-        if (score <= oldScore) { console.log('[ArcDB] existing score higher, skip', { oldScore, newScore: score }); return; }
+        const oldDist  = Number(match.document.fields.distance?.doubleValue ?? 0);
+        const scoreBetter = score > oldScore;
+        const distBetter  = distNum > oldDist;
+        if (!scoreBetter && !distBetter) {
+          console.log('[ArcDB] existing score+dist higher, skip', { oldScore, oldDist, newScore: score, newDist: distNum });
+          return;
+        }
         const docId = match.document.name.split('/').pop();
+        // Keep the higher of each metric — both compete independently.
+        const finalScore = scoreBetter ? score   : oldScore;
+        const finalDist  = distBetter  ? distNum : oldDist;
         const upd = await fetch(
-          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts&updateMask.fieldPaths=mode`,
+          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts&updateMask.fieldPaths=mode&updateMask.fieldPaths=distance`,
           {
             method: 'PATCH', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fields: {
-              score:  { integerValue: String(score)  },
-              avatar: { integerValue: String(avatar) },
-              ts:     { integerValue: String(Date.now()) },
-              mode:   { stringValue: mode },
+              score:    { integerValue: String(finalScore)  },
+              avatar:   { integerValue: String(avatar) },
+              ts:       { integerValue: String(Date.now()) },
+              mode:     { stringValue: mode },
+              distance: { doubleValue: finalDist },
             }}),
           }
         );
         if (!upd.ok) { console.warn('[ArcDB] PATCH failed', upd.status, await upd.text()); return; }
-        console.log('[ArcDB] score updated', { docId, score });
+        console.log('[ArcDB] score updated', { docId, score: finalScore, dist: finalDist });
       } else {
         const ins = await fetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields: {
-            name:   { stringValue: name  },
-            avatar: { integerValue: String(avatar) },
-            score:  { integerValue: String(score)  },
-            ts:     { integerValue: String(Date.now()) },
-            mode:   { stringValue: mode },
+            name:     { stringValue: name  },
+            avatar:   { integerValue: String(avatar) },
+            score:    { integerValue: String(score)  },
+            ts:       { integerValue: String(Date.now()) },
+            mode:     { stringValue: mode },
+            distance: { doubleValue: distNum },
           }}),
         });
         if (!ins.ok) { console.warn('[ArcDB] POST failed', ins.status, await ins.text()); return; }
@@ -1985,13 +2351,30 @@ const ARC_DB = (() => {
       .map(r => {
         const f = r.document.fields;
         return {
-          name:   f.name.stringValue,
-          avatar: parseInt(f.avatar.integerValue ?? 3),
-          score:  parseInt(f.score.integerValue ?? 0),
-          ts:     parseInt(f.ts?.integerValue ?? 0),
-          mode:   f.mode?.stringValue || null,
+          name:     f.name.stringValue,
+          avatar:   parseInt(f.avatar.integerValue ?? 3),
+          score:    parseInt(f.score.integerValue ?? 0),
+          distance: Number(f.distance?.doubleValue ?? 0),
+          ts:       parseInt(f.ts?.integerValue ?? 0),
+          mode:     f.mode?.stringValue || null,
+          docId:    r.document.name.split('/').pop(),
         };
       });
+  }
+
+  // Dedup: keep only each player's highest score per mode.
+  // (Old/legacy duplicates can sneak in; this guarantees one row per
+  // (name, mode) in any rendered list.)
+  function dedupeBest(rows) {
+    const best = new Map(); // key = `${name}|${normMode(mode)}`
+    for (const r of rows) {
+      const key = `${r.name}|${normMode(r.mode || 'normal')}`;
+      const cur = best.get(key);
+      if (!cur || r.score > cur.score || (r.score === cur.score && r.ts > cur.ts)) {
+        best.set(key, r);
+      }
+    }
+    return Array.from(best.values()).sort((a, b) => b.score - a.score);
   }
 
   // Top-N skor çek. mode girilmişse yerelde filtreler.
@@ -2027,9 +2410,10 @@ const ARC_DB = (() => {
   async function getTopScores(n = 10, mode) {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
     const target = mode ? normMode(mode) : null;
-    // Modest overfetch only when filtering client-side. No hard 200 floor.
-    // Worst case: 50 callers ask for 30, we fetch 60 → still 60 reads not 200.
-    const fetchN = target ? Math.min(n * 2 + 10, 100) : n;
+    // Overfetch for mode filter: top-N by score globally might be dominated
+    // by one mode, starving the other. ×6 + 30 buffer captures plenty.
+    // (Cache TTL keeps the cost down on repeats.)
+    const fetchN = target ? Math.min(n * 6 + 30, 250) : n;
     const key = `${target || 'all'}:${fetchN}`;
     // Cache hit: zero reads.
     const cached = _cacheGet(key);
@@ -2046,7 +2430,9 @@ const ARC_DB = (() => {
           limit:   fetchN,
         }}),
       });
-      const all = parseRows(await res.json());
+      // Dedupe at the read layer — only each player's best per mode survives,
+      // even if the doc store somehow contains historical duplicates.
+      const all = dedupeBest(parseRows(await res.json()));
       _cacheSet(key, all);
       return target ? all.filter(r => r.mode === target).slice(0, n) : all.slice(0, n);
     } catch(e) { console.warn('[ArcDB] fetch failed', e); return []; }
@@ -2063,7 +2449,81 @@ const ARC_DB = (() => {
     } catch(_){}
   }
 
-  return { submitScore, getTopScores, invalidateTopCache };
+  // Admin: wipe every doc in the `scores` collection. Devtools-callable.
+  // Usage: await ARC_DB.wipeAllScores()
+  // Returns the number of deleted documents.
+  async function wipeAllScores() {
+    if (!projectId || projectId.startsWith('BURAYA')) return 0;
+    if (!confirm('WIPE ALL leaderboard scores? This cannot be undone.')) return 0;
+    let total = 0, page = 0;
+    while (true) {
+      const lst = await fetch(`${BASE}/scores?key=${apiKey}&pageSize=300`);
+      if (!lst.ok) {
+        console.warn('[ArcDB] list failed', lst.status, await lst.text());
+        break;
+      }
+      const json = await lst.json();
+      const docs = json.documents || [];
+      if (docs.length === 0) break;
+      for (const d of docs) {
+        const docId = d.name.split('/').pop();
+        const del = await fetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
+        if (del.ok) total++;
+        else console.warn('[ArcDB] delete failed', docId, del.status);
+      }
+      page++;
+      console.log(`[ArcDB] wiped page ${page}, total deleted: ${total}`);
+      if (docs.length < 300) break;
+    }
+    invalidateTopCache();
+    console.log(`[ArcDB] DONE. ${total} score docs deleted.`);
+    return total;
+  }
+
+  // Admin: dedupe the `scores` collection so each (name, mode) has only
+  // the single highest-score doc. Older/lower duplicates are deleted.
+  // Usage: await ARC_DB.dedupeScores()
+  async function dedupeScores() {
+    if (!projectId || projectId.startsWith('BURAYA')) return { kept: 0, deleted: 0 };
+    if (!confirm('Dedupe scores: keep each player\'s highest per mode, delete the rest. Continue?')) return { kept: 0, deleted: 0 };
+    // Pull every doc — paginated. (Small enough projects only.)
+    const all = [];
+    let nextToken = null;
+    do {
+      const url = `${BASE}/scores?key=${apiKey}&pageSize=300` + (nextToken ? `&pageToken=${nextToken}` : '');
+      const res = await fetch(url);
+      if (!res.ok) { console.warn('[ArcDB] list failed', res.status); break; }
+      const j = await res.json();
+      const parsed = parseRows((j.documents || []).map(d => ({ document: d })));
+      all.push(...parsed);
+      nextToken = j.nextPageToken || null;
+    } while (nextToken);
+
+    // Group by (name, mode), keep highest, mark rest for delete
+    const keepers = new Map(); // key → row
+    const losers  = [];
+    for (const r of all) {
+      const key = `${r.name}|${normMode(r.mode || 'normal')}`;
+      const cur = keepers.get(key);
+      if (!cur) { keepers.set(key, r); continue; }
+      // Higher score wins; tie-break by newer timestamp
+      const rWins = r.score > cur.score || (r.score === cur.score && r.ts > cur.ts);
+      if (rWins) { losers.push(cur); keepers.set(key, r); }
+      else       { losers.push(r); }
+    }
+
+    let deleted = 0;
+    for (const l of losers) {
+      const del = await fetch(`${BASE}/scores/${l.docId}?key=${apiKey}`, { method: 'DELETE' });
+      if (del.ok) deleted++;
+      else console.warn('[ArcDB] dedupe delete failed', l.docId, del.status);
+    }
+    invalidateTopCache();
+    console.log(`[ArcDB] dedupe DONE. kept=${keepers.size}, deleted=${deleted}`);
+    return { kept: keepers.size, deleted };
+  }
+
+  return { submitScore, getTopScores, invalidateTopCache, wipeAllScores, dedupeScores };
 })();
 
 (() => {
@@ -2431,7 +2891,6 @@ const ARC_DB = (() => {
         gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
         bestNormal: 0, bestExtreme: 0,
         bestDistNormal: 0, bestDistExtreme: 0,
-        goldsCollected: 0, boostersCollected: 0,
         maxCombo: 0,
       }, JSON.parse(raw));
     } catch(_){}
@@ -2439,7 +2898,6 @@ const ARC_DB = (() => {
       gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
       bestNormal: 0, bestExtreme: 0,
       bestDistNormal: 0, bestDistExtreme: 0,
-      goldsCollected: 0, boostersCollected: 0,
       maxCombo: 0,
     };
   }
@@ -3732,7 +4190,10 @@ const ARC_DB = (() => {
     }
     // Score: base altitude + scoreBonus (combo points from greens)
     const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
-    score = Math.floor(maxAscend / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
+    // Score now tracks distancePx (spawn-relative). Previously used maxAscend
+    // which only goes above 0 once player.y < 0 (~866 px climb). Short
+    // Extreme runs that died early ended with score=0 and skipped Firestore.
+    score = Math.floor(distancePx / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
     // Combo HUD: show current multiplier
     const countdown = Math.ceil(energy * 9);
     const comboMul = countdown / 2;
@@ -3829,7 +4290,6 @@ const ARC_DB = (() => {
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
         spawnGoldParticles(b.x, b.y);
-        stats.goldsCollected++; saveStats();
         goldBalls.splice(i, 1);
       }
     }
@@ -3838,7 +4298,6 @@ const ARC_DB = (() => {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         spawnPurpleParticles(b.x, b.y);
-        stats.boostersCollected++; saveStats();
         purpleBalls.splice(i, 1);
         activateBooster(b.type);
       }
@@ -3956,9 +4415,8 @@ const ARC_DB = (() => {
     // Geçici "yükleniyor" satırları
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
 
-    // Skoru Firestore'a gönder (config yoksa no-op). Submitted score
-    // invalidates the cache so the next fetch reflects this run.
-    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode);
+    // Skoru + distance'ı Firestore'a gönder (config yoksa no-op).
+    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistM);
     if (sc > 0) ARC_DB.invalidateTopCache();
 
     // Yeterli satır çek — 20 yeter, sıralama görmek için.
@@ -4280,25 +4738,53 @@ const ARC_DB = (() => {
     if (lbCache[mode] && lbCache[mode].metric === lbMetric) return lbCache[mode];
     let rows;
     if (lbMetric === 'distance') {
-      // Local-only: derive a leaderboard from saved ghost traces. yMin is the
-      // peak (lowest y) so peak ascent = (H - 200) - yMin world-px → /(H/2) → m.
-      const spawnY = H - 200;
-      const traces = loadGhostTraces();
-      rows = traces
-        .filter(t => (t.mode || 'normal') === mode)
-        .map(t => {
-          const ascendPx = Math.max(0, spawnY - (t.yMin ?? spawnY));
-          const distM   = ascendPx / (H / 2);
-          return {
-            name:     playerName || 'PLAYER', // local traces have no name yet
+      // Hybrid: Firestore (cross-player) + local stats PB (self fallback).
+      // The same Firestore docs that store score also carry a 'distance'
+      // field now, so we reuse getTopScores' cache — zero extra reads.
+      const cloud = await ARC_DB.getTopScores(30, mode);
+      // Re-project each cloud row so 'score' field carries the distance,
+      // keeping the renderer (renderLbCard / renderLbPosition) generic.
+      rows = cloud
+        .filter(r => (r.distance || 0) > 0)
+        .map(r => ({
+          name:     r.name,
+          avatar:   r.avatar,
+          score:    r.distance,   // distance becomes the rank-by metric
+          distance: r.distance,
+          ts:       r.ts,
+          mode:     r.mode || 'normal',
+        }));
+      // Local PB fallback for self — covers games before distance field
+      // existed, or when Firestore submit failed.
+      const statsPB = (mode === 'extreme')
+        ? (stats?.bestDistExtreme || 0)
+        : (stats?.bestDistNormal  || 0);
+      if (statsPB > 0 && playerName) {
+        const mine = rows.find(r => r.name === playerName);
+        if (!mine) {
+          rows.push({
+            name:     playerName,
             avatar:   avatarIdx,
-            score:    distM,                   // reuse 'score' field for renderers
-            distance: distM,
-            ts:       t.ts || 0,
-            mode:     t.mode || 'normal',
-          };
-        })
-        .sort((a,b) => b.score - a.score);
+            score:    statsPB,
+            distance: statsPB,
+            ts:       Date.now(),
+            mode,
+            _statsPB: true,
+          });
+        } else if (statsPB > mine.score + 0.05) {
+          mine.score = statsPB;
+          mine.distance = statsPB;
+          mine._statsPB = true;
+        }
+      }
+      // Dedupe by name (each player one row — keep best distance) just in
+      // case dedupeBest in the read path didn't fully collapse them.
+      const byName = new Map();
+      for (const r of rows) {
+        const cur = byName.get(r.name);
+        if (!cur || r.score > cur.score) byName.set(r.name, r);
+      }
+      rows = Array.from(byName.values()).sort((a,b) => b.score - a.score);
     } else {
       // 30 sıra yeter: position widget en çok 6 satır gösteriyor, üç adet
       // best-card (all-time / today / month) bunun içinden türetilebiliyor.
@@ -4376,7 +4862,9 @@ const ARC_DB = (() => {
         </div>`;
       }
       const isYou = r.name === playerName;
-      const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop && !isYou ? ' top' : ''}`;
+      // #1 always wears the gold frame — even when it's the player themself.
+      // (CSS rule order makes .top visually win over .you so the gold reads.)
+      const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop ? ' top' : ''}`;
       const col = AVATAR_COLORS[r.avatar] || '#fff';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       return `<div class="${cls}">
@@ -4458,29 +4946,38 @@ const ARC_DB = (() => {
   let profAvatarGridOpen = false;
 
   function openProfModal() {
-    // Sync preview
+    // Sync avatar preview
     const img = document.getElementById('prof-modal-av-img');
     if (img) img.src = avatarSrc();
-    const inp = document.getElementById('prof-name-input');
-    if (inp) inp.value = playerName;
+    // Static name display
+    const nameEl = document.getElementById('prof-name-static');
+    if (nameEl) nameEl.textContent = (playerName || 'PLAYER').toUpperCase();
     // Reset avatar grid
     profAvatarGridOpen = false;
     const grid = document.getElementById('prof-av-grid');
     if (grid) grid.classList.remove('open');
-    // Stats değerlerini doldur
+    // Populate summary, slots (badges grid rendered on demand)
     renderProfStats();
+    renderEquipSlots();
     profModal.classList.add('open');
   }
 
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
-    set('ps-games',  stats.gamesTotal);
-    set('ps-best-n', pad(stats.bestNormal));
-    set('ps-best-x', pad(stats.bestExtreme));
-    set('ps-combo',  stats.maxCombo);
-    set('ps-gold',   stats.goldsCollected);
-    set('ps-boost',  stats.boostersCollected);
-    set('ps-xp',     xpTotal.toLocaleString());
+    const fmtD = d => (d >= 10 ? String(Math.round(d)) : Number(d || 0).toFixed(1));
+    const isExt   = gameMode === 'extreme';
+    const bScore  = isExt ? (stats?.bestExtreme    || 0) : (stats?.bestNormal     || 0);
+    const bDist   = isExt ? (stats?.bestDistExtreme || 0) : (stats?.bestDistNormal || 0);
+    set('ps-coins',      String(coins));
+    set('ps-bestscore',  pad(bScore));
+    set('ps-bestdist',   fmtD(bDist));
+    // Mode-tinted colours so the player can read at a glance which mode
+    // they're looking at.
+    const tone = isExt ? 'ps-flame' : 'ps-blue';
+    const scEl = document.getElementById('ps-bestscore');
+    const dEl  = document.getElementById('ps-bestdist');
+    if (scEl) scEl.className = 'prof-sum-val ' + tone;
+    if (dEl)  dEl.className  = 'prof-sum-val ' + tone;
   }
 
   // Tap profile card → open profile edit (but coin pill has its own handler)
@@ -4489,57 +4986,133 @@ const ARC_DB = (() => {
     openProfModal();
   });
 
+  // ── Equippable slot state (placeholder) ─────────────────
+  // Persisted in arc_slots_v1 as [slotItemId|null, slotItemId|null].
+  // The Upgrades catalog will populate these once finalised.
+  let slotItems = (() => {
+    try { return JSON.parse(localStorage.getItem('arc_slots_v1') || '[null,null]'); }
+    catch(_) { return [null, null]; }
+  })();
+  function saveSlots() {
+    try { localStorage.setItem('arc_slots_v1', JSON.stringify(slotItems)); } catch(_){}
+  }
+  function renderSlots() {
+    document.querySelectorAll('.slot').forEach(el => {
+      const i = Number(el.dataset.slot);
+      const item = slotItems[i];
+      el.classList.toggle('filled', !!item);
+      const iconEl = el.querySelector('.slot-icon');
+      if (iconEl) iconEl.textContent = item?.icon || '';
+    });
+  }
+  document.querySelectorAll('.slot').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = Number(el.dataset.slot);
+      if (slotItems[i]) {
+        // TODO: trigger active booster (once catalog defines effect)
+        console.log('[Slot] activate', i, slotItems[i]);
+      } else {
+        // Empty → open upgrades to equip
+        upgradesModal.classList.add('open');
+      }
+    });
+  });
+  renderSlots();
+
+  // Upgrades popup (placeholder — content will arrive once catalog is finalised)
+  const upgradesModal = document.getElementById('upgrades-modal');
+  document.getElementById('prof-upgrade-btn').addEventListener('click', () => {
+    upgradesModal.classList.add('open');
+  });
+  document.getElementById('upgrades-modal-close').addEventListener('click', () => upgradesModal.classList.remove('open'));
+  upgradesModal.addEventListener('click', e => { if (e.target === upgradesModal) upgradesModal.classList.remove('open'); });
+
   // Coins popup
   const coinsModal = document.getElementById('coins-modal');
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
+    // Next-coin progress: XP toward the next 1000-XP threshold
+    const xpMod  = xpTotal % 1000;
+    const pct    = Math.min(100, Math.max(0, (xpMod / 1000) * 100));
+    const pv = document.getElementById('coins-progress-val');
+    if (pv) pv.textContent = `${xpMod} / 1000`;
+    const pb = document.getElementById('coins-progress-bar');
+    if (pb) {
+      // Reset so the transition replays each open
+      pb.style.width = '0%';
+      // Animate in next frame
+      requestAnimationFrame(() => requestAnimationFrame(() => { pb.style.width = pct + '%'; }));
+    }
     coinsModal.classList.add('open');
   });
   document.getElementById('coins-modal-close').addEventListener('click', () => coinsModal.classList.remove('open'));
   coinsModal.addEventListener('click', e => { if (e.target === coinsModal) coinsModal.classList.remove('open'); });
+  // Purchase tier buttons — IAP not wired yet, just acknowledges the tap.
+  document.querySelectorAll('.coins-buy').forEach(b => {
+    b.addEventListener('click', () => {
+      const amt = Number(b.dataset.amount) || 0;
+      console.log('[Coins] purchase placeholder', { amount: amt });
+      alert(`In-app purchase coming soon — ${amt} coins.`);
+    });
+  });
+  // Jump from Coins to Upgrades (closes coins, opens upgrades)
+  document.getElementById('coins-to-upgrades').addEventListener('click', () => {
+    coinsModal.classList.remove('open');
+    upgradesModal.classList.add('open');
+  });
 
-  document.getElementById('prof-av-choose').addEventListener('click', () => {
+  // Render the avatar picker grid (including an "Upload Photo" tile first)
+  function renderProfAvGrid() {
+    const grid = document.getElementById('prof-av-grid');
+    grid.innerHTML = '';
+    // Upload tile (full row)
+    const up = document.createElement('button');
+    up.type = 'button';
+    up.className = 'prof-av-upload-tile';
+    up.textContent = '📷  UPLOAD PHOTO';
+    up.addEventListener('click', () => document.getElementById('prof-av-file').click());
+    grid.appendChild(up);
+    // Avatar tiles
+    AVATARS.forEach((src, i) => {
+      const d = document.createElement('div');
+      d.className = 'av-modal-opt' + (i === avatarIdx && !customAvatarSrc ? ' sel' : '');
+      d.title = AVATAR_NAMES[i];
+      const img = document.createElement('img'); img.src = src; img.alt = AVATAR_NAMES[i];
+      d.appendChild(img);
+      d.addEventListener('click', () => {
+        avatarIdx = i;
+        customAvatarSrc = null;
+        try { localStorage.removeItem('arc_avatar_custom'); } catch {}
+        localStorage.setItem('arc_avatar', i);
+        const pImg = document.getElementById('prof-modal-av-img');
+        if (pImg) pImg.src = avatarSrc();
+        grid.querySelectorAll('.av-modal-opt').forEach((el, j) => {
+          el.classList.toggle('sel', j === i);
+        });
+        applyProfile();
+      });
+      grid.appendChild(d);
+    });
+  }
+
+  // Tap avatar → toggle picker grid (with upload tile + preset avatars)
+  document.getElementById('prof-av-ring').addEventListener('click', () => {
     profAvatarGridOpen = !profAvatarGridOpen;
     const grid = document.getElementById('prof-av-grid');
     if (profAvatarGridOpen) {
-      // Render avatar options
-      grid.innerHTML = '';
-      AVATARS.forEach((src, i) => {
-        const d = document.createElement('div');
-        d.className = 'av-modal-opt' + (i === avatarIdx ? ' sel' : '');
-        d.title = AVATAR_NAMES[i];
-        const img = document.createElement('img'); img.src = src; img.alt = AVATAR_NAMES[i];
-        d.appendChild(img);
-        d.addEventListener('click', () => {
-          avatarIdx = i;
-          customAvatarSrc = null; // preset overrides custom
-          try { localStorage.removeItem('arc_avatar_custom'); } catch {}
-          localStorage.setItem('arc_avatar', i);
-          // Update preview and sel state
-          const pImg = document.getElementById('prof-modal-av-img');
-          if (pImg) pImg.src = avatarSrc();
-          grid.querySelectorAll('.av-modal-opt').forEach((el, j) => {
-            el.classList.toggle('sel', j === i);
-          });
-          applyProfile();
-        });
-        grid.appendChild(d);
-      });
+      renderProfAvGrid();
       grid.classList.add('open');
     } else {
       grid.classList.remove('open');
     }
   });
 
-  document.getElementById('prof-av-upload').addEventListener('click', () => {
-    document.getElementById('prof-av-file').click();
-  });
-
+  // Upload handler — now CENTER-CROPS non-square photos (cover behaviour).
   document.getElementById('prof-av-file').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    // Resize to ≤256px before storing to keep localStorage usage low
     const reader = new FileReader();
     reader.onload = ev => {
       const tmpImg = new Image();
@@ -4548,26 +5121,107 @@ const ARC_DB = (() => {
         const cvs = document.createElement('canvas');
         cvs.width = cvs.height = size;
         const cctx = cvs.getContext('2d');
-        const scale = Math.min(size / tmpImg.width, size / tmpImg.height);
-        const w2 = tmpImg.width * scale, h2 = tmpImg.height * scale;
+        // Cover: scale by max so the shorter side fills, then center-crop.
+        const scale = Math.max(size / tmpImg.width, size / tmpImg.height);
+        const w2 = tmpImg.width  * scale;
+        const h2 = tmpImg.height * scale;
         cctx.drawImage(tmpImg, (size - w2) / 2, (size - h2) / 2, w2, h2);
-        customAvatarSrc = cvs.toDataURL('image/jpeg', 0.8);
+        customAvatarSrc = cvs.toDataURL('image/jpeg', 0.85);
         try { localStorage.setItem('arc_avatar_custom', customAvatarSrc); } catch {}
         const pImg = document.getElementById('prof-modal-av-img');
         if (pImg) pImg.src = customAvatarSrc;
+        // Drop preset selection in the grid
+        document.querySelectorAll('#prof-av-grid .av-modal-opt').forEach(el => el.classList.remove('sel'));
         applyProfile();
       };
       tmpImg.src = ev.target.result;
     };
     reader.readAsDataURL(file);
-    e.target.value = ''; // reset so same file can be re-selected
+    e.target.value = '';
   });
 
+  // ── Badges (dummy set — real catalog later) ──────────────
+  const BADGES = [
+    { id: 'first-1k',   icon: '🥉', name: 'FIRST 1K'   },
+    { id: 'combo-9',    icon: '🔥', name: 'COMBO 9'    },
+    { id: 'extreme-1',  icon: '⚡', name: 'EXTREME'    },
+    { id: 'gold-100',   icon: '🪙', name: '100 GOLD'   },
+    { id: 'streak-5',   icon: '🎯', name: 'STREAK 5'   },
+    { id: 'speedrun',   icon: '🏃', name: 'SPEEDRUN'   },
+    { id: 'collector',  icon: '💎', name: 'COLLECTOR'  },
+    { id: 'night-owl',  icon: '🦉', name: 'NIGHT OWL'  },
+    { id: 'distance-100', icon: '📏', name: '100 M'    },
+    { id: 'distance-500', icon: '🚀', name: '500 M'    },
+    { id: 'boss',       icon: '👑', name: 'BOSS'       },
+    { id: 'survivor',   icon: '🛡️', name: 'SURVIVOR'  },
+  ];
+  let equippedBadges = (() => {
+    try { return JSON.parse(localStorage.getItem('arc_badges_v1') || '[null,null]'); }
+    catch(_) { return [null, null]; }
+  })();
+  function saveBadges() {
+    try { localStorage.setItem('arc_badges_v1', JSON.stringify(equippedBadges)); } catch(_){}
+  }
+  function findBadge(id) { return BADGES.find(b => b.id === id) || null; }
+
+  function renderEquipSlots() {
+    document.querySelectorAll('.prof-eq-slot').forEach(el => {
+      const i = Number(el.dataset.slot);
+      const id = equippedBadges[i];
+      const b = id ? findBadge(id) : null;
+      el.classList.toggle('filled', !!b);
+      const iconEl = el.querySelector('.prof-eq-icon');
+      if (iconEl) iconEl.textContent = b ? b.icon : '';
+    });
+  }
+  // Badges grid renderer — used by the standalone Badges modal.
+  function renderBadgeGrid() {
+    const grid = document.getElementById('badges-modal-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    BADGES.forEach(b => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'prof-badge' + (equippedBadges.includes(b.id) ? ' sel' : '');
+      el.innerHTML = `<span class="prof-badge-icon">${b.icon}</span><span class="prof-badge-name">${b.name}</span>`;
+      el.addEventListener('click', () => {
+        const idx = equippedBadges.indexOf(b.id);
+        if (idx !== -1) {
+          equippedBadges[idx] = null;
+        } else {
+          const empty = equippedBadges.indexOf(null);
+          if (empty !== -1) equippedBadges[empty] = b.id;
+          else equippedBadges[1] = b.id;
+        }
+        saveBadges();
+        renderBadgeGrid();
+        renderEquipSlots();
+      });
+      grid.appendChild(el);
+    });
+  }
+  // Badges modal: opened by tapping any equip slot, closed by Close button.
+  const badgesModal = document.getElementById('badges-modal');
+  function openBadgesModal() {
+    renderBadgeGrid();
+    badgesModal.classList.add('open');
+  }
+  function closeBadgesModal() { badgesModal.classList.remove('open'); }
+  document.getElementById('badges-modal-close').addEventListener('click', closeBadgesModal);
+  badgesModal.addEventListener('click', e => { if (e.target === badgesModal) closeBadgesModal(); });
+
+  // Tap any slot (empty or filled) → open the Badges screen.
+  document.querySelectorAll('.prof-eq-slot').forEach(el => {
+    el.addEventListener('click', openBadgesModal);
+  });
+
+  // BACK + SAVE both close. Avatar / badges / upload are persisted the
+  // moment the player taps them, so there's no extra commit on SAVE —
+  // the button exists as a confirming primary action.
+  document.getElementById('prof-modal-back').addEventListener('click', () => {
+    profModal.classList.remove('open');
+  });
   document.getElementById('prof-modal-save').addEventListener('click', () => {
-    const raw = (document.getElementById('prof-name-input').value || '')
-      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
-    if (raw) { playerName = raw; localStorage.setItem('arc_name', playerName); }
-    localStorage.setItem('arc_avatar', avatarIdx);
     applyProfile();
     profModal.classList.remove('open');
   });
