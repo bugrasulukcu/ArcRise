@@ -6,16 +6,16 @@
   <title>ArcRise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarpanch:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-    input, textarea { user-select: text; -webkit-user-select: text; font-size: 16px !important; }
+    input, textarea { user-select: text; -webkit-user-select: text; font-size: 21px !important; }
     :root {
       --green: #7CFF7A;
       --red:   #ff3355;
       --bg:    #080a0e;
       --panel: rgba(10,13,22,0.92);
-      --font:  'Press Start 2P', monospace;
+      --font:  'Sarpanch', 'Press Start 2P', monospace;
     }
     html, body { height: 100%; overflow: hidden; background: var(--bg); }
     body { font-family: var(--font); color: #fff; touch-action: manipulation; -ms-touch-action: manipulation; }
@@ -72,8 +72,36 @@
       right: calc(3.4% + 12px);
       text-align: right;
     }
-    .hud-lbl { font-size: 7px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
-    .hud-num { font-size: 13px; letter-spacing: 1px; }
+    .hud-lbl { font-size: 9px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
+    .hud-num { font-size: 17px; letter-spacing: 1px; }
+    /* ── Debug overlay ───────────────────────────────────── */
+    #debug-overlay {
+      position: fixed; top: 0; right: 0;
+      width: min(70vw, 240px); padding: 14px 16px;
+      background: rgba(8,10,18,0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-left: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.85);
+      font-family: var(--font); font-size: 9px;
+      letter-spacing: 1px;
+      z-index: 999; pointer-events: none;
+      transform: translateX(110%); transition: transform .25s ease;
+      opacity: .92;
+    }
+    #debug-overlay.open { transform: translateX(0); }
+    #debug-overlay .dbg-title {
+      font-size: 10px; color: var(--green); margin-bottom: 8px; letter-spacing: 2px;
+    }
+    #debug-overlay .dbg-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+    #debug-overlay .dbg-row span:first-child { color: rgba(255,255,255,.5); }
+    .hud-divider {
+      width: 60%; height: 1px; margin: 6px 0;
+      background: rgba(255,255,255,.18);
+    }
+    .hud-tr .hud-divider { margin-left: auto; }
+    .hud-sub-lbl { font-size: 7px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
+    .hud-sub-num { font-size: 11px; color: rgba(255,255,255,.75); letter-spacing: 1px; }
     /* Küçük avatar renk noktası YOUR BEST yanında */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
@@ -87,15 +115,15 @@
       padding: 60px 0 20px 0;
       overflow: hidden;
     }
-    .lb-row   { font-size: 5.5px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
-    .lb-row.you { font-size: 6px; }
+    .lb-row   { font-size: 7px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
+    .lb-row.you { font-size: 8px; }
 
     /* ══════════ PROFILE (Settings içinde) ══════════ */
     .profile-sect {
       border-bottom: 1px solid rgba(255,255,255,.08);
       padding-bottom: 18px;
     }
-    .profile-lbl { font-size: 6.5px; color: var(--green); letter-spacing: 2px; margin-bottom: 12px; }
+    .profile-lbl { font-size: 8.5px; color: var(--green); letter-spacing: 2px; margin-bottom: 12px; }
     .av-picker { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .av-opt {
       width: 26px; height: 26px; border-radius: 50%;
@@ -108,7 +136,7 @@
     #name-input {
       flex: 1; background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
-      color: #fff; font-family: var(--font); font-size: 8px;
+      color: #fff; font-family: var(--font); font-size: 10.5px;
       letter-spacing: 2px; padding: 10px 12px;
       text-transform: uppercase; min-width: 0;
     }
@@ -117,7 +145,7 @@
       padding: 10px 14px; border-radius: 8px;
       border: 1px solid var(--green); background: rgba(124,255,122,.1);
       color: var(--green); font-family: var(--font);
-      font-size: 7px; letter-spacing: 1px; cursor: pointer; flex-shrink: 0;
+      font-size: 9px; letter-spacing: 1px; cursor: pointer; flex-shrink: 0;
     }
     #name-save:active { transform: scale(0.95); }
 
@@ -170,11 +198,16 @@
       border-radius: 13px;
       padding: 17px 28px;
       font-family: var(--font);
-      font-size: 20px; letter-spacing: 3px;
+      font-size: 26px; letter-spacing: 3px;
       color: #fff; text-align: center;
       user-select: none;
     }
     .rb-inner:active { transform: scale(0.97); }
+    /* Start + Again — bold, +50% over original, uppercase */
+    #btn-start, #btn-again {
+      font-size: 30px; font-weight: 700; letter-spacing: 4px;
+      text-transform: uppercase;
+    }
 
     .menu { display: flex; flex-direction: column; gap: 14px; width: min(88vw, 310px); margin-top: 30px; }
 
@@ -186,7 +219,7 @@
         radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.18), transparent 60%),
         linear-gradient(180deg, rgba(40,46,60,.92), rgba(14,18,28,.92));
       color: #fff; font-family: var(--font);
-      font-size: 13px; letter-spacing: 2px;
+      font-size: 17px; letter-spacing: 2px;
       cursor: pointer; width: 100%;
       box-shadow:
         0 0 18px rgba(255,255,255,.06),
@@ -207,18 +240,18 @@
     #lb-modal {
       position: fixed; inset: 0; z-index: 55;
       display: none; align-items: center; justify-content: center;
-      background: rgba(8,10,18,0.32);
-      backdrop-filter: blur(22px) saturate(1.1);
-      -webkit-backdrop-filter: blur(22px) saturate(1.1);
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #lb-modal.open { display: flex; }
     #lb-modal-box {
       position: relative;
-      background: rgba(12,16,26,0.97);
-      border: 1.5px solid rgba(255,255,255,.14);
+      background: rgba(12,16,26,0.96);
+      border: 1.5px solid rgba(255,255,255,.18);
       border-radius: 22px;
-      padding: 22px 18px 18px;
-      width: min(92vw, 380px);
+      padding: 24px 20px 20px;
+      width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 12px;
       max-height: 88vh; overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
@@ -294,15 +327,34 @@
       animation: lbFlameFlicker 1.6s ease-in-out infinite;
     }
     #lb-modal-title {
-      font-size: 16px; letter-spacing: 3px; text-align: center;
+      font-size: 21px; letter-spacing: 2px; text-align: center;
       color: #fff; margin-bottom: 2px;
+      text-transform: none;
     }
     #lb-tabs { display: flex; gap: 0; border-radius: 12px; overflow: hidden;
       border: 1px solid rgba(255,255,255,.12); }
+    /* Metric sub-tabs (Score / Distance) */
+    #lb-metric-tabs {
+      display: flex; gap: 6px; margin-top: 2px;
+    }
+    .lb-metric-tab {
+      flex: 1; padding: 8px 0;
+      font-family: var(--font); font-size: 9px; letter-spacing: 1.4px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.5);
+      border-radius: 9px; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .lb-metric-tab.active {
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      border-color: rgba(255,255,255,.28);
+    }
     /* Popup tabs reuse the home mode-btn look (icy blue / flame) */
     .lb-tab {
       flex: 1; padding: 11px 0; font-family: var(--font);
-      font-size: 9px; letter-spacing: 2px;
+      font-size: 11.5px; letter-spacing: 2px;
       border: none; cursor: pointer;
       transition: filter .2s;
       background: rgba(255,255,255,.04); color: rgba(255,255,255,.42);
@@ -339,7 +391,7 @@
     }
 
     .lb-section-lbl {
-      font-size: 6px; letter-spacing: 2px; color: rgba(255,255,255,.4);
+      font-size: 8px; letter-spacing: 2px; color: rgba(255,255,255,.4);
       margin-top: 4px; margin-bottom: 2px;
     }
     .lb-bests-row {
@@ -354,11 +406,11 @@
       justify-content: space-between; gap: 10px;
       text-align: center; align-items: center;
     }
-    .lb-best-lbl   { font-size: 8px;  letter-spacing: 2.4px; color: rgba(255,255,255,.55); line-height: 1.3; }
-    .lb-best-name  { font-size: 10px; letter-spacing: 1.8px; color: #fff;
+    .lb-best-lbl   { font-size: 10.5px;  letter-spacing: 2.4px; color: rgba(255,255,255,.55); line-height: 1.3; }
+    .lb-best-name  { font-size: 13px; letter-spacing: 1.8px; color: #fff;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-    .lb-best-score { font-size: 12px; letter-spacing: 1.6px; color: var(--green); }
-    .lb-best-empty { font-size: 9px; color: rgba(255,255,255,.3); letter-spacing: 1.2px; }
+    .lb-best-score { font-size: 15.5px; letter-spacing: 1.6px; color: var(--green); }
+    .lb-best-empty { font-size: 11.5px; color: rgba(255,255,255,.3); letter-spacing: 1.2px; }
     /* Themed record cards */
     .lb-best-card.card-alltime  { border-color: rgba(255,210,80,.35); background: rgba(255,210,80,.06); }
     .lb-best-card.card-alltime  .lb-best-lbl { color: #ffd866; }
@@ -376,7 +428,7 @@
       display: grid; grid-template-columns: 40px 1fr auto;
       align-items: center; gap: 10px;
       padding: 10px 12px; border-radius: 8px;
-      font-size: 10px; letter-spacing: 1.4px;
+      font-size: 13px; letter-spacing: 1.4px;
       background: rgba(255,255,255,0.025);
       color: rgba(255,255,255,.78);
     }
@@ -394,21 +446,21 @@
     .lb-list-row.divider {
       grid-template-columns: 1fr; justify-content: center; text-align: center;
       background: none; color: rgba(255,255,255,.18); letter-spacing: 3px; padding: 2px 0;
-      font-size: 8px;
+      font-size: 10.5px;
     }
     .lb-list-row.you-placeholder {
       background: rgba(255,255,255,.04);
       border: 1px dashed rgba(255,255,255,.18);
       color: rgba(255,255,255,.5); font-style: italic;
     }
-    .lb-row-rank { font-size: 9px; opacity: .7; letter-spacing: 1px; }
+    .lb-row-rank { font-size: 11.5px; opacity: .7; letter-spacing: 1px; }
     .lb-row-dot {
       width: 8px; height: 8px; border-radius: 50%;
       display: inline-block; margin-right: 7px; vertical-align: middle;
     }
     .lb-empty {
       text-align: center; padding: 32px 0;
-      color: rgba(255,255,255,.35); font-size: 9px; letter-spacing: 1.8px;
+      color: rgba(255,255,255,.35); font-size: 11.5px; letter-spacing: 1.8px;
     }
     #lb-modal-close {
       width: 100%; padding: 14px; border-radius: 11px;
@@ -417,7 +469,7 @@
         radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.16), transparent 60%),
         linear-gradient(180deg, rgba(40,46,60,.90), rgba(14,18,28,.92));
       color: #fff; font-family: var(--font);
-      font-size: 11px; letter-spacing: 2.2px; cursor: pointer;
+      font-size: 14.5px; letter-spacing: 2.2px; cursor: pointer;
       box-shadow:
         0 0 18px rgba(255,255,255,.07),
         inset 0 1px 0 rgba(255,255,255,.18),
@@ -434,9 +486,11 @@
     }
     .menu-row > .btn-gray {
       flex: 1 1 0 !important; width: auto !important; min-width: 0;
-      padding: 14px 8px; font-size: 11px; letter-spacing: 1.4px;
+      padding: 14px 8px; font-size: 14.5px; letter-spacing: 1.4px;
       white-space: nowrap;
     }
+    .btn-icon { display: flex; align-items: center; justify-content: center; }
+    .btn-icon svg { width: 26px; height: 26px; color: #fff; }
     #btn-lb { /* legacy reset — sizing handled by .menu-row */ }
 
     /* ══════════ HOLD-TO-CONFIRM BACK TO MENU ══════════ */
@@ -458,7 +512,7 @@
     }
     #btn-menu .hold-hint {
       display: block;
-      font-size: 5.5px;
+      font-size: 7px;
       letter-spacing: 1.5px;
       color: rgba(255,255,255,.35);
       margin-top: 4px;
@@ -468,26 +522,31 @@
     #btn-menu.holding .hold-hint { color: rgba(124,255,122,.8); }
 
     #home-best {
-      font-size: 8px; letter-spacing: 1px; margin-top: 20px;
+      font-size: 10.5px; letter-spacing: 1px; margin-top: 20px;
       color: var(--green); text-align: center;
     }
     #home-best span { color: #fff; }
 
     #credits {
       position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      font-size: 6.5px; color: rgba(255,255,255,.3); letter-spacing: 1px;
+      font-size: 8.5px; color: rgba(255,255,255,.3); letter-spacing: 1px;
     }
 
     /* ══════════ SETTINGS ══════════ */
+    /* Settings is a full-screen scene; give it the same translucent
+       overlay used by popups so the home is visible-but-blurred behind. */
+    #settings.active {
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
     #settings .panel {
       position: relative;
-      background: rgba(10,13,22,0.78);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 26px;
-      padding: 28px 24px 22px;
-      width: min(92vw, 350px);
+      background: rgba(12,16,26,0.96);
+      border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
+      width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 20px;
     }
     /* Rotating rainbow gradient stroke around Settings panel (same vibe as Start) */
@@ -505,7 +564,7 @@
       z-index: 0;
     }
     #settings .panel > * { position: relative; z-index: 1; }
-    #settings h2 { font-size: 16px; text-align: center; letter-spacing: 3px; margin-bottom: 2px; }
+    #settings h2 { font-size: 21px; text-align: center; letter-spacing: 3px; margin-bottom: 2px; }
 
     .srow { display: flex; align-items: center; gap: 12px; }
     .sicon {
@@ -514,19 +573,19 @@
       color: rgba(255,255,255,.55);
     }
     .sicon svg { width: 20px; height: 20px; }
-    .slbl  { font-size: 10px; color: rgba(255,255,255,.78); letter-spacing: 1.4px; flex: 1; }
+    .slbl  { font-size: 13px; color: rgba(255,255,255,.78); letter-spacing: 1.4px; flex: 1; }
     .sctl  { display: flex; align-items: center; }
 
     /* Difficulty < NORMAL > */
     .darr {
       background: none; border: none;
       color: var(--green); font-family: var(--font);
-      font-size: 14px; cursor: pointer; padding: 6px 8px;
+      font-size: 18px; cursor: pointer; padding: 6px 8px;
       opacity: .85; transition: opacity .15s;
     }
     .darr:hover { opacity: 1; }
     .dval {
-      font-size: 8px; letter-spacing: 1px; color: #fff;
+      font-size: 10.5px; letter-spacing: 1px; color: #fff;
       min-width: 76px; text-align: center;
       background: rgba(0,200,180,.15);
       border: 1px solid rgba(0,220,190,.3);
@@ -562,7 +621,7 @@
         inset 0 -6px 12px rgba(0,0,0,.20);
     }
     .tog-btn {
-      font-family: var(--font); font-size: 9px; letter-spacing: 1.4px;
+      font-family: var(--font); font-size: 11.5px; letter-spacing: 1.4px;
       padding: 10px 18px; cursor: pointer; border: none;
       background: transparent; color: rgba(255,255,255,.45);
       transition: background .25s, color .25s, box-shadow .25s;
@@ -603,12 +662,12 @@
       display: flex; flex-direction: column; gap: 18px; align-items: center;
     }
     .rtable { width: 100%; border-collapse: collapse; }
-    .rtable th { font-size: 8.5px; color: var(--green); letter-spacing: 1.4px; padding-bottom: 10px; text-align: left; }
+    .rtable th { font-size: 11px; color: var(--green); letter-spacing: 1.4px; padding-bottom: 10px; text-align: left; }
     .rtable th:last-child { text-align: right; }
-    .rtable td { font-size: 9px; color: rgba(255,255,255,.65); padding: 6px 0; letter-spacing: 1px; }
+    .rtable td { font-size: 11.5px; color: rgba(255,255,255,.65); padding: 6px 0; letter-spacing: 1px; }
     .rtable td:last-child { text-align: right; }
     .rtable tr.you td { color: #fff; }
-    #go-best { font-size: 10px; color: var(--green); letter-spacing: 1.6px; text-align: center; }
+    #go-best { font-size: 13px; color: var(--green); letter-spacing: 1.6px; text-align: center; }
     #go-best span { color: #fff; }
 
     /* ══════════ TUTORIAL ══════════ */
@@ -619,7 +678,7 @@
       border: 2px dashed rgba(255,255,255,.65);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 7px; letter-spacing: 1px; color: rgba(255,255,255,.8);
+      font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,.8);
       font-family: var(--font);
       animation: tpulse 1.6s ease-in-out infinite;
     }
@@ -646,11 +705,11 @@
     }
     #tut-banner-left { flex: 1; }
     #tut-banner-title {
-      font-size: 9px; letter-spacing: 2px; color: var(--green);
+      font-size: 11.5px; letter-spacing: 2px; color: var(--green);
       margin-bottom: 7px;
     }
     #tut-banner-desc {
-      font-size: 6.5px; color: rgba(255,255,255,.5);
+      font-size: 8.5px; color: rgba(255,255,255,.5);
       letter-spacing: 1px; line-height: 1.8;
     }
     #tut-banner-right {
@@ -665,7 +724,7 @@
     #tut-skip-btn {
       background: none; border: 1px solid rgba(255,255,255,.18);
       border-radius: 7px; color: rgba(255,255,255,.4);
-      font-family: var(--font); font-size: 6px;
+      font-family: var(--font); font-size: 8px;
       letter-spacing: 1px; padding: 6px 11px; cursor: pointer;
     }
     #tut-skip-btn:hover { color: #fff; border-color: rgba(255,255,255,.4); }
@@ -676,7 +735,7 @@
       display: flex; gap: 24px; align-items: center;
     }
     .home-link {
-      font-size: 6.5px; color: rgba(255,255,255,.3);
+      font-size: 8.5px; color: rgba(255,255,255,.3);
       letter-spacing: 1px; cursor: pointer; background: none;
       border: none; font-family: var(--font);
     }
@@ -691,8 +750,8 @@
       width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 20px; align-items: center;
     }
-    #profile-setup h2 { font-size: 14px; letter-spacing: 2px; text-align: center; }
-    #profile-setup .ps-sub { font-size: 8px; color: rgba(255,255,255,.45); letter-spacing: 1.2px; text-align: center; }
+    #profile-setup h2 { font-size: 18px; letter-spacing: 2px; text-align: center; }
+    #profile-setup .ps-sub { font-size: 10.5px; color: rgba(255,255,255,.45); letter-spacing: 1.2px; text-align: center; }
     #av-grid {
       display: grid; grid-template-columns: repeat(5, 1fr);
       gap: 8px; width: 100%;
@@ -710,7 +769,7 @@
     #ps-name-input {
       flex: 1; background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.15); border-radius: 8px;
-      color: #fff; font-family: var(--font); font-size: 9px;
+      color: #fff; font-family: var(--font); font-size: 11.5px;
       letter-spacing: 2px; padding: 12px 14px;
       text-transform: uppercase; min-width: 0; text-align: center;
     }
@@ -719,7 +778,7 @@
       width: 100%; padding: 15px; border-radius: 13px;
       border: 1.5px solid var(--green); background: rgba(124,255,122,.12);
       color: var(--green); font-family: var(--font);
-      font-size: 12px; letter-spacing: 3px; cursor: pointer;
+      font-size: 15.5px; letter-spacing: 3px; cursor: pointer;
     }
     #ps-confirm:active { transform: scale(0.97); }
 
@@ -744,28 +803,28 @@
       width: 14px; height: 14px; border-radius: 50%;
       background: var(--green); border: 2px solid #080a0e;
       display: flex; align-items: center; justify-content: center;
-      font-size: 7px; color: #000;
+      font-size: 9px; color: #000;
     }
-    #settings-name-lbl { font-size: 10px; letter-spacing: 2px; }
+    #settings-name-lbl { font-size: 13px; letter-spacing: 2px; }
 
     /* ══════════ AVATAR MODAL ══════════ */
     #av-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
-      background: rgba(8,10,18,0.32);
-      backdrop-filter: blur(22px) saturate(1.1);
-      -webkit-backdrop-filter: blur(22px) saturate(1.1);
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #av-modal.open { display: flex; }
     #av-modal-box {
       background: rgba(12,16,26,0.96);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 24px;
-      padding: 26px 22px 22px;
+      border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
       width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 18px; align-items: center;
     }
-    #av-modal-title { font-size: 12px; letter-spacing: 2px; color: #fff; }
+    #av-modal-title { font-size: 15.5px; letter-spacing: 2px; color: #fff; }
     #av-modal-grid {
       display: grid; grid-template-columns: repeat(5, 1fr);
       gap: 10px; width: 100%;
@@ -783,7 +842,7 @@
       border: 1.5px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.06);
       color: rgba(255,255,255,.7); font-family: var(--font);
-      font-size: 10px; letter-spacing: 2px; cursor: pointer;
+      font-size: 13px; letter-spacing: 2px; cursor: pointer;
     }
     #av-modal-close:active { transform: scale(0.97); }
 
@@ -803,7 +862,7 @@
       border: 1.5px solid rgba(255,51,85,.45);
       background: rgba(255,51,85,.08);
       color: #ff3355; font-family: var(--font);
-      font-size: 8px; letter-spacing: 1px;
+      font-size: 10.5px; letter-spacing: 1px;
       cursor: pointer; white-space: nowrap;
       min-width: min(72vw, 260px);
     }
@@ -815,7 +874,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
     #reset-confirm {
-      display: none; font-size: 7px; color: rgba(255,255,255,.45);
+      display: none; font-size: 9px; color: rgba(255,255,255,.45);
       letter-spacing: 1px; text-align: center;
     }
 
@@ -835,6 +894,29 @@
       box-shadow:
         0 0 24px rgba(255,255,255,.06),
         inset 0 1px 0 rgba(255,255,255,.18);
+      transition: border-color .4s ease, box-shadow .4s ease, background .4s ease;
+    }
+    /* Extreme mode → flaming border on the profile card */
+    #home.extreme-mode #home-profile {
+      border-color: rgba(255,120,40,.7);
+      background:
+        radial-gradient(140% 110% at 50% 100%, rgba(255,80,20,.16), transparent 60%),
+        rgba(255,255,255,.08);
+      box-shadow:
+        0 0 22px rgba(255,80,20,.45),
+        0 0 48px rgba(255,40,10,.20),
+        inset 0 1px 0 rgba(255,200,140,.30);
+      animation: profileFlameFlicker 1.6s ease-in-out infinite;
+    }
+    @keyframes profileFlameFlicker {
+      0%, 100% { box-shadow:
+        0 0 22px rgba(255,80,20,.45),
+        0 0 48px rgba(255,40,10,.20),
+        inset 0 1px 0 rgba(255,200,140,.30); }
+      50%      { box-shadow:
+        0 0 30px rgba(255,120,40,.60),
+        0 0 60px rgba(255,60,20,.30),
+        inset 0 1px 0 rgba(255,220,160,.40); }
     }
     #home-av-wrap {
       position: relative; flex-shrink: 0;
@@ -863,47 +945,183 @@
     }
     #home-profile-info { flex: 1; min-width: 0; }
     #home-pname {
-      font-size: 11px; letter-spacing: 2px;
+      font-size: 14.5px; letter-spacing: 2px;
       color: #fff; margin-bottom: 6px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     #home-pbest-row {
       display: flex; align-items: center; gap: 6px;
     }
-    #home-pbest-lbl { font-size: 6px; color: var(--green); letter-spacing: 1px; }
-    #home-pbest-val { font-size: 10px; color: #fff; letter-spacing: 1px; }
+    #home-pbest-lbl { font-size: 8px; color: var(--green); letter-spacing: 1px; }
+    #home-pbest-val { font-size: 13px; color: #fff; letter-spacing: 1px; }
 
     /* Settings button — sizing handled by .menu-row when paired */
     #btn-settings { /* legacy: width applied via .menu-row */ }
 
-    /* Home profile card — stat row */
+    /* Home profile card — stat row.
+       Grid with explicit rows so labels share row 1 and values share row 2
+       regardless of label wrap height — the numbers stay on the same
+       baseline whether the label says "SCORE" or "DISTANCE". */
     #home-profile { cursor: pointer; }
-    .home-stat-row { display: flex; gap: 0; margin-top: 10px; }
-    .home-stat { flex: 1; text-align: center; padding: 0 4px; border-right: 1px solid rgba(255,255,255,.08); }
-    .home-stat:last-child { border-right: none; }
-    .home-stat-lbl { font-size: 7px; color: var(--green); letter-spacing: 1.4px; margin-bottom: 8px; }
-    .home-stat-val { font-size: 11px; letter-spacing: 1.2px; }
-    #home-edit-hint { font-size: 7px; color: rgba(255,255,255,.28); letter-spacing: 1.2px; margin-top: 10px; }
+    .home-stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      grid-auto-flow: column;  /* fill column-first: lbl→val, lbl→val */
+      column-gap: 0; row-gap: 6px;
+      margin-top: 10px;
+      align-items: end;
+    }
+    .home-stat {
+      display: contents; /* let lbl/val participate directly in the row grid */
+    }
+    .home-stat-lbl {
+      font-size: 9px; color: var(--green); letter-spacing: 1.4px;
+      line-height: 1.25; text-align: center;
+      align-self: end;
+      padding: 0 4px;
+    }
+    .home-stat-val {
+      font-size: 14.5px; letter-spacing: 1.2px;
+      text-align: center; align-self: start;
+      padding: 0 4px;
+    }
+    /* Divider only on first column (first .home-stat) */
+    .home-stat:first-child > .home-stat-lbl,
+    .home-stat:first-child > .home-stat-val {
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+
+    /* Coin pill — separate from stat data, opens its own gold popup */
+    #home-coin-pill {
+      flex-shrink: 0;
+      margin-left: 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-left: 1px solid rgba(255,210,80,.18);
+    }
+    #home-coin-lbl {
+      font-size: 8px; letter-spacing: 1.4px;
+      color: #ffd866;
+    }
+    #home-coin-disc {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
+      box-shadow:
+        0 0 12px rgba(255,210,80,.55),
+        inset 0 1.5px 0 rgba(255,255,255,.55),
+        inset 0 -3px 6px rgba(120,80,0,.45);
+      border: 1.5px solid #b8860b;
+      color: #4a2c00;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    }
+    #home-coin-pill:active #home-coin-disc { transform: scale(0.95); }
+
+    /* Coins popup — gold framed */
+    #coins-modal {
+      position: fixed; inset: 0; z-index: 56;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #coins-modal.open { display: flex; }
+    #coins-modal-box {
+      position: relative;
+      /* Match the game-over coin-bar palette: warm orange-amber to bright
+         lemon-yellow at the top, deep amber at the bottom. */
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,238,68,.22), transparent 55%),
+        radial-gradient(140% 90% at 50% 100%, rgba(255,170,0,.18), transparent 60%),
+        linear-gradient(180deg, rgba(50,30,4,0.96) 0%, rgba(24,16,4,0.96) 100%);
+      border: 1.5px solid rgba(255,210,80,.65);
+      border-radius: 22px;
+      padding: 26px 22px 22px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 14px; align-items: center;
+      box-shadow:
+        0 0 40px rgba(255,170,0,.30),
+        0 0 80px rgba(255,80,0,.12),
+        inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    /* Animated gold ring behind the box edge — subtle but readable. */
+    #coins-modal-box::before {
+      content: ""; position: absolute; inset: -2px;
+      border-radius: 24px;
+      pointer-events: none;
+      background: conic-gradient(from 0deg,
+        #ffaa00, #ffee44, #ffd866, #ffaa00, #ff9900,
+        #ffee44, #ffd866, #ffaa00);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      padding: 1.5px;
+      opacity: .6;
+      z-index: 0;
+    }
+    #coins-modal-box > * { position: relative; z-index: 1; }
+    #coins-modal-title {
+      font-size: 22px; letter-spacing: 3px;
+      /* Use the coin-bar gradient on the text itself. */
+      background: linear-gradient(90deg, #ffaa00, #ffee44, #ffd866);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 12px rgba(255,210,80,.35);
+      text-align: center;
+    }
+    #coins-modal-value {
+      font-size: 38px; letter-spacing: 2px;
+      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 50%, #b8860b 100%);
+      -webkit-background-clip: text;
+              background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 16px rgba(255,180,40,.45);
+    }
+    #coins-modal-sub {
+      font-size: 9.5px; color: rgba(255,210,140,.55); letter-spacing: 1.6px;
+      text-align: center; padding: 6px 8px;
+    }
+    #coins-modal-close {
+      width: 100%; padding: 14px; border-radius: 11px;
+      border: 1.5px solid rgba(255,210,80,.7);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,238,68,.30), transparent 55%),
+        linear-gradient(180deg, #ffaa00 0%, #ffee44 50%, #d68a00 100%);
+      color: #3a2400; font-family: var(--font); font-weight: 600;
+      font-size: 14.5px; letter-spacing: 2.2px; cursor: pointer;
+      box-shadow:
+        0 0 22px rgba(255,170,0,.40),
+        inset 0 1px 0 rgba(255,255,255,.35),
+        inset 0 -6px 12px rgba(120,60,0,.30);
+      transition: transform .12s, box-shadow .2s;
+    }
+    #coins-modal-close:active { transform: scale(0.97); }
 
     /* ══════════ PROFILE EDIT MODAL ══════════ */
     #prof-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
-      background: rgba(8,10,18,0.32);
-      backdrop-filter: blur(22px) saturate(1.1);
-      -webkit-backdrop-filter: blur(22px) saturate(1.1);
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #prof-modal.open { display: flex; }
     #prof-modal-box {
-      background: rgba(12,16,26,0.97);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 26px;
-      padding: 26px 22px 22px;
+      background: rgba(12,16,26,0.96);
+      border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
       width: min(92vw, 360px);
       max-height: 92vh; overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
-    #prof-modal-title { font-size: 16px; letter-spacing: 3px; color: #fff; }
+    #prof-modal-title { font-size: 21px; letter-spacing: 3px; color: #fff; }
     /* Avatar preview with rainbow ring */
     #prof-av-ring {
       width: 80px; height: 80px; border-radius: 50%;
@@ -924,7 +1142,7 @@
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.05);
       color: rgba(255,255,255,.7); font-family: var(--font);
-      font-size: 6.5px; letter-spacing: 1px; cursor: pointer;
+      font-size: 8.5px; letter-spacing: 1px; cursor: pointer;
     }
     .prof-av-btn:active { transform: scale(0.95); }
     #prof-name-row { width: 100%; }
@@ -944,7 +1162,7 @@
       border-radius: 12px; padding: 16px 16px 14px;
     }
     .prof-stats-title {
-      font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,.55);
+      font-size: 11.5px; letter-spacing: 3px; color: rgba(255,255,255,.55);
       text-align: center;
     }
     .prof-stats-grid {
@@ -955,9 +1173,9 @@
       padding: 10px 6px; background: rgba(255,255,255,.025);
       border-radius: 8px;
     }
-    .prof-stat-lbl { font-size: 7px; letter-spacing: 1.6px; color: rgba(255,255,255,.5);
+    .prof-stat-lbl { font-size: 9px; letter-spacing: 1.6px; color: rgba(255,255,255,.5);
       text-align: center; line-height: 1.3; }
-    .prof-stat-val { font-size: 13px; letter-spacing: 1.2px; color: #fff; }
+    .prof-stat-val { font-size: 17px; letter-spacing: 1.2px; color: #fff; }
     .ps-blue   { color: #66ccff; }
     .ps-flame  { color: #ff8866; }
     .ps-green  { color: var(--green); }
@@ -966,10 +1184,10 @@
     .prof-stats-foot {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px 6px 0;
-      font-size: 9px; letter-spacing: 1.8px; color: rgba(255,255,255,.6);
+      font-size: 11.5px; letter-spacing: 1.8px; color: rgba(255,255,255,.6);
       border-top: 1px solid rgba(255,255,255,.08);
     }
-    .prof-stats-foot > span:last-child { font-size: 12px; letter-spacing: 1px; }
+    .prof-stats-foot > span:last-child { font-size: 15.5px; letter-spacing: 1px; }
     #prof-modal-save {
       width: 100%; padding: 14px; border-radius: 13px;
       border: 1.5px solid rgba(124,255,122,.7);
@@ -977,7 +1195,7 @@
         radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.30), transparent 60%),
         linear-gradient(180deg, rgba(60,180,80,.45), rgba(20,80,30,.55));
       color: #d4ffd0; font-family: var(--font);
-      font-size: 11px; letter-spacing: 2px; cursor: pointer;
+      font-size: 14.5px; letter-spacing: 2px; cursor: pointer;
       box-shadow:
         0 0 22px rgba(124,255,122,.30),
         inset 0 1px 0 rgba(255,255,255,.20),
@@ -988,7 +1206,7 @@
     #prof-modal-cancel {
       background: none; border: none;
       color: rgba(255,255,255,.28); font-family: var(--font);
-      font-size: 6.5px; letter-spacing: 1px; cursor: pointer;
+      font-size: 8.5px; letter-spacing: 1px; cursor: pointer;
     }
     /* Avatar sub-grid inside profile modal */
     #prof-av-grid {
@@ -997,26 +1215,26 @@
     }
     #prof-av-grid.open { display: grid; }
 
-    #reset-confirm { font-size: 7px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
+    #reset-confirm { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
     /* ══════════ EXTREME MODE POPUP ══════════ */
     #extreme-modal {
       position: fixed; inset: 0; z-index: 60;
       display: none; align-items: center; justify-content: center;
-      background: rgba(8,10,18,0.32);
-      backdrop-filter: blur(22px) saturate(1.1);
-      -webkit-backdrop-filter: blur(22px) saturate(1.1);
+      background: rgba(6,8,14,0.22);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #extreme-modal.open { display: flex; }
     #extreme-modal-box {
       position: relative;
       background:
         radial-gradient(140% 90% at 50% 100%, rgba(255,80,20,.14), transparent 65%),
-        rgba(14,8,12,0.97);
+        rgba(14,8,12,0.96);
       border: 1.5px solid rgba(255,120,40,.0);
-      border-radius: 26px;
-      padding: 28px 24px 22px;
-      width: min(90vw, 340px);
+      border-radius: 22px;
+      padding: 24px 20px 20px;
+      width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       overflow: visible;
     }
@@ -1033,15 +1251,15 @@
         linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
       animation: lbFlameFlicker 1.6s ease-in-out infinite;
     }
-    #extreme-icon { font-size: 32px; line-height: 1; }
-    #extreme-title { font-size: 14px; letter-spacing: 3px; color: #ff3355; }
+    #extreme-icon { font-size: 41.5px; line-height: 1; }
+    #extreme-title { font-size: 18px; letter-spacing: 3px; color: #ff3355; }
     #extreme-desc { width: 100%; display: flex; flex-direction: column; gap: 8px;
       background: rgba(255,255,255,.04); border-radius: 12px; padding: 14px 16px; }
     .extreme-row { display: flex; justify-content: space-between; align-items: center; }
-    .extreme-lbl { font-size: 9px; color: rgba(255,255,255,.6); letter-spacing: 1.4px; }
-    .extreme-val { font-size: 11px; color: #ff7755; letter-spacing: 1.2px; }
+    .extreme-lbl { font-size: 11.5px; color: rgba(255,255,255,.6); letter-spacing: 1.4px; }
+    .extreme-val { font-size: 14.5px; color: #ff7755; letter-spacing: 1.2px; }
     #extreme-warn {
-      font-size: 8.5px; color: rgba(255,255,255,.45); letter-spacing: 1.2px;
+      font-size: 11px; color: rgba(255,255,255,.45); letter-spacing: 1.2px;
       text-align: center; line-height: 1.8;
     }
     #extreme-confirm {
@@ -1051,7 +1269,7 @@
         radial-gradient(120% 80% at 50% 0%, rgba(255,150,120,.30), transparent 60%),
         linear-gradient(180deg, rgba(170,30,40,.55), rgba(80,10,20,.65));
       color: #ffdcd0; font-family: var(--font);
-      font-size: 11px; letter-spacing: 2px; cursor: pointer;
+      font-size: 14.5px; letter-spacing: 2px; cursor: pointer;
       box-shadow:
         0 0 22px rgba(255,80,60,.40),
         inset 0 1px 0 rgba(255,255,255,.18),
@@ -1066,7 +1284,7 @@
         radial-gradient(120% 80% at 50% 0%, rgba(140,190,255,.18), transparent 60%),
         linear-gradient(180deg, rgba(40,60,110,.55), rgba(10,20,40,.65));
       color: #99bbff; font-family: var(--font);
-      font-size: 9px; letter-spacing: 2px; cursor: pointer;
+      font-size: 11.5px; letter-spacing: 2px; cursor: pointer;
       margin-top: 4px;
       box-shadow:
         0 0 14px rgba(80,140,255,.22),
@@ -1092,14 +1310,15 @@
     }
     #mode-sel {
       display: flex; gap: 0;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 12px; overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,.28);
+      border-radius: 13px; overflow: hidden;
       width: 100%;
       position: relative; z-index: 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
     }
     .mode-btn {
       flex: 1; padding: 11px 0; font-family: var(--font);
-      font-size: 8px; letter-spacing: 1.5px;
+      font-size: 10.5px; letter-spacing: 1.5px;
       border: none; cursor: pointer;
       transition: filter .2s;
       background: rgba(255,255,255,.04); color: rgba(255,255,255,.42);
@@ -1173,11 +1392,11 @@
     /* Floating decoration particles (ice crystals + flames around buttons) */
     .mode-deco {
       position: absolute; pointer-events: none;
-      font-size: 12px; will-change: transform, opacity;
+      font-size: 15.5px; will-change: transform, opacity;
       z-index: 2;
     }
     .ice-deco { color: #aaddff; text-shadow: 0 0 6px rgba(140,200,255,.9); }
-    .flame-deco { font-size: 14px; text-shadow: 0 0 8px rgba(255,180,40,.9); }
+    .flame-deco { font-size: 18px; text-shadow: 0 0 8px rgba(255,180,40,.9); }
     @keyframes iceFloat {
       0%   { transform: translate(0, 0)    rotate(0deg);   opacity: 0; }
       15%  { opacity: .9; }
@@ -1203,7 +1422,7 @@
     #combo-pill {
       background: rgba(10,24,10,0.88); border: 1.5px solid rgba(124,255,122,.5);
       border-radius: 18px; padding: 8px 16px;
-      font-size: 13px; letter-spacing: 1.4px; color: var(--green);
+      font-size: 17px; letter-spacing: 1.4px; color: var(--green);
       box-shadow: 0 0 12px rgba(124,255,122,.18);
     }
 
@@ -1211,20 +1430,33 @@
     /* drawn on canvas — no CSS needed */
 
     /* ══════════ GAME OVER EXTRAS ══════════ */
-    #go-score-row {
-      text-align: center;
+    #go-score-row { text-align: center; }
+    /* Game-over twin row: SCORE + DISTANCE side by side, small BEST below each */
+    #go-twin-row {
+      display: flex; gap: 14px; width: 100%;
+      align-items: stretch;
     }
-    #go-score-lbl { font-size: 9px; color: var(--green); letter-spacing: 2.4px; margin-bottom: 10px; }
-    #go-score-val { font-size: 22px; letter-spacing: 3px; }
+    .go-twin-col {
+      flex: 1; text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px;
+    }
+    .go-twin-lbl  { font-size: 10px; color: var(--green); letter-spacing: 2px; }
+    .go-twin-val  { font-size: 24px; letter-spacing: 2.4px; }
+    .go-twin-best {
+      font-size: 8.5px; color: rgba(255,255,255,.5);
+      letter-spacing: 1.4px; margin-top: 2px;
+    }
+    .go-twin-best span { color: var(--green); }
     /* Coin progress bar */
     #go-coin-row { width: 100%; }
     #go-coin-top {
       display: flex; justify-content: space-between; align-items: baseline;
       margin-bottom: 6px;
     }
-    #go-coin-lbl { font-size: 8px; color: #ffcc44; letter-spacing: 1.4px; }
-    #go-coin-earned { font-size: 10px; color: #ffcc44; }
-    #go-coin-progress { font-size: 8px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
+    #go-coin-lbl { font-size: 10.5px; color: #ffcc44; letter-spacing: 1.4px; }
+    #go-coin-earned { font-size: 13px; color: #ffcc44; }
+    #go-coin-progress { font-size: 10.5px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
     #go-coin-bar-wrap {
       width: 100%; height: 6px; border-radius: 3px;
       background: rgba(255,255,255,.08); overflow: hidden;
@@ -1256,8 +1488,8 @@
       backdrop-filter: blur(8px);
       box-shadow: 0 0 14px rgba(180,80,255,.20);
     }
-    #booster-icon { font-size: 18px; }
-    #booster-name { font-size: 10px; letter-spacing: 1.4px; color: #cc88ff; }
+    #booster-icon { font-size: 23.5px; }
+    #booster-name { font-size: 13px; letter-spacing: 1.4px; color: #cc88ff; }
     #booster-bar-wrap {
       width: 64px; height: 5px; background: rgba(255,255,255,.12);
       border-radius: 3px; overflow: hidden;
@@ -1271,6 +1503,12 @@
 <body>
 
 <!-- ── Canvas + HUD (aynı stack içinde, duvar sınırlarına göre konumlanır) ── -->
+<!-- Debug overlay: FPS + live game state. Toggled by T×2 or RTL swipe. -->
+<div id="debug-overlay">
+  <div class="dbg-title">DEBUG</div>
+  <div id="dbg-rows"></div>
+</div>
+
 <div id="wrap">
   <div class="stack">
     <canvas id="bg"></canvas>
@@ -1279,10 +1517,16 @@
       <div class="hud-tl">
         <div class="hud-lbl">SCORE</div>
         <div class="hud-num" id="h-score">000</div>
+        <div class="hud-divider"></div>
+        <div class="hud-sub-lbl">BEST <span id="hud-av"></span></div>
+        <div class="hud-sub-num" id="h-best">000</div>
       </div>
       <div class="hud-tr">
-        <div class="hud-lbl">YOUR BEST <span id="hud-av"></span></div>
-        <div class="hud-num" id="h-best">000</div>
+        <div class="hud-lbl">DISTANCE</div>
+        <div class="hud-num" id="h-dist">0</div>
+        <div class="hud-divider"></div>
+        <div class="hud-sub-lbl">BEST</div>
+        <div class="hud-sub-num" id="h-dist-best">0</div>
       </div>
       <div id="lb"></div>
       <!-- Combo indicator -->
@@ -1330,34 +1574,47 @@
       <div id="home-pname">PLAYER</div>
       <div class="home-stat-row">
         <div class="home-stat">
-          <div class="home-stat-lbl">LAST</div>
-          <div class="home-stat-val" id="home-plast">—</div>
-        </div>
-        <div class="home-stat">
-          <div class="home-stat-lbl">BEST</div>
+          <div class="home-stat-lbl">BEST SCORE</div>
           <div class="home-stat-val" id="home-pbest-val">000</div>
         </div>
         <div class="home-stat">
-          <div class="home-stat-lbl">COINS</div>
-          <div class="home-stat-val" id="home-pcoins">0</div>
+          <div class="home-stat-lbl">BEST DISTANCE</div>
+          <div class="home-stat-val" id="home-pbestdist">0</div>
         </div>
       </div>
-      <div id="home-edit-hint">tap to edit ✏</div>
+    </div>
+    <!-- Coin pill — separate from stat data, opens its own gold popup -->
+    <div id="home-coin-pill" title="Coins">
+      <span id="home-coin-lbl">COINS</span>
+      <span id="home-coin-disc"><span id="home-pcoins">0</span></span>
     </div>
   </div>
   </div><!-- /home-logo-wrap -->
   <div class="menu" style="margin-top:14px">
     <div class="rb-wrap" id="wrap-start">
-      <div class="rb-inner" id="btn-start">Start</div>
+      <div class="rb-inner" id="btn-start">START</div>
     </div>
     <div class="menu-row">
-      <button class="btn-gray" id="btn-settings">Settings</button>
-      <button class="btn-gray" id="btn-lb">High Scores</button>
+      <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.01c.4.16.74.43 1 .77.27.34.44.74.5 1.16H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06z"/>
+        </svg>
+      </button>
+      <button class="btn-gray btn-icon" id="btn-lb" title="High Scores" aria-label="High Scores">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 21h8"/>
+          <path d="M12 17v4"/>
+          <path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/>
+          <path d="M17 4h3v3a3 3 0 0 1-3 3"/>
+          <path d="M7 4H4v3a3 3 0 0 0 3 3"/>
+        </svg>
+      </button>
     </div>
     <!-- Mode selector (wrapper holds floating deco particles) -->
     <div id="mode-fx-wrap">
       <div id="mode-sel">
-        <button class="mode-btn active-normal" id="mode-btn-normal">Normal</button>
+        <button class="mode-btn active-normal" id="mode-btn-normal">Chill</button>
         <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
       </div>
     </div>
@@ -1424,6 +1681,23 @@
       </div>
     </div>
 
+    <!-- ── Anti-aliasing (off saves GPU on low-end devices) ── -->
+    <div class="srow">
+      <span class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 21l9-18 9 18"/>
+          <path d="M7 14h10"/>
+        </svg>
+      </span>
+      <span class="slbl">Smooth</span>
+      <div class="sctl">
+        <div class="tog">
+          <button class="tog-btn active-on"  id="aa-on">On</button>
+          <button class="tog-btn active-off" id="aa-off">Off</button>
+        </div>
+      </div>
+    </div>
+
     <button class="btn-gray" id="btn-back" style="margin-top:6px">Back</button>
   </div>
   <!-- Reset button outside panel -->
@@ -1436,10 +1710,18 @@
 <!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
   <div class="panel">
-    <!-- Animated score -->
-    <div id="go-score-row">
-      <div id="go-score-lbl">SCORE</div>
-      <div id="go-score-val">00000</div>
+    <!-- Animated score + distance, with small best lines under each -->
+    <div id="go-twin-row">
+      <div class="go-twin-col">
+        <div id="go-score-lbl" class="go-twin-lbl">SCORE</div>
+        <div id="go-score-val" class="go-twin-val">00000</div>
+        <div class="go-twin-best">BEST: <span id="go-best-val-inline">00000</span></div>
+      </div>
+      <div class="go-twin-col">
+        <div class="go-twin-lbl" id="go-dist-lbl">DISTANCE</div>
+        <div class="go-twin-val" id="go-dist-val">0M</div>
+        <div class="go-twin-best">BEST: <span id="go-bestdist-val-inline">0M</span></div>
+      </div>
     </div>
     <!-- Coin progress -->
     <div id="go-coin-row">
@@ -1458,14 +1740,13 @@
     </table>
     <div style="width:100%;display:flex;flex-direction:column;gap:12px">
       <div class="rb-wrap" id="wrap-again">
-        <div class="rb-inner" id="btn-again" style="font-size:18px">Again!</div>
+        <div class="rb-inner" id="btn-again">AGAIN!</div>
       </div>
-      <button class="btn-gray" id="btn-menu" style="font-size:9px;white-space:nowrap">
+      <button class="btn-gray" id="btn-menu" style="font-size: 11.5px;white-space:nowrap">
         <div class="hold-fill"></div>
         <span class="hold-label">Back to Menu</span>
       </button>
     </div>
-    <div id="go-best">YOUR BEST:<span id="go-best-val">00000</span></div>
   </div>
 </div>
 
@@ -1481,17 +1762,32 @@
     </div>
     <div id="extreme-warn">High speed — for experienced players only.</div>
     <button id="extreme-confirm">LET'S GO ⚡</button>
-    <button id="extreme-back">Stay Normal</button>
+    <button id="extreme-back">Stay Chill</button>
+  </div>
+</div>
+
+<!-- ══ COINS MODAL ══ -->
+<div id="coins-modal">
+  <div id="coins-modal-box">
+    <div id="coins-modal-title">COINS</div>
+    <div id="coins-modal-value"><span id="coins-modal-count">0</span></div>
+    <div id="coins-modal-sub">1 COIN PER 1000 XP · MORE SOON…</div>
+    <button id="coins-modal-close">Close</button>
   </div>
 </div>
 
 <!-- ══ HIGH SCORES MODAL ══ -->
 <div id="lb-modal">
   <div id="lb-modal-box">
-    <div id="lb-modal-title">HIGH SCORES</div>
+    <div id="lb-modal-title">High Scores</div>
     <div id="lb-tabs">
-      <button class="lb-tab active-normal" id="lb-tab-normal">Normal</button>
+      <button class="lb-tab active-normal" id="lb-tab-normal">Chill</button>
       <button class="lb-tab" id="lb-tab-extreme">Extreme</button>
+    </div>
+    <!-- Metric sub-tabs: Score vs Distance -->
+    <div id="lb-metric-tabs">
+      <button class="lb-metric-tab active" data-metric="score">Score</button>
+      <button class="lb-metric-tab" data-metric="distance">Distance</button>
     </div>
     <div class="lb-bests-row">
       <div class="lb-best-card card-alltime">
@@ -1545,7 +1841,7 @@
       <div class="prof-stats-title">STATS</div>
       <div class="prof-stats-grid">
         <div class="prof-stat"><div class="prof-stat-lbl">GAMES</div><div class="prof-stat-val" id="ps-games">0</div></div>
-        <div class="prof-stat"><div class="prof-stat-lbl">BEST NORMAL</div><div class="prof-stat-val ps-blue" id="ps-best-n">0</div></div>
+        <div class="prof-stat"><div class="prof-stat-lbl">BEST CHILL</div><div class="prof-stat-val ps-blue" id="ps-best-n">0</div></div>
         <div class="prof-stat"><div class="prof-stat-lbl">BEST EXTREME</div><div class="prof-stat-val ps-flame" id="ps-best-x">0</div></div>
         <div class="prof-stat"><div class="prof-stat-lbl">MAX COMBO</div><div class="prof-stat-val ps-green" id="ps-combo">0</div></div>
         <div class="prof-stat"><div class="prof-stat-lbl">GOLD BALLS</div><div class="prof-stat-val ps-gold" id="ps-gold">0</div></div>
@@ -1701,11 +1997,46 @@ const ARC_DB = (() => {
   // Top-N skor çek. mode girilmişse yerelde filtreler.
   // (Firestore'da where+orderBy composite index gerektirdiği için filtreyi
   // app tarafında yapıyoruz — daha geniş query çekip mode'a göre süzüyoruz.)
+  // ── Read cache (sessionStorage + memory) ───────────────────
+  // Cuts Firestore reads by 90%+ on repeat-views. TTL'd entries are reused;
+  // expired ones trigger a single refetch. The cache key includes mode + n
+  // so the cheapest call serves the larger one too if available.
+  const CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes
+  const _memCache = new Map();
+  function _cacheGet(key) {
+    const m = _memCache.get(key);
+    if (m && Date.now() - m.ts < CACHE_TTL_MS) return m.rows;
+    try {
+      const raw = sessionStorage.getItem('arc_topcache_' + key);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (Date.now() - obj.ts < CACHE_TTL_MS) {
+          _memCache.set(key, obj);
+          return obj.rows;
+        }
+      }
+    } catch(_){}
+    return null;
+  }
+  function _cacheSet(key, rows) {
+    const obj = { ts: Date.now(), rows };
+    _memCache.set(key, obj);
+    try { sessionStorage.setItem('arc_topcache_' + key, JSON.stringify(obj)); } catch(_){}
+  }
+
   async function getTopScores(n = 10, mode) {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
+    const target = mode ? normMode(mode) : null;
+    // Modest overfetch only when filtering client-side. No hard 200 floor.
+    // Worst case: 50 callers ask for 30, we fetch 60 → still 60 reads not 200.
+    const fetchN = target ? Math.min(n * 2 + 10, 100) : n;
+    const key = `${target || 'all'}:${fetchN}`;
+    // Cache hit: zero reads.
+    const cached = _cacheGet(key);
+    if (cached) {
+      return target ? cached.filter(r => r.mode === target).slice(0, n) : cached.slice(0, n);
+    }
     try {
-      // Mode filtreliyse daha geniş çek ki yeterli mode-match bulalım
-      const fetchN = mode ? Math.max(n * 4, 200) : n;
       const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1715,16 +2046,24 @@ const ARC_DB = (() => {
           limit:   fetchN,
         }}),
       });
-      let rows = parseRows(await res.json());
-      if (mode) {
-        const target = normMode(mode);
-        rows = rows.filter(r => r.mode === target).slice(0, n);
-      }
-      return rows;
+      const all = parseRows(await res.json());
+      _cacheSet(key, all);
+      return target ? all.filter(r => r.mode === target).slice(0, n) : all.slice(0, n);
     } catch(e) { console.warn('[ArcDB] fetch failed', e); return []; }
   }
 
-  return { submitScore, getTopScores };
+  // Allow explicit cache wipe (e.g. after submitting a new score).
+  function invalidateTopCache() {
+    _memCache.clear();
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const k = sessionStorage.key(i);
+        if (k && k.startsWith('arc_topcache_')) sessionStorage.removeItem(k);
+      }
+    } catch(_){}
+  }
+
+  return { submitScore, getTopScores, invalidateTopCache };
 })();
 
 (() => {
@@ -1769,7 +2108,8 @@ const ARC_DB = (() => {
   const tutBDesc   = document.getElementById('tut-banner-desc');
   const tutSDots   = document.querySelectorAll('.tut-sdot');
   const homeBestV  = document.getElementById('home-pbest-val'); // profile card'daki best score
-  const goBestV    = document.getElementById('go-best-val');
+  // goBestV legacy — replaced by inline best lines under twin SCORE/DISTANCE
+  const goBestV    = null;
   const rankRows   = document.getElementById('rank-rows');
   const profileSetupEl = document.getElementById('profile-setup');
   // SFX/Music are now on/off toggles (no sliders)
@@ -1848,10 +2188,20 @@ const ARC_DB = (() => {
     if (hImg) hImg.src = src;
     const hName = document.getElementById('home-pname');
     if (hName) hName.textContent = playerName || 'PLAYER';
+    // BEST SCORE — per-mode (Chill vs Extreme)
     const hBestEl = document.getElementById('home-pbest-val');
-    if (hBestEl) hBestEl.textContent = pad(best);
-    const hLastEl = document.getElementById('home-plast');
-    if (hLastEl) hLastEl.textContent = lastScore > 0 ? pad(lastScore) : '—';
+    const modeBest = (gameMode === 'extreme')
+      ? (stats?.bestExtreme || 0)
+      : (stats?.bestNormal  || 0);
+    if (hBestEl) hBestEl.textContent = pad(modeBest);
+    // BEST DISTANCE — per-mode, no M suffix, integer (rounded)
+    const hBestDistEl = document.getElementById('home-pbestdist');
+    if (hBestDistEl) {
+      const md = (gameMode === 'extreme')
+        ? (stats?.bestDistExtreme || 0)
+        : (stats?.bestDistNormal  || 0);
+      hBestDistEl.textContent = md >= 10 ? String(Math.round(md)) : md.toFixed(1);
+    }
     const hCoinsEl = document.getElementById('home-pcoins');
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
   }
@@ -1919,6 +2269,10 @@ const ARC_DB = (() => {
   let running = false, started = false;
   let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
+  // distancePx — peak ascent from spawn (y = H - 200), so distance starts at 0
+  // and increases the moment the player moves up. Independent of maxAscend so
+  // it doesn't shift the score formula.
+  let distancePx = 0;
   let best    = Number(localStorage.getItem('arc_best') || 0);
   let scoreBonus = 0; // altın toplardan gelen ek puan
 
@@ -2054,6 +2408,14 @@ const ARC_DB = (() => {
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
+  let aaOn   = localStorage.getItem('arc_aa')  !== '0';
+  let bestDistanceM = Number(localStorage.getItem('arc_bestdist') || 0);
+  function applyAA() {
+    if (ctx)  ctx.imageSmoothingEnabled  = aaOn;
+    if (bctx) bctx.imageSmoothingEnabled = aaOn;
+    if (ctx)  ctx.imageSmoothingQuality  = 'high';
+    if (bctx) bctx.imageSmoothingQuality = 'high';
+  }
   // XP-based coin system: every 1000 total XP = 1 coin (accumulates across games)
   let xpTotal   = Number(localStorage.getItem('arc_xp') || 0);
   let coins     = Math.floor(xpTotal / 1000); // always derived from xpTotal
@@ -2068,6 +2430,7 @@ const ARC_DB = (() => {
       if (raw) return Object.assign({
         gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
         bestNormal: 0, bestExtreme: 0,
+        bestDistNormal: 0, bestDistExtreme: 0,
         goldsCollected: 0, boostersCollected: 0,
         maxCombo: 0,
       }, JSON.parse(raw));
@@ -2075,6 +2438,7 @@ const ARC_DB = (() => {
     return {
       gamesTotal: 0, gamesNormal: 0, gamesExtreme: 0,
       bestNormal: 0, bestExtreme: 0,
+      bestDistNormal: 0, bestDistExtreme: 0,
       goldsCollected: 0, boostersCollected: 0,
       maxCombo: 0,
     };
@@ -2512,10 +2876,21 @@ const ARC_DB = (() => {
     ctx2.save();
     ctx2.globalAlpha  = alpha;
     ctx2.strokeStyle  = '#fff';
-    ctx2.lineWidth    = 0.5;
+    // AA on → 1px line, half-pixel offset so AA softens the edge nicely.
+    // AA off → 0.5px width, integer coords → fast & crisper-looking on low GPUs.
+    ctx2.lineWidth    = aaOn ? 1 : 0.5;
+    const half = aaOn ? 0.5 : 0;
     const off = ((oy % sz) + sz) % sz;
-    for (let y = off; y < H; y += sz) { ctx2.beginPath(); ctx2.moveTo(0,y); ctx2.lineTo(W,y); ctx2.stroke(); }
-    for (let x = 0;   x < W; x += sz) { ctx2.beginPath(); ctx2.moveTo(x,0); ctx2.lineTo(x,H); ctx2.stroke(); }
+    for (let y = off; y < H; y += sz) {
+      ctx2.beginPath();
+      ctx2.moveTo(0, y + half); ctx2.lineTo(W, y + half);
+      ctx2.stroke();
+    }
+    for (let x = 0; x < W; x += sz) {
+      ctx2.beginPath();
+      ctx2.moveTo(x + half, 0); ctx2.lineTo(x + half, H);
+      ctx2.stroke();
+    }
     ctx2.restore();
   }
 
@@ -2843,6 +3218,37 @@ const ARC_DB = (() => {
     ctx.restore();
   }
 
+  // ── Best Distance Line ───────────────────────────────────
+  // Thin horizontal "personal best" marker drawn at the world-Y matching the
+  // current mode's best distance. Visible only when in screen bounds.
+  function drawBestDistanceLine() {
+    const bd = (gameMode === 'extreme')
+      ? (stats?.bestDistExtreme || 0)
+      : (stats?.bestDistNormal  || 0);
+    if (!bd || bd <= 0.05) return;
+    const worldY = (H - 200) - bd * (H / 2); // higher up the world = smaller y
+    const sy = W2S(worldY);
+    if (sy < -2 || sy > H + 2) return;
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = (gameMode === 'extreme') ? '#ff8866' : '#88ccff';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(walls.left,  sy);
+    ctx.lineTo(walls.right, sy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Small "PB" label on the right side
+    ctx.globalAlpha = 0.7;
+    ctx.font = '9px var(--font), monospace';
+    ctx.fillStyle = (gameMode === 'extreme') ? '#ff8866' : '#88ccff';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
+    ctx.fillText('PB ' + (bd >= 10 ? Math.round(bd) : bd.toFixed(1)), walls.right - 6, sy - 8);
+    ctx.restore();
+  }
+
   // ── Ghost Trails — render last N stored traces from prior games ───────
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
@@ -2863,10 +3269,11 @@ const ARC_DB = (() => {
       const topY = W2S(g.yMin ?? -1e9);
       const botY = W2S(g.yMax ?? 1e9);
       if (botY < -80 || topY > H + 80) continue;
-      // Newer traces a touch brighter — last 10 in list shine slightly more.
+      // Newer traces a touch brighter; everything overall fainter than before.
       const recent = (gi >= allGhosts.length - 10);
-      ctx.globalAlpha = recent ? 0.14 : 0.07;
+      ctx.globalAlpha = recent ? 0.07 : 0.035;
       ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       let drew = false;
       for (let i = 0; i < pts.length; i++) {
@@ -2985,10 +3392,12 @@ const ARC_DB = (() => {
   const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
   let lbFrame = 0;
 
-  // Firestore'dan canlı skorları çek, lbNPCScores'u doldur
+  // Firestore'dan canlı skorları çek, lbNPCScores'u doldur.
+  // Rate-limited: çağrı başına en fazla 10 doc, ve aynı oturumda 5 dk içinde
+  // yeniden istenirse cache'ten dönüyor (getTopScores TTL'i devreye giriyor).
   async function fetchLiveScores() {
     try {
-      const rows = await ARC_DB.getTopScores(20, gameMode);
+      const rows = await ARC_DB.getTopScores(10, gameMode);
       if (rows && rows.length > 0) {
         // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
         lbNPCScores = rows
@@ -3195,7 +3604,7 @@ const ARC_DB = (() => {
     // Load ghost traces fresh each game so the next save shows up next run.
     allGhosts = loadGhostTraces();
     nextSpawnY = player.y - 500; lastBonusY = player.y;
-    score = 0; maxAscend = 0; energy = 1; scoreBonus = 0;
+    score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -3204,41 +3613,41 @@ const ARC_DB = (() => {
     goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
-    // Firestore'dan gerçek skorları arka planda çek
+    // Firestore'dan gerçek skorları arka planda çek — ilk çağrı dışında
+    // ARC_DB'nin 5dk TTL cache'ine düşer, yani okuma yapmadan döner.
     fetchLiveScores();
     initBgArcs();
   }
 
   function spawnAhead() {
     while (nextSpawnY > player.y - 2200) {
-      const sc = score;
+      // Difficulty driver — linear in distance, clamped 0..1 over 0..1000 m.
+      // Score is no longer a difficulty input; this gives a predictable curve.
+      const distM = distancePx / (H / 2);
+      const t  = Math.max(0, Math.min(1, distM / 1000));
+      const tMove = Math.max(0, (distM - 200) / 800); // movement after 200 m
+      const tMoveC = Math.max(0, Math.min(1, tMove));
+
       const x  = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
 
-      // Gap azalıyor
-      let gMin, gMax;
-      if      (sc < 50)  { gMin = 280; gMax = 430; }
-      else if (sc < 120) { gMin = 240; gMax = 370; }
-      else if (sc < 250) { gMin = 200; gMax = 320; }
-      else if (sc < 450) { gMin = 170; gMax = 280; }
-      else               { gMin = 150; gMax = 250; }
+      // Gap (vertical spacing) shrinks linearly: 430..200 (min), +100 random
+      const gMin = 430 - 230 * t;
+      const gMax = gMin + 100;
       const gap = gMin + Math.random() * (gMax - gMin);
 
       const needBonus = (lastBonusY - nextSpawnY) > 540;
-      // Altın top: %12 şans (sc >= 20'den sonra)
-      const spawnGold   = sc >= 20  && Math.random() < 0.12;
-      // Mor booster: %8 şans (sc >= 50'den sonra)
-      const spawnPurple = sc >= 50  && Math.random() < 0.08;
+      // Pickup probabilities — tied to distance so they kick in quickly
+      const spawnGold   = distM >=  4 && Math.random() < 0.12;
+      const spawnPurple = distM >= 10 && Math.random() < 0.08;
 
-      if (needBonus || Math.random() < (sc < 80 ? .36 : .52)) {
+      if (needBonus || Math.random() < (t < 0.15 ? .36 : .52)) {
         bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
         lastBonusY = nextSpawnY;
-        // Altın veya mor topu yeşilin yakınına ekle (farklı x)
         if (spawnGold) {
           const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-          // r=1..2 (minik), en küçük=100 puan, en büyük=50 puan
-          const gr = 1 + Math.random(); // r=1..2
+          const gr = 1 + Math.random();
           goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
-            pts: Math.round(100 / gr) }); // r=1→100, r=2→50
+            pts: Math.round(100 / gr) });
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
@@ -3247,34 +3656,31 @@ const ARC_DB = (() => {
           purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
         }
       } else {
-        // Engel boyutu: min çap=W/10 (r=30), max çap=W/3 (r=100)
-        let rMin, rMax;
-        if      (sc < 50)  { rMin = 30; rMax = 50; }
-        else if (sc < 120) { rMin = 38; rMax = 62; }
-        else if (sc < 250) { rMin = 45; rMax = 75; }
-        else if (sc < 450) { rMin = 55; rMax = 88; }
-        else               { rMin = 65; rMax = 100; }
+        // Obstacle radius scales linearly with distance.
+        // Max width = W/4 → max radius = W/8.
+        const R_MAX = W / 8;             // hard cap
+        const rMin = 30 + (R_MAX * 0.55 - 30) * t;  // 30 → ~0.55·R_MAX
+        const rMax = 50 + (R_MAX        - 50) * t;  // 50 → R_MAX
         const r = rMin + Math.random() * (rMax - rMin);
 
         const ob = { x, y: nextSpawnY, r };
 
-        // Hareket sistemi (250 puan üstü)
-        if (sc >= 250) {
-          const tier = Math.floor((sc - 250) / 250) + 1; // her 250 puan +1
-          ob.ma  = tier * 0.1 * 2 * r;           // genlik: çapın %10'u × tier
-          ob.mf  = 0.6 + Math.random() * 0.8;    // frekans (rad/s)
-          ob.mt  = Math.random() * Math.PI * 2;   // faz ofseti
-
-          if (sc >= 1000) {
-            ob.mk    = 'rand';
+        // Movement starts at 200 m and ramps linearly to full at 1000 m.
+        if (tMove > 0) {
+          // Max amplitude = obstacle radius (= 50% of diameter, per spec).
+          ob.ma  = tMoveC * r;
+          ob.mf  = 0.6 + Math.random() * 0.8;
+          ob.mt  = Math.random() * Math.PI * 2;
+          // Movement kind progresses with distance: h/v early, diag mid, rand late
+          if      (distM >= 900) ob.mk = 'rand';
+          else if (distM >= 600) ob.mk = 'diag';
+          else                   ob.mk = Math.random() < 0.5 ? 'h' : 'v';
+          if (ob.mk === 'rand') {
             ob.mang  = Math.random() * Math.PI * 2;
             ob.mnext = 1.5 + Math.random() * 2;
             ob.mct   = 0;
-          } else if (sc >= 500) {
-            ob.mk   = 'diag';
+          } else if (ob.mk === 'diag') {
             ob.mang = Math.random() * Math.PI * 2;
-          } else {
-            ob.mk = Math.random() < 0.5 ? 'h' : 'v';
           }
         }
 
@@ -3314,10 +3720,15 @@ const ARC_DB = (() => {
     if (pyS < H * .5) camY -= (H * .5 - pyS);
 
     maxAscend = Math.max(maxAscend, -player.y);
-    // Extreme mode: dynamic speed increase (+8 per 50 pts, capped at 2×)
+    // Distance from spawn — immediate, even before player has cleared y=0
+    distancePx = Math.max(distancePx, (H - 200) - player.y);
+    // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
+     // takes base to 2×). Booster overrides this.
     if (gameMode === 'extreme' && !boosterType) {
-      player.speed = Math.min(getBaseSpeed() + Math.floor(score / 50) * 8, getBaseSpeed() * 2);
-      GAME_SPEED = player.speed; // keep in sync for clearBooster
+      const distM = distancePx / (H / 2);
+      const t = Math.max(0, Math.min(1, distM / 1000));
+      player.speed = getBaseSpeed() * (1 + t); // 1× → 2×
+      GAME_SPEED = player.speed;
     }
     // Score: base altitude + scoreBonus (combo points from greens)
     const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
@@ -3480,27 +3891,43 @@ const ARC_DB = (() => {
     const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
+    const runDistM = distancePx / (H / 2);
+    if (runDistM > bestDistanceM) {
+      bestDistanceM = runDistM;
+      localStorage.setItem('arc_bestdist', String(bestDistanceM));
+    }
     // ── Stats güncelle ────────────────────────────────────
     stats.gamesTotal++;
     if (gameMode === 'extreme') {
       stats.gamesExtreme++;
       if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
+      if (runDistM > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistM;
     } else {
       stats.gamesNormal++;
       if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
+      if (runDistM > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistM;
     }
     saveStats();
 
     const sc  = lastScore;
     const avc = AVATAR_COLORS[avatarIdx];
 
-    goBestV.textContent = pad(best);
+    // Best lines under twin SCORE / DISTANCE values
+    const goBestInline = document.getElementById('go-best-val-inline');
+    if (goBestInline) goBestInline.textContent = pad(best);
+    const goBestDistInline = document.getElementById('go-bestdist-val-inline');
+    if (goBestDistInline) {
+      const bd = bestDistanceM || 0;
+      goBestDistInline.textContent = bd >= 10 ? String(Math.round(bd)) : bd.toFixed(1);
+    }
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
-    // ── Score animation (count up from 0 to sc) ───────────
+    // ── Twin animation: score + distance count up together ─
     const scoreValEl = document.getElementById('go-score-val');
+    const distValEl  = document.getElementById('go-dist-val');
     scoreValEl.textContent = pad(0);
+    if (distValEl) distValEl.textContent = '0';
     const animDur = Math.min(1400, Math.max(600, sc / 4));
     const animStart = performance.now();
     function animScore() {
@@ -3508,6 +3935,10 @@ const ARC_DB = (() => {
       const t = Math.min(1, elapsed / animDur);
       const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
       scoreValEl.textContent = pad(Math.floor(sc * eased));
+      if (distValEl) {
+        const d = runDistM * eased;
+        distValEl.textContent = d >= 10 ? String(Math.round(d)) : d.toFixed(1);
+      }
       if (t < 1) requestAnimationFrame(animScore);
     }
     requestAnimationFrame(animScore);
@@ -3523,13 +3954,15 @@ const ARC_DB = (() => {
     }, 200);
 
     // Geçici "yükleniyor" satırları
-    rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size:6px;padding:12px 0">LOADING...</td></tr>`;
+    rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
 
-    // Skoru Firestore'a gönder (config yoksa no-op)
+    // Skoru Firestore'a gönder (config yoksa no-op). Submitted score
+    // invalidates the cache so the next fetch reflects this run.
     await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode);
+    if (sc > 0) ARC_DB.invalidateTopCache();
 
-    // Yeterli satır çek (player sıralamayı bulmak için)
-    const topRows = await ARC_DB.getTopScores(50, gameMode);
+    // Yeterli satır çek — 20 yeter, sıralama görmek için.
+    const topRows = await ARC_DB.getTopScores(20, gameMode);
 
     if (topRows.length === 0) {
       // Firebase config yok → yerel fallback
@@ -3577,7 +4010,7 @@ const ARC_DB = (() => {
     let prev = -1;
     for (const idx of showArr) {
       if (prev >= 0 && idx > prev + 1) {
-        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.22);font-size:8px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
+        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
       }
       const r  = ann[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
@@ -3603,9 +4036,42 @@ const ARC_DB = (() => {
 
   // ── Main draw loop ────────────────────────────────────────
   let lastT = 0;
+  // Rolling FPS sample for the debug overlay (no allocs in the hot path).
+  let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
   function loop(ts) {
     const dt   = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
     const time = ts / 1000;
+    _fpsAccDt += dt; _fpsAccFr++;
+    if (_fpsAccDt >= 0.5) {
+      _fpsCur = Math.round(_fpsAccFr / _fpsAccDt);
+      _fpsAccDt = 0; _fpsAccFr = 0;
+    }
+    if (debugOverlayOn) {
+      _dbgAccTime += dt;
+      if (_dbgAccTime > 0.15) {
+        _dbgAccTime = 0;
+        const distM = distancePx / (H / 2);
+        const rows = [
+          ['FPS',       _fpsCur],
+          ['scene',     scene],
+          ['mode',      gameMode],
+          ['score',     Math.floor(score)],
+          ['distance',  distM.toFixed(1) + 'm'],
+          ['combo',     Math.ceil(energy * 9)],
+          ['trail',     trail.length],
+          ['ghosts',    allGhosts.length],
+          ['obstacles', obstacles.length],
+          ['particles', particles.length],
+          ['cam y',     Math.round(camY)],
+          ['speed',     Math.round(GAME_SPEED)],
+          ['aa',        aaOn ? 'on' : 'off'],
+          ['ua',        (navigator.userAgent.match(/Android|iPhone|iPad|Windows|Mac/) || ['?'])[0]],
+        ];
+        const html = rows.map(r => `<div class="dbg-row"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('');
+        const host = document.getElementById('dbg-rows');
+        if (host) host.innerHTML = html;
+      }
+    }
 
     // BG canvas: grid + arcs + beat flash
     bctx.clearRect(0, 0, W, H);
@@ -3618,7 +4084,7 @@ const ARC_DB = (() => {
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
-      drawWalls(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawBestDistanceLine(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       if (scene === 'play') { drawFlameParticles(); drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
     }
@@ -3627,6 +4093,15 @@ const ARC_DB = (() => {
       step(dt); // step kendi içinde tutPaused kontrolü yapar
       hScore.textContent = pad(Math.floor(score));
       hBest.textContent  = pad(best);
+      // Distance: half screen (H/2 world-px) = 1m. (Spawn-relative, no M suffix)
+      const distM = distancePx / (H / 2);
+      const dEl = document.getElementById('h-dist');
+      if (dEl) dEl.textContent = distM >= 10 ? String(Math.round(distM)) : distM.toFixed(1);
+      const dBestEl = document.getElementById('h-dist-best');
+      if (dBestEl) {
+        const bd = bestDistanceM || 0;
+        dBestEl.textContent = bd >= 10 ? String(Math.round(bd)) : bd.toFixed(1);
+      }
       if (!tutPaused) refreshLB();
     }
 
@@ -3659,9 +4134,10 @@ const ARC_DB = (() => {
 
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
-    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_firstplay','arc_name','arc_avatar',
+    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
      'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp', STATS_KEY, GHOSTS_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; firstPlay = true; coins = 0; lastScore = 0; xpTotal = 0;
+    bestDistanceM = 0;
     stats = loadStats();
     allGhosts = [];
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
@@ -3699,6 +4175,53 @@ const ARC_DB = (() => {
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
+  // ── Desktop: Space to flip arc ────────────────────────────
+  function spaceFlip() {
+    if (scene !== 'play' || !running) return;
+    haptic(40);
+    playTouchSound();
+    if (boosterType === 'magnet') player.x = W / 2;
+    beginArc(-player.dir, getRadius());
+  }
+  // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
+  let debugOverlayOn = false;
+  let lastTPress = 0;
+  function toggleDebug(force) {
+    debugOverlayOn = (force !== undefined) ? force : !debugOverlayOn;
+    const el = document.getElementById('debug-overlay');
+    if (el) el.classList.toggle('open', debugOverlayOn);
+  }
+  window.addEventListener('keydown', e => {
+    // Ignore typing in inputs
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.code === 'Space') { e.preventDefault(); spaceFlip(); }
+    else if (e.key === 't' || e.key === 'T') {
+      const now = performance.now();
+      if (now - lastTPress < 500) { toggleDebug(); lastTPress = 0; }
+      else lastTPress = now;
+    }
+  });
+  // Horizontal swipe on mobile — right→left opens, left→right closes
+  let swipeX0 = null, swipeY0 = null;
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { swipeX0 = null; return; }
+    swipeX0 = e.touches[0].clientX;
+    swipeY0 = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (swipeX0 === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeX0;
+    const dy = Math.abs(t.clientY - swipeY0);
+    const minDx = window.innerWidth * 0.4;
+    if (Math.abs(dx) > minDx && dy < Math.abs(dx) * 0.6) {
+      if (dx < 0) toggleDebug(true);   // RTL → open
+      else        toggleDebug(false);  // LTR → close
+    }
+    swipeX0 = null;
+  }, { passive: true });
+
   // ── Profil UI ─────────────────────────────────────────────
   renderAvPicker();
   applyProfile();
@@ -3717,6 +4240,16 @@ const ARC_DB = (() => {
     // If turned off mid-game, pause; if turned on mid-game, resume
     if (scene === 'play') { v ? bgAudio.play().catch(() => {}) : bgAudio.pause(); }
   }
+  function setAA(v) {
+    aaOn = v;
+    localStorage.setItem('arc_aa', v ? '1' : '0');
+    document.getElementById('aa-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
+    document.getElementById('aa-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
+    applyAA();
+  }
+  document.getElementById('aa-on').addEventListener('click',  () => setAA(true));
+  document.getElementById('aa-off').addEventListener('click', () => setAA(false));
+  setAA(aaOn);
   document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
   document.getElementById('sfx-off').addEventListener('click', () => setSfx(false));
   document.getElementById('mus-on').addEventListener('click',  () => setMus(true));
@@ -3737,37 +4270,73 @@ const ARC_DB = (() => {
   // ── High Scores Modal ─────────────────────────────────────
   const lbModal = document.getElementById('lb-modal');
   let lbCurrentMode = 'normal';
+  let lbMetric = 'score'; // 'score' (cloud) | 'distance' (local traces)
   let lbCache = { normal: null, extreme: null }; // {top, daily, monthly, rows}
 
   function startOfDay(ts) { const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
   function startOfMonth(ts) { const d = new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
 
   async function loadLbData(mode) {
-    if (lbCache[mode]) return lbCache[mode];
-    // 500 satır yeter — top/daily/monthly + oyuncu çevresi yerelde işlenir
-    const rows = await ARC_DB.getTopScores(500, mode);
+    if (lbCache[mode] && lbCache[mode].metric === lbMetric) return lbCache[mode];
+    let rows;
+    if (lbMetric === 'distance') {
+      // Local-only: derive a leaderboard from saved ghost traces. yMin is the
+      // peak (lowest y) so peak ascent = (H - 200) - yMin world-px → /(H/2) → m.
+      const spawnY = H - 200;
+      const traces = loadGhostTraces();
+      rows = traces
+        .filter(t => (t.mode || 'normal') === mode)
+        .map(t => {
+          const ascendPx = Math.max(0, spawnY - (t.yMin ?? spawnY));
+          const distM   = ascendPx / (H / 2);
+          return {
+            name:     playerName || 'PLAYER', // local traces have no name yet
+            avatar:   avatarIdx,
+            score:    distM,                   // reuse 'score' field for renderers
+            distance: distM,
+            ts:       t.ts || 0,
+            mode:     t.mode || 'normal',
+          };
+        })
+        .sort((a,b) => b.score - a.score);
+    } else {
+      // 30 sıra yeter: position widget en çok 6 satır gösteriyor, üç adet
+      // best-card (all-time / today / month) bunun içinden türetilebiliyor.
+      // (Daha geriye uzanmak için kullanıcı zaten Firestore quota'sı yiyor.)
+      rows = await ARC_DB.getTopScores(30, mode);
+    }
     const now = Date.now();
-    const dayStart = startOfDay(now);
+    const dayStart   = startOfDay(now);
     const monthStart = startOfMonth(now);
     const top     = rows[0] || null;
     const daily   = rows.filter(r => r.ts >= dayStart).sort((a,b)=>b.score-a.score)[0] || null;
     const monthly = rows.filter(r => r.ts >= monthStart).sort((a,b)=>b.score-a.score)[0] || null;
-    const data = { rows, top, daily, monthly };
+    const data = { rows, top, daily, monthly, metric: lbMetric };
     lbCache[mode] = data;
     return data;
   }
 
+  // Format a value depending on the current metric. No M suffix on distance —
+  // we want score and distance numbers to stack on the same baseline.
+  function fmtMetric(v) {
+    if (lbMetric === 'distance') {
+      const d = Number(v) || 0;
+      return d >= 10 ? String(Math.round(d)) : d.toFixed(1);
+    }
+    return pad(Math.round(v || 0));
+  }
   function renderLbCard(prefix, entry, fallback) {
     document.getElementById('lb-' + prefix + '-name').textContent =
       entry ? entry.name : (fallback || '—');
     document.getElementById('lb-' + prefix + '-score').textContent =
-      entry ? pad(entry.score) : '—';
+      entry ? fmtMetric(entry.score) : '—';
   }
 
   function renderLbPosition(rows, mode) {
     const listEl = document.getElementById('lb-list');
     if (!rows || rows.length === 0) {
-      listEl.innerHTML = `<div class="lb-empty">No scores yet for ${mode.toUpperCase()}</div>`;
+      const label = mode === 'normal' ? 'CHILL' : mode.toUpperCase();
+      listEl.innerHTML = `<div class="lb-empty">No scores yet for ${label}</div>`;
       return;
     }
     // Layout: 1. (gold) + divider + 2 üst + sen (yeşil) + 2 alt = 6 satır
@@ -3813,7 +4382,7 @@ const ARC_DB = (() => {
       return `<div class="${cls}">
         <span class="lb-row-rank">${rankStr}</span>
         <span><span class="lb-row-dot" style="background:${col}"></span>${r.name}</span>
-        <span>${pad(r.score)}</span>
+        <span>${fmtMetric(r.score)}</span>
       </div>`;
     }).join('');
   }
@@ -3844,8 +4413,13 @@ const ARC_DB = (() => {
 
   function openLbModal() {
     lbCurrentMode = gameMode || 'normal'; // mevcut moddan başla
-    // Cache'i temizle ki açılışta taze veri çekilsin
-    lbCache = { normal: null, extreme: null };
+    lbMetric = 'score';
+    // NOT clearing lbCache on open — the ARC_DB layer has its own TTL (5 min)
+    // and we rely on submitScore-triggered invalidation for freshness. This
+    // alone cuts Firestore reads by ~10× for repeat opens in a session.
+    document.querySelectorAll('.lb-metric-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.metric === lbMetric);
+    });
     lbModal.classList.add('open');
     refreshLbView();
   }
@@ -3860,6 +4434,20 @@ const ARC_DB = (() => {
   document.getElementById('lb-tab-extreme').addEventListener('click', () => {
     if (lbCurrentMode === 'extreme') return;
     lbCurrentMode = 'extreme'; refreshLbView();
+  });
+  // Metric sub-tabs (Score / Distance)
+  document.querySelectorAll('.lb-metric-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = btn.dataset.metric;
+      if (lbMetric === m) return;
+      lbMetric = m;
+      // metric değişti → cache temizle (her metric için ayrı veri)
+      lbCache = { normal: null, extreme: null };
+      document.querySelectorAll('.lb-metric-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.metric === lbMetric);
+      });
+      refreshLbView();
+    });
   });
   lbModal.addEventListener('click', e => {
     if (e.target === lbModal) closeLbModal();
@@ -3895,7 +4483,21 @@ const ARC_DB = (() => {
     set('ps-xp',     xpTotal.toLocaleString());
   }
 
-  document.getElementById('home-profile').addEventListener('click', openProfModal);
+  // Tap profile card → open profile edit (but coin pill has its own handler)
+  document.getElementById('home-profile').addEventListener('click', e => {
+    if (e.target.closest('#home-coin-pill')) return;
+    openProfModal();
+  });
+
+  // Coins popup
+  const coinsModal = document.getElementById('coins-modal');
+  document.getElementById('home-coin-pill').addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('coins-modal-count').textContent = String(coins);
+    coinsModal.classList.add('open');
+  });
+  document.getElementById('coins-modal-close').addEventListener('click', () => coinsModal.classList.remove('open'));
+  coinsModal.addEventListener('click', e => { if (e.target === coinsModal) coinsModal.classList.remove('open'); });
 
   document.getElementById('prof-av-choose').addEventListener('click', () => {
     profAvatarGridOpen = !profAvatarGridOpen;
@@ -4086,6 +4688,8 @@ const ARC_DB = (() => {
     // Toggle the home frame's extreme-flame look
     const home = document.getElementById('home');
     if (home) home.classList.toggle('extreme-mode', m === 'extreme');
+    // Refresh BEST tile so it reflects the new mode's best score
+    try { applyProfile(); } catch(_){}
   }
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
