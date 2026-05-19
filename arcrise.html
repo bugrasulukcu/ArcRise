@@ -5929,96 +5929,53 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       return card;
     }
 
-    // Radius / Speed (bidirectional)
-    host.appendChild(bidiCard('radius', 'Radius', '⭕'));
-    host.appendChild(bidiCard('speed',  'Speed',  '⚡'));
-    // Combo timer (forward only, max +4 sec)
-    host.appendChild(fwdCard('timer', 'Combo Timer', '⏱', 4, dirPrice, v => v > 0 ? `+${v}s` : 'base'));
-    // Trace thickness (forward only, max 20 = +%200)
-    host.appendChild(fwdCard('traceThickness', 'Trace Thickness', '〰', 20, thicknessPrice, v => `+${v * 10}%`));
-
-    // Trace color picker
-    (() => {
-      const card = document.createElement('div');
-      card.className = 'upg-card';
-      const cur = upg.traceColor;
-      card.innerHTML = `
-        <div class="upg-card-head">
-          <span class="upg-card-icon">🎨</span>
-          <span class="upg-card-title">Trace Color</span>
-          <span class="upg-card-active">🪙${TRACE_COLOR_PRICE}/change</span>
-        </div>
-        <div class="upg-color-grid">
-          ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
-        </div>
-        <div class="upg-card-sub">Other players see this color on your best-run ghost.</div>
-      `;
-      card.querySelectorAll('.upg-color-swatch').forEach(s => {
-        s.addEventListener('click', () => {
-          const c = s.dataset.c;
-          if (c === upg.traceColor) return; // already selected — no charge
-          if (!spendCoins(TRACE_COLOR_PRICE)) return;
-          upg.traceColor = c;
-          saveUpg();
-          renderUpgrades();
-        });
+  function colorCard() {
+    const card = document.createElement('div');
+    card.className = 'upg-card';
+    const cur = upg.traceColor;
+    card.innerHTML = `
+      <div class="upg-card-sub">Other players see this color on your best-run ghost.</div>
+      <div class="upg-color-grid">
+        ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
+      </div>
+      <div class="upg-buys">
+        <div class="upg-card-active" style="flex:1;text-align:center">🪙${TRACE_COLOR_PRICE} per change</div>
+      </div>
+    `;
+    card.querySelectorAll('.upg-color-swatch').forEach(s => {
+      s.addEventListener('click', () => {
+        const c = s.dataset.c;
+        if (c === upg.traceColor) return;
+        if (!spendCoins(TRACE_COLOR_PRICE)) return;
+        upg.traceColor = c;
+        saveUpg();
+        renderUpgrades();
       });
-      host.appendChild(card);
-    })();
+    });
+    return card;
+  }
 
-    // Death marker: name on map
-    (() => {
-      const card = document.createElement('div');
-      card.className = 'upg-card';
-      const unlocked = upg.deathName;
-      card.innerHTML = `
-        <div class="upg-card-head">
-          <span class="upg-card-icon">🪦</span>
-          <span class="upg-card-title">Death-point Name</span>
-          <span class="upg-card-active">${unlocked ? 'unlocked' : `🪙${DEATH_NAME_PRICE}`}</span>
-        </div>
-        <div class="upg-card-sub">Your name appears on the map at your best-run death spot — visible to other players.</div>
-        <div class="upg-buys">
-          ${unlocked
-            ? `<button class="upg-tog-btn on" data-act="off">ENABLED</button>`
-            : `<button class="upg-buy" ${coins < DEATH_NAME_PRICE ? 'disabled' : ''}>Unlock <span class="upg-coin">🪙${DEATH_NAME_PRICE}</span></button>`}
-        </div>
-      `;
-      const buy = card.querySelector('.upg-buy');
-      if (buy) buy.addEventListener('click', () => {
-        if (coins < DEATH_NAME_PRICE) return;
-        if (!spendCoins(DEATH_NAME_PRICE)) return;
-        upg.deathName = true; saveUpg(); renderUpgrades();
-      });
-      host.appendChild(card);
-    })();
-
-    // Death marker: avatar on map
-    (() => {
-      const card = document.createElement('div');
-      card.className = 'upg-card';
-      const unlocked = upg.deathAvatar;
-      card.innerHTML = `
-        <div class="upg-card-head">
-          <span class="upg-card-icon">👤</span>
-          <span class="upg-card-title">Death-point Avatar</span>
-          <span class="upg-card-active">${unlocked ? 'unlocked' : `🪙${DEATH_AV_PRICE}`}</span>
-        </div>
-        <div class="upg-card-sub">Your avatar appears on the map at your best-run death spot.</div>
-        <div class="upg-buys">
-          ${unlocked
-            ? `<button class="upg-tog-btn on" data-act="off">ENABLED</button>`
-            : `<button class="upg-buy" ${coins < DEATH_AV_PRICE ? 'disabled' : ''}>Unlock <span class="upg-coin">🪙${DEATH_AV_PRICE}</span></button>`}
-        </div>
-      `;
-      const buy = card.querySelector('.upg-buy');
-      if (buy) buy.addEventListener('click', () => {
-        if (coins < DEATH_AV_PRICE) return;
-        if (!spendCoins(DEATH_AV_PRICE)) return;
-        upg.deathAvatar = true; saveUpg(); renderUpgrades();
-      });
-      host.appendChild(card);
-    })();
+  function toggleCard(key, price, desc) {
+    const card = document.createElement('div');
+    card.className = 'upg-card';
+    const unlocked = !!upg[key];
+    card.innerHTML = `
+      <div class="upg-card-sub">${desc}</div>
+      <div class="upg-buys">
+        ${unlocked
+          ? `<button class="upg-tog-btn on">ENABLED</button>`
+          : `<button class="upg-buy" ${coins < price ? 'disabled' : ''}>Unlock <span class="upg-coin">🪙${price}</span></button>`}
+      </div>
+    `;
+    const buy = card.querySelector('.upg-buy');
+    if (buy) buy.addEventListener('click', () => {
+      if (coins < price) return;
+      if (!spendCoins(price)) return;
+      upg[key] = true;
+      saveUpg();
+      renderUpgrades();
+    });
+    return card;
   }
 
   // Recompute live values that depend on the upgrade state.
