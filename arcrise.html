@@ -2373,40 +2373,65 @@ const ARC_DB = (() => {
         const oldDist  = Number(match.document.fields.distance?.doubleValue ?? 0);
         const scoreBetter = score > oldScore;
         const distBetter  = distNum > oldDist;
-        if (!scoreBetter && !distBetter) {
-          console.log('[ArcDB] existing score+dist higher, skip', { oldScore, oldDist, newScore: score, newDist: distNum });
+        // We also update trace fields when:
+        //   - distance is a new best AND new trace data is provided, OR
+        //   - color/thickness changed (cosmetic refresh) even without new PB
+        const oldColor     = match.document.fields.traceColor?.stringValue || null;
+        const oldThickness = parseInt(match.document.fields.traceThickness?.integerValue ?? 0) || 0;
+        const colorChanged     = traceColor !== null && traceColor !== oldColor;
+        const thicknessChanged = traceThickness !== oldThickness;
+        const writeTracePts    = distBetter && tracePts !== null;
+        const writeTraceCosmetic = (traceColor !== null || traceData) && (colorChanged || thicknessChanged);
+        if (!scoreBetter && !distBetter && !writeTracePts && !writeTraceCosmetic) {
+          console.log('[ArcDB] nothing better, skip', { oldScore, oldDist, newScore: score, newDist: distNum });
           return;
         }
         const docId = match.document.name.split('/').pop();
         // Keep the higher of each metric — both compete independently.
         const finalScore = scoreBetter ? score   : oldScore;
         const finalDist  = distBetter  ? distNum : oldDist;
+        const fields = {
+          score:    { integerValue: String(finalScore)  },
+          avatar:   { integerValue: String(avatar) },
+          ts:       { integerValue: String(Date.now()) },
+          mode:     { stringValue: mode },
+          distance: { doubleValue: finalDist },
+        };
+        const maskParts = ['score','avatar','ts','mode','distance'];
+        if (writeTracePts) {
+          fields.tracePts = { stringValue: tracePts };
+          maskParts.push('tracePts');
+        }
+        if (traceColor !== null) {
+          fields.traceColor = { stringValue: traceColor };
+          maskParts.push('traceColor');
+        }
+        if (traceData) {
+          fields.traceThickness = { integerValue: String(traceThickness) };
+          maskParts.push('traceThickness');
+        }
+        const mask = maskParts.map(f => `updateMask.fieldPaths=${f}`).join('&');
         const upd = await fetch(
-          `${BASE}/scores/${docId}?key=${apiKey}&updateMask.fieldPaths=score&updateMask.fieldPaths=avatar&updateMask.fieldPaths=ts&updateMask.fieldPaths=mode&updateMask.fieldPaths=distance`,
-          {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fields: {
-              score:    { integerValue: String(finalScore)  },
-              avatar:   { integerValue: String(avatar) },
-              ts:       { integerValue: String(Date.now()) },
-              mode:     { stringValue: mode },
-              distance: { doubleValue: finalDist },
-            }}),
-          }
+          `${BASE}/scores/${docId}?key=${apiKey}&${mask}`,
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) }
         );
         if (!upd.ok) { console.warn('[ArcDB] PATCH failed', upd.status, await upd.text()); return; }
-        console.log('[ArcDB] score updated', { docId, score: finalScore, dist: finalDist });
+        console.log('[ArcDB] score updated', { docId, score: finalScore, dist: finalDist, traceUpdated: writeTracePts });
       } else {
+        const fields = {
+          name:     { stringValue: name  },
+          avatar:   { integerValue: String(avatar) },
+          score:    { integerValue: String(score)  },
+          ts:       { integerValue: String(Date.now()) },
+          mode:     { stringValue: mode },
+          distance: { doubleValue: distNum },
+        };
+        if (tracePts)       fields.tracePts       = { stringValue: tracePts };
+        if (traceColor)     fields.traceColor     = { stringValue: traceColor };
+        if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
         const ins = await fetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fields: {
-            name:     { stringValue: name  },
-            avatar:   { integerValue: String(avatar) },
-            score:    { integerValue: String(score)  },
-            ts:       { integerValue: String(Date.now()) },
-            mode:     { stringValue: mode },
-            distance: { doubleValue: distNum },
-          }}),
+          body: JSON.stringify({ fields }),
         });
         if (!ins.ok) { console.warn('[ArcDB] POST failed', ins.status, await ins.text()); return; }
         console.log('[ArcDB] score created');
