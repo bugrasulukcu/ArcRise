@@ -4324,11 +4324,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
-        // Combo bonus based on current energy timer
+        // Base 10, süre katsayısı → booster katsayısı sırayla
         const cd = Math.max(0, Math.ceil(energy * 8));
-        const comboBonus = Math.round(cd / 2) * 10; // ×(cd/2), in multiples of 10
-        scoreBonus += comboBonus;
-        spawnFloatText(b.x, b.y - b.r - 8, '+' + comboBonus, 120); // float green text
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const afterTime = Math.round(10 * timeMul);
+        const finalPts  = Math.round(afterTime * boostMul);
+        scoreBonus += finalPts;
+        spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
         spawnGreenParticles(b.x, b.y);
         if (tutStep === 1) advanceTut(2);
