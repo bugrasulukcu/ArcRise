@@ -2920,9 +2920,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (ctx)  ctx.imageSmoothingQuality  = 'high';
     if (bctx) bctx.imageSmoothingQuality = 'high';
   }
-  // XP-based coin system: every 1000 total XP = 1 coin (accumulates across games)
-  let xpTotal   = Number(localStorage.getItem('arc_xp') || 0);
-  let coins     = Math.floor(xpTotal / 1000); // always derived from xpTotal
+  // Distance-based coin system: every 100m total distance = 1 coin
+  let distTotal = Number(localStorage.getItem('arc_dist_total') || 0);
+  let coins     = Math.floor(distTotal / 100); // always derived from distTotal
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   // ── Profile stats (persisted) ─────────────────────────────
