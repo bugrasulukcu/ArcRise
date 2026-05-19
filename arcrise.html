@@ -2942,7 +2942,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
-  let aaOn   = localStorage.getItem('arc_aa')  !== '0';
+  let aaOn   = false; // smooth permanently off — pixel-crisp look
   let bestDistanceM = Number(localStorage.getItem('arc_bestdist') || 0);
   function applyAA() {
     if (ctx)  ctx.imageSmoothingEnabled  = aaOn;
