@@ -2784,11 +2784,36 @@ const ARC_DB = (() => {
     return { kept: keepers.size, deleted };
   }
 
-  // Returns top-N rows for `mode` that have an uploaded trace, parsed into
-  // {name, mode, points: [[x,y],...], color, thickness, distance, score}.
-  // Piggy-backs on getTopScores' cache — zero extra reads.
-  async function getCrossPlayerGhosts(mode, limit = 30) {
-    const rows = await getTopScores(limit, mode);
+  // Returns the most recent N traces for `mode`, ordered by ts DESC —
+  // the "next N players after us see our trace, then it scrolls off" model.
+  // Each player has 1 doc per (name, mode), so this is effectively the
+  // last N players to play in this mode.
+  async function getCrossPlayerGhosts(mode, limit = 100) {
+    if (!projectId || projectId.startsWith('BURAYA')) return [];
+    const target = mode ? normMode(mode) : null;
+    // Overfetch for mode filter (one mode could dominate recent submits).
+    const fetchN = target ? Math.min(limit * 3 + 30, 300) : limit;
+    const key = `ghosts:${target || 'all'}:${fetchN}`;
+    const cached = _cacheGet(key);
+    let parsed;
+    if (cached) {
+      parsed = cached;
+    } else {
+      try {
+        const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ structuredQuery: {
+            from:    [{ collectionId: 'scores' }],
+            orderBy: [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }],
+            limit:   fetchN,
+          }}),
+        });
+        parsed = parseRows(await res.json());
+        _cacheSet(key, parsed);
+      } catch(e) { console.warn('[ArcDB] ghost fetch failed', e); return []; }
+    }
+    const rows = target ? parsed.filter(r => r.mode === target) : parsed;
     const out = [];
     for (const r of rows) {
       if (!r.tracePts) continue;
@@ -2796,11 +2821,12 @@ const ARC_DB = (() => {
       try { pts = JSON.parse(r.tracePts); } catch(_){}
       if (!Array.isArray(pts) || pts.length < 2) continue;
       out.push({
-        name: r.name, mode: r.mode, distance: r.distance, score: r.score,
+        name: r.name, mode: r.mode, distance: r.distance, score: r.score, ts: r.ts,
         points: pts,
         color: r.traceColor || null,
         thickness: r.traceThickness || 0,
       });
+      if (out.length >= limit) break;
     }
     return out;
   }
