@@ -4086,6 +4086,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
+  // Cross-player ghost trails for current mode — own ghost excluded.
+  // Uses ARC_DB.getCrossPlayerGhosts which reuses the leaderboard cache.
+  async function fetchCrossPlayerGhosts() {
+    try {
+      const list = await ARC_DB.getCrossPlayerGhosts(gameMode, 30);
+      crossPlayerGhosts = list
+        .filter(g => g.name !== playerName)
+        .map(g => {
+          // Re-shape points and pre-compute y bounds for the cull
+          const pts = g.points.map(p => ({ x: p[0], y: p[1] }));
+          let yMin = Infinity, yMax = -Infinity;
+          for (const p of pts) { if (p.y < yMin) yMin = p.y; if (p.y > yMax) yMax = p.y; }
+          return { ...g, points: pts, yMin, yMax };
+        });
+    } catch(e) {
+      crossPlayerGhosts = [];
+    }
+  }
+
   function refreshLB() {
     lbFrame++;
     if (lbFrame % 30 !== 0) return; // update every 30 frames
