@@ -951,19 +951,17 @@
       text-shadow: 0 0 8px rgba(255,255,255,.18);
     }
     #home-stats-line {
-      display: flex; align-items: baseline; gap: 10px;
+      display: flex; flex-direction: column; gap: 3px;
       font-family: var(--font);
       white-space: nowrap;
     }
-    .hs-pair { display: inline-flex; align-items: baseline; gap: 5px; }
-    .hs-lbl { font-size: 9px; letter-spacing: 1.4px; color: var(--green); }
-    .hs-val { font-size: 14px; letter-spacing: 1px; color: #fff; }
-    .hs-sep {
-      width: 1px; height: 13px;
-      background: rgba(255,255,255,.18);
-      display: inline-block;
-      align-self: center;
+    .hs-pair {
+      display: grid; grid-template-columns: 46px 1fr;
+      align-items: baseline; gap: 8px;
     }
+    .hs-lbl { font-size: 9px; letter-spacing: 1.4px; color: var(--green); }
+    .hs-val { font-size: 13.5px; letter-spacing: 1px; color: #fff; }
+    .hs-sep { display: none; }
 
     /* Settings button — sizing handled by .menu-row when paired */
     #btn-settings { /* legacy: width applied via .menu-row */ }
