@@ -4654,9 +4654,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
+      // Visual particle updates continue animating after death (over scene) too
+      updateParticles(dt);
+      updateFloatTexts(dt);
+      updateFlameParticles(dt);
+      updateFlyScores(dt);
       drawWalls(); drawBestDistanceLine(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
-      if (scene === 'play') { drawFlameParticles(); drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
+      drawFlameParticles();
+      if (scene === 'play') { drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
