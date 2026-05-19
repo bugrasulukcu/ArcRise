@@ -4090,6 +4090,64 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
+  // ── Death markers at the PB world-Y (own player only, V1) ───────────
+  // Renders name / avatar disc at the y where the player has died deepest,
+  // visible on the map every run.
+  let _avImgCache = { src: '', img: null, loaded: false };
+  function ensureAvatarImg() {
+    const src = avatarSrc();
+    if (!src) return null;
+    if (_avImgCache.src !== src) {
+      _avImgCache = { src, img: new Image(), loaded: false };
+      _avImgCache.img.onload = () => { _avImgCache.loaded = true; };
+      _avImgCache.img.src = src;
+    }
+    return _avImgCache.loaded ? _avImgCache.img : null;
+  }
+  function drawDeathMarkers() {
+    if (!upg.deathName && !upg.deathAvatar) return;
+    const bd = (gameMode === 'extreme')
+      ? (stats?.bestDistExtreme || 0)
+      : (stats?.bestDistNormal  || 0);
+    if (!bd || bd <= 0.05) return;
+    const worldY = (H - 200) - bd * (H / 2);
+    const sy = W2S(worldY);
+    if (sy < -40 || sy > H + 40) return;
+    const mx = (walls.left + walls.right) / 2;
+    ctx.save();
+    if (upg.deathAvatar) {
+      const r = 16;
+      const img = ensureAvatarImg();
+      if (img) {
+        ctx.save();
+        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.clip();
+        ctx.drawImage(img, mx - r, sy - r * 2 - 14, r * 2, r * 2);
+        ctx.restore();
+        // Subtle ring
+        ctx.strokeStyle = 'rgba(255,255,255,.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.stroke();
+      } else {
+        // Fallback: filled disc with first letter
+        ctx.fillStyle = AVATAR_COLORS[avatarIdx] || '#aaa';
+        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.font = 'bold 14px var(--font), monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((playerName || '?').slice(0,1).toUpperCase(), mx, sy - r - 14);
+      }
+    }
+    if (upg.deathName && playerName) {
+      ctx.font = '10px var(--font), monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
+      ctx.fillText(playerName.toUpperCase(), mx, sy + 6);
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+  }
+
   // ── Ghost Trails — render last N stored traces from prior games ───────
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
