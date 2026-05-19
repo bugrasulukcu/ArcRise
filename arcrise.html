@@ -967,80 +967,37 @@
     #btn-settings { /* legacy: width applied via .menu-row */ }
     #home-profile { cursor: pointer; }
 
-    /* Right column — unified tall pill with two halves (coin + upgrade)
-       Flush to card's right edge by cancelling profile padding via negative margins. */
-    #home-actions {
-      flex-shrink: 0;
-      align-self: stretch;
-      display: flex; flex-direction: column;
-      border-radius: 0 16px 16px 0; /* match card right corners only */
-      overflow: hidden;
-      margin: -14px -18px -14px 8px;
-      width: 84px;
-      box-shadow:
-        inset 1px 0 0 rgba(255,255,255,.06);
-    }
-    .home-action-btn {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 4px;
-      padding: 8px 6px;
-      border: none;
-      cursor: pointer;
-      font-family: var(--font);
-      transition: filter .15s, transform .12s;
-      position: relative;
-    }
-    .home-action-btn:active { transform: scale(0.97); }
-    .home-action-btn .ha-ic {
-      width: 26px; height: 26px; border-radius: 50%;
+    /* Menu-row coin & upgrade buttons — share .btn-gray look with subtle accent */
+    .menu-row > #home-coin-pill,
+    .menu-row > #home-upgrade-btn {
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 800;
-      flex-shrink: 0;
+      gap: 6px;
     }
-    .home-action-btn .ha-val {
-      font-size: 12px; font-weight: 700; letter-spacing: .8px;
-      color: #fff;
-    }
-
-    /* Coin half (top) — gold gradient */
-    #home-coin-pill.home-action-btn {
-      background:
-        radial-gradient(120% 90% at 50% 0%, rgba(255,240,160,.25), transparent 65%),
-        linear-gradient(180deg, rgba(110,75,15,.65), rgba(70,45,5,.65));
-      border-bottom: 1px solid rgba(255,210,80,.35);
-      flex-direction: row; gap: 6px;
-    }
-    #home-coin-pill:hover { filter: brightness(1.08); }
-    #home-coin-pill .ha-ic {
+    /* Coin button — gold accent on the disc only */
+    #home-coin-pill .mr-coin-disc {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
       background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
       box-shadow:
-        0 0 10px rgba(255,210,80,.55),
-        inset 0 1.5px 0 rgba(255,255,255,.55),
+        0 0 8px rgba(255,210,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.55),
         inset 0 -2px 4px rgba(120,80,0,.45);
       border: 1px solid #b8860b;
       color: #4a2c00;
+      flex-shrink: 0;
     }
-    #home-coin-pill .ha-val { color: #ffe8a0; font-size: 13px; letter-spacing: 1px; }
-
-    /* Upgrade half (bottom) — purple gradient with up-arrow */
-    #home-upgrade-btn.home-action-btn {
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(190,130,255,.20), transparent 65%),
-        linear-gradient(180deg, rgba(70,30,140,.65), rgba(40,15,90,.70));
+    #home-coin-pill .mr-coin-val {
+      font-size: 13px; font-weight: 700; letter-spacing: .6px;
+      color: #ffe8a0;
     }
-    #home-upgrade-btn:hover { filter: brightness(1.10); }
-    #home-upgrade-btn .ha-ic {
-      width: 26px; height: 26px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: none; border: none; box-shadow: none;
-      color: #e0c8ff;
+    #home-coin-pill:hover { border-color: rgba(255,210,80,.45); }
+    /* Upgrade button — purple icon accent */
+    #home-upgrade-btn svg {
+      color: #c8a8ff;
+      filter: drop-shadow(0 0 4px rgba(180,120,255,.45));
     }
-    #home-upgrade-btn .ha-ic svg {
-      width: 22px; height: 22px;
-      filter: drop-shadow(0 0 4px rgba(200,140,255,.55));
-    }
-    #home-upgrade-btn .ha-val { color: #d8c0ff; font-size: 10.5px; letter-spacing: 1.4px; }
+    #home-upgrade-btn:hover { border-color: rgba(170,120,255,.45); }
 
     /* Coins popup — gold framed */
     #coins-modal {
