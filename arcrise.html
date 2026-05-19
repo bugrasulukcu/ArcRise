@@ -4304,6 +4304,22 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     maxAscend = Math.max(maxAscend, -player.y);
     // Distance from spawn — immediate, even before player has cleared y=0
     distancePx = Math.max(distancePx, (H - 200) - player.y);
+
+    // ── PB distance line cross: +200 puan + rainbow burst (once per run) ─
+    if (!pbCrossed) {
+      const pbDist = (gameMode === 'extreme')
+        ? (stats?.bestDistExtreme || 0)
+        : (stats?.bestDistNormal  || 0);
+      if (pbDist > 0.05) {
+        const pbWorldY = (H - 200) - pbDist * (H / 2);
+        if (player.y <= pbWorldY) {
+          pbCrossed = true;
+          scoreBonus += 200;
+          spawnRainbowParticles(player.x, pbWorldY);
+          spawnFloatText(player.x, pbWorldY, '+200 PB', '#ffffff');
+        }
+      }
+    }
     // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
      // takes base to 2×). Booster overrides this.
     if (gameMode === 'extreme' && !boosterType) {
