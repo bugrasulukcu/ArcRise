@@ -4864,6 +4864,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (now - lastTPress < 500) { toggleDebug(); lastTPress = 0; }
       else lastTPress = now;
     }
+    else if (e.key === 'r' || e.key === 'R') {
+      const now = performance.now();
+      if (now - lastRPress < 500) { devCheatBoost(); lastRPress = 0; }
+      else lastRPress = now;
+    }
   });
   // Horizontal swipe on mobile — right→left opens, left→right closes
   let swipeX0 = null, swipeY0 = null;
