@@ -967,18 +967,18 @@
     #btn-settings { /* legacy: width applied via .menu-row */ }
     #home-profile { cursor: pointer; }
 
-    /* Right column — unified tall pill with two halves (coin + upgrade) */
+    /* Right column — unified tall pill with two halves (coin + upgrade)
+       Flush to card's right edge by cancelling profile padding via negative margins. */
     #home-actions {
       flex-shrink: 0;
       align-self: stretch;
       display: flex; flex-direction: column;
-      border-radius: 16px;
+      border-radius: 0 16px 16px 0; /* match card right corners only */
       overflow: hidden;
-      margin-left: 10px;
-      width: 92px;
+      margin: -14px -18px -14px 8px;
+      width: 84px;
       box-shadow:
-        0 0 18px rgba(180,140,40,.18),
-        0 0 22px rgba(140,80,220,.18);
+        inset 1px 0 0 rgba(255,255,255,.06);
     }
     .home-action-btn {
       flex: 1;
