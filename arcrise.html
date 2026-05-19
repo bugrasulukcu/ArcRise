@@ -2526,6 +2526,37 @@ const ARC_DB = (() => {
   return { submitScore, getTopScores, invalidateTopCache, wipeAllScores, dedupeScores };
 })();
 
+// ── One-shot data reset gate ──────────────────────────────
+// Bump ARC_RESET_VERSION whenever you want every device that loads the
+// page to wipe its local state once. On next load each device:
+//   1) checks localStorage.arc_reset_v
+//   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
+//      sessionStorage
+//   3) writes the new version so the wipe doesn't repeat
+const ARC_RESET_VERSION = 'r-2026-05-15-1';
+(() => {
+  try {
+    if (localStorage.getItem('arc_reset_v') === ARC_RESET_VERSION) return;
+    // Collect keys first (mutating localStorage while iterating is unsafe)
+    const local = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('arc_') && k !== 'arc_reset_v') local.push(k);
+    }
+    local.forEach(k => localStorage.removeItem(k));
+    // Same for sessionStorage (Firestore read cache, etc.)
+    const sess = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith('arc_')) sess.push(k);
+    }
+    sess.forEach(k => sessionStorage.removeItem(k));
+    localStorage.setItem('arc_reset_v', ARC_RESET_VERSION);
+    console.log('[ArcRise] one-shot data reset →', ARC_RESET_VERSION,
+                `(cleared ${local.length} local + ${sess.length} session keys)`);
+  } catch(e) { console.warn('[ArcRise] reset gate failed', e); }
+})();
+
 (() => {
   // ── Mobile zoom kilidi ───────────────────────────────────
   // viewport meta + touch-action yetmediği iOS Safari sürümleri için gesture event'lerini blokla.
@@ -2729,6 +2760,10 @@ const ARC_DB = (() => {
   let running = false, started = false;
   let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
+  // Once energy hits 0 the countdown shows "0" for this many seconds before
+  // endGame is called — gives the player a small forgiveness window.
+  const GRACE_S = 0.45;
+  let graceTimer = 0;
   // distancePx — peak ascent from spawn (y = H - 200), so distance starts at 0
   // and increases the moment the player moves up. Independent of maxAscend so
   // it doesn't shift the score formula.
@@ -3771,13 +3806,13 @@ const ARC_DB = (() => {
     ctx.save();
     const px = player.x, py = W2S(player.y), r = player.r;
 
-    // Renk: geri sayım değerine göre (9→green, 4→yellow, 1→red)
-    const countdown = Math.ceil(energy * 9);
+    // Countdown 8 → 0. Bands: 7-8 green, 5-6 yellow, 3-4 orange, 0-2 red.
+    const countdown = Math.max(0, Math.ceil(energy * 8));
     let glowR, glowG, glowB;
-    if (countdown > 5)      { glowR = 124; glowG = 255; glowB = 122; }       // yeşil
-    else if (countdown > 3) { glowR = 255; glowG = 220; glowB = 60; }         // sarı
-    else if (countdown > 1) { glowR = 255; glowG = 140; glowB = 60; }         // turuncu
-    else                    { glowR = 255; glowG = 60;  glowB = 60; }          // kırmızı
+    if (countdown >= 7)      { glowR = 124; glowG = 255; glowB = 122; }       // green
+    else if (countdown >= 5) { glowR = 255; glowG = 220; glowB = 60;  }       // yellow
+    else if (countdown >= 3) { glowR = 255; glowG = 140; glowB = 60;  }       // orange
+    else                     { glowR = 255; glowG = 60;  glowB = 60;  }       // red
 
     // Ghost efekti — mor renk, yarı saydam
     if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
@@ -3803,11 +3838,15 @@ const ARC_DB = (() => {
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
-    // Geri sayım — %50 daha büyük font
+    // Countdown — bold + 2× larger than before, in the main brand font.
     const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
     ctx.globalAlpha = isGhost ? 0.65 : 1;
-    ctx.font = `${r < 20 ? 11 : 14}px 'Press Start 2P', monospace`;
+    // -20% from the doubled size to leave headroom for future
+    // upgrades that push the countdown into double digits.
+    const fontPx = (r < 20 ? 18 : 22);
+    // Canvas ctx.font doesn't resolve CSS vars — use the literal family name.
+    ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(countdown), px, py);
     ctx.restore();
@@ -4063,6 +4102,7 @@ const ARC_DB = (() => {
     allGhosts = loadGhostTraces();
     nextSpawnY = player.y - 500; lastBonusY = player.y;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
+    graceTimer = 0;
     started = false; running = false; lbFrame = 0;
     tutStep = -1; tutTimer = 0; tutAlpha = 0; tutPaused = false;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -4157,7 +4197,14 @@ const ARC_DB = (() => {
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
     energy = Math.max(0, energy - dt * ENERGY_DECAY);
-    if (energy <= 0) { endGame(); return; }
+    if (energy <= 0) {
+      // Grace window: countdown shows "0" for up to GRACE_S so the player
+      // has a forgiving moment to grab a green and recover before death.
+      graceTimer += dt;
+      if (graceTimer >= GRACE_S) { endGame(); return; }
+    } else {
+      graceTimer = 0;
+    }
 
     const now = performance.now() / 1000;
 
@@ -4195,7 +4242,7 @@ const ARC_DB = (() => {
     // Extreme runs that died early ended with score=0 and skipped Firestore.
     score = Math.floor(distancePx / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
     // Combo HUD: show current multiplier
-    const countdown = Math.ceil(energy * 9);
+    const countdown = Math.max(0, Math.ceil(energy * 8));
     const comboMul = countdown / 2;
     const comboEl  = document.getElementById('combo-hud');
     const comboVal = document.getElementById('combo-val');
@@ -4266,7 +4313,7 @@ const ARC_DB = (() => {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         // Combo bonus based on current energy timer
-        const cd = Math.ceil(energy * 9);
+        const cd = Math.max(0, Math.ceil(energy * 8));
         const comboBonus = Math.round(cd / 2) * 10; // ×(cd/2), in multiples of 10
         scoreBonus += comboBonus;
         spawnFloatText(b.x, b.y - b.r - 8, '+' + comboBonus, 120); // float green text
@@ -4281,7 +4328,7 @@ const ARC_DB = (() => {
       const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
         // Combo çarpanı (timer/2)
-        const cd = Math.ceil(energy * 9);
+        const cd = Math.max(0, Math.ceil(energy * 8));
         const mul = Math.max(0.5, cd / 2);
         const finalPts = Math.round((b.pts * mul) / 10) * 10; // 10'un katı
         scoreBonus += finalPts;
@@ -4515,7 +4562,7 @@ const ARC_DB = (() => {
           ['mode',      gameMode],
           ['score',     Math.floor(score)],
           ['distance',  distM.toFixed(1) + 'm'],
-          ['combo',     Math.ceil(energy * 9)],
+          ['combo',     Math.max(0, Math.ceil(energy * 8))],
           ['trail',     trail.length],
           ['ghosts',    allGhosts.length],
           ['obstacles', obstacles.length],
