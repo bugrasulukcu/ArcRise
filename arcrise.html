@@ -5727,7 +5727,34 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return true;
   }
 
-  // ── Render: build Passive cards from current `upg` state ───────────────
+  // Currently visible Passive sub-view: 'grid' or one of the upgrade keys
+  let upgPassiveView = 'grid';
+
+  // Compact one-line summary for tile state text
+  function upgStateLabel(key) {
+    const v = upg[key + 'Active'];
+    if (key === 'radius' || key === 'speed') {
+      return (v > 0 ? '+' : '') + v + ' (' + (v * 10) + '%)';
+    }
+    if (key === 'timer')          return upg.timer > 0 ? '+' + upg.timer + 's' : 'base';
+    if (key === 'traceThickness') return '+' + (upg.traceThickness * 10) + '%';
+    if (key === 'traceColor')     return upg.traceColor ? '●' : 'default';
+    if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
+    if (key === 'deathAvatar')    return upg.deathAvatar ? 'enabled' : 'locked';
+    return '';
+  }
+
+  const PASSIVE_TILES = [
+    { key: 'radius',         title: 'Radius',       icon: '⭕' },
+    { key: 'speed',          title: 'Speed',        icon: '⚡' },
+    { key: 'timer',          title: 'Combo Timer',  icon: '⏱'  },
+    { key: 'traceThickness', title: 'Trace Width',  icon: '〰' },
+    { key: 'traceColor',     title: 'Trace Color',  icon: '🎨' },
+    { key: 'deathName',      title: 'Death Name',   icon: '🪦' },
+    { key: 'deathAvatar',    title: 'Death Avatar', icon: '👤' },
+  ];
+
+  // ── Render: Passive tab is either the tile grid or a single detail view ──
   function renderUpgrades() {
     const el = document.getElementById('upg-balance');
     if (el) el.textContent = String(coins);
@@ -5735,8 +5762,61 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (!host) return;
     host.innerHTML = '';
 
-    // Helper: render a ±ladder card (radius / speed)
-    function bidiCard(key, title, icon) {
+    if (upgPassiveView === 'grid') {
+      const grid = document.createElement('div');
+      grid.className = 'upg-tile-grid';
+      for (const t of PASSIVE_TILES) {
+        const tile = document.createElement('button');
+        tile.className = 'upg-tile';
+        tile.innerHTML = `
+          <span class="upg-tile-icon">${t.icon}</span>
+          <span class="upg-tile-body">
+            <span class="upg-tile-title">${t.title}</span>
+            <span class="upg-tile-state">${upgStateLabel(t.key)}</span>
+          </span>
+        `;
+        tile.addEventListener('click', () => {
+          upgPassiveView = t.key;
+          renderUpgrades();
+        });
+        grid.appendChild(tile);
+      }
+      host.appendChild(grid);
+      return;
+    }
+
+    // Detail view — header with back button + the matching upgrade card body
+    const tileMeta = PASSIVE_TILES.find(t => t.key === upgPassiveView);
+    if (!tileMeta) { upgPassiveView = 'grid'; renderUpgrades(); return; }
+    const panel = document.createElement('div');
+    panel.className = 'upg-detail open';
+    panel.innerHTML = `
+      <div class="upg-detail-head">
+        <button class="upg-back-btn" id="upg-back">‹</button>
+        <span class="upg-detail-title">${tileMeta.icon} ${tileMeta.title}</span>
+        <span class="upg-detail-active">${upgStateLabel(tileMeta.key)}</span>
+      </div>
+    `;
+    panel.appendChild(buildDetailBody(tileMeta.key));
+    host.appendChild(panel);
+    panel.querySelector('#upg-back').addEventListener('click', () => {
+      upgPassiveView = 'grid';
+      renderUpgrades();
+    });
+  }
+
+  // Returns the full body element for a single upgrade (ladder + buys / color grid / toggle)
+  function buildDetailBody(key) {
+    if (key === 'radius' || key === 'speed') return bidiCard(key, '', '');
+    if (key === 'timer')          return fwdCard('timer', '', '', 4, dirPrice, v => v > 0 ? `+${v}s` : 'base');
+    if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
+    if (key === 'traceColor')     return colorCard();
+    if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot — visible to other players.');
+    if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, 'Your avatar appears on the map at your best-run death spot.');
+    const x = document.createElement('div'); x.textContent = '?'; return x;
+  }
+
+  function bidiCard(key, title, icon) {
       const pos = upg[key + 'Pos'] | 0;
       const neg = upg[key + 'Neg'] | 0;
       const act = upg[key + 'Active'] | 0;
