@@ -5459,7 +5459,51 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
+  function refreshExtremeReqs() {
+    const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
+    const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
+    const distOk    = bestDist >= 100;
+    const scoreOk   = bestScore >= 2000;
+    const coinOk    = coins >= 50;
+    const allOk     = distOk && scoreOk && coinOk;
+
+    const rowDist  = document.getElementById('ex-req-dist');
+    const rowScore = document.getElementById('ex-req-score');
+    const rowCoin  = document.getElementById('ex-req-coin');
+
+    rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
+    rowDist.querySelector('.ex-req-check').textContent = distOk ? '✓' : '✗';
+    document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(en iyi: ${Math.floor(bestDist)}m)`;
+
+    rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
+    rowScore.querySelector('.ex-req-check').textContent = scoreOk ? '✓' : '✗';
+    document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(en iyi: ${bestScore})`;
+
+    const coinIcon = document.getElementById('ex-coin-icon');
+    const deficit  = document.getElementById('ex-coin-deficit');
+    const coinVal  = document.getElementById('ex-req-coin-val');
+    if (coinOk) {
+      coinIcon.classList.remove('dim');
+      deficit.textContent = '';
+      rowCoin.className = 'ex-req-row met';
+      rowCoin.querySelector('.ex-req-label').style.color = '';
+    } else {
+      coinIcon.classList.add('dim');
+      deficit.textContent = `(${50 - coins} eksik)`;
+      rowCoin.className = 'ex-req-row unmet';
+    }
+    coinVal.textContent = `(sahip: ${coins})`;
+
+    const btn = document.getElementById('extreme-confirm');
+    if (allOk) {
+      btn.classList.remove('locked');
+    } else {
+      btn.classList.add('locked');
+    }
+  }
+
   function openExtremeModal() {
+    refreshExtremeReqs();
     extremeModal.classList.add('open');
     popupDecoActive = true;
     popupDecoTimer = 0;
@@ -5475,6 +5519,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     openExtremeModal();
   });
   document.getElementById('extreme-confirm').addEventListener('click', () => {
+    if (coins < 50) return;
+    coins -= 50;
+    localStorage.setItem('arc_coins', String(coins));
+    applyProfile();
     setGameMode('extreme');
     closeExtremeModal();
   });
