@@ -3824,7 +3824,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (botY < -80 || topY > H + 80) continue;
       // Newer traces a touch brighter; everything overall fainter than before.
       const recent = (gi >= allGhosts.length - 10);
-      ctx.globalAlpha = recent ? 0.07 : 0.035;
+      ctx.globalAlpha = recent ? 0.045 : 0.03;
       ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
