@@ -5103,11 +5103,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
-    // Next-coin progress: XP toward the next 1000-XP threshold
-    const xpMod  = xpTotal % 1000;
-    const pct    = Math.min(100, Math.max(0, (xpMod / 1000) * 100));
+    // Next-coin progress: distance toward the next 100m threshold
+    const distMod2 = distTotal % 100;
+    const pct      = Math.min(100, Math.max(0, distMod2));
     const pv = document.getElementById('coins-progress-val');
-    if (pv) pv.textContent = `${xpMod} / 1000`;
+    if (pv) pv.textContent = `${Math.floor(distMod2)}m / 100m`;
     const pb = document.getElementById('coins-progress-bar');
     if (pb) {
       // Reset so the transition replays each open
