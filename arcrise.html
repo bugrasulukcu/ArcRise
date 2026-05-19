@@ -4474,9 +4474,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    const xpMod  = xpTotal % 1000; // birikimli XP'nin 1000'e kalan kısmı
-    const barPct = Math.round(xpMod / 10); // % (0-100)
-    document.getElementById('go-coin-progress').textContent = `${xpMod} / 1000`;
+    const distMod = distTotal % 100; // kalan metre (sonraki coin'e)
+    const barPct  = Math.round(distMod); // % (0-100)
+    document.getElementById('go-coin-progress').textContent = `${Math.floor(distMod)}m / 100m`;
     // Animate bar after short delay
     setTimeout(() => {
       document.getElementById('go-coin-bar').style.width = barPct + '%';
