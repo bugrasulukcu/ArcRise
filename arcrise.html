@@ -3095,9 +3095,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   function getRadius() {
-    if (boosterType === 'wide')   return W / 3;
-    if (boosterType === 'narrow') return W / 5;
-    return W / 4;
+    let base;
+    if (boosterType === 'wide')        base = W / 3;
+    else if (boosterType === 'narrow') base = W / 5;
+    else                                base = W / 4;
+    const mult = 1 + ((upg && upg.radiusActive) || 0) * 0.10;
+    return base * mult;
   }
 
   // Ghost: önceki oyunun trail'i (world-space) — %20 alpha ile çizilir
