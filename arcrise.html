@@ -943,82 +943,96 @@
       width: calc(100% - 6px); height: calc(100% - 6px);
       object-fit: cover;
     }
-    #home-profile-info { flex: 1; min-width: 0; }
+    #home-profile-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
     #home-pname {
-      font-size: 14.5px; letter-spacing: 2px;
-      color: #fff; margin-bottom: 6px;
+      font-size: 19px; font-weight: 800; letter-spacing: 1.6px;
+      color: #fff;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-shadow: 0 0 8px rgba(255,255,255,.18);
     }
-    #home-pbest-row {
-      display: flex; align-items: center; gap: 6px;
+    #home-stats-line {
+      display: flex; align-items: baseline; gap: 10px;
+      font-family: var(--font);
+      white-space: nowrap;
     }
-    #home-pbest-lbl { font-size: 8px; color: var(--green); letter-spacing: 1px; }
-    #home-pbest-val { font-size: 13px; color: #fff; letter-spacing: 1px; }
+    .hs-pair { display: inline-flex; align-items: baseline; gap: 5px; }
+    .hs-lbl { font-size: 9px; letter-spacing: 1.4px; color: var(--green); }
+    .hs-val { font-size: 14px; letter-spacing: 1px; color: #fff; }
+    .hs-sep {
+      width: 1px; height: 13px;
+      background: rgba(255,255,255,.18);
+      display: inline-block;
+      align-self: center;
+    }
 
     /* Settings button — sizing handled by .menu-row when paired */
     #btn-settings { /* legacy: width applied via .menu-row */ }
-
-    /* Home profile card — stat row.
-       Grid with explicit rows so labels share row 1 and values share row 2
-       regardless of label wrap height — the numbers stay on the same
-       baseline whether the label says "SCORE" or "DISTANCE". */
     #home-profile { cursor: pointer; }
-    .home-stat-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      grid-auto-flow: column;  /* fill column-first: lbl→val, lbl→val */
-      column-gap: 0; row-gap: 6px;
-      margin-top: 10px;
-      align-items: end;
+
+    /* Right column — coins (top) + upgrade (bottom), stacked */
+    #home-actions {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 6px;
+      margin-left: 10px;
+      padding-left: 10px;
+      border-left: 1px solid rgba(255,255,255,.10);
     }
-    .home-stat {
-      display: contents; /* let lbl/val participate directly in the row grid */
+    .home-action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s, transform .12s, border-color .15s;
     }
-    .home-stat-lbl {
-      font-size: 9px; color: var(--green); letter-spacing: 1.4px;
-      line-height: 1.25; text-align: center;
-      align-self: end;
-      padding: 0 4px;
+    .home-action-btn:active { transform: scale(0.96); }
+    .home-action-btn .ha-ic {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800;
+      flex-shrink: 0;
     }
-    .home-stat-val {
-      font-size: 14.5px; letter-spacing: 1.2px;
-      text-align: center; align-self: start;
-      padding: 0 4px;
-    }
-    /* Divider only on first column (first .home-stat) */
-    .home-stat:first-child > .home-stat-lbl,
-    .home-stat:first-child > .home-stat-val {
-      border-right: 1px solid rgba(255,255,255,.08);
+    .home-action-btn .ha-val {
+      font-size: 12px; font-weight: 700; letter-spacing: .8px;
+      color: #fff;
     }
 
-    /* Coin pill — separate from stat data, opens its own gold popup */
-    #home-coin-pill {
-      flex-shrink: 0;
-      margin-left: 10px;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      cursor: pointer;
-      padding: 8px 10px;
-      border-left: 1px solid rgba(255,210,80,.18);
+    /* Coin variant — gold tint */
+    #home-coin-pill { /* keep legacy id selector hits */ }
+    #home-coin-pill.home-action-btn {
+      border-color: rgba(255,210,80,.35);
+      background: rgba(255,200,80,.08);
     }
-    #home-coin-lbl {
-      font-size: 8px; letter-spacing: 1.4px;
-      color: #ffd866;
-    }
-    #home-coin-disc {
-      width: 36px; height: 36px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      background:
-        radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
+    #home-coin-pill.home-action-btn:hover { border-color: rgba(255,210,80,.6); }
+    #home-coin-pill .ha-ic {
+      background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
       box-shadow:
-        0 0 12px rgba(255,210,80,.55),
-        inset 0 1.5px 0 rgba(255,255,255,.55),
-        inset 0 -3px 6px rgba(120,80,0,.45);
-      border: 1.5px solid #b8860b;
+        0 0 8px rgba(255,210,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.55),
+        inset 0 -2px 4px rgba(120,80,0,.45);
+      border: 1px solid #b8860b;
       color: #4a2c00;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
     }
-    #home-coin-pill:active #home-coin-disc { transform: scale(0.95); }
+    #home-coin-pill .ha-val { color: #ffd866; }
+
+    /* Upgrade variant — purple tint */
+    #home-upgrade-btn.home-action-btn {
+      border-color: rgba(170,120,255,.40);
+      background: rgba(120,70,200,.10);
+    }
+    #home-upgrade-btn.home-action-btn:hover { border-color: rgba(170,120,255,.70); }
+    #home-upgrade-btn .ha-ic {
+      background: radial-gradient(circle at 30% 30%, #d4baff, #aa66ff 50%, #5d22a8 95%);
+      box-shadow:
+        0 0 8px rgba(170,90,255,.50),
+        inset 0 1px 0 rgba(255,255,255,.40),
+        inset 0 -2px 4px rgba(40,0,80,.55);
+      border: 1px solid #6e2db5;
+      color: #fff;
+    }
+    #home-upgrade-btn .ha-val { color: #cba6ff; font-size: 10px; letter-spacing: 1.2px; }
 
     /* Coins popup — gold framed */
     #coins-modal {
