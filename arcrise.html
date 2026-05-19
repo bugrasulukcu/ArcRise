@@ -5826,7 +5826,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Jump from Coins to Upgrades (closes coins, opens upgrades)
   document.getElementById('coins-to-upgrades').addEventListener('click', () => {
     coinsModal.classList.remove('open');
-    upgradesModal.classList.add('open');
+    openUpgradesModal();
   });
 
   // Render the avatar picker grid (including an "Upload Photo" tile first)
