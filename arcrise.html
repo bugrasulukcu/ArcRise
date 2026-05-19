@@ -5514,11 +5514,283 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   renderSlots();
 
-  // Upgrades popup (placeholder — content will arrive once catalog is finalised)
+  // ══ Upgrades — Passive catalog ══════════════════════════════════════════
   const upgradesModal = document.getElementById('upgrades-modal');
-  document.getElementById('prof-upgrade-btn').addEventListener('click', () => {
-    upgradesModal.classList.add('open');
+
+  // Pricing — every directional purchase chain uses [5,10,20,40].
+  // Trace thickness uses a longer curve (20 levels) — geometric early, linear later.
+  const DIR_PRICES = [5, 10, 20, 40];                // levels 1..4
+  const THICKNESS_PRICES = [
+    5, 10, 20, 40, 60, 80, 100, 120, 140, 160,
+    180, 200, 220, 240, 260, 280, 300, 320, 340, 360, // levels 1..20 → +%10 each
+  ];
+  const TRACE_COLOR_PRICE = 10;       // rebuyable cost per change
+  const DEATH_NAME_PRICE  = 15;       // one-time unlock
+  const DEATH_AV_PRICE    = 60;       // one-time unlock
+  const TRACE_COLORS = [
+    '#88bbff', '#ff5566', '#ffaa44', '#ffee55', '#66ff88',
+    '#66eeff', '#aa66ff', '#ff77cc', '#ffffff', '#aaaaaa',
+  ];
+
+  function dirPrice(nextLevel) {
+    if (nextLevel < 1 || nextLevel > DIR_PRICES.length) return null;
+    return DIR_PRICES[nextLevel - 1];
+  }
+  function thicknessPrice(nextLevel) {
+    if (nextLevel < 1 || nextLevel > THICKNESS_PRICES.length) return null;
+    return THICKNESS_PRICES[nextLevel - 1];
+  }
+
+  // Deduct coins via the distance-total ledger that derives them.
+  // 1 coin == 100m of distTotal, so we subtract `n*100` from distTotal.
+  function spendCoins(n) {
+    if (coins < n) return false;
+    distTotal = Math.max(0, distTotal - n * 100);
+    coins = Math.floor(distTotal / 100);
+    localStorage.setItem('arc_dist_total', String(distTotal));
+    localStorage.setItem('arc_coins', String(coins));
+    try { applyProfile(); } catch(_){}
+    return true;
+  }
+
+  // ── Render: build Passive cards from current `upg` state ───────────────
+  function renderUpgrades() {
+    const el = document.getElementById('upg-balance');
+    if (el) el.textContent = String(coins);
+    const host = document.getElementById('upg-tab-passive');
+    if (!host) return;
+    host.innerHTML = '';
+
+    // Helper: render a ±ladder card (radius / speed)
+    function bidiCard(key, title, icon) {
+      const pos = upg[key + 'Pos'] | 0;
+      const neg = upg[key + 'Neg'] | 0;
+      const act = upg[key + 'Active'] | 0;
+      const card = document.createElement('div');
+      card.className = 'upg-card';
+      card.innerHTML = `
+        <div class="upg-card-head">
+          <span class="upg-card-icon">${icon}</span>
+          <span class="upg-card-title">${title}</span>
+          <span class="upg-card-active">${act > 0 ? '+' : ''}${act} (${act * 10}%)</span>
+        </div>
+        <div class="upg-ladder" data-stat="${key}">
+          ${[-3,-2,-1,0,1,2,3].map(v => {
+            const unlocked = v === 0 || (v > 0 && v <= pos) || (v < 0 && -v <= neg);
+            const cls = ['upg-pip'];
+            if (unlocked) cls.push('unlocked');
+            if (v > 0) cls.push('pos');
+            if (v < 0) cls.push('neg');
+            if (v === act) cls.push('active');
+            return `<button class="${cls.join(' ')}" data-val="${v}">${v > 0 ? '+' + v : v}</button>`;
+          }).join('')}
+        </div>
+        <div class="upg-buys">
+          ${(() => {
+            const negNext = neg + 1;
+            const negPrice = dirPrice(negNext);
+            const posNext = pos + 1;
+            const posPrice = dirPrice(posNext);
+            const negBtn = negPrice == null
+              ? `<button class="upg-buy maxed">MAX</button>`
+              : `<button class="upg-buy" data-dir="-1" ${coins < negPrice ? 'disabled' : ''}>Buy −${negNext} <span class="upg-coin">🪙${negPrice}</span></button>`;
+            const posBtn = posPrice == null
+              ? `<button class="upg-buy maxed">MAX</button>`
+              : `<button class="upg-buy" data-dir="+1" ${coins < posPrice ? 'disabled' : ''}>Buy +${posNext} <span class="upg-coin">🪙${posPrice}</span></button>`;
+            return negBtn + posBtn;
+          })()}
+        </div>
+      `;
+      // Wire pip clicks → switch active level (unlocked only)
+      card.querySelectorAll('.upg-pip.unlocked').forEach(p => {
+        p.addEventListener('click', () => {
+          const v = parseInt(p.dataset.val, 10) || 0;
+          upg[key + 'Active'] = v;
+          saveUpg();
+          applyUpgradeSideEffects();
+          renderUpgrades();
+        });
+      });
+      // Wire buy buttons
+      card.querySelectorAll('.upg-buy[data-dir]').forEach(b => {
+        if (b.hasAttribute('disabled')) { b.classList.add('disabled'); return; }
+        b.addEventListener('click', () => {
+          const dir = b.dataset.dir;
+          if (dir === '+1') {
+            const next = pos + 1; const p = dirPrice(next); if (p == null) return;
+            if (!spendCoins(p)) return;
+            upg[key + 'Pos'] = next;
+            upg[key + 'Active'] = next; // jump active to the new max
+          } else {
+            const next = neg + 1; const p = dirPrice(next); if (p == null) return;
+            if (!spendCoins(p)) return;
+            upg[key + 'Neg'] = next;
+            upg[key + 'Active'] = -next;
+          }
+          saveUpg();
+          applyUpgradeSideEffects();
+          renderUpgrades();
+        });
+      });
+      return card;
+    }
+
+    // Helper: forward-only ladder (timer 0..4 → seconds)
+    function fwdCard(key, title, icon, maxLevel, priceFn, labelFmt) {
+      const cur = upg[key] | 0;
+      const card = document.createElement('div');
+      card.className = 'upg-card';
+      const nextPrice = priceFn(cur + 1);
+      card.innerHTML = `
+        <div class="upg-card-head">
+          <span class="upg-card-icon">${icon}</span>
+          <span class="upg-card-title">${title}</span>
+          <span class="upg-card-active">${labelFmt(cur)}</span>
+        </div>
+        <div class="upg-ladder">
+          ${Array.from({length: maxLevel + 1}, (_, i) => {
+            const cls = ['upg-pip', i <= cur ? 'unlocked pos' : '', i === cur ? 'active' : ''].join(' ');
+            return `<button class="${cls}" disabled>${i}</button>`;
+          }).join('')}
+        </div>
+        <div class="upg-buys">
+          ${nextPrice == null
+            ? `<button class="upg-buy maxed">MAX</button>`
+            : `<button class="upg-buy" ${coins < nextPrice ? 'disabled' : ''}>Buy +${cur + 1} <span class="upg-coin">🪙${nextPrice}</span></button>`}
+        </div>
+      `;
+      const btn = card.querySelector('.upg-buy:not(.maxed)');
+      if (btn && !btn.hasAttribute('disabled')) {
+        btn.addEventListener('click', () => {
+          const p = priceFn(cur + 1);
+          if (p == null || !spendCoins(p)) return;
+          upg[key] = cur + 1;
+          saveUpg();
+          applyUpgradeSideEffects();
+          renderUpgrades();
+        });
+      } else if (btn) {
+        btn.classList.add('disabled');
+      }
+      return card;
+    }
+
+    // Radius / Speed (bidirectional)
+    host.appendChild(bidiCard('radius', 'Radius', '⭕'));
+    host.appendChild(bidiCard('speed',  'Speed',  '⚡'));
+    // Combo timer (forward only, max +4 sec)
+    host.appendChild(fwdCard('timer', 'Combo Timer', '⏱', 4, dirPrice, v => v > 0 ? `+${v}s` : 'base'));
+    // Trace thickness (forward only, max 20 = +%200)
+    host.appendChild(fwdCard('traceThickness', 'Trace Thickness', '〰', 20, thicknessPrice, v => `+${v * 10}%`));
+
+    // Trace color picker
+    (() => {
+      const card = document.createElement('div');
+      card.className = 'upg-card';
+      const cur = upg.traceColor;
+      card.innerHTML = `
+        <div class="upg-card-head">
+          <span class="upg-card-icon">🎨</span>
+          <span class="upg-card-title">Trace Color</span>
+          <span class="upg-card-active">🪙${TRACE_COLOR_PRICE}/change</span>
+        </div>
+        <div class="upg-color-grid">
+          ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
+        </div>
+        <div class="upg-card-sub">Other players see this color on your best-run ghost.</div>
+      `;
+      card.querySelectorAll('.upg-color-swatch').forEach(s => {
+        s.addEventListener('click', () => {
+          const c = s.dataset.c;
+          if (c === upg.traceColor) return; // already selected — no charge
+          if (!spendCoins(TRACE_COLOR_PRICE)) return;
+          upg.traceColor = c;
+          saveUpg();
+          renderUpgrades();
+        });
+      });
+      host.appendChild(card);
+    })();
+
+    // Death marker: name on map
+    (() => {
+      const card = document.createElement('div');
+      card.className = 'upg-card';
+      const unlocked = upg.deathName;
+      card.innerHTML = `
+        <div class="upg-card-head">
+          <span class="upg-card-icon">🪦</span>
+          <span class="upg-card-title">Death-point Name</span>
+          <span class="upg-card-active">${unlocked ? 'unlocked' : `🪙${DEATH_NAME_PRICE}`}</span>
+        </div>
+        <div class="upg-card-sub">Your name appears on the map at your best-run death spot — visible to other players.</div>
+        <div class="upg-buys">
+          ${unlocked
+            ? `<button class="upg-tog-btn on" data-act="off">ENABLED</button>`
+            : `<button class="upg-buy" ${coins < DEATH_NAME_PRICE ? 'disabled' : ''}>Unlock <span class="upg-coin">🪙${DEATH_NAME_PRICE}</span></button>`}
+        </div>
+      `;
+      const buy = card.querySelector('.upg-buy');
+      if (buy) buy.addEventListener('click', () => {
+        if (coins < DEATH_NAME_PRICE) return;
+        if (!spendCoins(DEATH_NAME_PRICE)) return;
+        upg.deathName = true; saveUpg(); renderUpgrades();
+      });
+      host.appendChild(card);
+    })();
+
+    // Death marker: avatar on map
+    (() => {
+      const card = document.createElement('div');
+      card.className = 'upg-card';
+      const unlocked = upg.deathAvatar;
+      card.innerHTML = `
+        <div class="upg-card-head">
+          <span class="upg-card-icon">👤</span>
+          <span class="upg-card-title">Death-point Avatar</span>
+          <span class="upg-card-active">${unlocked ? 'unlocked' : `🪙${DEATH_AV_PRICE}`}</span>
+        </div>
+        <div class="upg-card-sub">Your avatar appears on the map at your best-run death spot.</div>
+        <div class="upg-buys">
+          ${unlocked
+            ? `<button class="upg-tog-btn on" data-act="off">ENABLED</button>`
+            : `<button class="upg-buy" ${coins < DEATH_AV_PRICE ? 'disabled' : ''}>Unlock <span class="upg-coin">🪙${DEATH_AV_PRICE}</span></button>`}
+        </div>
+      `;
+      const buy = card.querySelector('.upg-buy');
+      if (buy) buy.addEventListener('click', () => {
+        if (coins < DEATH_AV_PRICE) return;
+        if (!spendCoins(DEATH_AV_PRICE)) return;
+        upg.deathAvatar = true; saveUpg(); renderUpgrades();
+      });
+      host.appendChild(card);
+    })();
+  }
+
+  // Recompute live values that depend on the upgrade state.
+  function applyUpgradeSideEffects() {
+    // Active speed multiplier feeds into the per-mode base speed.
+    GAME_SPEED = getBaseSpeed();
+    // player.speed is read each step from GAME_SPEED-derived state, no extra wiring.
+  }
+
+  // Tab switching
+  document.querySelectorAll('.upg-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.upg-tab').forEach(t => t.classList.toggle('active', t === tab));
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.upg-tab-pane').forEach(p => {
+        p.classList.toggle('active', p.id === 'upg-tab-' + target);
+      });
+    });
   });
+
+  function openUpgradesModal() {
+    renderUpgrades();
+    upgradesModal.classList.add('open');
+  }
+  // Re-route all entry points to the unified opener so the UI always reflects state.
+  document.getElementById('prof-upgrade-btn').addEventListener('click', openUpgradesModal);
   document.getElementById('upgrades-modal-close').addEventListener('click', () => upgradesModal.classList.remove('open'));
   upgradesModal.addEventListener('click', e => { if (e.target === upgradesModal) upgradesModal.classList.remove('open'); });
 
