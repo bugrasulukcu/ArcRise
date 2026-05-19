@@ -2950,10 +2950,29 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const ghostSampled = [];
   // allGhosts = up to 1000 traces from prior games, loaded at game start.
   let allGhosts = [];
+  let crossPlayerGhosts = []; // others' best traces from Firestore, mode-filtered
   // Performance cap for the per-frame render — last N most-recent traces.
   const GHOSTS_RENDER_MAX = 80;
   const GHOSTS_STORE_MAX  = 1000;
   const GHOSTS_KEY        = 'arc_traces_v1';
+
+  // ── Upgrade state (Phase 1A stub — UI comes in Phase 1B) ─────────────
+  const UPG_KEY = 'arc_upg_v1';
+  const UPG_DEFAULTS = {
+    radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -3..+3 active
+    speedPos: 0,  speedNeg: 0,  speedActive: 0,
+    timer: 0,                                    // 0..4 (+sec on combo)
+    traceColor: null,                            // hex or null (→ default)
+    traceThickness: 0,                           // 0..20 (each +%10)
+    deathName: false,
+    deathAvatar: false,
+  };
+  function loadUpg() {
+    try { return Object.assign({}, UPG_DEFAULTS, JSON.parse(localStorage.getItem(UPG_KEY) || '{}')); }
+    catch(_) { return Object.assign({}, UPG_DEFAULTS); }
+  }
+  function saveUpg() { try { localStorage.setItem(UPG_KEY, JSON.stringify(upg)); } catch(_){} }
+  let upg = loadUpg();
 
   function loadGhostTraces() {
     try {
