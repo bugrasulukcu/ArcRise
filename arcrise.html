@@ -1514,6 +1514,27 @@
       font-size: 11px; color: rgba(255,255,255,.45); letter-spacing: 1.2px;
       text-align: center; line-height: 1.8;
     }
+    /* Extreme mode unlock requirements */
+    #extreme-reqs {
+      width: 100%; background: rgba(0,0,0,.30); border-radius: 10px;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
+      border: 1px solid rgba(255,120,60,.25);
+    }
+    .ex-req-row {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font); font-size: 11px; letter-spacing: 1.2px;
+    }
+    .ex-req-check { font-size: 13px; width: 16px; text-align: center; }
+    .ex-req-label { flex: 1; color: rgba(255,220,200,.75); }
+    .ex-req-val { font-size: 10px; color: rgba(255,200,160,.5); }
+    .ex-req-row.met .ex-req-check  { color: #66ff88; }
+    .ex-req-row.met .ex-req-label  { color: rgba(200,255,200,.85); }
+    .ex-req-row.unmet .ex-req-check { color: rgba(255,100,80,.7); }
+    .ex-req-row.unmet .ex-req-label { color: rgba(255,180,160,.55); }
+    .ex-coin-icon { font-size: 14px; }
+    .ex-coin-icon.dim { filter: grayscale(1) opacity(.4); }
+    #ex-coin-deficit { font-size: 10px; color: rgba(255,140,100,.8); margin-left: 4px; }
+
     #extreme-confirm {
       width: 100%; padding: 14px; border-radius: 13px;
       border: 1.5px solid rgba(255,90,80,.7);
@@ -1526,9 +1547,12 @@
         0 0 22px rgba(255,80,60,.40),
         inset 0 1px 0 rgba(255,255,255,.18),
         inset 0 -6px 12px rgba(40,0,0,.30);
-      transition: transform .12s, box-shadow .2s;
+      transition: transform .12s, box-shadow .2s, opacity .2s;
     }
-    #extreme-confirm:active { transform: scale(0.97); }
+    #extreme-confirm.locked {
+      opacity: .35; cursor: not-allowed; pointer-events: none;
+    }
+    #extreme-confirm:not(.locked):active { transform: scale(0.97); }
     #extreme-back {
       width: 100%; padding: 13px; border-radius: 13px;
       border: 1.5px solid rgba(120,170,255,.45);
