@@ -1116,10 +1116,19 @@
       box-shadow:
         0 0 12px rgba(255,170,0,.22),
         inset 0 1px 0 rgba(255,255,255,.16);
-      transition: transform .12s, box-shadow .2s, border-color .2s;
+      transition: transform .2s ease-out, box-shadow .2s ease-out, border-color .2s ease-out;
     }
-    .coins-buy:hover { border-color: rgba(255,210,80,.85); box-shadow: 0 0 16px rgba(255,170,0,.35), inset 0 1px 0 rgba(255,255,255,.22); }
-    .coins-buy:active { transform: scale(0.96); }
+    .coins-buy:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,210,80,.9);
+      box-shadow: 0 0 22px rgba(255,170,0,.50), 0 4px 10px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.26);
+    }
+    .coins-buy:active {
+      transform: translateY(0) scale(0.98);
+      border-color: rgba(255,220,100,1);
+      box-shadow: 0 0 30px rgba(255,190,0,.65), inset 0 1px 0 rgba(255,255,255,.20);
+      transition-duration: .08s;
+    }
     .coins-buy-amount {
       font-size: 14px; letter-spacing: 1.4px;
       background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
@@ -3514,8 +3523,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // ── Purple Boosters ──────────────────────────────────────
-  const PURPLE_ICONS = { wide:'↔', narrow:'↕', magnet:'🎯', x2:'×2', x3:'×3', x4:'×4',
-                         ghost:'👻', shield:'🛡', speed:'⚡' };
   function drawPurpleBalls() {
     const now = performance.now() / 1000;
     for (const b of purpleBalls) {
@@ -3531,17 +3538,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Core
       ctx.fillStyle = '#b450ff';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Icon
-      ctx.font = `${b.r * 0.9}px sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(PURPLE_ICONS[b.type] ?? '?', b.x, sy);
       ctx.restore();
     }
   }
 
   // ── Float Texts (combo bonuses) ──────────────────────────
-  function spawnFloatText(wx, wy, text, hue) {
-    floatTexts.push({ x: wx, y: wy, text, hue, life: 1 });
+  function spawnFloatText(wx, wy, text, hue, scale = 1) {
+    floatTexts.push({ x: wx, y: wy, text, hue, life: 1, scale });
+  }
+
+  // Aktif booster skoru kaç ile çarpıyor (x2/x3/x4 → 2/3/4, diğerleri → 1)
+  function getBoostScoreMul() {
+    if (boosterType === 'x2') return 2;
+    if (boosterType === 'x3') return 3;
+    if (boosterType === 'x4') return 4;
+    return 1;
   }
 
   function updateFloatTexts(dt) {
@@ -3561,7 +3572,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const a = Math.max(0, t.life);
       const sc = 0.6 + 0.4 * (1 - t.life); // grows a bit as it fades
       ctx.globalAlpha = a;
-      ctx.font = `bold ${Math.round(14 * sc)}px 'Press Start 2P', monospace`;
+      const mulSc = Math.min(4, t.scale || 1);
+      ctx.font = `bold ${Math.round(14 * sc * mulSc)}px 'Press Start 2P', monospace`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       // glow
       ctx.shadowColor = `hsl(${t.hue},100%,60%)`;
@@ -4145,7 +4157,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
           const gr = 1 + Math.random();
           goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
-            pts: Math.round(100 / gr) });
+            pts: 100 });
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
@@ -4312,11 +4324,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
-        // Combo bonus based on current energy timer
+        // Base 10, süre katsayısı → booster katsayısı sırayla
         const cd = Math.max(0, Math.ceil(energy * 8));
-        const comboBonus = Math.round(cd / 2) * 10; // ×(cd/2), in multiples of 10
-        scoreBonus += comboBonus;
-        spawnFloatText(b.x, b.y - b.r - 8, '+' + comboBonus, 120); // float green text
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const afterTime = Math.round(10 * timeMul);
+        const finalPts  = Math.round(afterTime * boostMul);
+        scoreBonus += finalPts;
+        spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
         spawnGreenParticles(b.x, b.y);
         if (tutStep === 1) advanceTut(2);
@@ -4327,23 +4342,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
-        // Combo çarpanı (timer/2)
+        // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * 8));
-        const mul = Math.max(0.5, cd / 2);
-        const finalPts = Math.round((b.pts * mul) / 10) * 10; // 10'un katı
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const totalMul = timeMul * boostMul;
+        const finalPts = Math.round((b.pts * totalMul) / 10) * 10;
         scoreBonus += finalPts;
         // Sarı flash sahne kenarlarında (puana göre intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
-        spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
+        spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
       }
     }
-    // Mor booster toplama
+    // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        const cd = Math.max(0, Math.ceil(energy * 8));
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const finalPts = Math.round((100 * timeMul * boostMul) / 10) * 10;
+        scoreBonus += finalPts;
+        spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
         purpleBalls.splice(i, 1);
         activateBooster(b.type);
