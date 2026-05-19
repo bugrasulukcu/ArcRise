@@ -967,37 +967,53 @@
     #btn-settings { /* legacy: width applied via .menu-row */ }
     #home-profile { cursor: pointer; }
 
-    /* Menu-row coin & upgrade buttons — share .btn-gray look with subtle accent */
-    .menu-row > #home-coin-pill,
-    .menu-row > #home-upgrade-btn {
+    /* Profile card right column — two subtle glass chips (coin + upgrade) */
+    #home-side {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 6px;
+      align-self: stretch; justify-content: center;
+    }
+    .home-chip {
       display: flex; align-items: center; justify-content: center;
       gap: 6px;
+      padding: 6px 9px;
+      min-width: 56px;
+      border-radius: 11px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .12s;
     }
-    /* Coin button — gold accent on the disc only */
-    #home-coin-pill .mr-coin-disc {
-      width: 22px; height: 22px; border-radius: 50%;
+    .home-chip:hover  { background: rgba(255,255,255,.10); }
+    .home-chip:active { transform: scale(0.96); }
+    .chip-ic {
+      width: 18px; height: 18px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800;
-      background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
-      box-shadow:
-        0 0 8px rgba(255,210,80,.45),
-        inset 0 1px 0 rgba(255,255,255,.55),
-        inset 0 -2px 4px rgba(120,80,0,.45);
-      border: 1px solid #b8860b;
-      color: #4a2c00;
+      font-size: 10px; font-weight: 800;
       flex-shrink: 0;
     }
-    #home-coin-pill .mr-coin-val {
-      font-size: 13px; font-weight: 700; letter-spacing: .6px;
-      color: #ffe8a0;
+    .chip-val { font-size: 12px; font-weight: 700; letter-spacing: .6px; color: #fff; }
+    /* Coin variant — tiny gold disc only */
+    .chip-coin .chip-ic {
+      background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
+      box-shadow:
+        0 0 6px rgba(255,210,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.55),
+        inset 0 -1.5px 3px rgba(120,80,0,.45);
+      border: 1px solid #b8860b;
+      color: #4a2c00;
     }
-    #home-coin-pill:hover { border-color: rgba(255,210,80,.45); }
-    /* Upgrade button — purple icon accent */
-    #home-upgrade-btn svg {
+    .chip-coin .chip-val { color: #ffe8a0; }
+    .chip-coin:hover { border-color: rgba(255,210,80,.35); }
+    /* Upgrade variant — purple icon accent, no value */
+    .chip-upg { padding: 6px 9px; }
+    .chip-upg svg {
+      width: 18px; height: 18px;
       color: #c8a8ff;
-      filter: drop-shadow(0 0 4px rgba(180,120,255,.45));
+      filter: drop-shadow(0 0 4px rgba(180,120,255,.40));
     }
-    #home-upgrade-btn:hover { border-color: rgba(170,120,255,.45); }
+    .chip-upg:hover { border-color: rgba(170,120,255,.35); }
 
     /* Coins popup — gold framed */
     #coins-modal {
