@@ -2809,6 +2809,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let best    = Number(localStorage.getItem('arc_best') || 0);
   let scoreBonus = 0; // altın toplardan gelen ek puan
   let pbCrossed = false; // PB distance line geçildi mi (run başına bir kez)
+  let pbFadeT   = 0;     // PB çizgi fade-out animasyon zamanlayıcısı (sn)
+  const PB_FADE_DUR = 0.7;
 
   // ── Booster state ────────────────────────────────────────
   // types: 'wide','narrow','magnet','x2','x3','x4','ghost','speed'
