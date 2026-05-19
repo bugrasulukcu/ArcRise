@@ -3922,26 +3922,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
   // history without overpowering the live trail.
   function drawGhostTrail() {
-    if (!allGhosts.length) return;
-    const start = Math.max(0, allGhosts.length - GHOSTS_RENDER_MAX);
+    if (!allGhosts.length && !crossPlayerGhosts.length) return;
     ctx.save();
-    ctx.lineWidth = 1.6;
     ctx.lineCap   = 'round';
     ctx.lineJoin  = 'round';
     ctx.globalCompositeOperation = 'lighter';
-    for (let gi = start; gi < allGhosts.length; gi++) {
-      const g = allGhosts[gi];
-      const pts = g.points;
-      if (!pts || pts.length < 2) continue;
-      // Cheap world-y bounding-cull: if entire trace is off-screen, skip.
-      const topY = W2S(g.yMin ?? -1e9);
-      const botY = W2S(g.yMax ?? 1e9);
-      if (botY < -80 || topY > H + 80) continue;
-      // Newer traces a touch brighter; everything overall fainter than before.
-      const recent = (gi >= allGhosts.length - 10);
-      ctx.globalAlpha = recent ? 0.045 : 0.03;
-      ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
-      ctx.lineWidth = 1.2;
+
+    // Helper: stroke a trace's points with the current ctx state
+    function strokeTrace(pts) {
       ctx.beginPath();
       let drew = false;
       for (let i = 0; i < pts.length; i++) {
@@ -3953,6 +3941,37 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       }
       ctx.stroke();
     }
+
+    // 1) Local own ghosts (faint, mode-tinted, neutral thickness)
+    const start = Math.max(0, allGhosts.length - GHOSTS_RENDER_MAX);
+    for (let gi = start; gi < allGhosts.length; gi++) {
+      const g = allGhosts[gi];
+      const pts = g.points;
+      if (!pts || pts.length < 2) continue;
+      const topY = W2S(g.yMin ?? -1e9);
+      const botY = W2S(g.yMax ?? 1e9);
+      if (botY < -80 || topY > H + 80) continue;
+      const recent = (gi >= allGhosts.length - 10);
+      ctx.globalAlpha = recent ? 0.045 : 0.03;
+      ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
+      ctx.lineWidth = 1.2;
+      strokeTrace(pts);
+    }
+
+    // 2) Cross-player ghosts (10% alpha, custom color & thickness)
+    for (const g of crossPlayerGhosts) {
+      const pts = g.points;
+      if (!pts || pts.length < 2) continue;
+      const topY = W2S(g.yMin ?? -1e9);
+      const botY = W2S(g.yMax ?? 1e9);
+      if (botY < -80 || topY > H + 80) continue;
+      ctx.globalAlpha = 0.10;
+      ctx.strokeStyle = g.color || ((g.mode === 'extreme') ? '#ff8866' : '#88bbff');
+      // thickness level 0..20 → 1.2px base, +0.12px per level → max 3.6px
+      ctx.lineWidth = 1.2 + (g.thickness || 0) * 0.12;
+      strokeTrace(pts);
+    }
+
     ctx.restore();
   }
 
