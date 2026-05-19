@@ -1495,6 +1495,68 @@
     .upg-tab-pane { display: none; flex-direction: column; gap: 10px; }
     .upg-tab-pane.active { display: flex; }
 
+    /* Passive tile grid — entry points to detail views */
+    .upg-tile-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+      width: 100%;
+    }
+    .upg-tile {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s, border-color .15s, transform .12s;
+      text-align: left;
+    }
+    .upg-tile:hover  { background: rgba(255,255,255,.08); border-color: rgba(170,120,255,.4); }
+    .upg-tile:active { transform: scale(0.97); }
+    .upg-tile-icon {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      background: rgba(170,120,255,.15);
+      border: 1px solid rgba(170,120,255,.30);
+      flex-shrink: 0;
+    }
+    .upg-tile-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .upg-tile-title {
+      font-size: 10px; letter-spacing: 1.2px; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .upg-tile-state {
+      font-size: 9px; letter-spacing: .6px; color: rgba(203,166,255,.85);
+    }
+
+    /* Detail panel — slides in when a tile is tapped, replacing the grid */
+    .upg-detail {
+      display: none; flex-direction: column; gap: 10px; width: 100%;
+    }
+    .upg-detail.open { display: flex; }
+    .upg-detail-head {
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .upg-back-btn {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.20);
+      color: #fff; font-family: var(--font);
+      font-size: 14px; line-height: 1;
+      width: 28px; height: 28px; border-radius: 8px;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upg-back-btn:hover { border-color: rgba(170,120,255,.55); }
+    .upg-detail-title {
+      flex: 1; font-size: 13px; letter-spacing: 1.4px; color: #fff;
+    }
+    .upg-detail-active {
+      font-size: 11px; letter-spacing: 1px; color: #cba6ff;
+    }
+
     /* Generic upgrade card */
     .upg-card {
       width: 100%;
