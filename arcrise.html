@@ -4342,15 +4342,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
-        // Combo çarpanı (timer/2)
+        // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * 8));
-        const mul = Math.max(0.5, cd / 2);
-        const finalPts = Math.round((b.pts * mul) / 10) * 10; // 10'un katı
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const totalMul = timeMul * boostMul;
+        const finalPts = Math.round((b.pts * totalMul) / 10) * 10;
         scoreBonus += finalPts;
         // Sarı flash sahne kenarlarında (puana göre intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
-        spawnFlyScore(b.x, W2S(b.y), b.pts, mul, finalPts);
+        spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
       }
