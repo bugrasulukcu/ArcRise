@@ -995,16 +995,19 @@
       font-size: 12.5px; font-weight: 800; letter-spacing: .8px;
       color: #fff; flex: 1; text-align: center;
     }
-    /* Coin variant — gold filled button */
+    /* Coin variant — mirrors .coins-buy in the coins popup */
     .chip-coin {
+      border: 1.5px solid rgba(255,210,80,.5);
       background:
-        radial-gradient(120% 90% at 50% 0%, rgba(255,240,160,.45), transparent 65%),
-        linear-gradient(180deg, #d99e22 0%, #a06a0a 100%);
-      border: 1px solid rgba(255,220,120,.55);
+        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
+        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
       box-shadow:
-        0 0 10px rgba(255,180,40,.30),
-        inset 0 1px 0 rgba(255,255,255,.30),
-        inset 0 -2px 3px rgba(80,40,0,.40);
+        0 0 12px rgba(255,170,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.16);
+    }
+    .chip-coin:hover {
+      border-color: rgba(255,210,80,.9);
+      box-shadow: 0 0 18px rgba(255,170,0,.45), inset 0 1px 0 rgba(255,255,255,.22);
     }
     .chip-coin .chip-ic {
       background: radial-gradient(circle at 30% 30%, #fff6b3, #ffd866 45%, #b8860b 95%);
@@ -1015,25 +1018,32 @@
       border: 1px solid #6a4505;
       color: #4a2c00;
     }
-    .chip-coin .chip-val { color: #fff8d8; }
-    /* Upgrade variant — purple filled button, white icon */
+    .chip-coin .chip-val {
+      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    /* Upgrade variant — mirrors #coins-to-upgrades */
     .chip-upg {
+      border: 1.5px solid rgba(170,120,255,.7);
       background:
-        radial-gradient(120% 90% at 50% 0%, rgba(200,150,255,.40), transparent 65%),
-        linear-gradient(180deg, #6e2bb8 0%, #3b0e80 100%);
-      border: 1px solid rgba(190,140,255,.55);
+        radial-gradient(120% 80% at 50% 0%, rgba(190,150,255,.30), transparent 60%),
+        linear-gradient(180deg, rgba(80,50,140,.60), rgba(30,15,60,.72));
       box-shadow:
-        0 0 10px rgba(160,80,255,.35),
-        inset 0 1px 0 rgba(255,255,255,.25),
-        inset 0 -2px 3px rgba(20,0,40,.45);
+        0 0 14px rgba(170,120,255,.30),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -3px 8px rgba(20,10,40,.30);
+    }
+    .chip-upg:hover {
+      box-shadow: 0 0 22px rgba(170,120,255,.45), inset 0 1px 0 rgba(255,255,255,.24);
     }
     .chip-upg svg {
       width: 18px; height: 18px;
-      color: #ffffff;
-      filter: drop-shadow(0 0 3px rgba(255,255,255,.35));
+      color: #e6d5ff;
+      filter: drop-shadow(0 0 3px rgba(190,150,255,.45));
       flex-shrink: 0;
     }
-    .chip-upg .chip-val { color: #ffffff; }
+    .chip-upg .chip-val { color: #e6d5ff; }
 
     /* Coins popup — gold framed */
     #coins-modal {
