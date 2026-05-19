@@ -4704,7 +4704,24 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
 
     // Skoru + distance'ı Firestore'a gönder (config yoksa no-op).
-    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistM);
+    // Build optional trace data: only meaningful if we have enough sample points.
+    // Downsample to ~150 points to keep Firestore payload small.
+    let traceData = null;
+    if (ghostSampled.length >= 4) {
+      const src  = ghostSampled;
+      const step = Math.max(1, Math.floor(src.length / 150));
+      const out  = [];
+      for (let i = 0; i < src.length; i += step) out.push([src[i].x | 0, src[i].y | 0]);
+      // Always include last point so the trace ends at the death spot
+      const last = src[src.length - 1];
+      if (out.length === 0 || out[out.length - 1][1] !== (last.y | 0)) out.push([last.x | 0, last.y | 0]);
+      traceData = {
+        pts: JSON.stringify(out),
+        color: upg.traceColor,             // null falls back to mode tint on render
+        thickness: upg.traceThickness | 0, // 0..20
+      };
+    }
+    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistM, traceData);
     if (sc > 0) ARC_DB.invalidateTopCache();
 
     // Yeterli satır çek — 20 yeter, sıralama görmek için.
