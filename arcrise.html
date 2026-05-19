@@ -2334,7 +2334,7 @@ const ARC_DB = (() => {
 
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
-  async function submitScore(name, avatar, score, mode, distance) {
+  async function submitScore(name, avatar, score, mode, distance, traceData) {
     if (!projectId || projectId.startsWith('BURAYA')) {
       console.warn('[ArcDB] no projectId configured — score not saved');
       return;
@@ -2348,7 +2348,11 @@ const ARC_DB = (() => {
     // Distance — float meters (3 dp). Stored alongside the score so the
     // leaderboard can sort either metric from the same single doc.
     const distNum = Math.max(0, Math.round((Number(distance) || 0) * 1000) / 1000);
-    console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum });
+    // Optional trace data — uploaded only when this run is a new PB distance
+    const tracePts       = (traceData && typeof traceData.pts === 'string') ? traceData.pts : null;
+    const traceColor     = (traceData && traceData.color) || null;
+    const traceThickness = (traceData && Number.isFinite(traceData.thickness)) ? Number(traceData.thickness) : 0;
+    console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum, hasTrace: !!tracePts });
     try {
       const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
