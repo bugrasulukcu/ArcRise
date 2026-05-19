@@ -3653,15 +3653,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // Rainbow burst — fired when crossing PB distance line
-  function spawnRainbowParticles(wx, wy) {
-    const count = 72; // bigger burst — record-breaking moment
+  // Rainbow burst — explodes along the horizontal PB line, not from a point
+  function spawnRainbowParticles(wy, xLeft, xRight) {
+    const count = 140; // dense line burst
+    const span  = xRight - xLeft;
     for (let i = 0; i < count; i++) {
-      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      const spd = 1200 + Math.random() * 1800;
+      const x   = xLeft + (i / (count - 1)) * span + (Math.random() - 0.5) * 8;
+      const vy  = (Math.random() < 0.5 ? -1 : 1) * (700 + Math.random() * 1700);
+      const vx  = (Math.random() - 0.5) * 350;
       particles.push({
-        wx, wy, x: wx, y: wy,
-        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        wx: x, wy,
+        x, y: wy,
+        vx, vy,
         r:    2.5 + Math.random() * 5,
         life: 1.15,
         hue:  Math.random() * 360, // full rainbow
