@@ -4152,20 +4152,37 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function drawTrail(time) {
     if (trail.length < 2) return;
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const userColor = (upg && upg.traceColor) || null;
+    const thickMul  = 1 + ((upg && upg.traceThickness) || 0) * 0.10;
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i];
       const t = i / (trail.length - 1);
       const al = Math.pow(t, 1.4) * 0.9;
-      const w  = 1 + t * 3.8;
-      const h1 = ((time * 80) + i * 3) % 360;
-      const h2 = (h1 + 35) % 360;
-      const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
-      gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
-      gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
-      ctx.strokeStyle = gr; ctx.lineWidth = w; ctx.lineCap = 'round';
+      const w  = (1 + t * 3.8) * thickMul;
+      let stroke;
+      if (userColor) {
+        // Use the chosen hex with age-based alpha — no rainbow
+        const rgb = hexToRgb(userColor);
+        stroke = `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
+      } else {
+        // Default rainbow gradient
+        const h1 = ((time * 80) + i * 3) % 360;
+        const h2 = (h1 + 35) % 360;
+        const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
+        gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
+        gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
+        stroke = gr;
+      }
+      ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
     ctx.restore();
+  }
+  function hexToRgb(hex) {
+    const m = /^#?([a-f\d]{6})$/i.exec(hex || '');
+    if (!m) return { r: 255, g: 255, b: 255 };
+    const n = parseInt(m[1], 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
   // ── Player ───────────────────────────────────────────────
@@ -4174,7 +4191,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const px = player.x, py = W2S(player.y), r = player.r;
 
     // Countdown 8 → 0. Bands: 7-8 green, 5-6 yellow, 3-4 orange, 0-2 red.
-    const countdown = Math.max(0, Math.ceil(energy * 8));
+    const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
     let glowR, glowG, glowB;
     if (countdown >= 7)      { glowR = 124; glowG = 255; glowB = 122; }       // green
     else if (countdown >= 5) { glowR = 255; glowG = 220; glowB = 60;  }       // yellow
@@ -4649,7 +4666,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Extreme runs that died early ended with score=0 and skipped Firestore.
     score = Math.floor(distancePx / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
     // Combo HUD: show current multiplier
-    const countdown = Math.max(0, Math.ceil(energy * 8));
+    const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
     const comboMul = countdown / 2;
     const comboEl  = document.getElementById('combo-hud');
     const comboVal = document.getElementById('combo-val');
@@ -4716,7 +4733,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
         // Base 10, süre katsayısı → booster katsayısı sırayla
-        const cd = Math.max(0, Math.ceil(energy * 8));
+        const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         const afterTime = Math.round(10 * timeMul);
@@ -4734,7 +4751,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
         // Base 100, süre katsayısı önce, booster katsayısı üstüne
-        const cd = Math.max(0, Math.ceil(energy * 8));
+        const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         const totalMul = timeMul * boostMul;
@@ -4752,7 +4769,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
-        const cd = Math.max(0, Math.ceil(energy * 8));
+        const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         const finalPts = Math.round((100 * timeMul * boostMul) / 10) * 10;
@@ -4993,7 +5010,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           ['mode',      gameMode],
           ['score',     Math.floor(score)],
           ['distance',  distM.toFixed(1) + 'm'],
-          ['combo',     Math.max(0, Math.ceil(energy * 8))],
+          ['combo',     Math.max(0, Math.ceil(energy * comboDisplayMax()))],
           ['trail',     trail.length],
           ['ghosts',    allGhosts.length],
           ['obstacles', obstacles.length],
