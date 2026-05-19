@@ -4357,10 +4357,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         goldBalls.splice(i, 1);
       }
     }
-    // Mor booster toplama
+    // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        const cd = Math.max(0, Math.ceil(energy * 8));
+        const timeMul  = Math.max(0.5, cd / 2);
+        const boostMul = getBoostScoreMul();
+        const finalPts = Math.round((100 * timeMul * boostMul) / 10) * 10;
+        scoreBonus += finalPts;
+        spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
         purpleBalls.splice(i, 1);
         activateBooster(b.type);
