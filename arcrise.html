@@ -4148,7 +4148,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
           const gr = 1 + Math.random();
           goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
-            pts: Math.round(100 / gr) });
+            pts: 100 });
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
