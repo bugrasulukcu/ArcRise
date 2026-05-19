@@ -5427,20 +5427,23 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function tickPopupDeco(dt) {
     if (!popupDecoActive) return;
     popupDecoTimer += dt;
-    if (popupDecoTimer < 0.14) return;
+    if (popupDecoTimer < 0.18) return;
     popupDecoTimer = 0;
     const w = popupDecoEl.offsetWidth, h = popupDecoEl.offsetHeight;
     if (w < 10) return;
+    // ICE crystals float up from the Stay Chill button area (bottom quarter)
     const el = document.createElement('span');
-    el.className = 'mode-deco flame-deco';
-    el.textContent = FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)];
+    el.className = 'mode-deco ice-deco';
+    el.textContent = ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)];
     el.style.left = (Math.random() * (w - 16)) + 'px';
-    el.style.top  = (h * 0.85 + Math.random() * h * 0.12) + 'px';
-    el.style.setProperty('--dx', (Math.random() * 20 - 10) + 'px');
-    el.style.animation = `flameRise ${0.8 + Math.random() * 0.7}s ease-out forwards`;
-    el.style.fontSize = (11 + Math.random() * 7) + 'px';
+    el.style.top  = (h * 0.72 + Math.random() * h * 0.22) + 'px';
+    el.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
+    el.style.setProperty('--dy',  -(20 + Math.random() * 30) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+    el.style.animation = `iceFloat ${1.6 + Math.random()}s linear forwards`;
+    el.style.fontSize = (10 + Math.random() * 6) + 'px';
     popupDecoEl.appendChild(el);
-    setTimeout(() => el.remove(), 2000);
+    setTimeout(() => el.remove(), 3000);
   }
 
   // ── Mode selector + Extreme popup ────────────────────────
