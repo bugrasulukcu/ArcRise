@@ -3543,8 +3543,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // ── Float Texts (combo bonuses) ──────────────────────────
-  function spawnFloatText(wx, wy, text, hue) {
-    floatTexts.push({ x: wx, y: wy, text, hue, life: 1 });
+  function spawnFloatText(wx, wy, text, hue, scale = 1) {
+    floatTexts.push({ x: wx, y: wy, text, hue, life: 1, scale });
+  }
+
+  // Aktif booster skoru kaç ile çarpıyor (x2/x3/x4 → 2/3/4, diğerleri → 1)
+  function getBoostScoreMul() {
+    if (boosterType === 'x2') return 2;
+    if (boosterType === 'x3') return 3;
+    if (boosterType === 'x4') return 4;
+    return 1;
   }
 
   function updateFloatTexts(dt) {
