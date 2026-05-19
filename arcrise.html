@@ -3572,7 +3572,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const a = Math.max(0, t.life);
       const sc = 0.6 + 0.4 * (1 - t.life); // grows a bit as it fades
       ctx.globalAlpha = a;
-      ctx.font = `bold ${Math.round(14 * sc)}px 'Press Start 2P', monospace`;
+      const mulSc = Math.min(4, t.scale || 1);
+      ctx.font = `bold ${Math.round(14 * sc * mulSc)}px 'Press Start 2P', monospace`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       // glow
       ctx.shadowColor = `hsl(${t.hue},100%,60%)`;
