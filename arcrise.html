@@ -4327,12 +4327,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
 
     spawnAhead();
-    updateParticles(dt);
-    updateFloatTexts(dt);
     spawnFlameParticles(dt);
-    updateFlameParticles(dt);
     updateFakeViz();
-    updateFlyScores(dt);
 
     // Cull obstacles/bonuses/etc. far below view to prevent memory growth
     const cullY = player.y + H * 1.5;
