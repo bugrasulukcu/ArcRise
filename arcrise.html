@@ -3203,7 +3203,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
   let GAME_SPEED = gameMode === 'extreme' ? 800 : 400;
   function getScoreMul() { return gameMode === 'extreme' ? 3.0 : 1.5; }
-  function getBaseSpeed() { return gameMode === 'extreme' ? 800 : 400; }
+  function getBaseSpeed() {
+    const base = gameMode === 'extreme' ? 800 : 400;
+    const mult = 1 + ((upg && upg.speedActive) || 0) * 0.10;
+    return base * mult;
+  }
+  // Combo timer (base 9 sec, +1 per timer level). Displayed countdown range
+  // is one less because the countdown texture starts at 8.
+  function comboTimerSec()   { return 9 + ((upg && upg.timer) || 0); }
+  function comboDisplayMax() { return 8 + ((upg && upg.timer) || 0); }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
