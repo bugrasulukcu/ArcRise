@@ -5108,13 +5108,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // Tap profile card → open profile edit (but coin pill has its own handler)
-  document.getElementById('home-profile').addEventListener('click', e => {
-    if (e.target.closest('#home-coin-pill')) return;
-    if (e.target.closest('#home-upgrade-btn')) return;
-    openProfModal();
-  });
-  document.getElementById('home-upgrade-btn').addEventListener('click', e => {
-    e.stopPropagation();
+  document.getElementById('home-profile').addEventListener('click', () => openProfModal());
+  document.getElementById('home-upgrade-btn').addEventListener('click', () => {
     document.getElementById('upgrades-modal').classList.add('open');
   });
 
