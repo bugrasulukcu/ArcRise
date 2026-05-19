@@ -4454,6 +4454,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Distance-based coins: accumulate total metres, 1 coin per 100m
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
+    const runDistM = distancePx / (H / 2);
     const prevCoins = coins;
     distTotal += runDistM;
     localStorage.setItem('arc_dist_total', String(distTotal));
@@ -4462,7 +4463,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
-    const runDistM = distancePx / (H / 2);
     if (runDistM > bestDistanceM) {
       bestDistanceM = runDistM;
       localStorage.setItem('arc_bestdist', String(bestDistanceM));
