@@ -4583,7 +4583,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     player.y    = player.cy + Math.sin(player.ang) * player.radius;
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
-    energy = Math.max(0, energy - dt * ENERGY_DECAY);
+    energy = Math.max(0, energy - dt / comboTimerSec());
     if (energy <= 0) {
       // Grace window: countdown shows "0" for up to GRACE_S so the player
       // has a forgiving moment to grab a green and recover before death.
