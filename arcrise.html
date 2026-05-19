@@ -1914,21 +1914,21 @@
     </div>
     <div id="home-profile-info">
       <div id="home-pname">PLAYER</div>
-      <div class="home-stat-row">
-        <div class="home-stat">
-          <div class="home-stat-lbl">BEST SCORE</div>
-          <div class="home-stat-val" id="home-pbest-val">000</div>
-        </div>
-        <div class="home-stat">
-          <div class="home-stat-lbl">BEST DISTANCE</div>
-          <div class="home-stat-val" id="home-pbestdist">0</div>
-        </div>
+      <div id="home-stats-line">
+        <span class="hs-pair"><span class="hs-lbl">SCORE</span><span class="hs-val" id="home-pbest-val">0</span></span>
+        <span class="hs-sep"></span>
+        <span class="hs-pair"><span class="hs-lbl">DIST</span><span class="hs-val" id="home-pbestdist">0</span></span>
       </div>
     </div>
-    <!-- Coin pill — separate from stat data, opens its own gold popup -->
-    <div id="home-coin-pill" title="Coins">
-      <span id="home-coin-lbl">COINS</span>
-      <span id="home-coin-disc"><span id="home-pcoins">0</span></span>
+    <div id="home-actions">
+      <div id="home-coin-pill" class="home-action-btn" title="Coins">
+        <span class="ha-ic">🪙</span>
+        <span class="ha-val" id="home-pcoins">0</span>
+      </div>
+      <button id="home-upgrade-btn" class="home-action-btn" title="Upgrades">
+        <span class="ha-ic">⚙</span>
+        <span class="ha-val">UPGRADE</span>
+      </button>
     </div>
   </div>
   </div><!-- /home-logo-wrap -->
