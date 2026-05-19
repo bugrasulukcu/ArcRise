@@ -4308,6 +4308,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Firestore'dan gerçek skorları arka planda çek — ilk çağrı dışında
     // ARC_DB'nin 5dk TTL cache'ine düşer, yani okuma yapmadan döner.
     fetchLiveScores();
+    fetchCrossPlayerGhosts();
     initBgArcs();
   }
 
