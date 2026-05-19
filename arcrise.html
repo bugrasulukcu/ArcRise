@@ -2453,6 +2453,9 @@ const ARC_DB = (() => {
           distance: Number(f.distance?.doubleValue ?? 0),
           ts:       parseInt(f.ts?.integerValue ?? 0),
           mode:     f.mode?.stringValue || null,
+          tracePts:       f.tracePts?.stringValue || null,
+          traceColor:     f.traceColor?.stringValue || null,
+          traceThickness: parseInt(f.traceThickness?.integerValue ?? 0) || 0,
           docId:    r.document.name.split('/').pop(),
         };
       });
