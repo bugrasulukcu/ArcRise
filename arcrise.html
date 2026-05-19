@@ -4834,16 +4834,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // If turned off mid-game, pause; if turned on mid-game, resume
     if (scene === 'play') { v ? bgAudio.play().catch(() => {}) : bgAudio.pause(); }
   }
-  function setAA(v) {
-    aaOn = v;
-    localStorage.setItem('arc_aa', v ? '1' : '0');
-    document.getElementById('aa-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
-    document.getElementById('aa-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
-    applyAA();
-  }
-  document.getElementById('aa-on').addEventListener('click',  () => setAA(true));
-  document.getElementById('aa-off').addEventListener('click', () => setAA(false));
-  setAA(aaOn);
+  applyAA();
   document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
   document.getElementById('sfx-off').addEventListener('click', () => setSfx(false));
   document.getElementById('mus-on').addEventListener('click',  () => setMus(true));
