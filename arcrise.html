@@ -2622,7 +2622,27 @@ const ARC_DB = (() => {
     return { kept: keepers.size, deleted };
   }
 
-  return { submitScore, getTopScores, invalidateTopCache, wipeAllScores, dedupeScores };
+  // Returns top-N rows for `mode` that have an uploaded trace, parsed into
+  // {name, mode, points: [[x,y],...], color, thickness, distance, score}.
+  // Piggy-backs on getTopScores' cache — zero extra reads.
+  async function getCrossPlayerGhosts(mode, limit = 30) {
+    const rows = await getTopScores(limit, mode);
+    const out = [];
+    for (const r of rows) {
+      if (!r.tracePts) continue;
+      let pts = null;
+      try { pts = JSON.parse(r.tracePts); } catch(_){}
+      if (!Array.isArray(pts) || pts.length < 2) continue;
+      out.push({
+        name: r.name, mode: r.mode, distance: r.distance, score: r.score,
+        points: pts,
+        color: r.traceColor || null,
+        thickness: r.traceThickness || 0,
+      });
+    }
+    return out;
+  }
+  return { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, wipeAllScores, dedupeScores };
 })();
 
 // ── One-shot data reset gate ──────────────────────────────
