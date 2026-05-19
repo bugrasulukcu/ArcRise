@@ -3783,21 +3783,32 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       ? (stats?.bestDistExtreme || 0)
       : (stats?.bestDistNormal  || 0);
     if (!bd || bd <= 0.05) return;
+    // Geçildiyse fade-out: kalınlık artar, opaklık 0'a iner; sonra hiç çizme
+    let lineAlpha = 0.55, labelAlpha = 0.7, lineW = 1.2, dash = [6, 6];
+    if (pbCrossed) {
+      if (pbFadeT >= PB_FADE_DUR) return;
+      const t = pbFadeT / PB_FADE_DUR; // 0 → 1
+      const ease = 1 - (1 - t) * (1 - t); // ease-out
+      lineAlpha  = 0.55 * (1 - ease);
+      labelAlpha = 0.7  * (1 - ease);
+      lineW      = 1.2 + ease * 9; // 1.2 → ~10
+      dash       = []; // çizgi kalınlaştıkça düz olsun, dash kaybolsun
+    }
     const worldY = (H - 200) - bd * (H / 2); // higher up the world = smaller y
     const sy = W2S(worldY);
     if (sy < -2 || sy > H + 2) return;
     ctx.save();
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = lineAlpha;
     ctx.strokeStyle = (gameMode === 'extreme') ? '#ff8866' : '#88ccff';
-    ctx.lineWidth = 1.2;
-    ctx.setLineDash([6, 6]);
+    ctx.lineWidth = lineW;
+    ctx.setLineDash(dash);
     ctx.beginPath();
     ctx.moveTo(walls.left,  sy);
     ctx.lineTo(walls.right, sy);
     ctx.stroke();
     ctx.setLineDash([]);
     // Small "PB" label on the right side
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = labelAlpha;
     ctx.font = '9px var(--font), monospace';
     ctx.fillStyle = (gameMode === 'extreme') ? '#ff8866' : '#88ccff';
     ctx.textBaseline = 'middle';
