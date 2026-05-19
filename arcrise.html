@@ -3670,6 +3670,24 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
+  // Rainbow burst — fired when crossing PB distance line
+  function spawnRainbowParticles(wx, wy) {
+    const count = 72; // bigger burst — record-breaking moment
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+      const spd = 1200 + Math.random() * 1800;
+      particles.push({
+        wx, wy, x: wx, y: wy,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r:    2.5 + Math.random() * 5,
+        life: 1.15,
+        hue:  Math.random() * 360, // full rainbow
+        sides: 3 + Math.floor(Math.random() * 4),
+        rot:   Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
   // Purple booster burst (violet/magenta polygons)
   function spawnPurpleParticles(wx, wy) {
     const count = 64; // a bit more — booster is a big event
