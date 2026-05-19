@@ -3523,8 +3523,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // ── Purple Boosters ──────────────────────────────────────
-  const PURPLE_ICONS = { wide:'↔', narrow:'↕', magnet:'🎯', x2:'×2', x3:'×3', x4:'×4',
-                         ghost:'👻', shield:'🛡', speed:'⚡' };
   function drawPurpleBalls() {
     const now = performance.now() / 1000;
     for (const b of purpleBalls) {
@@ -3540,10 +3538,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Core
       ctx.fillStyle = '#b450ff';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Icon
-      ctx.font = `${b.r * 0.9}px sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(PURPLE_ICONS[b.type] ?? '?', b.x, sy);
       ctx.restore();
     }
   }
