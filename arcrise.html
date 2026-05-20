@@ -6664,10 +6664,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     openExtremeModal();
   });
   document.getElementById('extreme-confirm').addEventListener('click', () => {
-    if (coins < 50) return;
-    coins -= 50;
-    localStorage.setItem('arc_coins', String(coins));
-    applyProfile();
+    if (!extremeUnlocked) {
+      if (!spendCoins(50)) return;
+      extremeUnlocked = true;
+      localStorage.setItem('arc_extreme_unlocked', '1');
+    }
     setGameMode('extreme');
     closeExtremeModal();
   });
