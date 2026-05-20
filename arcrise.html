@@ -5161,18 +5161,24 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       }
     }
 
-    // ── Tutorial zamanlayıcısı ──────────────────────────────
+    // ── Tutorial pacing ─────────────────────────────────────
     if (tutStep >= 0 && tutStep <= 4) {
       tutTimer += dt;
-      // Fade in: ilk 0.5s
+      // Fade in over first 0.5s (used by canvas-side dashed rings)
       if (tutTimer < 0.5) tutAlpha = tutTimer / 0.5;
       else tutAlpha = 1;
 
-      // Zamanlı adımlar için otomatik ilerleme
-      if (tutStep === 1 && tutTimer > 3.5) advanceTut(2);
-      if (tutStep === 2 && tutTimer > 3.5) advanceTut(3);
-      if (tutStep === 3 && tutTimer > 5.5) advanceTut(4);
-      if (tutStep === 4 && tutTimer > 5.5) { endTutorial(); }
+      // Step 2: walls/red warning shown for ~4s then go latent (step 3)
+      if (tutStep === 2 && tutTimer > 4.0) advanceTut(3);
+
+      // Step 3: latent — wait until the combo countdown drops to ≤5
+      if (tutStep === 3) {
+        const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
+        if (countdown <= 5) advanceTut(4);
+      }
+
+      // Step 4: energy-low warning shown for ~3.5s then end
+      if (tutStep === 4 && tutTimer > 3.5) endTutorial();
     }
   }
 
