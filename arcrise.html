@@ -5457,7 +5457,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
 
     if (scene === 'play' && running) {
-      step(dt); // step kendi içinde tutPaused kontrolü yapar
+      if (!tutPaused) step(dt); // step itself also early-returns; this is a guard
       hScore.textContent = pad(Math.floor(score));
       hBest.textContent  = pad(best);
       // Distance: half screen (H/2 world-px) = 1m. (Spawn-relative, no M suffix)
