@@ -5442,16 +5442,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
-      // Soft dim overlay confirms the pause visually during tutorial warnings
-      if (tutPaused && scene === 'play') {
+      // Diagnostic: always show tutorial state during play (temporary debug)
+      if (scene === 'play' && tutStep >= 0) {
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.30)';
-        ctx.fillRect(0, 0, W, H);
-        // Tiny diagnostic so we can SEE whether tutPaused was actually set
-        ctx.fillStyle = 'rgba(255,200,80,.95)';
-        ctx.font = '10px var(--font), monospace';
+        if (tutPaused) {
+          ctx.fillStyle = 'rgba(0,0,0,0.30)';
+          ctx.fillRect(0, 0, W, H);
+        }
+        ctx.fillStyle = tutPaused ? 'rgba(255,200,80,.95)' : 'rgba(120,200,255,.9)';
+        ctx.font = '11px var(--font), monospace';
         ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.fillText(`PAUSED · step ${tutStep}`, 12, 12);
+        ctx.fillText(`tut step=${tutStep} pause=${tutPaused} ang=${tutAngleAcc.toFixed(2)}/${TUT_ARC_TARGET.toFixed(2)}`, 8, H - 20);
         ctx.restore();
       }
     }
