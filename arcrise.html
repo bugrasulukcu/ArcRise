@@ -6617,17 +6617,27 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const coinIcon = document.getElementById('ex-coin-icon');
     const deficit  = document.getElementById('ex-coin-deficit');
     const coinVal  = document.getElementById('ex-req-coin-val');
-    if (coinOk) {
+    if (extremeUnlocked) {
       coinIcon.classList.remove('dim');
       deficit.textContent = '';
       rowCoin.className = 'ex-req-row met';
       rowCoin.querySelector('.ex-req-label').style.color = '';
+      rowCoin.querySelector('.ex-req-label').textContent  = 'Unlocked';
+      coinVal.textContent = '';
     } else {
-      coinIcon.classList.add('dim');
-      deficit.textContent = `(${50 - coins} short)`;
-      rowCoin.className = 'ex-req-row unmet';
+      rowCoin.querySelector('.ex-req-label').textContent = '50 coin';
+      if (coinOk) {
+        coinIcon.classList.remove('dim');
+        deficit.textContent = '';
+        rowCoin.className = 'ex-req-row met';
+        rowCoin.querySelector('.ex-req-label').style.color = '';
+      } else {
+        coinIcon.classList.add('dim');
+        deficit.textContent = `(${50 - coins} short)`;
+        rowCoin.className = 'ex-req-row unmet';
+      }
+      coinVal.textContent = `(have: ${coins})`;
     }
-    coinVal.textContent = `(have: ${coins})`;
 
     const btn = document.getElementById('extreme-confirm');
     if (allOk) {
