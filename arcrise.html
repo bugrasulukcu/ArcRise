@@ -6585,7 +6585,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       rowCoin.querySelector('.ex-req-label').style.color = '';
     } else {
       coinIcon.classList.add('dim');
-      deficit.textContent = `(${50 - coins} eksik)`;
+      deficit.textContent = `(${50 - coins} short)`;
       rowCoin.className = 'ex-req-row unmet';
     }
     coinVal.textContent = `(sahip: ${coins})`;
