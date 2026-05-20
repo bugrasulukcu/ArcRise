@@ -4858,11 +4858,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     tutStep  = nextStep;
     tutTimer = 0;
     tutAlpha = 0; // sıfırdan fade-in
+    // Warning/energy banners pause the game so players actually read them.
+    // Latent step 3 must NOT pause — game must keep running for energy to drop.
+    if (nextStep === 2 || nextStep === 4) tutPaused = true;
+    else if (nextStep === 3) tutPaused = false;
     updateTutHud();
   }
 
   function endTutorial() {
     tutStep = -1;
+    tutPaused = false;
     tutHudEl.classList.remove('active');
   }
 
