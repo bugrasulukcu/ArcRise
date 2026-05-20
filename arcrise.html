@@ -1700,6 +1700,107 @@
     #reset-confirm { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
     /* ══════════ EXTREME MODE POPUP ══════════ */
+    /* ══════════ WIFE MODE CONFIRM ══════════ */
+    #wife-modal {
+      position: fixed; inset: 0; z-index: 60;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(40,10,30,0.30);
+      backdrop-filter: blur(18px) saturate(1.10);
+      -webkit-backdrop-filter: blur(18px) saturate(1.10);
+    }
+    #wife-modal.open { display: flex; }
+    #wife-modal-box {
+      position: relative;
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,180,210,.22), transparent 60%),
+        linear-gradient(180deg, rgba(60,20,40,0.94) 0%, rgba(30,10,22,0.95) 100%);
+      border: 1.5px solid rgba(255,140,200,.65);
+      border-radius: 26px;
+      padding: 26px 22px 22px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      box-shadow:
+        0 0 40px rgba(255,80,150,.30),
+        0 0 80px rgba(255,40,120,.12),
+        inset 0 1px 0 rgba(255,200,225,.20);
+      overflow: hidden;
+    }
+    #wife-modal-deco {
+      position: absolute; inset: 0;
+      pointer-events: none; overflow: hidden;
+      border-radius: 26px; z-index: 0;
+    }
+    #wife-modal-box > *:not(#wife-modal-deco) { position: relative; z-index: 1; }
+    #wife-icon {
+      font-size: 38px;
+      filter: drop-shadow(0 0 12px rgba(255,140,200,.6));
+    }
+    #wife-title {
+      font-family: var(--font);
+      font-size: 22px; letter-spacing: 3px;
+      color: #ffd0e5;
+      text-shadow: 0 0 12px rgba(255,140,200,.55);
+    }
+    #wife-desc {
+      font-family: var(--font);
+      font-size: 11.5px; letter-spacing: 1px; line-height: 1.6;
+      color: rgba(255,220,235,.85); text-align: center;
+      padding: 4px 6px;
+    }
+    #wife-desc b { color: #ffb0d4; }
+    #wife-warn {
+      font-family: var(--font);
+      font-size: 10.5px; letter-spacing: 1px; line-height: 1.5;
+      color: rgba(255,200,220,.65); text-align: center;
+      padding: 8px 12px;
+      background: rgba(255,80,150,.08);
+      border: 1px solid rgba(255,140,200,.25);
+      border-radius: 10px;
+    }
+    #wife-warn b { color: #ffc8de; }
+    #wife-confirm {
+      width: 100%; padding: 14px; border-radius: 13px;
+      border: 1.5px solid rgba(255,140,200,.7);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,200,225,.30), transparent 60%),
+        linear-gradient(180deg, rgba(200,50,120,.60), rgba(110,20,60,.70));
+      color: #ffe0ef; font-family: var(--font);
+      font-size: 14.5px; letter-spacing: 2px; cursor: pointer;
+      box-shadow:
+        0 0 22px rgba(255,80,150,.40),
+        inset 0 1px 0 rgba(255,255,255,.20),
+        inset 0 -6px 12px rgba(60,10,30,.30);
+      transition: transform .12s, filter .15s;
+    }
+    #wife-confirm:hover  { filter: brightness(1.10); }
+    #wife-confirm:active { transform: scale(0.97); }
+    #wife-back {
+      width: 100%; padding: 13px; border-radius: 13px;
+      border: 1.5px solid rgba(120,170,255,.45);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(140,190,255,.18), transparent 60%),
+        linear-gradient(180deg, rgba(40,60,110,.55), rgba(10,20,40,.65));
+      color: #99bbff; font-family: var(--font);
+      font-size: 11.5px; letter-spacing: 2px; cursor: pointer;
+      margin-top: 4px;
+      box-shadow: 0 0 14px rgba(80,140,255,.22), inset 0 1px 0 rgba(255,255,255,.12);
+      transition: transform .12s;
+    }
+    #wife-back:active { transform: scale(0.97); }
+    /* Floating flowers behind the popup */
+    .flower-deco {
+      position: absolute;
+      font-size: 14px;
+      pointer-events: none;
+      animation: wifeFlowerRise 2.2s linear forwards;
+    }
+    @keyframes wifeFlowerRise {
+      0%   { transform: translateY(0)    rotate(0deg);   opacity: 0; }
+      15%  { opacity: 0.9; }
+      85%  { opacity: 0.7; }
+      100% { transform: translateY(-90px) rotate(var(--rot, 180deg)); opacity: 0; }
+    }
+
     #extreme-modal {
       position: fixed; inset: 0; z-index: 60;
       display: none; align-items: center; justify-content: center;
