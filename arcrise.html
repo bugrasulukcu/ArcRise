@@ -3367,52 +3367,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // LB NPC sabit skorları (her oyun başında yeniden çekilir)
   let lbNPCScores = [];
 
-  // Tutorial adım 0: ilk yay çizildikten 1.8s sonra fizik durdurulur
-  // (running'i değiştirmeden, ayrı bayrakla)
-  let tutPaused = false;
-
-  // ── Tutorial state ───────────────────────────────────────
-  // -1 = off
-  //  0 = paused after first 1/6 arc, waiting for first tap
-  //  1 = paused after reverse 1/6 arc, waiting for second tap
-  //  2 = running, showing "stay away from walls + red" banner
-  //  3 = latent, waiting for energy countdown to drop to 5
-  //  4 = showing "energy low — collect green" banner
-  let tutStep  = -1;
-  let tutTimer = 0;       // current step elapsed (sec)
-  let tutAlpha = 0;       // legacy fade-in for canvas hints (0..1)
-  let tutAngleAcc = 0;    // accumulated arc-angle since last tap (radians)
-  const TUT_ARC_TARGET = Math.PI / 3; // 60° = 1/6 of a full circle
-
-  // Each step → title + description + visual mode class
-  const TUT_STEPS = [
-    { title: 'TAP TO ROTATE',       desc: 'Tap the screen to flip your arc',                 kind: 'tap'    },
-    { title: 'TAP AGAIN',           desc: 'Each tap reverses your direction',                kind: 'tap'    },
-    { title: 'AVOID OBSTACLES',     desc: 'Stay away from walls and red balls',              kind: 'warn'   },
-    { title: '',                    desc: '',                                                kind: 'hidden' },
-    { title: 'ENERGY LOW',          desc: 'Collect green balls to refill your countdown',    kind: 'energy' },
-  ];
-
-  function updateTutHud() {
-    if (tutStep < 0 || tutStep > 4 || scene !== 'play') {
-      tutHudEl.classList.remove('active');
-      return;
-    }
-    const s = TUT_STEPS[tutStep];
-    if (s.kind === 'hidden') {
-      tutHudEl.classList.remove('active'); // latent step — no banner
-      return;
-    }
-    tutHudEl.classList.add('active');
-    tutBTitle.textContent = s.title;
-    tutBDesc.textContent  = s.desc;
-    const banner = document.getElementById('tut-banner');
-    if (banner) {
-      banner.classList.toggle('is-tap',    s.kind === 'tap');
-      banner.classList.toggle('is-warn',   s.kind === 'warn');
-      banner.classList.toggle('is-energy', s.kind === 'energy');
-    }
-  }
+  // Tutorial system removed — players learn by playing.
 
   // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2×, dynamic +)
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
