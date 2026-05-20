@@ -688,44 +688,64 @@
     }
 
     /* ══════════ IN-GAME TUTORIAL HUD ══════════ */
-    /* Alt banner: adım başlığı + açıklama + skip */
+    /* Centered card with title + 1-line description + skip */
     #tut-hud {
-      position: fixed; bottom: 0; left: 0; right: 0;
+      position: fixed; inset: 0;
       z-index: 25; pointer-events: none;
       display: none;
+      align-items: center; justify-content: center;
     }
-    #tut-hud.active { display: block; }
+    #tut-hud.active { display: flex; }
     #tut-banner {
-      background: rgba(8,10,14,0.92);
-      border-top: 1px solid rgba(255,255,255,.08);
-      backdrop-filter: blur(6px);
-      padding: 14px 20px 18px;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 14px; pointer-events: auto;
+      background: rgba(8,10,14,0.86);
+      border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      padding: 20px 26px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      pointer-events: auto;
+      backdrop-filter: blur(12px) saturate(1.05);
+      -webkit-backdrop-filter: blur(12px) saturate(1.05);
+      box-shadow: 0 0 40px rgba(0,0,0,.55);
+      max-width: 80vw;
+      animation: tutBannerIn .25s ease-out;
     }
-    #tut-banner-left { flex: 1; }
+    @keyframes tutBannerIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    #tut-tap-ic {
+      font-size: 28px;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(180,230,255,.6));
+      animation: tutTapPulse 1.2s ease-in-out infinite;
+      display: none;
+    }
+    #tut-banner.is-tap #tut-tap-ic { display: block; }
+    @keyframes tutTapPulse {
+      0%,100% { transform: scale(1)   translateY(0);  opacity: .85; }
+      50%     { transform: scale(1.15) translateY(2px); opacity: 1; }
+    }
     #tut-banner-title {
-      font-size: 11.5px; letter-spacing: 2px; color: var(--green);
-      margin-bottom: 7px;
+      font-family: var(--font);
+      font-size: 15px; letter-spacing: 2px;
+      color: var(--green);
+      text-align: center;
     }
+    #tut-banner.is-warn #tut-banner-title { color: #ff7788; }
+    #tut-banner.is-energy #tut-banner-title { color: #ffcc44; }
     #tut-banner-desc {
-      font-size: 8.5px; color: rgba(255,255,255,.5);
-      letter-spacing: 1px; line-height: 1.8;
+      font-family: var(--font);
+      font-size: 10.5px; color: rgba(255,255,255,.65);
+      letter-spacing: 1.1px; line-height: 1.5;
+      text-align: center;
+      max-width: 240px;
     }
-    #tut-banner-right {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0;
-    }
-    #tut-step-dots { display: flex; gap: 5px; }
-    .tut-sdot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,.18); transition: background .25s;
-    }
-    .tut-sdot.active { background: var(--green); }
     #tut-skip-btn {
+      margin-top: 4px;
       background: none; border: 1px solid rgba(255,255,255,.18);
       border-radius: 7px; color: rgba(255,255,255,.4);
-      font-family: var(--font); font-size: 8px;
-      letter-spacing: 1px; padding: 6px 11px; cursor: pointer;
+      font-family: var(--font); font-size: 8.5px;
+      letter-spacing: 1px; padding: 6px 14px; cursor: pointer;
     }
     #tut-skip-btn:hover { color: #fff; border-color: rgba(255,255,255,.4); }
 
