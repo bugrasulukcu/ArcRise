@@ -6152,10 +6152,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
-    if (firstPlay) {
-      firstPlay = false;
-      localStorage.setItem('arc_firstplay', '0');
-    }
   }
 
   // ── Mode button decorations (ice crystals / flames) ──────
