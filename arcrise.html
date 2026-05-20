@@ -3328,9 +3328,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2×, dynamic +)
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
   let GAME_SPEED = gameMode === 'extreme' ? 800 : 400;
-  function getScoreMul() { return gameMode === 'extreme' ? 3.0 : 1.5; }
+  function getScoreMul() {
+    if (gameMode === 'extreme') return 3.0;
+    if (gameMode === 'wife')    return 1.5; // same reward tier as Chill
+    return 1.5;
+  }
   function getBaseSpeed() {
-    const base = gameMode === 'extreme' ? 800 : 400;
+    let base;
+    if (gameMode === 'extreme')   base = 800;
+    else if (gameMode === 'wife') base = 400 * 0.7; // 30% slower than Chill
+    else                          base = 400;
     const mult = 1 + ((upg && upg.speedActive) || 0) * 0.10;
     return base * mult;
   }
