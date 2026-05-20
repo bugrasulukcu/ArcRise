@@ -6443,7 +6443,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         firstPlay = false;
         localStorage.setItem('arc_firstplay', '0');
       }
-      advanceTut(1); // adım 0 (touch to begin) atlandı, direkt 1'den başlat
+      tutAngleAcc = 0;
+      advanceTut(0); // arc begins running; pauses after ~60° for first tap prompt
     }
   }
 
