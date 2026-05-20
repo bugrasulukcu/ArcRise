@@ -5211,20 +5211,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ripples.push({ x: sx, y: S2W(sy), t: performance.now() / 1000 });
 
     if (running) {
-      // During paused warning steps (2/4), NEXT button is the only way out
-      if (tutPaused && (tutStep === 2 || tutStep === 4)) return;
-      // Magnet booster: player.x'i parmak x'ine ışınla
       if (boosterType === 'magnet') player.x = sx;
-      // Tutorial: tap during a paused tap-prompt step reverses + advances
-      if (tutPaused && (tutStep === 0 || tutStep === 1)) {
-        const nextStep = (tutStep === 0) ? 1 : 2;
-        tutPaused = false;
-        tutAngleAcc = 0;
-        beginArc(-player.dir, getRadius());
-        advanceTut(nextStep);
-      } else {
-        beginArc(-player.dir, getRadius());
-      }
+      beginArc(-player.dir, getRadius());
     }
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
