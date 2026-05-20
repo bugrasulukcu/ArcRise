@@ -5517,12 +5517,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     if (running) {
       // Magnet booster: player.x'i parmak x'ine ışınla
+      if (boosterType === 'magnot') player.x = sx;
       if (boosterType === 'magnet') player.x = sx;
-      beginArc(-player.dir, getRadius());
-      // Adım 3: sol %35'e dokunulursa ilerle
-      if (tutStep === 3 && sx < W * 0.35) advanceTut(4);
-      // Adım 4: sağ %35'e dokunulursa ilerle
-      else if (tutStep === 4 && sx > W * 0.65) advanceTut(5);
+      // Tutorial: tap during a paused step reverses + advances
+      if (tutPaused && (tutStep === 0 || tutStep === 1)) {
+        const nextStep = (tutStep === 0) ? 1 : 2;
+        tutPaused = false;
+        tutAngleAcc = 0;
+        beginArc(-player.dir, getRadius());
+        advanceTut(nextStep);
+      } else {
+        beginArc(-player.dir, getRadius());
+      }
     }
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
