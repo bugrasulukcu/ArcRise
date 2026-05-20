@@ -6363,8 +6363,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     gameMode = m;
     localStorage.setItem('arc_mode', m);
     GAME_SPEED = getBaseSpeed();
-    document.getElementById('mode-btn-normal').className = 'mode-btn' + (m === 'normal' ? ' active-normal' : '');
+    document.getElementById('mode-btn-normal').className  = 'mode-btn' + (m === 'normal'  ? ' active-normal'  : '');
     document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
+    const wifeBtn = document.getElementById('mode-btn-wife');
+    if (wifeBtn) wifeBtn.classList.toggle('active', m === 'wife');
     // Clear any in-flight deco particles from the previous mode so the screen flips cleanly
     const wrap = document.getElementById('mode-fx-wrap');
     if (wrap) wrap.querySelectorAll('.mode-deco').forEach(el => el.remove());
@@ -6376,6 +6378,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
+  document.getElementById('mode-btn-wife').addEventListener('click', () => setGameMode('wife'));
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
