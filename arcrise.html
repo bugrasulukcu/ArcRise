@@ -6573,7 +6573,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
     rowScore.querySelector('.ex-req-check').textContent = scoreOk ? '✓' : '✗';
-    document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(en iyi: ${bestScore})`;
+    document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(best: ${bestScore})`;
 
     const coinIcon = document.getElementById('ex-coin-icon');
     const deficit  = document.getElementById('ex-coin-deficit');
