@@ -1818,6 +1818,43 @@
       position: relative;
       padding: 14px 18px;  /* room for floating particles outside */
     }
+    /* Wife Mode — floating pink button anchored to the LEFT of #mode-sel,
+       outside the selector so Chill/Extreme keep their original positions. */
+    #mode-btn-wife {
+      position: absolute;
+      left: -42px; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px;
+      border-radius: 11px;
+      border: 1.5px solid rgba(255,140,200,.55);
+      background:
+        radial-gradient(circle 11px at 30% 30%, rgba(255,220,235,.55), transparent 60%),
+        linear-gradient(135deg, #ff7eb6 0%, #ff4d9a 55%, #c2356b 100%);
+      color: #fff;
+      font-size: 17px; line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow:
+        0 0 14px rgba(255,80,150,.40),
+        inset 0 -4px 8px rgba(180,30,80,.30),
+        inset 0 2px 4px rgba(255,255,255,.28);
+      transition: transform .12s, filter .15s, box-shadow .2s;
+      z-index: 2;
+    }
+    #mode-btn-wife:hover  { filter: brightness(1.10); }
+    #mode-btn-wife:active { transform: translateY(-50%) scale(0.92); }
+    #mode-btn-wife.active {
+      border-color: rgba(255,170,210,.95);
+      box-shadow:
+        0 0 22px rgba(255,80,150,.65),
+        0 0 40px rgba(255,40,120,.30),
+        inset 0 -4px 8px rgba(180,30,80,.45),
+        inset 0 2px 4px rgba(255,255,255,.38);
+      animation: wifePulse 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes wifePulse {
+      0%   { filter: brightness(1.00) saturate(1.00); }
+      100% { filter: brightness(1.18) saturate(1.15); }
+    }
     #mode-sel {
       display: flex; gap: 0;
       border: 1.5px solid rgba(255,255,255,.28);
