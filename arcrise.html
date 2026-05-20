@@ -5432,15 +5432,23 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
-      // Visual particle updates continue animating after death (over scene) too
-      updateParticles(dt);
-      updateFloatTexts(dt);
-      updateFlameParticles(dt);
-      updateFlyScores(dt);
+      // Particle updates pause too while a tutorial warning is up — total freeze feel
+      const animDt = (tutPaused && scene === 'play') ? 0 : dt;
+      updateParticles(animDt);
+      updateFloatTexts(animDt);
+      updateFlameParticles(animDt);
+      updateFlyScores(animDt);
       drawWalls(); drawBestDistanceLine(); drawDeathMarkers(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
+      // Soft dim overlay confirms the pause visually during tutorial warnings
+      if (tutPaused && scene === 'play') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.30)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
     }
 
     if (scene === 'play' && running) {
