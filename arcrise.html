@@ -5220,17 +5220,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // ── Desktop: Space to flip arc ────────────────────────────
   function spaceFlip() {
     if (scene !== 'play' || !running) return;
-    if (tutPaused && (tutStep === 2 || tutStep === 4)) return;
     haptic(40);
     playTouchSound();
-    if (tutPaused && (tutStep === 0 || tutStep === 1)) {
-      const nextStep = (tutStep === 0) ? 1 : 2;
-      tutPaused = false;
-      tutAngleAcc = 0;
-      beginArc(-player.dir, getRadius());
-      advanceTut(nextStep);
-      return;
-    }
     if (boosterType === 'magnet') player.x = W / 2;
     beginArc(-player.dir, getRadius());
   }
