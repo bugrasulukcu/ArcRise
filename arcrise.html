@@ -6592,12 +6592,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
+  // Extreme is a one-time 50-coin unlock — flag persists after first purchase.
+  let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
     const distOk    = bestDist >= 100;
     const scoreOk   = bestScore >= 2000;
-    const coinOk    = coins >= 50;
+    const coinOk    = extremeUnlocked || coins >= 50;
     const allOk     = distOk && scoreOk && coinOk;
 
     const rowDist  = document.getElementById('ex-req-dist');
