@@ -5126,33 +5126,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Game canvas
     ctx.clearRect(0, 0, W, H);
     if (scene === 'play' || scene === 'over') {
-      // Particle updates pause too while a tutorial warning is up — total freeze feel
-      const animDt = (tutPaused && scene === 'play') ? 0 : dt;
-      updateParticles(animDt);
-      updateFloatTexts(animDt);
-      updateFlameParticles(animDt);
-      updateFlyScores(animDt);
+      updateParticles(dt);
+      updateFloatTexts(dt);
+      updateFlameParticles(dt);
+      updateFlyScores(dt);
       drawWalls(); drawBestDistanceLine(); drawDeathMarkers(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
-      if (scene === 'play') { drawFlyScores(); drawTutorial(time); drawBoosterBorder(); }
-      // Diagnostic: always show tutorial state during play (temporary debug)
-      if (scene === 'play' && tutStep >= 0) {
-        ctx.save();
-        if (tutPaused) {
-          ctx.fillStyle = 'rgba(0,0,0,0.30)';
-          ctx.fillRect(0, 0, W, H);
-        }
-        ctx.fillStyle = tutPaused ? 'rgba(255,200,80,.95)' : 'rgba(120,200,255,.9)';
-        ctx.font = '11px var(--font), monospace';
-        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.fillText(`tut step=${tutStep} pause=${tutPaused} ang=${tutAngleAcc.toFixed(2)}/${TUT_ARC_TARGET.toFixed(2)}`, 8, H - 20);
-        ctx.restore();
-      }
+      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); }
     }
 
     if (scene === 'play' && running) {
-      if (!tutPaused) step(dt); // step itself also early-returns; this is a guard
+      step(dt);
       hScore.textContent = pad(Math.floor(score));
       hBest.textContent  = pad(best);
       // Distance: half screen (H/2 world-px) = 1m. (Spawn-relative, no M suffix)
