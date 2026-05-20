@@ -5148,7 +5148,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const bd = bestDistanceM || 0;
         dBestEl.textContent = bd >= 10 ? String(Math.round(bd)) : bd.toFixed(1);
       }
-      if (!tutPaused) refreshLB();
+      refreshLB();
     }
 
     requestAnimationFrame(loop);
