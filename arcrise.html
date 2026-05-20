@@ -6521,7 +6521,39 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
-  document.getElementById('mode-btn-wife').addEventListener('click', () => setGameMode('wife'));
+
+  // ── Wife Mode confirm popup ──────────────────────────────
+  const wifeModal = document.getElementById('wife-modal');
+  const wifeDecoEl = document.getElementById('wife-modal-deco');
+  let wifeDecoActive = false;
+  let wifeDecoTimer = 0;
+  const FLOWER_GLYPHS = ['🌸','🌺','💮','🌷','🌼','✿'];
+  function tickWifeDeco(dt) {
+    if (!wifeDecoActive) return;
+    wifeDecoTimer += dt;
+    if (wifeDecoTimer < 0.20) return;
+    wifeDecoTimer = 0;
+    const w = wifeDecoEl.offsetWidth, h = wifeDecoEl.offsetHeight;
+    if (w < 10) return;
+    const el = document.createElement('span');
+    el.className = 'flower-deco';
+    el.textContent = FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)];
+    el.style.left = (Math.random() * (w - 18)) + 'px';
+    el.style.top  = (h * 0.85 + Math.random() * h * 0.12) + 'px';
+    el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+    el.style.fontSize = (12 + Math.random() * 8) + 'px';
+    wifeDecoEl.appendChild(el);
+    setTimeout(() => el.remove(), 2400);
+  }
+  function openWifeModal()  { wifeModal.classList.add('open');    wifeDecoActive = true;  wifeDecoTimer = 0; }
+  function closeWifeModal() { wifeModal.classList.remove('open'); wifeDecoActive = false; if (wifeDecoEl) wifeDecoEl.querySelectorAll('.flower-deco').forEach(el => el.remove()); }
+  document.getElementById('mode-btn-wife').addEventListener('click', () => {
+    if (gameMode === 'wife') return;
+    openWifeModal();
+  });
+  document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
+  document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
+  wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
