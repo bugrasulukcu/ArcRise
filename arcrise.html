@@ -3238,7 +3238,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
   let running = false, started = false;
-  let firstPlay = localStorage.getItem('arc_firstplay') !== '0'; // false sonraki oturumlarda
+  // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
   // endGame is called — gives the player a small forgiveness window.
