@@ -5178,7 +5178,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Step 3: latent — running game, wait for combo countdown to drop to ≤5
       if (tutStep === 3) {
         const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
-        if (countdown <= 5) advanceTut(4);
+        if (countdown <= 5) { advanceTut(4); return; }
       }
       // Steps 2 & 4 are paused — advance is driven by the NEXT button.
     }
