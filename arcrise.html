@@ -6484,6 +6484,20 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       el.style.fontSize = (12 + Math.random() * 6) + 'px';
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 2000);
+    } else if (gameMode === 'wife') {
+      // FLOWER deco — drift up across full width
+      const el = document.createElement('span');
+      el.className = 'mode-deco flower-deco';
+      el.textContent = FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)];
+      const startX = Math.random() * (w - 10);
+      const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
+      el.style.left = startX + 'px';
+      el.style.top  = startY + 'px';
+      el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      el.style.animation = `wifeFlowerRise ${1.8 + Math.random() * 0.8}s ease-out forwards`;
+      el.style.fontSize = (13 + Math.random() * 7) + 'px';
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 2700);
     }
   }
 
