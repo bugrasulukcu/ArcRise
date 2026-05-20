@@ -5017,10 +5017,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_last', String(lastScore));
     const runDistM = distancePx / (H / 2);
     const prevCoins = coins;
-    distTotal += runDistM;
-    localStorage.setItem('arc_dist_total', String(distTotal));
-    coins = Math.floor(distTotal / 100);
-    localStorage.setItem('arc_coins', String(coins));
+    // Wife Mode is casual — no coin earnings either
+    if (gameMode !== 'wife') {
+      distTotal += runDistM;
+      localStorage.setItem('arc_dist_total', String(distTotal));
+      coins = Math.floor(distTotal / 100);
+      localStorage.setItem('arc_coins', String(coins));
+    }
     const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
