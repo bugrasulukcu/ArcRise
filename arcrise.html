@@ -5447,6 +5447,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.30)';
         ctx.fillRect(0, 0, W, H);
+        // Tiny diagnostic so we can SEE whether tutPaused was actually set
+        ctx.fillStyle = 'rgba(255,200,80,.95)';
+        ctx.font = '10px var(--font), monospace';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(`PAUSED · step ${tutStep}`, 12, 12);
         ctx.restore();
       }
     }
