@@ -4784,69 +4784,33 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function drawTutorial(time) {
     if (tutStep < 0 || tutStep > 4) return;
-
-    // fade in/out (0→1 in 0.4s, stays, 1→0 in last 0.4s for timed steps)
     tutAlpha = Math.min(1, tutAlpha);
+    const pulse = 0.75 + 0.25 * Math.sin(time * 3.5);
 
-    const pulse = 0.75 + 0.25 * Math.sin(time * 3.5); // pulsing ring
-
-    if (tutStep === 0) {
-      // ── Adım 0: TOUCH ──────────────────────────────────────
-      const rx = W * 0.72, ry = H * 0.72;
-      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
-      ctx.setLineDash([9, 6]);
-      ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(rx, ry, 56, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-      tutLabel(rx, ry, 'TOUCH', null, '#fff');
-
-    } else if (tutStep === 1) {
-      // ── Adım 1: COLLECT GREEN TO MOVE ──────────────────────
-      // Ekranda görünen ilk bonus etrafında yeşil dashed ring
-      const b = bonuses.find(bo => { const sy = W2S(bo.y); return sy > 60 && sy < H - 60; });
-      if (b) {
-        const sy = W2S(b.y);
-        dashedRing(b.x, sy, b.r + 22, `rgba(124,255,122,${pulse * .85})`);
-        tutLabelGreen(b.x, sy - b.r - 46);
-      }
-
-    } else if (tutStep === 2) {
-      // ── Adım 2: STAY AWAY FROM THE RED ─────────────────────
-      // Ekranda görünen ilk engel etrafında kırmızı dashed ring
+    if (tutStep === 2) {
+      // Highlight a nearby obstacle in red — "stay away" hint
       const ob = obstacles.find(o => { const sy = W2S(o._oy ?? o.y); return sy > 60 && sy < H - 60; });
       if (ob) {
         const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
         ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
         ctx.setLineDash([9, 6]);
-        ctx.strokeStyle = `rgba(255,51,85,.85)`; ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'rgba(255,51,85,.85)'; ctx.lineWidth = 1.8;
         ctx.beginPath(); ctx.arc(sx, sy, ob.r + 22, 0, Math.PI * 2); ctx.stroke();
         ctx.setLineDash([]);
         ctx.restore();
-        tutLabelMixed(sx, sy - ob.r - 46, 'STAY AWAY', 'FROM ', 'THE RED');
       }
-
-    } else if (tutStep === 3) {
-      // ── Adım 3: TOUCH RIGHT → WIDE ARC ──────────────────────
-      const rx = W * 0.82, ry = H * 0.42;
-      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
-      ctx.setLineDash([10, 7]);
-      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(rx, ry, 68, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-      tutLabel(rx - 90, ry, 'TOUCH RIGHT', 'WIDE ARC');
-
     } else if (tutStep === 4) {
-      // ── Adım 4: TOUCH LEFT → TIGHT ARC ─────────────────────
-      const rx = W * 0.18, ry = H * 0.42;
-      ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
-      ctx.setLineDash([10, 7]);
-      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(rx, ry, 52, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-      tutLabel(rx + 80, ry, 'TOUCH LEFT', 'TIGHT ARC');
+      // Highlight a nearby green bonus — "grab the green" hint
+      const b = bonuses.find(bo => { const sy = W2S(bo.y); return sy > 60 && sy < H - 60; });
+      if (b) {
+        const sy = W2S(b.y);
+        ctx.save(); ctx.globalAlpha = tutAlpha * pulse;
+        ctx.setLineDash([9, 6]);
+        ctx.strokeStyle = 'rgba(124,255,122,.85)'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(b.x, sy, b.r + 22, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
     }
   }
 
