@@ -5162,8 +5162,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     settingsEl.classList.toggle('active',     s === 'settings');
     gameoverEl.classList.toggle('active',     s === 'over');
     hudEl.classList.toggle('active',          s === 'play');
-    if (s === 'home') { applyProfile(); endTutorial(); }
-    if (s !== 'play') tutHudEl.classList.remove('active');
+    if (s === 'home') { applyProfile(); }
   }
 
   // İlk açılışta profil oluşturma ekranını göster
@@ -5172,11 +5171,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   } else {
     showScene('home');
   }
-
-  // ── Tutorial HUD: SKIP butonu ──────────────────────────────
-  document.getElementById('tut-skip-btn').addEventListener('click', () => {
-    endTutorial();
-  });
 
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
