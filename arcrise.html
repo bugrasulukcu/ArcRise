@@ -5447,7 +5447,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total', STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
+     'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked', STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; firstPlay = true; coins = 0; lastScore = 0; xpTotal = 0;
     bestDistanceM = 0;
     stats = loadStats();
