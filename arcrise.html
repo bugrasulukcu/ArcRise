@@ -6152,13 +6152,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
-    if (withTutorial || firstPlay) {
-      if (firstPlay) {
-        firstPlay = false;
-        localStorage.setItem('arc_firstplay', '0');
-      }
-      tutAngleAcc = 0;
-      advanceTut(0); // arc begins running; pauses after ~60° for first tap prompt
+    if (firstPlay) {
+      firstPlay = false;
+      localStorage.setItem('arc_firstplay', '0');
     }
   }
 
