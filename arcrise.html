@@ -6534,9 +6534,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Clear any in-flight deco particles from the previous mode so the screen flips cleanly
     const wrap = document.getElementById('mode-fx-wrap');
     if (wrap) wrap.querySelectorAll('.mode-deco').forEach(el => el.remove());
-    // Toggle the home frame's extreme-flame look
+    // Toggle the home frame's mode-specific look
     const home = document.getElementById('home');
-    if (home) home.classList.toggle('extreme-mode', m === 'extreme');
+    if (home) {
+      home.classList.toggle('extreme-mode', m === 'extreme');
+      home.classList.toggle('wife-mode',    m === 'wife');
+    }
     // Refresh BEST tile so it reflects the new mode's best score
     try { applyProfile(); } catch(_){}
   }
