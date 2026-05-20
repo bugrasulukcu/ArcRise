@@ -4582,9 +4582,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     player.ang = Math.atan2(player.y - player.cy, player.x - player.cx);
   }
 
-  // Tutorial drawing & state machine removed
-  function drawTutorial() { /* no-op */ }
-
   function resetGame() {
     GAME_SPEED = getBaseSpeed(); // reset to mode base (no dynamic boost yet)
     player.x = W/2; player.y = H - 200;
