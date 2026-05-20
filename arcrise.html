@@ -3460,18 +3460,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let tutPaused = false;
 
   // ── Tutorial state ───────────────────────────────────────
-  // -1 = kapalı, 0 = ilk dokunuş bekle, 1..4 = adımlar, 5 = bitti
+  // -1 = off
+  //  0 = paused after first 1/6 arc, waiting for first tap
+  //  1 = paused after reverse 1/6 arc, waiting for second tap
+  //  2 = running, showing "stay away from walls + red" banner
+  //  3 = latent, waiting for energy countdown to drop to 5
+  //  4 = showing "energy low — collect green" banner
   let tutStep  = -1;
-  let tutTimer = 0;   // mevcut adımdaki süre (saniye)
-  let tutAlpha = 0;   // fade in/out (0..1)
+  let tutTimer = 0;       // current step elapsed (sec)
+  let tutAlpha = 0;       // legacy fade-in for canvas hints (0..1)
+  let tutAngleAcc = 0;    // accumulated arc-angle since last tap (radians)
+  const TUT_ARC_TARGET = Math.PI / 3; // 60° = 1/6 of a full circle
 
-  // Her adım için başlık + açıklama (banner'da gösterilir)
+  // Each step → title + description + visual mode class
   const TUT_STEPS = [
-    { title: 'TOUCH ANYWHERE',          desc: 'Ekrana dokunarak oynamaya başla' },
-    { title: 'COLLECT GREEN TO MOVE',   desc: 'Yeşil topları topla — enerjiyi doldurur' },
-    { title: 'AVOID THE RED',           desc: 'Kırmızı engellere çarpma, oyun biter!' },
-    { title: 'RIGHT → WIDE ARC',  desc: 'Sağa dokun → geniş yay — engelleri rahat geç' },
-    { title: 'LEFT → TIGHT ARC', desc: 'Sola dokun → dar yay — dar geçişlerde kullan' },
+    { title: 'TAP TO ROTATE',       desc: 'Tap the screen to flip your arc',                 kind: 'tap'    },
+    { title: 'TAP AGAIN',           desc: 'Each tap reverses your direction',                kind: 'tap'    },
+    { title: 'AVOID OBSTACLES',     desc: 'Stay away from walls and red balls',              kind: 'warn'   },
+    { title: '',                    desc: '',                                                kind: 'hidden' },
+    { title: 'ENERGY LOW',          desc: 'Collect green balls to refill your countdown',    kind: 'energy' },
   ];
 
   function updateTutHud() {
@@ -3479,11 +3486,20 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       tutHudEl.classList.remove('active');
       return;
     }
-    tutHudEl.classList.add('active');
     const s = TUT_STEPS[tutStep];
+    if (s.kind === 'hidden') {
+      tutHudEl.classList.remove('active'); // latent step — no banner
+      return;
+    }
+    tutHudEl.classList.add('active');
     tutBTitle.textContent = s.title;
     tutBDesc.textContent  = s.desc;
-    tutSDots.forEach((d, i) => d.classList.toggle('active', i === tutStep));
+    const banner = document.getElementById('tut-banner');
+    if (banner) {
+      banner.classList.toggle('is-tap',    s.kind === 'tap');
+      banner.classList.toggle('is-warn',   s.kind === 'warn');
+      banner.classList.toggle('is-energy', s.kind === 'energy');
+    }
   }
 
   // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2×, dynamic +)
