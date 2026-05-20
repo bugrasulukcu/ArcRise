@@ -6384,6 +6384,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
     const wifeBtn = document.getElementById('mode-btn-wife');
     if (wifeBtn) wifeBtn.classList.toggle('active', m === 'wife');
+    // Outer glow on the selector container — Chill blue / Extreme flame / Wife off
+    const modeSelEl = document.getElementById('mode-sel');
+    if (modeSelEl) {
+      modeSelEl.classList.toggle('glow-normal',  m === 'normal');
+      modeSelEl.classList.toggle('glow-extreme', m === 'extreme');
+    }
     // Clear any in-flight deco particles from the previous mode so the screen flips cleanly
     const wrap = document.getElementById('mode-fx-wrap');
     if (wrap) wrap.querySelectorAll('.mode-deco').forEach(el => el.remove());
