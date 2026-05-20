@@ -6422,55 +6422,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   document.getElementById('btn-again').addEventListener('click', () => startGame());
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
-  // ── Tutorial NEXT button & hold-to-skip ───────────────────
-  (() => {
-    const nextBtn = document.getElementById('tut-next-btn');
-    if (nextBtn) {
-      nextBtn.addEventListener('click', e => {
-        e.preventDefault(); e.stopPropagation();
-        if (tutStep === 2) { advanceTut(3); }     // walls/red → latent
-        else if (tutStep === 4) { endTutorial(); } // energy low → done
-      });
-    }
-    const skipBtn = document.getElementById('tut-skip-btn');
-    if (!skipBtn) return;
-    const fill = skipBtn.querySelector('.tut-skip-fill');
-    const HOLD_MS = 500;
-    let holdTimer = null;
-    let holding   = false;
-    function startHold(e) {
-      if (holding) return;
-      holding = true;
-      skipBtn.classList.add('holding');
-      fill.style.transition = 'width 0s linear';
-      fill.style.width = '0%';
-      void fill.offsetWidth;
-      fill.style.transition = `width ${HOLD_MS}ms linear`;
-      fill.style.width = '100%';
-      holdTimer = setTimeout(() => {
-        holdTimer = null; holding = false;
-        skipBtn.classList.remove('holding');
-        fill.style.transition = 'width 0.2s ease';
-        fill.style.width = '0%';
-        endTutorial();
-      }, HOLD_MS);
-      if (e && e.preventDefault) e.preventDefault();
-      if (e && e.stopPropagation) e.stopPropagation();
-    }
-    function cancelHold() {
-      if (!holding) return;
-      holding = false;
-      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      skipBtn.classList.remove('holding');
-      fill.style.transition = 'width 0.25s ease';
-      fill.style.width = '0%';
-    }
-    skipBtn.addEventListener('pointerdown',   startHold);
-    skipBtn.addEventListener('pointerup',     cancelHold);
-    skipBtn.addEventListener('pointerleave',  cancelHold);
-    skipBtn.addEventListener('pointercancel', cancelHold);
-    skipBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
-  })();
 
   // ── Back to Menu: 2s hold required (with visual fill) ─────
   (() => {
