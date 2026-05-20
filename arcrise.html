@@ -4688,16 +4688,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   function step(dt) {
-    if (!running || tutPaused) return;
+    if (!running) return;
     const w  = player.speed / player.radius;
-    // Tutorial: pause once the player has swept ~60° (1/6 of a circle)
-    if (tutStep === 0 || tutStep === 1) {
-      tutAngleAcc += w * dt;
-      if (tutAngleAcc >= TUT_ARC_TARGET) {
-        tutPaused = true;
-        return;
-      }
-    }
     player.ang += w * dt * player.dir;
     player.x    = player.cx + Math.cos(player.ang) * player.radius;
     player.y    = player.cy + Math.sin(player.ang) * player.radius;
