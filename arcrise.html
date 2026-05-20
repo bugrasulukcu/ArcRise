@@ -5106,8 +5106,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         thickness: upg.traceThickness | 0, // 0..20
       };
     }
-    await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistM, traceData);
-    if (sc > 0) ARC_DB.invalidateTopCache();
+    // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
+    if (gameMode !== 'wife') {
+      await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistM, traceData);
+      if (sc > 0) ARC_DB.invalidateTopCache();
+    }
 
     // Yeterli satır çek — 20 yeter, sıralama görmek için.
     const topRows = await ARC_DB.getTopScores(20, gameMode);
