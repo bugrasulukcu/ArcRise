@@ -740,12 +740,48 @@
       text-align: center;
       max-width: 240px;
     }
+    /* Prominent NEXT button — shown on warning/energy steps only */
+    #tut-next-btn {
+      margin-top: 8px;
+      padding: 10px 28px;
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(180,255,200,.25), transparent 65%),
+        linear-gradient(180deg, rgba(60,180,90,.55), rgba(20,100,50,.65));
+      border: 1.5px solid rgba(124,255,122,.70);
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--font); font-size: 12.5px;
+      letter-spacing: 2px; cursor: pointer;
+      box-shadow: 0 0 16px rgba(124,255,122,.45), inset 0 1px 0 rgba(255,255,255,.22);
+      display: none;
+      transition: filter .15s, transform .12s;
+    }
+    #tut-banner.is-warn   #tut-next-btn,
+    #tut-banner.is-energy #tut-next-btn { display: block; }
+    #tut-next-btn:hover  { filter: brightness(1.10); }
+    #tut-next-btn:active { transform: scale(0.97); }
+
+    /* SKIP — hold 500ms to confirm */
     #tut-skip-btn {
       margin-top: 4px;
+      position: relative; overflow: hidden;
       background: none; border: 1px solid rgba(255,255,255,.18);
-      border-radius: 7px; color: rgba(255,255,255,.4);
+      border-radius: 7px; color: rgba(255,255,255,.45);
       font-family: var(--font); font-size: 8.5px;
-      letter-spacing: 1px; padding: 6px 14px; cursor: pointer;
+      letter-spacing: 1px; padding: 7px 18px; cursor: pointer;
+    }
+    .tut-skip-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: rgba(255,100,100,.30);
+      transition: width 0s linear;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .tut-skip-label { position: relative; z-index: 1; }
+    #tut-skip-btn.holding {
+      border-color: rgba(255,100,100,.55);
+      color: rgba(255,200,200,.85);
     }
     #tut-skip-btn:hover { color: #fff; border-color: rgba(255,255,255,.4); }
 
