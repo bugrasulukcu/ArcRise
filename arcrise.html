@@ -6485,12 +6485,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 2000);
     } else if (gameMode === 'wife') {
-      // FLOWER deco — drift up across full width
+      // FLOWER deco — clustered ONLY around the wife button (left: -42px, 36px wide)
+      const wifeBtn = document.getElementById('mode-btn-wife');
+      if (!wifeBtn) return;
       const el = document.createElement('span');
       el.className = 'mode-deco flower-deco';
       el.textContent = FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)];
-      const startX = Math.random() * (w - 10);
-      const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
+      // wifeBtn left edge ~= -42 (relative to wrap's padding box). Spawn area: -52..+8 horizontally.
+      const startX = -52 + Math.random() * 60;
+      const startY = h * 0.5 + (Math.random() - 0.5) * 50; // tight vertical cluster
       el.style.left = startX + 'px';
       el.style.top  = startY + 'px';
       el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
