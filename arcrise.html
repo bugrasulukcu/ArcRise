@@ -4919,7 +4919,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       allGhosts = loadGhostTraces();
     }
     running = false; started = false;
-    // Distance-based coins: accumulate total metres, 1 coin per 100m
+    // Distance-based coins: accumulate total cm, 1 coin per 33cm
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
     const runDistCm = (distancePx / H) * 15;
