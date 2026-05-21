@@ -5111,13 +5111,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       _dbgAccTime += dt;
       if (_dbgAccTime > 0.15) {
         _dbgAccTime = 0;
-        const distM = distancePx / (H / 2);
+        const distCm = (distancePx / H) * 15;
         const rows = [
           ['FPS',       _fpsCur],
           ['scene',     scene],
           ['mode',      gameMode],
           ['score',     Math.floor(score)],
-          ['distance',  distM.toFixed(1) + 'm'],
+          ['distance',  distCm.toFixed(1) + 'cm'],
           ['combo',     Math.max(0, Math.ceil(energy * comboDisplayMax()))],
           ['trail',     trail.length],
           ['ghosts',    allGhosts.length],
