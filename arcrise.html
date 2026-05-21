@@ -6337,7 +6337,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
-    const distOk    = bestDist >= 100;
+    const distOk    = bestDist >= 750;
     const scoreOk   = bestScore >= 2000;
     const coinOk    = extremeUnlocked || coins >= 50;
     const allOk     = distOk && scoreOk && coinOk;
