@@ -4636,9 +4636,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     while (nextSpawnY > player.y - 2200) {
       // Difficulty driver — linear in distance, clamped 0..1 over 0..1000 m.
       // Score is no longer a difficulty input; this gives a predictable curve.
-      const distM = distancePx / (H / 2);
-      const t  = Math.max(0, Math.min(1, distM / 1000));
-      const tMove = Math.max(0, (distM - 200) / 800); // movement after 200 m
+      const distCm = (distancePx / H) * 15;
+      const t  = Math.max(0, Math.min(1, distCm / 7500));
+      const tMove = Math.max(0, (distCm - 1500) / 6000); // movement after 1500 cm
       const tMoveC = Math.max(0, Math.min(1, tMove));
 
       const x  = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
