@@ -4987,9 +4987,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    const distMod = distTotal % 100; // kalan metre (sonraki coin'e)
-    const barPct  = Math.round(distMod); // % (0-100)
-    document.getElementById('go-coin-progress').textContent = `${Math.floor(distMod)}m / 100m`;
+    const distMod = distTotal % 33; // kalan cm (sonraki coin'e)
+    const barPct  = Math.round((distMod / 33) * 100); // % (0-100)
+    document.getElementById('go-coin-progress').textContent = `${distMod.toFixed(1)}cm / 33cm`;
     // Animate bar after short delay
     setTimeout(() => {
       document.getElementById('go-coin-bar').style.width = barPct + '%';
