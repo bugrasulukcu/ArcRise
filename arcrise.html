@@ -6348,7 +6348,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
     rowDist.querySelector('.ex-req-check').textContent = distOk ? '✓' : '✗';
-    document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${Math.floor(bestDist)})`;
+    document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${bestDist.toFixed(1)}cm)`;
 
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
     rowScore.querySelector('.ex-req-check').textContent = scoreOk ? '✓' : '✗';
