@@ -4769,8 +4769,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
      // takes base to 2×). Booster overrides this.
     if (gameMode === 'extreme' && !boosterType) {
-      const distM = distancePx / (H / 2);
-      const t = Math.max(0, Math.min(1, distM / 1000));
+      const distCm = (distancePx / H) * 15;
+      const t = Math.max(0, Math.min(1, distCm / 7500));
       player.speed = getBaseSpeed() * (1 + t); // 1× → 2×
       GAME_SPEED = player.speed;
     }
