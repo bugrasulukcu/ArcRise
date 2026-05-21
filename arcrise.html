@@ -5163,7 +5163,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Distance: 1 screen height = 15cm. (Spawn-relative, cm 1 decimal)
       const distCm = (distancePx / H) * 15;
       const dEl = document.getElementById('h-dist');
-      if (dEl) dEl.textContent = distCm.toFixed(1);
+      if (dEl) dEl.textContent = distCm.toFixed(1) + 'cm';
       const dBestEl = document.getElementById('h-dist-best');
       if (dBestEl) {
         const bd = bestDistanceM || 0;
