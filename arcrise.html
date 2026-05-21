@@ -5585,7 +5585,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const bDist   = isExt ? (stats?.bestDistExtreme || 0) : (stats?.bestDistNormal || 0);
     set('ps-coins',      String(coins));
     set('ps-bestscore',  pad(bScore));
-    set('ps-bestdist',   fmtD(bDist));
+    set('ps-bestdist',   fmtD(bDist) + 'cm');
     // Mode-tinted colours so the player can read at a glance which mode
     // they're looking at.
     const tone = isExt ? 'ps-flame' : 'ps-blue';
