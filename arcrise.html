@@ -4311,7 +4311,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       ? (stats?.bestDistExtreme || 0)
       : (stats?.bestDistNormal  || 0);
     if (!bd || bd <= 0.05) return;
-    const worldY = (H - 200) - bd * (H / 2);
+    const worldY = (H - 200) - bd * (H / 15);
     const sy = W2S(worldY);
     if (sy < -40 || sy > H + 40) return;
     const mx = (walls.left + walls.right) / 2;
