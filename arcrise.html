@@ -5167,7 +5167,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const dBestEl = document.getElementById('h-dist-best');
       if (dBestEl) {
         const bd = bestDistanceM || 0;
-        dBestEl.textContent = bd.toFixed(1);
+        dBestEl.textContent = bd.toFixed(1) + 'cm';
       }
       refreshLB();
     }
