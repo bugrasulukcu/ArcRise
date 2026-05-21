@@ -4978,8 +4978,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
       scoreValEl.textContent = pad(Math.floor(sc * eased));
       if (distValEl) {
-        const d = runDistM * eased;
-        distValEl.textContent = d >= 10 ? String(Math.round(d)) : d.toFixed(1);
+        const d = runDistCm * eased;
+        distValEl.textContent = d.toFixed(1);
       }
       if (t < 1) requestAnimationFrame(animScore);
     }
