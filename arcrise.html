@@ -5961,11 +5961,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
-    // Next-coin progress: distance toward the next 100m threshold
-    const distMod2 = distTotal % 100;
-    const pct      = Math.min(100, Math.max(0, distMod2));
+    // Next-coin progress: distance toward the next 33cm threshold
+    const distMod2 = distTotal % 33;
+    const pct      = Math.min(100, Math.max(0, (distMod2 / 33) * 100));
     const pv = document.getElementById('coins-progress-val');
-    if (pv) pv.textContent = `${Math.floor(distMod2)}m / 100m`;
+    if (pv) pv.textContent = `${distMod2.toFixed(1)}cm / 33cm`;
     const pb = document.getElementById('coins-progress-bar');
     if (pb) {
       // Reset so the transition replays each open
