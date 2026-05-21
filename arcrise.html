@@ -3447,6 +3447,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function saveStats() {
     try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(_){}
   }
+  // Migrate stats distances to cm (×7.5) one-time
+  if (localStorage.getItem('arc_stats_unit') !== 'cm') {
+    stats.bestDistNormal  = (stats.bestDistNormal  || 0) * 7.5;
+    stats.bestDistExtreme = (stats.bestDistExtreme || 0) * 7.5;
+    saveStats();
+    localStorage.setItem('arc_stats_unit', 'cm');
+  }
 
   // Float texts (combo bonuses)
   const floatTexts = [];
