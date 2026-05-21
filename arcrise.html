@@ -3400,6 +3400,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
   let aaOn   = false; // smooth permanently off — pixel-crisp look
   let bestDistanceM = Number(localStorage.getItem('arc_bestdist') || 0);
+  // Migrate bestdist to cm (×7.5) one-time
+  if (localStorage.getItem('arc_bestdist_unit') !== 'cm') {
+    bestDistanceM = bestDistanceM * 7.5;
+    localStorage.setItem('arc_bestdist', String(bestDistanceM));
+    localStorage.setItem('arc_bestdist_unit', 'cm');
+  }
   function applyAA() {
     if (ctx)  ctx.imageSmoothingEnabled  = aaOn;
     if (bctx) bctx.imageSmoothingEnabled = aaOn;
