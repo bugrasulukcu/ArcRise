@@ -4287,7 +4287,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.fillStyle = (gameMode === 'extreme') ? '#ff8866' : '#88ccff';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'right';
-    ctx.fillText('PB ' + (bd >= 10 ? Math.round(bd) : bd.toFixed(1)), walls.right - 6, sy - 8);
+    ctx.fillText('PB ' + bd.toFixed(1) + 'cm', walls.right - 6, sy - 8);
     ctx.restore();
   }
 
