@@ -4756,7 +4756,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         ? (stats?.bestDistExtreme || 0)
         : (stats?.bestDistNormal  || 0);
       if (pbDist > 0.05) {
-        const pbWorldY = (H - 200) - pbDist * (H / 2);
+        const pbWorldY = (H - 200) - pbDist * (H / 15);
         if (player.y <= pbWorldY) {
           pbCrossed = true;
           pbFadeT = 0;
