@@ -5246,22 +5246,22 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function devCheatBoost() {
     // +900 coin (distance-based ekosistemde distTotal'ı buna göre arttır)
     const targetCoins = coins + 900;
-    distTotal = targetCoins * 100;
-    coins = Math.floor(distTotal / 100);
+    distTotal = targetCoins * 33;
+    coins = Math.floor(distTotal / 33);
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_coins', String(coins));
-    // Minimum 2000 score & 200m mesafe — her iki mode için yüksek olanı tut
+    // Minimum 2000 score & 1500cm mesafe — her iki mode için yüksek olanı tut
     stats.bestNormal     = Math.max(stats.bestNormal || 0, 2000);
     stats.bestExtreme    = Math.max(stats.bestExtreme || 0, 2000);
-    stats.bestDistNormal  = Math.max(stats.bestDistNormal  || 0, 200);
-    stats.bestDistExtreme = Math.max(stats.bestDistExtreme || 0, 200);
+    stats.bestDistNormal  = Math.max(stats.bestDistNormal  || 0, 1500);
+    stats.bestDistExtreme = Math.max(stats.bestDistExtreme || 0, 1500);
     best          = Math.max(best, 2000);
-    bestDistanceM = Math.max(bestDistanceM, 200);
+    bestDistanceM = Math.max(bestDistanceM, 1500);
     localStorage.setItem('arc_best', String(best));
     localStorage.setItem('arc_bestdist', String(bestDistanceM));
     saveStats();
     try { applyProfile(); } catch(_){}
-    console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥200m');
+    console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥1500cm');
   }
   function toggleDebug(force) {
     debugOverlayOn = (force !== undefined) ? force : !debugOverlayOn;
