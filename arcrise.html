@@ -4653,8 +4653,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const bonusGap = 540 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
-      const spawnGold   = distM >=  4 && Math.random() < 0.12;
-      const spawnPurple = distM >= 10 && Math.random() < 0.08;
+      const spawnGold   = distCm >= 30 && Math.random() < 0.12;
+      const spawnPurple = distCm >= 75 && Math.random() < 0.08;
 
       const bonusProb = (t < 0.15 ? .36 : .52) * (wife ? 1.7 : 1.0);
       if (needBonus || Math.random() < bonusProb) {
