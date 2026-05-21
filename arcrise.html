@@ -4960,7 +4960,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const goBestDistInline = document.getElementById('go-bestdist-val-inline');
     if (goBestDistInline) {
       const bd = bestDistanceM || 0;
-      goBestDistInline.textContent = bd >= 10 ? String(Math.round(bd)) : bd.toFixed(1);
+      goBestDistInline.textContent = bd.toFixed(1);
     }
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
