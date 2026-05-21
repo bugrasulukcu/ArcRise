@@ -4268,7 +4268,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       lineW      = 1.2 + ease * 9; // 1.2 → ~10
       dash       = []; // çizgi kalınlaştıkça düz olsun, dash kaybolsun
     }
-    const worldY = (H - 200) - bd * (H / 2); // higher up the world = smaller y
+    const worldY = (H - 200) - bd * (H / 15); // bd is cm; 1cm = H/15 px
     const sy = W2S(worldY);
     if (sy < -2 || sy > H + 2) return;
     ctx.save();
