@@ -3406,9 +3406,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (ctx)  ctx.imageSmoothingQuality  = 'high';
     if (bctx) bctx.imageSmoothingQuality = 'high';
   }
-  // Distance-based coin system: every 100m total distance = 1 coin
+  // Distance-based coin system: every 33cm total distance = 1 coin
+  // Unit: cm (1 screen height H = 15 cm). Migration from old meter-based store: ×7.5.
   let distTotal = Number(localStorage.getItem('arc_dist_total') || 0);
-  let coins     = Math.floor(distTotal / 100); // always derived from distTotal
+  if (localStorage.getItem('arc_dist_unit') !== 'cm') {
+    distTotal = distTotal * 7.5;
+    localStorage.setItem('arc_dist_total', String(distTotal));
+    localStorage.setItem('arc_dist_unit', 'cm');
+  }
+  let coins = Math.floor(distTotal / 33); // always derived from distTotal (cm)
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   // ── Profile stats (persisted) ─────────────────────────────
