@@ -4922,20 +4922,20 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Distance-based coins: accumulate total metres, 1 coin per 100m
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
-    const runDistM = distancePx / (H / 2);
+    const runDistCm = (distancePx / H) * 15;
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
-      distTotal += runDistM;
+      distTotal += runDistCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
-      coins = Math.floor(distTotal / 100);
+      coins = Math.floor(distTotal / 33);
       localStorage.setItem('arc_coins', String(coins));
     }
     const earned = coins - prevCoins;
     best = Math.max(best, lastScore);
     localStorage.setItem('arc_best', String(best));
-    if (runDistM > bestDistanceM) {
-      bestDistanceM = runDistM;
+    if (runDistCm > bestDistanceM) {
+      bestDistanceM = runDistCm;
       localStorage.setItem('arc_bestdist', String(bestDistanceM));
     }
     // ── Stats güncelle ────────────────────────────────────
@@ -4943,11 +4943,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (gameMode === 'extreme') {
       stats.gamesExtreme++;
       if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
-      if (runDistM > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistM;
+      if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
     } else {
       stats.gamesNormal++;
       if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
-      if (runDistM > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistM;
+      if (runDistCm > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistCm;
     }
     saveStats();
 
