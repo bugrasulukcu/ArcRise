@@ -4689,8 +4689,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           ob.mf  = 0.6 + Math.random() * 0.8;
           ob.mt  = Math.random() * Math.PI * 2;
           // Movement kind progresses with distance: h/v early, diag mid, rand late
-          if      (distM >= 900) ob.mk = 'rand';
-          else if (distM >= 600) ob.mk = 'diag';
+          if      (distCm >= 6750) ob.mk = 'rand';
+          else if (distCm >= 4500) ob.mk = 'diag';
           else                   ob.mk = Math.random() < 0.5 ? 'h' : 'v';
           if (ob.mk === 'rand') {
             ob.mang  = Math.random() * Math.PI * 2;
