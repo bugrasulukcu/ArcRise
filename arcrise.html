@@ -5579,7 +5579,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
-    const fmtD = d => (d >= 10 ? String(Math.round(d)) : Number(d || 0).toFixed(1));
+    const fmtD = d => Number(d || 0).toFixed(1);
     const isExt   = gameMode === 'extreme';
     const bScore  = isExt ? (stats?.bestExtreme    || 0) : (stats?.bestNormal     || 0);
     const bDist   = isExt ? (stats?.bestDistExtreme || 0) : (stats?.bestDistNormal || 0);
