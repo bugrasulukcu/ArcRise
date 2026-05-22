@@ -3412,6 +3412,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (ctx)  ctx.imageSmoothingQuality  = 'high';
     if (bctx) bctx.imageSmoothingQuality = 'high';
   }
+  // Physical cm per rendered canvas height — auto-calibrated from CSS px.
+  // 96 CSS px = 1 inch = 2.54 cm. Falls back to 15 if layout not ready.
+  let CM_PER_SCREEN = 15;
+  function recalcCmPerScreen() {
+    const r = gc.getBoundingClientRect();
+    if (r.height > 1) CM_PER_SCREEN = r.height * 2.54 / 96;
+  }
+  window.addEventListener('resize', recalcCmPerScreen);
+  window.addEventListener('orientationchange', recalcCmPerScreen);
+  setTimeout(recalcCmPerScreen, 0);
+
   // Distance-based coin system: every 100cm total distance = 1 coin
   // Unit: cm (1 screen height H = 15 cm). Migration from old meter-based store: ×7.5.
   let distTotal = Number(localStorage.getItem('arc_dist_total') || 0);
