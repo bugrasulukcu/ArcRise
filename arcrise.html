@@ -5246,8 +5246,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function devCheatBoost() {
     // +900 coin (distance-based ekosistemde distTotal'ı buna göre arttır)
     const targetCoins = coins + 900;
-    distTotal = targetCoins * 33;
-    coins = Math.floor(distTotal / 33);
+    distTotal = targetCoins * 100;
+    coins = Math.floor(distTotal / 100);
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_coins', String(coins));
     // Minimum 2000 score & 1500cm mesafe — her iki mode için yüksek olanı tut
