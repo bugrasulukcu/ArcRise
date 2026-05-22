@@ -3420,7 +3420,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_dist_unit', 'cm');
   }
-  let coins = Math.floor(distTotal / 33); // always derived from distTotal (cm)
+  let coins = Math.floor(distTotal / 100); // always derived from distTotal (cm)
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   // ── Profile stats (persisted) ─────────────────────────────
