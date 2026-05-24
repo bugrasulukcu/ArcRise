@@ -4974,7 +4974,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const goBestDistInline = document.getElementById('go-bestdist-val-inline');
     if (goBestDistInline) {
       const bd = bestDistanceM || 0;
-      goBestDistInline.textContent = bd.toFixed(1) + 'cm';
+      goBestDistInline.textContent = fmtDist(bd);
     }
     // Ã–nce ekranÄ± aÃ§ â€” Firestore cevabÄ±nÄ± beklemeden
     showScene('over');
