@@ -5131,7 +5131,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           ['scene',     scene],
           ['mode',      gameMode],
           ['score',     Math.floor(score)],
-          ['distance',  distCm.toFixed(1) + 'cm'],
+          ['distance',  fmtDist(distCm)],
           ['combo',     Math.max(0, Math.ceil(energy * comboDisplayMax()))],
           ['trail',     trail.length],
           ['ghosts',    allGhosts.length],
