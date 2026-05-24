@@ -6362,7 +6362,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
     rowDist.querySelector('.ex-req-check').textContent = distOk ? 'âœ“' : 'âœ—';
-    document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${bestDist.toFixed(1)}cm)`;
+    document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${fmtDist(bestDist)})`;
 
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
     rowScore.querySelector('.ex-req-check').textContent = scoreOk ? 'âœ“' : 'âœ—';
