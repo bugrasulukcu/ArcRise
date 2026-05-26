@@ -3314,12 +3314,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const BOOSTER_INFO = {
     wide:    { icon: 'arrowLR', name: 'WIDE ARC',    dur: 8,  color: '#88ccff' },
     narrow:  { icon: 'arrowUD', name: 'TIGHT ARC',   dur: 8,  color: '#aaffdd' },
-    magnet:  { icon: 'ğŸ¯', name: 'X-MAGNET',    dur: 8,  color: '#ffcc44' },
-    x2:      { icon: 'Ã—2', name: 'SCORE Ã—2',    dur: 8,  color: '#ff88ff' },
-    x3:      { icon: 'Ã—3', name: 'SCORE Ã—3',    dur: 8,  color: '#ff55ff' },
-    x4:      { icon: 'Ã—4', name: 'SCORE Ã—4',    dur: 8,  color: '#ff00ff' },
-    ghost:   { icon: 'ğŸ‘»', name: 'GHOST',        dur: 6,  color: '#aa88ff' },
-    speed:   { icon: 'âš¡', name: 'SPEED BOOST', dur: 6,  color: '#ffee44' },
+    magnet:  { icon: 'target',  name: 'X-MAGNET',    dur: 8,  color: '#ffcc44' },
+    x2:      { icon: 'x2',      name: 'SCORE x2',    dur: 8,  color: '#ff88ff', textIcon: true },
+    x3:      { icon: 'x3',      name: 'SCORE x3',    dur: 8,  color: '#ff55ff', textIcon: true },
+    x4:      { icon: 'x4',      name: 'SCORE x4',    dur: 8,  color: '#ff00ff', textIcon: true },
+    ghost:   { icon: 'ghost',   name: 'GHOST',        dur: 6,  color: '#aa88ff' },
+    speed:   { icon: 'bolt',    name: 'SPEED BOOST', dur: 6,  color: '#ffee44' },
   };
 
   function activateBooster(type) {
@@ -3328,7 +3328,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     isGhost   = (type === 'ghost');
     hasShield = (type === 'shield');
     if (type === 'speed') player.speed = GAME_SPEED * 1.6;
-    BOOSTER_ICON.textContent = info.icon;
+    if (info.textIcon) { BOOSTER_ICON.textContent = info.icon; } else { BOOSTER_ICON.innerHTML = iconHTML(info.icon, { size: 22 }); }
     BOOSTER_NAME.textContent = info.name;
     BOOSTER_NAME.style.color = info.color;
     BOOSTER_BAR.style.background = info.color;
@@ -5747,20 +5747,20 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     if (key === 'timer')          return upg.timer > 0 ? '+' + upg.timer + 's' : 'base';
     if (key === 'traceThickness') return '+' + (upg.traceThickness * 10) + '%';
-    if (key === 'traceColor')     return upg.traceColor ? 'â—' : 'default';
+    if (key === 'traceColor')     return upg.traceColor ? iconHTML('dot', { size: 12 }) : 'default';
     if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
     if (key === 'deathAvatar')    return upg.deathAvatar ? 'enabled' : 'locked';
     return '';
   }
 
   const PASSIVE_TILES = [
-    { key: 'radius',         title: 'Radius',       icon: 'â­•' },
-    { key: 'speed',          title: 'Speed',        icon: 'âš¡' },
-    { key: 'timer',          title: 'Combo Timer',  icon: 'â±'  },
-    { key: 'traceThickness', title: 'Trace Width',  icon: 'ã€°' },
-    { key: 'traceColor',     title: 'Trace Color',  icon: 'ğŸ¨' },
-    { key: 'deathName',      title: 'Death Name',   icon: 'ğŸª¦' },
-    { key: 'deathAvatar',    title: 'Death Avatar', icon: 'ğŸ‘¤' },
+    { key: 'radius',         title: 'Radius',       icon: 'ring' },
+    { key: 'speed',          title: 'Speed',        icon: 'bolt' },
+    { key: 'timer',          title: 'Combo Timer',  icon: 'timer' },
+    { key: 'traceThickness', title: 'Trace Width',  icon: 'wave' },
+    { key: 'traceColor',     title: 'Trace Color',  icon: 'palette' },
+    { key: 'deathName',      title: 'Death Name',   icon: 'headstone' },
+    { key: 'deathAvatar',    title: 'Death Avatar', icon: 'bust' },
   ];
 
   // â”€â”€ Render: Passive tab is either the tile grid or a single detail view â”€â”€
@@ -5856,10 +5856,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
             const posPrice = dirPrice(posNext);
             const negBtn = negPrice == null
               ? `<button class="upg-buy maxed">MAX</button>`
-              : `<button class="upg-buy" data-dir="-1" ${coins < negPrice ? 'disabled' : ''}>Buy âˆ’${negNext} <span class="upg-coin">ğŸª™${negPrice}</span></button>`;
+              : `<button class="upg-buy" data-dir="-1" ${coins < negPrice ? 'disabled' : ''}>Buy âˆ’${negNext} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${negPrice}</span></button>`;
             const posBtn = posPrice == null
               ? `<button class="upg-buy maxed">MAX</button>`
-              : `<button class="upg-buy" data-dir="+1" ${coins < posPrice ? 'disabled' : ''}>Buy +${posNext} <span class="upg-coin">ğŸª™${posPrice}</span></button>`;
+              : `<button class="upg-buy" data-dir="+1" ${coins < posPrice ? 'disabled' : ''}>Buy +${posNext} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${posPrice}</span></button>`;
             return negBtn + posBtn;
           })()}
         </div>
@@ -5919,7 +5919,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         <div class="upg-buys">
           ${nextPrice == null
             ? `<button class="upg-buy maxed">MAX</button>`
-            : `<button class="upg-buy" ${coins < nextPrice ? 'disabled' : ''}>Buy +${cur + 1} <span class="upg-coin">ğŸª™${nextPrice}</span></button>`}
+            : `<button class="upg-buy" ${coins < nextPrice ? 'disabled' : ''}>Buy +${cur + 1} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${nextPrice}</span></button>`}
         </div>
       `;
       const btn = card.querySelector('.upg-buy:not(.maxed)');
@@ -5948,7 +5948,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
       </div>
       <div class="upg-buys">
-        <div class="upg-card-active" style="flex:1;text-align:center">ğŸª™${TRACE_COLOR_PRICE} per change</div>
+        <div class="upg-card-active" style="flex:1;text-align:center">${iconHTML('coin', { size: 14 })}${TRACE_COLOR_PRICE} per change</div>
       </div>
     `;
     card.querySelectorAll('.upg-color-swatch').forEach(s => {
@@ -5973,7 +5973,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       <div class="upg-buys">
         ${unlocked
           ? `<button class="upg-tog-btn on">ENABLED</button>`
-          : `<button class="upg-buy" ${coins < price ? 'disabled' : ''}>Unlock <span class="upg-coin">ğŸª™${price}</span></button>`}
+          : `<button class="upg-buy" ${coins < price ? 'disabled' : ''}>Unlock <span class="upg-coin">${iconHTML('coin', { size: 14 })}${price}</span></button>`}
       </div>
     `;
     const buy = card.querySelector('.upg-buy');
@@ -6057,7 +6057,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const up = document.createElement('button');
     up.type = 'button';
     up.className = 'prof-av-upload-tile';
-    up.textContent = 'ğŸ“·  UPLOAD PHOTO';
+    up.innerHTML = iconHTML('camera', { size: 16 }) + '&nbsp; UPLOAD PHOTO';
     up.addEventListener('click', () => document.getElementById('prof-av-file').click());
     grid.appendChild(up);
     // Avatar tiles
@@ -6128,18 +6128,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // â”€â”€ Badges (dummy set â€” real catalog later) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const BADGES = [
-    { id: 'first-1k',   icon: 'ğŸ¥‰', name: 'FIRST 1K'   },
-    { id: 'combo-9',    icon: 'ğŸ”¥', name: 'COMBO 9'    },
-    { id: 'extreme-1',  icon: 'âš¡', name: 'EXTREME'    },
-    { id: 'gold-100',   icon: 'ğŸª™', name: '100 GOLD'   },
-    { id: 'streak-5',   icon: 'ğŸ¯', name: 'STREAK 5'   },
-    { id: 'speedrun',   icon: 'ğŸƒ', name: 'SPEEDRUN'   },
-    { id: 'collector',  icon: 'ğŸ’', name: 'COLLECTOR'  },
-    { id: 'night-owl',  icon: 'ğŸ¦‰', name: 'NIGHT OWL'  },
-    { id: 'distance-100', icon: 'ğŸ“', name: '100 M'    },
-    { id: 'distance-500', icon: 'ğŸš€', name: '500 M'    },
-    { id: 'boss',       icon: 'ğŸ‘‘', name: 'BOSS'       },
-    { id: 'survivor',   icon: 'ğŸ›¡ï¸', name: 'SURVIVOR'  },
+    { id: 'first-1k',   icon: 'medal',  name: 'FIRST 1K'   },
+    { id: 'combo-9',    icon: 'fire',   name: 'COMBO 9'    },
+    { id: 'extreme-1',  icon: 'bolt',   name: 'EXTREME'    },
+    { id: 'gold-100',   icon: 'coin',   name: '100 GOLD'   },
+    { id: 'streak-5',   icon: 'target', name: 'STREAK 5'   },
+    { id: 'speedrun',   icon: 'runner', name: 'SPEEDRUN'   },
+    { id: 'collector',  icon: 'gem',    name: 'COLLECTOR'  },
+    { id: 'night-owl',  icon: 'owl',    name: 'NIGHT OWL'  },
+    { id: 'distance-100', icon: 'ruler',  name: '100 M'      },
+    { id: 'distance-500', icon: 'rocket', name: '500 M'      },
+    { id: 'boss',       icon: 'crown',  name: 'BOSS'       },
+    { id: 'survivor',   icon: 'shield', name: 'SURVIVOR'   },
   ];
   let equippedBadges = (() => {
     try { return JSON.parse(localStorage.getItem('arc_badges_v1') || '[null,null]'); }
@@ -6235,8 +6235,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // â”€â”€ Mode button decorations (ice crystals / flames) â”€â”€â”€â”€â”€â”€
   // Spawns small floating elements around the mode-fx-wrap that animate via CSS.
-  const ICE_GLYPHS    = ['â„','â…','â†','âœ¦','âœ§'];
-  const FLAME_GLYPHS  = ['ğŸ”¥','âœ¦'];
+  const ICE_GLYPHS    = ['snowflake', 'sparkle'];
+  const FLAME_GLYPHS  = ['fire', 'sparkle'];
   let modeDecoTimer = 0;
   function tickModeDeco(dt) {
     if (scene !== 'home') return;
@@ -6253,7 +6253,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // ICE deco â€” spread across full width above the mode selector
       const el = document.createElement('span');
       el.className = 'mode-deco ice-deco';
-      el.textContent = ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)];
+      el.innerHTML = iconHTML(ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)], { size: 16 });
       const startX = Math.random() * (w - 10);
       const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
       el.style.left = startX + 'px';
@@ -6269,7 +6269,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // FLAME deco â€” spread across full width rising from the bottom
       const el = document.createElement('span');
       el.className = 'mode-deco flame-deco';
-      el.textContent = FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)];
+      el.innerHTML = iconHTML(FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)], { size: 16 });
       const startX = Math.random() * (w - 10);
       const startY = h * 0.95;
       el.style.left = startX + 'px';
@@ -6285,7 +6285,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (!wifeBtn) return;
       const el = document.createElement('span');
       el.className = 'mode-deco flower-deco';
-      el.textContent = FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)];
+      el.innerHTML = iconHTML(FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)], { size: 16 });
       // wifeBtn left edge ~= -42 (relative to wrap's padding box). Spawn area: -52..+8 horizontally.
       const startX = -52 + Math.random() * 60;
       const startY = h * 0.5 + (Math.random() - 0.5) * 50; // tight vertical cluster
@@ -6314,7 +6314,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // ICE crystals float up from the Stay Chill button area (bottom quarter)
     const el = document.createElement('span');
     el.className = 'mode-deco ice-deco';
-    el.textContent = ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)];
+    el.innerHTML = iconHTML(ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)], { size: 16 });
     el.style.left = (Math.random() * (w - 16)) + 'px';
     el.style.top  = (h * 0.72 + Math.random() * h * 0.22) + 'px';
     el.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
@@ -6363,7 +6363,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const wifeDecoEl = document.getElementById('wife-modal-deco');
   let wifeDecoActive = false;
   let wifeDecoTimer = 0;
-  const FLOWER_GLYPHS = ['ğŸŒ¸','ğŸŒº','ğŸ’®','ğŸŒ·','ğŸŒ¼','âœ¿'];
+  const FLOWER_GLYPHS = ['flower'];
   function tickWifeDeco(dt) {
     if (!wifeDecoActive) return;
     wifeDecoTimer += dt;
@@ -6373,7 +6373,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (w < 10) return;
     const el = document.createElement('span');
     el.className = 'flower-deco';
-    el.textContent = FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)];
+    el.innerHTML = iconHTML(FLOWER_GLYPHS[Math.floor(Math.random() * FLOWER_GLYPHS.length)], { size: 16 });
     el.style.left = (Math.random() * (w - 18)) + 'px';
     el.style.top  = (h * 0.85 + Math.random() * h * 0.12) + 'px';
     el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
@@ -6405,11 +6405,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const rowCoin  = document.getElementById('ex-req-coin');
 
     rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
-    rowDist.querySelector('.ex-req-check').textContent = distOk ? 'âœ“' : 'âœ—';
+    rowDist.querySelector('.ex-req-check').innerHTML  = iconHTML(distOk ? 'check' : 'cross', { size: 14, color: distOk ? '#66ff88' : '#ff5566' });
     document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${fmtDist(bestDist)})`;
 
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
-    rowScore.querySelector('.ex-req-check').textContent = scoreOk ? 'âœ“' : 'âœ—';
+    rowScore.querySelector('.ex-req-check').innerHTML = iconHTML(scoreOk ? 'check' : 'cross', { size: 14, color: scoreOk ? '#66ff88' : '#ff5566' });
     document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(best: ${bestScore})`;
 
     const coinIcon = document.getElementById('ex-coin-icon');
@@ -6547,6 +6547,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   initBgArcs();
+  // Populate static SVG icon placeholders defined in HTML markup
+  (function populateStaticIcons() {
+    const fill = (selector, name, opts) => {
+      document.querySelectorAll(selector).forEach(el => { el.innerHTML = iconHTML(name, opts); });
+    };
+    fill('.ic-bolt',   'bolt',   { size: 18 });
+    fill('.ic-coin',   'coin',   { size: 18 });
+    fill('.ic-hearts', 'hearts', { size: 16, color: '#ff77cc' });
+    fill('.ic-flower', 'flower', { size: 16, color: '#ff77cc' });
+    const wb = document.getElementById('mode-btn-wife');
+    if (wb) wb.innerHTML = iconHTML('flower', { size: 22, color: '#ff77cc' });
+    const ei = document.getElementById('extreme-icon');
+    if (ei) ei.innerHTML = iconHTML('bolt', { size: 64, color: '#ff5522' });
+    const eci = document.getElementById('ex-coin-icon');
+    if (eci) eci.innerHTML = iconHTML('coin', { size: 18 });
+    const wi = document.getElementById('wife-icon');
+    if (wi) wi.innerHTML = iconHTML('flower', { size: 64, color: '#ff77cc' });
+  })();
+
   resetGame();
   applyProfile();
   // showScene is called by the profile-setup check above (or after ps-confirm)
