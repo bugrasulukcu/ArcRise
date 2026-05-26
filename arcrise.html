@@ -3111,10 +3111,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const size = o.size || 24;
     const color = o.color || 'currentColor';
     const cls = o.cls ? ` class="${o.cls}"` : '';
-    const style = o.style ? ` style="${o.style}"` : '';
+    const extra = o.style ? (';' + o.style) : '';
     const body = ICONS[name];
     if (!body) return '';
-    return `<svg${cls}${style} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="color:${color};vertical-align:middle${o.style ? ';' + o.style : ''}">${body}</svg>`;
+    return `<svg${cls} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="color:${color};display:inline-block;vertical-align:middle${extra}">${body}</svg>`;
   }
 
   // â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
