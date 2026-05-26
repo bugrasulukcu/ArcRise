@@ -5856,7 +5856,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
             const posPrice = dirPrice(posNext);
             const negBtn = negPrice == null
               ? `<button class="upg-buy maxed">MAX</button>`
-              : `<button class="upg-buy" data-dir="-1" ${coins < negPrice ? 'disabled' : ''}>Buy âˆ’${negNext} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${negPrice}</span></button>`;
+              : `<button class="upg-buy" data-dir="-1" ${coins < negPrice ? 'disabled' : ''}>Buy -${negNext} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${negPrice}</span></button>`;
             const posBtn = posPrice == null
               ? `<button class="upg-buy maxed">MAX</button>`
               : `<button class="upg-buy" data-dir="+1" ${coins < posPrice ? 'disabled' : ''}>Buy +${posNext} <span class="upg-coin">${iconHTML('coin', { size: 14 })}${posPrice}</span></button>`;
