@@ -5679,7 +5679,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const item = slotItems[i];
       el.classList.toggle('filled', !!item);
       const iconEl = el.querySelector('.slot-icon');
-      if (iconEl) iconEl.textContent = item?.icon || '';
+      if (iconEl) iconEl.innerHTML = item?.icon ? iconHTML(item.icon, { size: 22 }) : '';
     });
   }
   document.querySelectorAll('.slot').forEach(el => {
