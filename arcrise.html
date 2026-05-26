@@ -6169,7 +6169,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'prof-badge' + (equippedBadges.includes(b.id) ? ' sel' : '');
-      el.innerHTML = `<span class="prof-badge-icon">${b.icon}</span><span class="prof-badge-name">${b.name}</span>`;
+      el.innerHTML = `<span class="prof-badge-icon">${iconHTML(b.icon, { size: 26 })}</span><span class="prof-badge-name">${b.name}</span>`;
       el.addEventListener('click', () => {
         const idx = equippedBadges.indexOf(b.id);
         if (idx !== -1) {
