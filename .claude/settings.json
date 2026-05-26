@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(Out-String)",
+      "PowerShell(& 'c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\_find_emoji.ps1')",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\arcrise.html'\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $lines = $text -split \"`n\"; $n=0; $hits=@\\(\\); foreach\\($line in $lines\\){ $n++; if\\($line -match '\\\\?\\\\?' -or $line -match '[-ÿ]{2,}'\\){ $hits += \\(\"{0}: {1}\" -f $n, $line.Trim\\(\\)\\) } }; $hits | Select-Object -First 60)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -6,18 +14,13 @@
         "hooks": [
           {
             "type": "command",
-            "shell": "powershell",
             "command": "$fp = ($input | ConvertFrom-Json).tool_input.file_path; if ($fp -like '*ArcRise*') { Set-Location 'C:\\Users\\DELL\\Desktop\\BUGRA\\ArcRise'; git add -A; $msg = 'auto: ' + (Split-Path $fp -Leaf) + ' guncellendi'; git diff --cached --quiet; if ($LASTEXITCODE -ne 0) { git commit -m $msg; git push } }",
+            "shell": "powershell",
             "timeout": 30,
             "statusMessage": "GitHub'a gönderiliyor..."
           }
         ]
       }
-    ]
-  },
-  "permissions": {
-    "allow": [
-      "Bash(git *)"
     ]
   }
 }
