@@ -6157,7 +6157,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const b = id ? findBadge(id) : null;
       el.classList.toggle('filled', !!b);
       const iconEl = el.querySelector('.prof-eq-icon');
-      if (iconEl) iconEl.textContent = b ? b.icon : '';
+      if (iconEl) iconEl.innerHTML = b ? iconHTML(b.icon, { size: 22 }) : '';
     });
   }
   // Badges grid renderer â€” used by the standalone Badges modal.
