@@ -4,7 +4,8 @@
       "Bash(git *)",
       "Bash(Out-String)",
       "PowerShell(& 'c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\_find_emoji.ps1')",
-      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\arcrise.html'\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $lines = $text -split \"`n\"; $n=0; $hits=@\\(\\); foreach\\($line in $lines\\){ $n++; if\\($line -match '\\\\?\\\\?' -or $line -match '[-ÿ]{2,}'\\){ $hits += \\(\"{0}: {1}\" -f $n, $line.Trim\\(\\)\\) } }; $hits | Select-Object -First 60)"
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\arcrise.html'\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $lines = $text -split \"`n\"; $n=0; $hits=@\\(\\); foreach\\($line in $lines\\){ $n++; if\\($line -match '\\\\?\\\\?' -or $line -match '[-ÿ]{2,}'\\){ $hits += \\(\"{0}: {1}\" -f $n, $line.Trim\\(\\)\\) } }; $hits | Select-Object -First 60)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('c:\\\\Users\\\\DELL\\\\Desktop\\\\BUGRA\\\\ArcRise\\\\arcrise.html'\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $idx = $text.IndexOf\\(\"'X-MAGNET'\"\\); if\\($idx -gt 0\\){ $start = $idx - 30; $sub = $text.Substring\\($start, 50\\); [byte[]]$b = [System.Text.Encoding]::UTF8.GetBytes\\($sub\\); \\($b | ForEach-Object { '{0:X2}' -f $_ }\\) -join ' ' } else { 'not found' })"
     ]
   },
   "hooks": {
