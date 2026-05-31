@@ -25,7 +25,7 @@
     html, body { height: 100%; overflow: hidden; background: var(--bg); }
     body { font-family: var(--font); color: #fff; touch-action: manipulation; -ms-touch-action: manipulation; }
 
-    /* â”€â”€ Canvas layer â”€â”€ */
+    /* ── Canvas layer ── */
     #wrap {
       position: fixed; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -33,7 +33,7 @@
     .stack {
       position: relative;
       /* Canvas iÃ§ Ã§Ã¶zÃ¼nÃ¼rlÃ¼k 600x1066 (â‰ˆ9:16). Hem geniÅŸliÄŸi hem
-         yÃ¼ksekliÄŸi bu orana gÃ¶re kÄ±s â€” yoksa 19.5:9 / 20:9 Android
+         yÃ¼ksekliÄŸi bu orana gÃ¶re kÄ±s — yoksa 19.5:9 / 20:9 Android
          ekranlarda canvas dikey eziliyor, daireler oval gÃ¶rÃ¼nÃ¼yor.
          56.285vh = (600/1066)*100 ; 177.667vw = (1066/600)*100 */
       width:  min(100vw, 56.285vh);
@@ -47,7 +47,7 @@
     #bg  { z-index: 0; }
     #gc  { z-index: 1; touch-action: none; cursor: pointer; }
 
-    /* â”€â”€ Overlays â”€â”€ */
+    /* ── Overlays ── */
     .screen {
       position: fixed; inset: 0;
       display: none; flex-direction: column;
@@ -57,8 +57,8 @@
     }
     .screen.active { display: flex; }
 
-    /* â”€â”€ HUD â”€â”€ */
-    /* #hud artÄ±k .stack iÃ§inde â€” position: absolute ile canvas'a gÃ¶re konumlanÄ±r */
+    /* ── HUD ── */
+    /* #hud artÄ±k .stack iÃ§inde — position: absolute ile canvas'a gÃ¶re konumlanÄ±r */
     #hud {
       position: absolute; inset: 0;
       z-index: 15; pointer-events: none;
@@ -66,7 +66,7 @@
     }
     #hud.active { display: block; }
 
-    /* Duvar iÃ§ kenarÄ±: canvas 600px'de 20px sol/saÄŸ â†’ %3.33
+    /* Duvar iÃ§ kenarÄ±: canvas 600px'de 20px sol/saÄŸ → %3.33
        GÃ¼venli bÃ¶lge baÅŸlangÄ±cÄ± = calc(3.4% + 10px)                */
     .hud-tl {
       position: absolute; top: 18px;
@@ -79,7 +79,7 @@
     }
     .hud-lbl { font-size: 9px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
     .hud-num { font-size: 17px; letter-spacing: 1px; }
-    /* â”€â”€ Debug overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Debug overlay ───────────────────────────────────── */
     #debug-overlay {
       position: fixed; top: 0; right: 0;
       width: min(70vw, 240px); padding: 14px 16px;
@@ -110,7 +110,7 @@
     /* KÃ¼Ã§Ã¼k avatar renk noktasÄ± YOUR BEST yanÄ±nda */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
-    /* Leaderboard sidebar â€” saÄŸ duvarÄ±n iÃ§inde */
+    /* Leaderboard sidebar — saÄŸ duvarÄ±n iÃ§inde */
     #lb {
       position: absolute; top: 0;
       right: calc(3.4% + 10px);
@@ -162,10 +162,10 @@
       text-align: center;
       position: relative;
       z-index: 3;
-      /* 14px = same gap as Settings â†” mode selector below */
+      /* 14px = same gap as Settings ↔ mode selector below */
       margin: 0 0 14px;
     }
-    /* Logo sits behind the profile card â€” ball+arc poke out above the top edge. */
+    /* Logo sits behind the profile card — ball+arc poke out above the top edge. */
     #home-logo-wrap {
       position: relative;
       width: min(88vw, 310px);
@@ -177,7 +177,7 @@
     }
     #home-logo {
       position: absolute;
-      /* LOGO.png â€” ball is at ~43% x, ~22% y of the image.
+      /* LOGO.png — ball is at ~43% x, ~22% y of the image.
          translateX(-43%) keeps the ball horizontally centered over the
          profile card regardless of width. */
       width: 108%;
@@ -208,7 +208,7 @@
       user-select: none;
     }
     .rb-inner:active { transform: scale(0.97); }
-    /* Start + Again â€” bold, +50% over original, uppercase */
+    /* Start + Again — bold, +50% over original, uppercase */
     #btn-start, #btn-again {
       font-size: 30px; font-weight: 700; letter-spacing: 4px;
       text-transform: uppercase;
@@ -261,7 +261,7 @@
       max-height: 88vh; overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
     }
-    /* Themed frame layers â€” fade in/out per mode, no rotation, no blur */
+    /* Themed frame layers — fade in/out per mode, no rotation, no blur */
     #lb-modal-box::before,
     #lb-modal-box::after {
       content: ""; position: absolute; inset: -3px;
@@ -269,7 +269,7 @@
       opacity: 0; transition: opacity .55s ease;
       z-index: -1;
     }
-    /* Blue ring for Normal â€” static, soft glow */
+    /* Blue ring for Normal — static, soft glow */
     #lb-modal-box::before {
       border: 1.5px solid rgba(110,170,255,.55);
       box-shadow:
@@ -281,7 +281,7 @@
         rgba(40,80,200,.04) 50%,
         rgba(80,160,255,.10) 100%);
     }
-    /* Flame ring for Extreme â€” flickering rising-flame gradients, no rotation */
+    /* Flame ring for Extreme — flickering rising-flame gradients, no rotation */
     #lb-modal-box::after {
       border: 1.5px solid rgba(255,120,40,.7);
       background:
@@ -291,7 +291,7 @@
         radial-gradient(40% 50% at 50% -10%, rgba(255,160,60,.35), transparent 70%),
         linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
     }
-    /* Flicker animates ONLY box-shadow â€” opacity stays class-controlled */
+    /* Flicker animates ONLY box-shadow — opacity stays class-controlled */
     @keyframes lbFlameFlicker {
       0%, 100% {
         box-shadow:
@@ -315,7 +315,7 @@
           inset 0 -14px 22px rgba(255,120,40,.45);
       }
     }
-    /* Mode toggles â€” fade rings in/out */
+    /* Mode toggles — fade rings in/out */
     #lb-modal-box.mode-normal {
       border-color: rgba(110,170,255,.45);
       box-shadow: 0 0 24px rgba(80,140,255,.35);
@@ -496,7 +496,7 @@
     }
     .btn-icon { display: flex; align-items: center; justify-content: center; }
     .btn-icon svg { width: 26px; height: 26px; color: #fff; }
-    #btn-lb { /* legacy reset â€” sizing handled by .menu-row */ }
+    #btn-lb { /* legacy reset — sizing handled by .menu-row */ }
 
     /* â•â•â•â•â•â•â•â•â•â• HOLD-TO-CONFIRM BACK TO MENU â•â•â•â•â•â•â•â•â•â• */
     #btn-menu {
@@ -597,7 +597,7 @@
       border-radius: 10px; padding: 8px 12px;
     }
 
-    /* Rainbow slider â€” tam yÃ¼kseklik, yuvarlak uÃ§lar */
+    /* Rainbow slider — tam yÃ¼kseklik, yuvarlak uÃ§lar */
     .rslide-wrap {
       position: relative; height: 14px; border-radius: 7px;
       background: linear-gradient(to right,#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
@@ -631,7 +631,7 @@
       background: transparent; color: rgba(255,255,255,.45);
       transition: background .25s, color .25s, box-shadow .25s;
     }
-    /* ON state â€” green gradient + soft outer glow */
+    /* ON state — green gradient + soft outer glow */
     .tog-btn.active-on {
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.40), transparent 65%),
@@ -675,9 +675,9 @@
     #go-best { font-size: 13px; color: var(--green); letter-spacing: 1.6px; text-align: center; }
     #go-best span { color: #fff; }
 
-    /* Tutorial CSS removed â€” players discover mechanics by playing */
+    /* Tutorial CSS removed — players discover mechanics by playing */
 
-    /* â”€â”€ HOME alt baÄŸlantÄ±larÄ± â”€â”€ */
+    /* ── HOME alt baÄŸlantÄ±larÄ± ── */
     #home-links {
       position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
       display: flex; gap: 24px; align-items: center;
@@ -730,7 +730,7 @@
     }
     #ps-confirm:active { transform: scale(0.97); }
 
-    /* Difficulty selector kaldÄ±rÄ±ldÄ± â€” tek seviye: EXTREME */
+    /* Difficulty selector kaldÄ±rÄ±ldÄ± — tek seviye: EXTREME */
 
     /* â•â•â•â•â•â•â•â•â•â• SETTINGS profile (read-only) â•â•â•â•â•â•â•â•â•â• */
     #settings-profile-ro {
@@ -794,7 +794,7 @@
     }
     #av-modal-close:active { transform: scale(0.97); }
 
-    /* av-picker in settings â€” image thumbnails */
+    /* av-picker in settings — image thumbnails */
     .av-opt {
       width: 30px; height: 30px; border-radius: 50%;
       border: 2px solid transparent; cursor: pointer;
@@ -804,7 +804,7 @@
     .av-opt img { width: 100%; height: 100%; border-radius: 50%; display: block; }
     .av-opt.sel { border-color: #fff; transform: scale(1.18); }
 
-    /* â”€â”€ RESET butonu (Settings'te) â”€â”€ */
+    /* ── RESET butonu (Settings'te) ── */
     .btn-danger {
       padding: 13px 32px; border-radius: 13px;
       border: 1.5px solid rgba(255,51,85,.45);
@@ -816,7 +816,7 @@
     }
     .btn-danger:active { transform: scale(0.97); }
 
-    /* Reset outer â€” ekranÄ±n en altÄ±na */
+    /* Reset outer — ekranÄ±n en altÄ±na */
     #reset-outer {
       position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -827,7 +827,7 @@
     }
 
     /* â•â•â•â•â•â•â•â•â•â• HOME PROFILE CARD â•â•â•â•â•â•â•â•â•â• */
-    /* White glass â€” sits in front of the logo (z-index 2) with backdrop blur */
+    /* White glass — sits in front of the logo (z-index 2) with backdrop blur */
     #home-profile {
       position: relative; z-index: 2;
       display: flex; align-items: center; gap: 14px;
@@ -844,7 +844,7 @@
         inset 0 1px 0 rgba(255,255,255,.18);
       transition: border-color .4s ease, box-shadow .4s ease, background .4s ease;
     }
-    /* Extreme mode â†’ flaming border on the profile card */
+    /* Extreme mode → flaming border on the profile card */
     #home.extreme-mode #home-profile {
       border-color: rgba(255,120,40,.7);
       background:
@@ -911,11 +911,11 @@
     .hs-val { font-size: 13.5px; letter-spacing: 1px; color: #fff; }
     .hs-sep { display: none; }
 
-    /* Settings button â€” sizing handled by .menu-row when paired */
+    /* Settings button — sizing handled by .menu-row when paired */
     #btn-settings { /* legacy: width applied via .menu-row */ }
     #home-profile { cursor: pointer; }
 
-    /* Profile card right column â€” two subtle glass chips (coin + upgrade) */
+    /* Profile card right column — two subtle glass chips (coin + upgrade) */
     #home-side {
       flex-shrink: 0;
       display: flex; flex-direction: column; gap: 6px;
@@ -943,7 +943,7 @@
       font-size: 12.5px; font-weight: 800; letter-spacing: .8px;
       color: #fff; flex: 1; text-align: center;
     }
-    /* Coin variant â€” mirrors .coins-buy in the coins popup */
+    /* Coin variant — mirrors .coins-buy in the coins popup */
     .chip-coin {
       border: 1.5px solid rgba(255,210,80,.5);
       background:
@@ -971,7 +971,7 @@
       -webkit-background-clip: text; background-clip: text;
       color: transparent;
     }
-    /* Upgrade variant â€” mirrors #coins-to-upgrades */
+    /* Upgrade variant — mirrors #coins-to-upgrades */
     .chip-upg {
       border: 1.5px solid rgba(170,120,255,.7);
       background:
@@ -993,7 +993,7 @@
     }
     .chip-upg .chip-val { color: #e6d5ff; }
 
-    /* Coins popup â€” gold framed */
+    /* Coins popup — gold framed */
     #coins-modal {
       position: fixed; inset: 0; z-index: 56;
       display: none; align-items: center; justify-content: center;
@@ -1020,7 +1020,7 @@
         0 0 80px rgba(255,80,0,.12),
         inset 0 1px 0 rgba(255,255,255,.14);
     }
-    /* Animated gold ring behind the box edge â€” subtle but readable. */
+    /* Animated gold ring behind the box edge — subtle but readable. */
     #coins-modal-box::before {
       content: ""; position: absolute; inset: -2px;
       border-radius: 24px;
@@ -1113,7 +1113,7 @@
       color: rgba(255,210,140,.7);
     }
 
-    /* UPGRADES jumper â€” primary action, bigger than Close. */
+    /* UPGRADES jumper — primary action, bigger than Close. */
     #coins-to-upgrades {
       width: 100%; padding: 18px; border-radius: 14px;
       border: 1.5px solid rgba(170,120,255,.7);
@@ -1190,7 +1190,7 @@
     }
     #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
 
-    /* Avatar row: badge slot â”€ avatar â”€ badge slot */
+    /* Avatar row: badge slot ─ avatar ─ badge slot */
     #prof-av-row {
       display: flex; align-items: center; justify-content: center;
       gap: 14px; width: 100%;
@@ -1215,7 +1215,7 @@
     .prof-eq-slot.filled .prof-eq-empty { display: none; }
     .prof-eq-slot:not(.filled) .prof-eq-icon { display: none; }
 
-    /* Avatar preview with rainbow ring (now a button â€” tap to open picker) */
+    /* Avatar preview with rainbow ring (now a button — tap to open picker) */
     #prof-av-ring {
       width: 76px; height: 76px; border-radius: 50%;
       padding: 2.5px; border: 0;
@@ -1231,7 +1231,7 @@
     }
     #prof-modal-av-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
-    /* Static name (no input â€” first-launch setup is the only way to set it) */
+    /* Static name (no input — first-launch setup is the only way to set it) */
     #prof-name-static {
       width: 100%;
       font-size: 15px; letter-spacing: 2.4px;
@@ -1443,7 +1443,7 @@
     .upg-tab-pane { display: none; flex-direction: column; gap: 10px; }
     .upg-tab-pane.active { display: flex; }
 
-    /* Passive tile grid â€” entry points to detail views */
+    /* Passive tile grid — entry points to detail views */
     .upg-tile-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
       width: 100%;
@@ -1478,7 +1478,7 @@
       font-size: 9px; letter-spacing: .6px; color: rgba(203,166,255,.85);
     }
 
-    /* Detail panel â€” slides in when a tile is tapped, replacing the grid */
+    /* Detail panel — slides in when a tile is tapped, replacing the grid */
     .upg-detail {
       display: none; flex-direction: column; gap: 10px; width: 100%;
     }
@@ -1769,7 +1769,7 @@
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       overflow: visible;
     }
-    /* Flame frame for the extreme popup â€” same flicker system as HS popup */
+    /* Flame frame for the extreme popup — same flicker system as HS popup */
     #extreme-modal-box::after {
       content: ""; position: absolute; inset: -3px;
       border-radius: 29px; pointer-events: none; z-index: -1;
@@ -1867,7 +1867,7 @@
       position: relative;
       padding: 14px 18px;  /* room for floating particles outside */
     }
-    /* Wife Mode â€” floating pink button anchored to the LEFT of #mode-sel,
+    /* Wife Mode — floating pink button anchored to the LEFT of #mode-sel,
        outside the selector so Chill/Extreme keep their original positions. */
     #mode-btn-wife {
       position: absolute;
@@ -1977,7 +1977,7 @@
 
     /* â•â•â•â•â•â•â•â•â•â• HOME EXTREME FLAME FRAME â•â•â•â•â•â•â•â•â•â• */
     /* Soft edge-glow that fades in when extreme mode is selected.
-       No rapid flicker â€” just a slow breathe so it reads as ambient warmth. */
+       No rapid flicker — just a slow breathe so it reads as ambient warmth. */
     #home-flame-frame {
       position: absolute; inset: 0;
       pointer-events: none;
@@ -2053,7 +2053,7 @@
     }
 
     /* â•â•â•â•â•â•â•â•â•â• FLOAT TEXTS (combo points) â•â•â•â•â•â•â•â•â•â• */
-    /* drawn on canvas â€” no CSS needed */
+    /* drawn on canvas — no CSS needed */
 
     /* â•â•â•â•â•â•â•â•â•â• GAME OVER EXTRAS â•â•â•â•â•â•â•â•â•â• */
     #go-score-row { text-align: center; }
@@ -2098,7 +2098,7 @@
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
 
     /* â•â•â•â•â•â•â•â•â•â• BOOSTER HUD â•â•â•â•â•â•â•â•â•â• */
-    /* Sits below the combo pill at the top â€” same reason: keep info above the thumb. */
+    /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
     #booster-hud {
       position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
@@ -2166,8 +2166,8 @@
 </head>
 <body>
 
-<!-- â”€â”€ Canvas + HUD (aynÄ± stack iÃ§inde, duvar sÄ±nÄ±rlarÄ±na gÃ¶re konumlanÄ±r) â”€â”€ -->
-<!-- Debug overlay: FPS + live game state. Toggled by TÃ—2 or RTL swipe. -->
+<!-- ── Canvas + HUD (aynÄ± stack iÃ§inde, duvar sÄ±nÄ±rlarÄ±na gÃ¶re konumlanÄ±r) ── -->
+<!-- Debug overlay: FPS + live game state. Toggled by T×2 or RTL swipe. -->
 <div id="debug-overlay">
   <div class="dbg-title">DEBUG</div>
   <div id="dbg-rows"></div>
@@ -2300,7 +2300,7 @@
       </div>
     </div>
   </div>
-  <!-- Difficulty selector kaldÄ±rÄ±ldÄ± â€” sabit EXTREME seviye -->
+  <!-- Difficulty selector kaldÄ±rÄ±ldÄ± — sabit EXTREME seviye -->
   <div id="home-links">
     <button class="home-link" id="btn-credits">CREDITS</button>
   </div>
@@ -2311,7 +2311,7 @@
   <div class="panel">
     <h2>Settings</h2>
 
-    <!-- â”€â”€ SFX â”€â”€ -->
+    <!-- ── SFX ── -->
     <div class="srow">
       <span class="sicon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2328,7 +2328,7 @@
       </div>
     </div>
 
-    <!-- â”€â”€ Music â”€â”€ -->
+    <!-- ── Music ── -->
     <div class="srow">
       <span class="sicon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2345,7 +2345,7 @@
       </div>
     </div>
 
-    <!-- â”€â”€ Feedback â”€â”€ -->
+    <!-- ── Feedback ── -->
     <div class="srow">
       <span class="sicon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2442,7 +2442,7 @@
         <span class="ex-req-val" id="ex-req-coin-val"></span>
       </div>
     </div>
-    <div id="extreme-warn">High speed â€” for experienced players only.</div>
+    <div id="extreme-warn">High speed — for experienced players only.</div>
     <button id="extreme-confirm" class="locked">LET'S GO <span class="ic-bolt"></span> &nbsp;<span class="ic-coin"></span> 50</button>
     <button id="extreme-back">Stay Chill</button>
   </div>
@@ -2456,7 +2456,7 @@
     <div id="wife-title">WIFE MODE</div>
     <div id="wife-desc">
       Added at my wife's request <span class="ic-hearts"></span><br><br>
-      A slower, gentler way to play â€”
+      A slower, gentler way to play —
       <b>50% of Chill's speed</b> with twice the green energy spawn.
     </div>
     <div id="wife-warn">
@@ -2481,13 +2481,13 @@
       <div id="upg-tab-passive" class="upg-tab-pane active"></div>
       <div id="upg-tab-active" class="upg-tab-pane">
         <div class="upg-card-sub" style="text-align:center;padding:24px 12px">
-          Active boosters coming soon â€”<br>
+          Active boosters coming soon —<br>
           one-shot perks that apply to your next runs.
         </div>
       </div>
       <div id="upg-tab-ingame" class="upg-tab-pane">
         <div class="upg-card-sub" style="text-align:center;padding:24px 12px">
-          In-game abilities coming soon â€”<br>
+          In-game abilities coming soon —<br>
           equippable slots with cooldowns.
         </div>
       </div>
@@ -2555,18 +2555,18 @@
     <div class="lb-bests-row">
       <div class="lb-best-card card-alltime">
         <div class="lb-best-lbl">ALL-TIME</div>
-        <div class="lb-best-name" id="lb-best-name">â€”</div>
+        <div class="lb-best-name" id="lb-best-name">—</div>
         <div class="lb-best-score" id="lb-best-score">00000</div>
       </div>
       <div class="lb-best-card card-today">
         <div class="lb-best-lbl">TODAY</div>
-        <div class="lb-best-name" id="lb-daily-name">â€”</div>
-        <div class="lb-best-score" id="lb-daily-score">â€”</div>
+        <div class="lb-best-name" id="lb-daily-name">—</div>
+        <div class="lb-best-score" id="lb-daily-score">—</div>
       </div>
       <div class="lb-best-card card-month">
         <div class="lb-best-lbl">MONTH</div>
-        <div class="lb-best-name" id="lb-monthly-name">â€”</div>
-        <div class="lb-best-score" id="lb-monthly-score">â€”</div>
+        <div class="lb-best-name" id="lb-monthly-name">—</div>
+        <div class="lb-best-score" id="lb-monthly-score">—</div>
       </div>
     </div>
     <div id="lb-list">
@@ -2596,7 +2596,7 @@
       </button>
     </div>
 
-    <!-- Static name (no editing here â€” first-launch profile setup only) -->
+    <!-- Static name (no editing here — first-launch profile setup only) -->
     <div id="prof-name-static" data-name>PLAYER</div>
     <div id="prof-name-divider"></div>
 
@@ -2620,7 +2620,7 @@
     <div id="prof-av-grid"></div>
     <input type="file" id="prof-av-file" accept="image/*" style="display:none">
 
-    <!-- UPGRADES â€” sits on its own line, above the BACK/SAVE pair -->
+    <!-- UPGRADES — sits on its own line, above the BACK/SAVE pair -->
     <button id="prof-upgrade-btn">UPGRADES</button>
     <!-- Footer: Back + Save -->
     <div id="prof-actions">
@@ -2634,7 +2634,7 @@
 <div id="badges-modal">
   <div id="badges-modal-box">
     <div id="badges-modal-title">Badges</div>
-    <div id="badges-modal-sub">Tap to equip Â· re-tap to remove</div>
+    <div id="badges-modal-sub">Tap to equip · re-tap to remove</div>
     <div id="badges-modal-grid"></div>
     <button id="badges-modal-close">Close</button>
   </div>
@@ -2649,19 +2649,19 @@
   </div>
 </div>
 
-<!-- Tutorial system removed â€” players discover mechanics through play -->
+<!-- Tutorial system removed — players discover mechanics through play -->
 
 <!--
   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Firebase kurulumu:
-  1. console.firebase.google.com â†’ yeni proje â†’ "arcrise"
-  2. Build â†’ Firestore â†’ "Start in test mode" â†’ europe-west1
-  3. Project Settings â†’ Web app â†’ firebaseConfig'i kopyala
+  1. console.firebase.google.com → yeni proje → "arcrise"
+  2. Build → Firestore → "Start in test mode" → europe-west1
+  3. Project Settings → Web app → firebaseConfig'i kopyala
   4. AÅŸaÄŸÄ±daki FIREBASE_CONFIG alanÄ±nÄ± doldur
   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -->
 <script>
-// â”€â”€ Firebase Firestore (REST API â€” SDK gerekmez) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Firebase Firestore (REST API — SDK gerekmez) ────────────
 // Config'i console.firebase.google.com > Project Settings > Web app'ten al
 const FIREBASE_CONFIG = {
   apiKey:    'AIzaSyB7x2es8UgEkQ91K4hruM7OaJKhpXkzvW4',
@@ -2675,23 +2675,23 @@ const ARC_DB = (() => {
   // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
   function normMode(m) { return (m === 'extreme') ? 'extreme' : 'normal'; }
 
-  // Skor kaydet â€” her oyuncu iÃ§in (name + mode) baÅŸÄ±na sadece en yÃ¼ksek skor tutulur.
+  // Skor kaydet — her oyuncu iÃ§in (name + mode) baÅŸÄ±na sadece en yÃ¼ksek skor tutulur.
   // Eski 'mode' alanÄ± olmayan kayÄ±tlar "normal" sayÄ±lÄ±r (geriye dÃ¶nÃ¼k uyumluluk).
   async function submitScore(name, avatar, score, mode, distance, traceData) {
     if (!projectId || projectId.startsWith('BURAYA')) {
-      console.warn('[ArcDB] no projectId configured â€” score not saved');
+      console.warn('[ArcDB] no projectId configured — score not saved');
       return;
     }
     name = (name || '').toString().trim();
-    if (!name) { console.warn('[ArcDB] empty name â€” score not saved'); return; }
+    if (!name) { console.warn('[ArcDB] empty name — score not saved'); return; }
     score = Number(score) || 0;
-    if (score <= 0) { console.warn('[ArcDB] score <= 0 â€” skip'); return; }
+    if (score <= 0) { console.warn('[ArcDB] score <= 0 — skip'); return; }
     avatar = Number(avatar) || 0;
     mode = normMode(mode);
-    // Distance â€” float meters (3 dp). Stored alongside the score so the
+    // Distance — float meters (3 dp). Stored alongside the score so the
     // leaderboard can sort either metric from the same single doc.
     const distNum = Math.max(0, Math.round((Number(distance) || 0) * 1000) / 1000);
-    // Optional trace data â€” uploaded only when this run is a new PB distance
+    // Optional trace data — uploaded only when this run is a new PB distance
     const tracePts       = (traceData && typeof traceData.pts === 'string') ? traceData.pts : null;
     const traceColor     = (traceData && traceData.color) || null;
     const traceThickness = (traceData && Number.isFinite(traceData.thickness)) ? Number(traceData.thickness) : 0;
@@ -2730,7 +2730,7 @@ const ARC_DB = (() => {
           return;
         }
         const docId = match.document.name.split('/').pop();
-        // Keep the higher of each metric â€” both compete independently.
+        // Keep the higher of each metric — both compete independently.
         const finalScore = scoreBetter ? score   : oldScore;
         const finalDist  = distBetter  ? distNum : oldDist;
         const fields = {
@@ -2783,7 +2783,7 @@ const ARC_DB = (() => {
   }
 
   // YardÄ±mcÄ±: Firestore yanÄ±tÄ±nÄ± {name, avatar, score, ts, mode} listesine dÃ¶nÃ¼ÅŸtÃ¼r.
-  // mode alanÄ± olmayan ESKÄ° kayÄ±tlar `mode: null` olarak gelir â€” getTopScores bunlarÄ± filtreler.
+  // mode alanÄ± olmayan ESKÄ° kayÄ±tlar `mode: null` olarak gelir — getTopScores bunlarÄ± filtreler.
   function parseRows(rows) {
     return rows
       .filter(r => r.document?.fields)
@@ -2821,8 +2821,8 @@ const ARC_DB = (() => {
 
   // Top-N skor Ã§ek. mode girilmiÅŸse yerelde filtreler.
   // (Firestore'da where+orderBy composite index gerektirdiÄŸi iÃ§in filtreyi
-  // app tarafÄ±nda yapÄ±yoruz â€” daha geniÅŸ query Ã§ekip mode'a gÃ¶re sÃ¼zÃ¼yoruz.)
-  // â”€â”€ Read cache (sessionStorage + memory) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // app tarafÄ±nda yapÄ±yoruz — daha geniÅŸ query Ã§ekip mode'a gÃ¶re sÃ¼zÃ¼yoruz.)
+  // ── Read cache (sessionStorage + memory) ───────────────────
   // Cuts Firestore reads by 90%+ on repeat-views. TTL'd entries are reused;
   // expired ones trigger a single refetch. The cache key includes mode + n
   // so the cheapest call serves the larger one too if available.
@@ -2853,7 +2853,7 @@ const ARC_DB = (() => {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
     const target = mode ? normMode(mode) : null;
     // Overfetch for mode filter: top-N by score globally might be dominated
-    // by one mode, starving the other. Ã—6 + 30 buffer captures plenty.
+    // by one mode, starving the other. ×6 + 30 buffer captures plenty.
     // (Cache TTL keeps the cost down on repeats.)
     const fetchN = target ? Math.min(n * 6 + 30, 250) : n;
     const key = `${target || 'all'}:${fetchN}`;
@@ -2872,7 +2872,7 @@ const ARC_DB = (() => {
           limit:   fetchN,
         }}),
       });
-      // Dedupe at the read layer â€” only each player's best per mode survives,
+      // Dedupe at the read layer — only each player's best per mode survives,
       // even if the doc store somehow contains historical duplicates.
       const all = dedupeBest(parseRows(await res.json()));
       _cacheSet(key, all);
@@ -2928,7 +2928,7 @@ const ARC_DB = (() => {
   async function dedupeScores() {
     if (!projectId || projectId.startsWith('BURAYA')) return { kept: 0, deleted: 0 };
     if (!confirm('Dedupe scores: keep each player\'s highest per mode, delete the rest. Continue?')) return { kept: 0, deleted: 0 };
-    // Pull every doc â€” paginated. (Small enough projects only.)
+    // Pull every doc — paginated. (Small enough projects only.)
     const all = [];
     let nextToken = null;
     do {
@@ -2942,7 +2942,7 @@ const ARC_DB = (() => {
     } while (nextToken);
 
     // Group by (name, mode), keep highest, mark rest for delete
-    const keepers = new Map(); // key â†’ row
+    const keepers = new Map(); // key → row
     const losers  = [];
     for (const r of all) {
       const key = `${r.name}|${normMode(r.mode || 'normal')}`;
@@ -2965,7 +2965,7 @@ const ARC_DB = (() => {
     return { kept: keepers.size, deleted };
   }
 
-  // Returns the most recent N traces for `mode`, ordered by ts DESC â€”
+  // Returns the most recent N traces for `mode`, ordered by ts DESC —
   // the "next N players after us see our trace, then it scrolls off" model.
   // Each player has 1 doc per (name, mode), so this is effectively the
   // last N players to play in this mode.
@@ -3014,11 +3014,11 @@ const ARC_DB = (() => {
   return { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, wipeAllScores, dedupeScores };
 })();
 
-// â”€â”€ One-shot data reset gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── One-shot data reset gate ──────────────────────────────
 // Bump ARC_RESET_VERSION whenever you want every device that loads the
 // page to wipe its local state once. On next load each device:
 //   1) checks localStorage.arc_reset_v
-//   2) if it doesn't match â†’ drops all arc_* keys + arc_topcache_* in
+//   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
 //      sessionStorage
 //   3) writes the new version so the wipe doesn't repeat
 const ARC_RESET_VERSION = 'r-2026-05-15-1';
@@ -3040,13 +3040,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     sess.forEach(k => sessionStorage.removeItem(k));
     localStorage.setItem('arc_reset_v', ARC_RESET_VERSION);
-    console.log('[ArcRise] one-shot data reset â†’', ARC_RESET_VERSION,
+    console.log('[ArcRise] one-shot data reset →', ARC_RESET_VERSION,
                 `(cleared ${local.length} local + ${sess.length} session keys)`);
   } catch(e) { console.warn('[ArcRise] reset gate failed', e); }
 })();
 
 (() => {
-  // â”€â”€ Mobile zoom kilidi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mobile zoom kilidi ───────────────────────────────────
   // viewport meta + touch-action yetmediÄŸi iOS Safari sÃ¼rÃ¼mleri iÃ§in gesture event'lerini blokla.
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
     document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -3063,7 +3063,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (e.touches && e.touches.length > 1) e.preventDefault();
   }, { passive: false });
 
-  // â”€â”€ Canvas setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Canvas setup ──────────────────────────────────────────
   const W = 600, H = 1066;
   const gc = document.getElementById('gc');
   const bg = document.getElementById('bg');
@@ -3117,7 +3117,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return `<svg${cls} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="color:${color};display:inline-block;vertical-align:middle${extra}">${body}</svg>`;
   }
 
-  // â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── DOM refs ──────────────────────────────────────────────
   const hudEl      = document.getElementById('hud');
   const hScore     = document.getElementById('h-score');
   const hBest      = document.getElementById('h-best');
@@ -3128,13 +3128,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const gameoverEl = document.getElementById('gameover');
   // Tutorial DOM refs removed
   const homeBestV  = document.getElementById('home-pbest-val'); // profile card'daki best score
-  // goBestV legacy â€” replaced by inline best lines under twin SCORE/DISTANCE
+  // goBestV legacy — replaced by inline best lines under twin SCORE/DISTANCE
   const goBestV    = null;
   const rankRows   = document.getElementById('rank-rows');
   const profileSetupEl = document.getElementById('profile-setup');
   // SFX/Music are now on/off toggles (no sliders)
 
-  // â”€â”€ 20 Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 20 Avatar ────────────────────────────────────────────
   const AVATAR_COLORS = [
     '#7CFF7A','#ff2255','#00ccff','#ff7700','#4488ff',
     '#ffdd00','#9944ff','#ff3355','#44ff88','#ffffff',
@@ -3191,7 +3191,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   ];
   const AVATARS = _avSVGs.map(s => 'data:image/svg+xml,' + encodeURIComponent(s));
 
-  // â”€â”€ Profil â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Profil ───────────────────────────────────────────────
   let playerName = (localStorage.getItem('arc_name') || '').toUpperCase().slice(0, 8);
   let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 0);
   const nameIsLocked = !!localStorage.getItem('arc_name');
@@ -3208,13 +3208,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (hImg) hImg.src = src;
     const hName = document.getElementById('home-pname');
     if (hName) hName.textContent = playerName || 'PLAYER';
-    // BEST SCORE â€” per-mode (Chill vs Extreme)
+    // BEST SCORE — per-mode (Chill vs Extreme)
     const hBestEl = document.getElementById('home-pbest-val');
     const modeBest = (gameMode === 'extreme')
       ? (stats?.bestExtreme || 0)
       : (stats?.bestNormal  || 0);
     if (hBestEl) hBestEl.textContent = pad(modeBest);
-    // BEST DISTANCE â€” per-mode, no M suffix, integer (rounded)
+    // BEST DISTANCE — per-mode, no M suffix, integer (rounded)
     const hBestDistEl = document.getElementById('home-pbestdist');
     if (hBestDistEl) {
       const md = (gameMode === 'extreme')
@@ -3256,7 +3256,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     });
   }
 
-  // â”€â”€ Avatar modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Avatar modal ──────────────────────────────────────────
   const avModal = document.getElementById('av-modal');
   function openAvModal() {
     renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {
@@ -3265,11 +3265,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     });
     avModal.classList.add('open');
   }
-  // settings-profile-ro removed â€” profile editing is now on home card
+  // settings-profile-ro removed — profile editing is now on home card
   document.getElementById('av-modal-close').addEventListener('click', () => avModal.classList.remove('open'));
   avModal.addEventListener('click', e => { if (e.target === avModal) avModal.classList.remove('open'); });
 
-  // â”€â”€ Profile setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Profile setup ─────────────────────────────────────────
   document.getElementById('ps-confirm').addEventListener('click', () => {
     const raw = document.getElementById('ps-name-input').value
       .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
@@ -3284,16 +3284,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (e.key === 'Enter') document.getElementById('ps-confirm').click();
   });
 
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── State ────────────────────────────────────────────────
   let scene   = 'home';
   let running = false, started = false;
-  // firstPlay flag removed â€” no tutorial anymore
+  // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
-  // endGame is called â€” gives the player a small forgiveness window.
+  // endGame is called — gives the player a small forgiveness window.
   const GRACE_S = 0.45;
   let graceTimer = 0;
-  // distancePx â€” peak ascent from spawn (y = H - 200), so distance starts at 0
+  // distancePx — peak ascent from spawn (y = H - 200), so distance starts at 0
   // and increases the moment the player moves up. Independent of maxAscend so
   // it doesn't shift the score formula.
   let distancePx = 0;
@@ -3303,7 +3303,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let pbFadeT   = 0;     // PB Ã§izgi fade-out animasyon zamanlayÄ±cÄ±sÄ± (sn)
   const PB_FADE_DUR = 0.7;
 
-  // â”€â”€ Booster state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Booster state ────────────────────────────────────────
   // types: 'wide','narrow','magnet','x2','x3','x4','ghost','speed'
   let boosterType = null, boosterTime = 0, boosterDur = 0;
   let isGhost = false, hasShield = false;
@@ -3351,31 +3351,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return base * mult;
   }
 
-  // Ghost: Ã¶nceki oyunun trail'i (world-space) â€” %20 alpha ile Ã§izilir
+  // Ghost: Ã¶nceki oyunun trail'i (world-space) — %20 alpha ile Ã§izilir
   let ghostTrail = [];          // legacy single-ghost (unused after the
                                 // multi-trace refactor below, kept to avoid
                                 // touching unrelated callsites)
 
-  // â”€â”€ Multi-trace ghosts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Multi-trace ghosts ───────────────────────────────────
   // ghostSampled = current game's sparsely-sampled trail (no shift), used
   // to capture a ghost at endGame. Sampling cadence ~every 20 world-px
-  // upward â€” keeps each saved trace under ~150 points.
+  // upward — keeps each saved trace under ~150 points.
   const ghostSampled = [];
   // allGhosts = up to 1000 traces from prior games, loaded at game start.
   let allGhosts = [];
   let crossPlayerGhosts = []; // others' best traces from Firestore, mode-filtered
-  // Performance cap for the per-frame render â€” last N most-recent traces.
+  // Performance cap for the per-frame render — last N most-recent traces.
   const GHOSTS_RENDER_MAX = 80;
   const GHOSTS_STORE_MAX  = 1000;
   const GHOSTS_KEY        = 'arc_traces_v1';
 
-  // â”€â”€ Upgrade state (Phase 1A stub â€” UI comes in Phase 1B) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Upgrade state (Phase 1A stub — UI comes in Phase 1B) ─────────────
   const UPG_KEY = 'arc_upg_v1';
   const UPG_DEFAULTS = {
     radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -3..+3 active
     speedPos: 0,  speedNeg: 0,  speedActive: 0,
     timer: 0,                                    // 0..4 (+sec on combo)
-    traceColor: null,                            // hex or null (â†’ default)
+    traceColor: null,                            // hex or null (→ default)
     traceThickness: 0,                           // 0..20 (each +%10)
     deathName: false,
     deathAvatar: false,
@@ -3416,9 +3416,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // LB NPC sabit skorlarÄ± (her oyun baÅŸÄ±nda yeniden Ã§ekilir)
   let lbNPCScores = [];
 
-  // Tutorial system removed â€” players learn by playing.
+  // Tutorial system removed — players learn by playing.
 
-  // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2Ã—, dynamic +)
+  // Game mode: 'normal' (400 base) | 'extreme' (800 base, 2×, dynamic +)
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
   let GAME_SPEED = gameMode === 'extreme' ? 800 : 400;
   function getScoreMul() {
@@ -3442,9 +3442,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
   let musOn  = localStorage.getItem('arc_mus') !== '0';
-  let aaOn   = false; // smooth permanently off â€” pixel-crisp look
+  let aaOn   = false; // smooth permanently off — pixel-crisp look
   let bestDistanceM = Number(localStorage.getItem('arc_bestdist') || 0);
-  // Migrate bestdist to cm (Ã—7.5) one-time
+  // Migrate bestdist to cm (×7.5) one-time
   if (localStorage.getItem('arc_bestdist_unit') !== 'cm') {
     bestDistanceM = bestDistanceM * 7.5;
     localStorage.setItem('arc_bestdist', String(bestDistanceM));
@@ -3456,7 +3456,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (ctx)  ctx.imageSmoothingQuality  = 'high';
     if (bctx) bctx.imageSmoothingQuality = 'high';
   }
-  // Physical cm per rendered canvas height â€” auto-calibrated from CSS px.
+  // Physical cm per rendered canvas height — auto-calibrated from CSS px.
   // 96 CSS px = 1 inch = 2.54 cm. Falls back to 15 if layout not ready.
   // Display scale: 1 physical cm → 50 game-metres. Internal storage stays in cm.
   const DISP_SCALE = 50;
@@ -3471,7 +3471,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   setTimeout(recalcCmPerScreen, 0);
 
   // Distance-based coin system: every 100cm total distance = 1 coin
-  // Unit: cm (1 screen height H = 15 cm). Migration from old meter-based store: Ã—7.5.
+  // Unit: cm (1 screen height H = 15 cm). Migration from old meter-based store: ×7.5.
   let distTotal = Number(localStorage.getItem('arc_dist_total') || 0);
   if (localStorage.getItem('arc_dist_unit') !== 'cm') {
     distTotal = distTotal * 7.5;
@@ -3481,8 +3481,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let coins = Math.floor(distTotal / 100); // always derived from distTotal (cm)
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
-  // â”€â”€ Profile stats (persisted) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Single localStorage key holding JSON â€” easy to extend later.
+  // ── Profile stats (persisted) ─────────────────────────────
+  // Single localStorage key holding JSON — easy to extend later.
   const STATS_KEY = 'arc_stats_v1';
   function loadStats() {
     try {
@@ -3505,7 +3505,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function saveStats() {
     try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(_){}
   }
-  // Migrate stats distances to cm (Ã—7.5) one-time
+  // Migrate stats distances to cm (×7.5) one-time
   if (localStorage.getItem('arc_stats_unit') !== 'cm') {
     stats.bestDistNormal  = (stats.bestDistNormal  || 0) * 7.5;
     stats.bestDistExtreme = (stats.bestDistExtreme || 0) * 7.5;
@@ -3520,7 +3520,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const flameParticles = [];
   let flameSpawnAcc = 0;
 
-  // Flying score animations (gold ball points â†’ score HUD)
+  // Flying score animations (gold ball points → score HUD)
   // Items: {x, y (screen-space), tx, ty (HUD target), text, life}
   const flyScores = [];
 
@@ -3537,7 +3537,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // bg flash still has motion.
   function initAudioViz() {
     if (vizData) return;
-    // 64 fake bins â€” same length as the old analyser frequencyBinCount.
+    // 64 fake bins — same length as the old analyser frequencyBinCount.
     vizData = new Uint8Array(64);
   }
   // Drive fake viz data each frame so musOn-gated visuals still animate.
@@ -3556,7 +3556,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     goldFlashAlpha = Math.min(0.5, goldFlashAlpha + intensity);
   }
 
-  // Gold vignette flash only â€” beat-synced background removed for now
+  // Gold vignette flash only — beat-synced background removed for now
   function drawBgFlash() {
     if (goldFlashAlpha <= 0.005) return;
     const gA = goldFlashAlpha * energy;
@@ -3571,12 +3571,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     goldFlashAlpha *= 0.90;
   }
 
-  // â”€â”€ Flying Score (gold ball points â†’ HUD score) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Flying Score (gold ball points → HUD score) ──────────
   // Gold pickup animation. Three stages:
-  //   1) GROW    â€” big "+basePts" pops in at the canvas center, scales from 0 to full.
-  //   2) MULTIPLY â€” combo multiplier is applied; the value snaps from basePts â†’ finalPts
-  //                 with a brief scale pulse + "Ã— N" badge so the player feels the bonus.
-  //   3) FLY     â€” the final value eases toward the score HUD at the top-left.
+  //   1) GROW    — big "+basePts" pops in at the canvas center, scales from 0 to full.
+  //   2) MULTIPLY — combo multiplier is applied; the value snaps from basePts → finalPts
+  //                 with a brief scale pulse + "× N" badge so the player feels the bonus.
+  //   3) FLY     — the final value eases toward the score HUD at the top-left.
   function spawnFlyScore(sx, sy, basePts, mul, finalPts) {
     const hudRect    = hScore.getBoundingClientRect();
     const canvasRect = gc.getBoundingClientRect();
@@ -3592,7 +3592,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       growDur: 0.35,
       mulDur:  (mul && Math.abs(mul - 1) > 0.05) ? 0.55 : 0.20, // skip the multiplier beat when mulâ‰ˆ1
       // Positions
-      sx, sy,   // world spawn (where the gold ball was) â€” used as origin for grow
+      sx, sy,   // world spawn (where the gold ball was) — used as origin for grow
       cx, cy,   // center anchor
       tx, ty,   // HUD target
       x: cx, y: cy,
@@ -3629,13 +3629,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           // Snap to final value at midpoint, with a scale-pulse
           if (p < 0.45) {
             f.shownPts = f.basePts;
-            f.pulse = p / 0.45;       // 0 â†’ 1 building tension
+            f.pulse = p / 0.45;       // 0 → 1 building tension
             f.scale = 1.0 + 0.15 * Math.sin(p * Math.PI / 0.45);
           } else {
             f.shownPts = f.finalPts;
             const k = (p - 0.45) / 0.55;
-            f.pulse = 1 - k;          // 1 â†’ 0 release
-            f.scale = 1.4 - 0.4 * k;  // pulse out from 1.4 â†’ 1.0
+            f.pulse = 1 - k;          // 1 → 0 release
+            f.scale = 1.4 - 0.4 * k;  // pulse out from 1.4 → 1.0
           }
         } else {
           f.shownPts = f.finalPts;
@@ -3692,7 +3692,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Flame Particles (Extreme mode frame effect) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Flame Particles (Extreme mode frame effect) ──────────
   // Emit from wall edges (and top during play). Screen-space, drift inward+up.
   function spawnFlameParticles(dt) {
     if (gameMode !== 'extreme') return;
@@ -3717,7 +3717,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         x, y, vx, vy,
         r: 5 + Math.random() * 9,
         life: 1,
-        hue: 8 + Math.random() * 35, // redâ†’orangeâ†’yellow
+        hue: 8 + Math.random() * 35, // red→orange→yellow
       });
     }
   }
@@ -3756,9 +3756,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // Combo decay now derived from comboTimerSec() â€” see getBaseSpeed area.
+  // Combo decay now derived from comboTimerSec() — see getBaseSpeed area.
 
-  // â”€â”€ Player â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Player ───────────────────────────────────────────────
   const player = {
     x: W/2, y: H - 200, r: 18,
     dir: 0, speed: GAME_SPEED,
@@ -3768,8 +3768,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const trail = [], obstacles = [], bonuses = [], ripples = [];
   const goldBalls = [], purpleBalls = [], particles = [];
 
-  // â”€â”€ Audio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // new Audio() her protokolde (file://, http://) Ã§alÄ±ÅŸÄ±r â€” fetch'in aksine.
+  // ── Audio ──────────────────────────────────────────────────
+  // new Audio() her protokolde (file://, http://) Ã§alÄ±ÅŸÄ±r — fetch'in aksine.
   const bgAudio    = new Audio('AUDIO/ArcRiseBGMusic.wav');
   bgAudio.loop     = true;
   bgAudio.volume   = 0.7;
@@ -3780,7 +3780,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const deadAudioFallback = new Audio('AUDIO/ArcRiseDead.wav');
   deadAudioFallback.volume = 0.8;
 
-  // Low-latency SFX via AudioBuffer â€” separate context from bg-music analyser
+  // Low-latency SFX via AudioBuffer — separate context from bg-music analyser
   let sfxCtx = null, touchBuffer = null, deadBuffer = null;
 
   async function loadSfxBuffer(ctx, url) {
@@ -3824,7 +3824,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // Synchronous + gesture-friendly. We deliberately don't await anything
-  // here â€” iOS Safari requires the .play() call to land inside the
+  // here — iOS Safari requires the .play() call to land inside the
   // original click handler frame, and an await before it breaks the
   // gesture chain.
   function playBgMusic() {
@@ -3837,7 +3837,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function stopBgMusic() {
     bgAudio.pause();
-    // Don't reset currentTime â€” resume from same position next game
+    // Don't reset currentTime — resume from same position next game
   }
 
   function playTouchSound() {
@@ -3851,12 +3851,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
   let nextSpawnY, lastBonusY;
 
-  // â”€â”€ BG Arc animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── BG Arc animation ─────────────────────────────────────
   const RAINBOW = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa'];
   const bgArcs  = [];
 
   // Her BG arc: bir "top" dairesel yay Ã¼zerinde hareket eder, arkasÄ±nda iz bÄ±rakÄ±r.
-  // TÄ±pkÄ± oyundaki topun yaptÄ±ÄŸÄ± gibi â€” gerÃ§ek dairesel kinematik.
+  // TÄ±pkÄ± oyundaki topun yaptÄ±ÄŸÄ± gibi — gerÃ§ek dairesel kinematik.
   function newBgArc(preAge) {
     const hueStart = Math.random() * 360;              // gÃ¶kkuÅŸaÄŸÄ± baÅŸlangÄ±Ã§ rengi
     const radius = 90 + Math.random() * 220;
@@ -3897,8 +3897,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     for (const a of bgArcs) {
       // Ã‡izim fazÄ±: ne kadar radyan Ã§izildi (0..maxLen)
-      const headFrac = Math.min(1, a.age / a.drawT); // 0â†’1 Ã§izim ilerler
-      // Silme fazÄ±: Ã§izim bitti â†’ kuyruk ilerler
+      const headFrac = Math.min(1, a.age / a.drawT); // 0→1 Ã§izim ilerler
+      // Silme fazÄ±: Ã§izim bitti → kuyruk ilerler
       const tailFrac = a.age > a.drawT
         ? Math.min(1, (a.age - a.drawT) / a.FADE_OUT)
         : 0;
@@ -3917,7 +3917,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const ang0 = a.startA + a.dir * a.maxLen * t0;
         const ang1 = a.startA + a.dir * a.maxLen * t1;
 
-        // GÃ¶kkuÅŸaÄŸÄ± rengi â€” baÅŸ tarafa doÄŸru daha parlak
+        // GÃ¶kkuÅŸaÄŸÄ± rengi — baÅŸ tarafa doÄŸru daha parlak
         const segT   = s / (SEGS - 1);
         const hue    = (a.hueStart + segT * 280) % 360;
         const bright = 55 + segT * 12;
@@ -3936,13 +3936,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx2.restore();
   }
 
-  // â”€â”€ Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Grid ─────────────────────────────────────────────────
   function drawGrid(ctx2, oy = 0, alpha = 0.13, sz = 40) {
     ctx2.save();
     ctx2.globalAlpha  = alpha;
     ctx2.strokeStyle  = '#fff';
-    // AA on â†’ 1px line, half-pixel offset so AA softens the edge nicely.
-    // AA off â†’ 0.5px width, integer coords â†’ fast & crisper-looking on low GPUs.
+    // AA on → 1px line, half-pixel offset so AA softens the edge nicely.
+    // AA off → 0.5px width, integer coords → fast & crisper-looking on low GPUs.
     ctx2.lineWidth    = aaOn ? 1 : 0.5;
     const half = aaOn ? 0.5 : 0;
     const off = ((oy % sz) + sz) % sz;
@@ -3959,12 +3959,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx2.restore();
   }
 
-  // â”€â”€ Walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Walls ────────────────────────────────────────────────
   const walls = { left: 20, right: W - 20 };
   function drawWalls() {
     ctx.save();
     if (gameMode === 'extreme') {
-      // Flame walls â€” animated gradient with flickering highlights
+      // Flame walls — animated gradient with flickering highlights
       const t = performance.now() / 220;
       const lg1 = ctx.createLinearGradient(0, 0, 0, H);
       lg1.addColorStop(0,    '#aa1122');
@@ -4006,10 +4006,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Obstacles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Obstacles ────────────────────────────────────────────
   function drawObstacles() {
     ctx.save();
-    // DuvarÄ±n dÄ±ÅŸÄ±na taÅŸan kÄ±smÄ± kÄ±rp â€” siyah duvar gÃ¶rÃ¼nsÃ¼n
+    // DuvarÄ±n dÄ±ÅŸÄ±na taÅŸan kÄ±smÄ± kÄ±rp — siyah duvar gÃ¶rÃ¼nsÃ¼n
     ctx.beginPath();
     ctx.rect(walls.left, 0, walls.right - walls.left, H);
     ctx.clip();
@@ -4019,7 +4019,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const sx = ob._ox ?? ob.x, sy = W2S(ob._oy ?? ob.y);
       if (sy < -100 || sy > H + 100) continue;
       if (flame) {
-        // Flame obstacle â€” animated radial gradient with shimmer
+        // Flame obstacle — animated radial gradient with shimmer
         const wobble = 1 + 0.05 * Math.sin(t + ob.x * 0.05);
         const R = ob.r * wobble;
         // Outer glow (red-orange)
@@ -4045,7 +4045,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Bonuses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Bonuses ──────────────────────────────────────────────
   function drawBonuses() {
     for (const b of bonuses) {
       const sy = W2S(b.y);
@@ -4057,7 +4057,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // â”€â”€ Gold Balls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Gold Balls ───────────────────────────────────────────
   function drawGoldBalls() {
     const now = performance.now() / 1000;
     for (const b of goldBalls) {
@@ -4076,7 +4076,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Minik core (r=1..2 px)
       ctx.fillStyle = '#FFE44D';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Puan (+100 / +50) â€” glowun Ã¼zerinde kÃ¼Ã§Ã¼k yazÄ±
+      // Puan (+100 / +50) — glowun Ã¼zerinde kÃ¼Ã§Ã¼k yazÄ±
       ctx.fillStyle = 'rgba(255,240,120,0.9)';
       ctx.font = `6px 'Press Start 2P', monospace`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
@@ -4085,7 +4085,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // â”€â”€ Purple Boosters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Purple Boosters ──────────────────────────────────────
   function drawPurpleBalls() {
     const now = performance.now() / 1000;
     for (const b of purpleBalls) {
@@ -4105,12 +4105,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // â”€â”€ Float Texts (combo bonuses) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Float Texts (combo bonuses) ──────────────────────────
   function spawnFloatText(wx, wy, text, hue, scale = 1) {
     floatTexts.push({ x: wx, y: wy, text, hue, life: 1, scale });
   }
 
-  // Aktif booster skoru kaÃ§ ile Ã§arpÄ±yor (x2/x3/x4 â†’ 2/3/4, diÄŸerleri â†’ 1)
+  // Aktif booster skoru kaÃ§ ile Ã§arpÄ±yor (x2/x3/x4 → 2/3/4, diÄŸerleri → 1)
   function getBoostScoreMul() {
     if (boosterType === 'x2') return 2;
     if (boosterType === 'x3') return 3;
@@ -4148,12 +4148,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Green Particles (polygonal, very wide spread, small size) â”€â”€
+  // ── Green Particles (polygonal, very wide spread, small size) ──
   function spawnGreenParticles(wx, wy) {
     const count = 48; // more particles
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      // Huge spread â€” wide velocity range
+      // Huge spread — wide velocity range
       const spd = 1200 + Math.random() * 1600;
       particles.push({
         wx, wy,
@@ -4180,14 +4180,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
         r:    2 + Math.random() * 5,
         life: 1,
-        hue:  44 + Math.random() * 16,   // 44â€“60 (goldâ†’amber)
+        hue:  44 + Math.random() * 16,   // 44–60 (gold→amber)
         sides: 3 + Math.floor(Math.random() * 4),
         rot:   Math.random() * Math.PI * 2,
       });
     }
   }
 
-  // Rainbow burst â€” explodes along the horizontal PB line, not from a point
+  // Rainbow burst — explodes along the horizontal PB line, not from a point
   function spawnRainbowParticles(wy, xLeft, xRight) {
     const count = 140; // dense line burst
     const span  = xRight - xLeft;
@@ -4210,7 +4210,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // Purple booster burst (violet/magenta polygons)
   function spawnPurpleParticles(wx, wy) {
-    const count = 64; // a bit more â€” booster is a big event
+    const count = 64; // a bit more — booster is a big event
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
       const spd = 1300 + Math.random() * 2000;
@@ -4219,7 +4219,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
         r:    3 + Math.random() * 5,
         life: 1.1,
-        hue:  275 + Math.random() * 30,  // 275â€“305 (violetâ†’magenta)
+        hue:  275 + Math.random() * 30,  // 275–305 (violet→magenta)
         sides: 3 + Math.floor(Math.random() * 4),
         rot:   Math.random() * Math.PI * 2,
       });
@@ -4229,7 +4229,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      // Very low friction â†’ particles travel further across scene
+      // Very low friction → particles travel further across scene
       p.vx *= Math.pow(0.86, dt * 60);
       p.vy *= Math.pow(0.86, dt * 60);
       p.x  += p.vx * dt;
@@ -4274,7 +4274,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Audio Visualizer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Audio Visualizer ─────────────────────────────────────
   function drawVisualizer() {
     if (!analyser || !vizData) return;
     analyser.getByteFrequencyData(vizData);
@@ -4293,7 +4293,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const dIdx = Math.floor(i / BARS * vizData.length * 0.6);
       const fakeV = musOn ? vizData[dIdx] / 255 : (0.1 + 0.05 * Math.sin(performance.now()/400 + i));
       const barH  = Math.max(3, fakeV * 55);
-      const hue   = 130 - i * 1.5; // greenâ†’cyan
+      const hue   = 130 - i * 1.5; // green→cyan
       const alpha = baseAlpha * (0.55 + fakeV * 0.45);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = `hsl(${hue},100%,65%)`;
@@ -4307,7 +4307,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Best Distance Line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Best Distance Line ───────────────────────────────────
   // Thin horizontal "personal best" marker drawn at the world-Y matching the
   // current mode's best distance. Visible only when in screen bounds.
   function drawBestDistanceLine() {
@@ -4319,11 +4319,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     let lineAlpha = 0.55, labelAlpha = 0.7, lineW = 1.2, dash = [6, 6];
     if (pbCrossed) {
       if (pbFadeT >= PB_FADE_DUR) return;
-      const t = pbFadeT / PB_FADE_DUR; // 0 â†’ 1
+      const t = pbFadeT / PB_FADE_DUR; // 0 → 1
       const ease = 1 - (1 - t) * (1 - t); // ease-out
       lineAlpha  = 0.55 * (1 - ease);
       labelAlpha = 0.7  * (1 - ease);
-      lineW      = 1.2 + ease * 9; // 1.2 â†’ ~10
+      lineW      = 1.2 + ease * 9; // 1.2 → ~10
       dash       = []; // Ã§izgi kalÄ±nlaÅŸtÄ±kÃ§a dÃ¼z olsun, dash kaybolsun
     }
     const worldY = (H - 200) - bd * (H / CM_PER_SCREEN); // bd is cm; 1cm = H/15 px
@@ -4349,7 +4349,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Death markers at the PB world-Y (own player only, V1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Death markers at the PB world-Y (own player only, V1) ───────────
   // Renders name / avatar disc at the y where the player has died deepest,
   // visible on the map every run.
   let _avImgCache = { src: '', img: null, loaded: false };
@@ -4407,7 +4407,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Ghost Trails â€” render last N stored traces from prior games â”€â”€â”€â”€â”€â”€â”€
+  // ── Ghost Trails — render last N stored traces from prior games ───────
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
   // history without overpowering the live trail.
@@ -4418,17 +4418,34 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.lineJoin  = 'round';
     ctx.globalCompositeOperation = 'lighter';
 
-    // Helper: stroke a trace's points with the current ctx state
+    // Helper: stroke a trace's points with quadratic smoothing.
+    // Cross-player ghosts are downsampled to ~150 pts so a raw polyline
+    // looks polygonal; midpoint-quadratic smoothing hides that.
     function strokeTrace(pts) {
       ctx.beginPath();
-      let drew = false;
+      let buf = [];
+      const flush = () => {
+        if (buf.length < 2) { buf = []; return; }
+        ctx.moveTo(buf[0].x, buf[0].sy);
+        if (buf.length === 2) {
+          ctx.lineTo(buf[1].x, buf[1].sy);
+        } else {
+          for (let i = 1; i < buf.length - 1; i++) {
+            const a = buf[i], b = buf[i + 1];
+            ctx.quadraticCurveTo(a.x, a.sy, (a.x + b.x) * 0.5, (a.sy + b.sy) * 0.5);
+          }
+          const last = buf[buf.length - 1];
+          ctx.lineTo(last.x, last.sy);
+        }
+        buf = [];
+      };
       for (let i = 0; i < pts.length; i++) {
         const p = pts[i];
         const sy = W2S(p.y);
-        if (sy < -80 || sy > H + 80) { drew = false; continue; }
-        if (!drew) { ctx.moveTo(p.x, sy); drew = true; }
-        else       { ctx.lineTo(p.x, sy); }
+        if (sy < -80 || sy > H + 80) { flush(); continue; }
+        buf.push({ x: p.x, sy });
       }
+      flush();
       ctx.stroke();
     }
 
@@ -4457,7 +4474,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (botY < -80 || topY > H + 80) continue;
       ctx.globalAlpha = 0.10;
       ctx.strokeStyle = g.color || ((g.mode === 'extreme') ? '#ff8866' : '#88bbff');
-      // thickness level 0..20 â†’ 1.2px base, +0.12px per level â†’ max 3.6px
+      // thickness level 0..20 → 1.2px base, +0.12px per level → max 3.6px
       ctx.lineWidth = 1.2 + (g.thickness || 0) * 0.12;
       strokeTrace(pts);
     }
@@ -4465,7 +4482,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Trail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Trail ────────────────────────────────────────────────
   function drawTrail(time) {
     if (trail.length < 2) return;
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -4478,7 +4495,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const w  = (1 + t * 3.8) * thickMul;
       let stroke;
       if (userColor) {
-        // Use the chosen hex with age-based alpha â€” no rainbow
+        // Use the chosen hex with age-based alpha — no rainbow
         const rgb = hexToRgb(userColor);
         stroke = `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
       } else {
@@ -4502,12 +4519,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
-  // â”€â”€ Player â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Player ───────────────────────────────────────────────
   function drawPlayer() {
     ctx.save();
     const px = player.x, py = W2S(player.y), r = player.r;
 
-    // Countdown 8 â†’ 0. Bands: 7-8 green, 5-6 yellow, 3-4 orange, 0-2 red.
+    // Countdown 8 → 0. Bands: 7-8 green, 5-6 yellow, 3-4 orange, 0-2 red.
     const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
     let glowR, glowG, glowB;
     if (countdown >= 7)      { glowR = 124; glowG = 255; glowB = 122; }       // green
@@ -4515,7 +4532,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     else if (countdown >= 3) { glowR = 255; glowG = 140; glowB = 60;  }       // orange
     else                     { glowR = 255; glowG = 60;  glowB = 60;  }       // red
 
-    // Ghost efekti â€” mor renk, yarÄ± saydam
+    // Ghost efekti — mor renk, yarÄ± saydam
     if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
 
     const glowCol = `rgb(${glowR},${glowG},${glowB})`;
@@ -4534,26 +4551,26 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.fillStyle = isGhost ? 'rgba(40,0,80,0.7)' : '#000';
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
 
-    // Ring stroke â€” glow rengiyle aynÄ± renk
+    // Ring stroke — glow rengiyle aynÄ± renk
     ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${.95 * energy})`;
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
-    // Countdown â€” bold + 2Ã— larger than before, in the main brand font.
+    // Countdown — bold + 2× larger than before, in the main brand font.
     const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
     ctx.globalAlpha = isGhost ? 0.65 : 1;
     // -20% from the doubled size to leave headroom for future
     // upgrades that push the countdown into double digits.
     const fontPx = (r < 20 ? 18 : 22);
-    // Canvas ctx.font doesn't resolve CSS vars â€” use the literal family name.
+    // Canvas ctx.font doesn't resolve CSS vars — use the literal family name.
     ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(countdown), px, py);
     ctx.restore();
   }
 
-  // â”€â”€ Ripples â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Ripples ──────────────────────────────────────────────
   function drawRipples() {
     const now = performance.now() / 1000;
     for (const rp of ripples) {
@@ -4566,7 +4583,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // â”€â”€ Booster Border â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Booster Border ───────────────────────────────────────
   function drawBoosterBorder() {
     if (!boosterType || boosterDur <= 0) return;
     const frac  = Math.max(0, boosterTime / boosterDur);
@@ -4586,7 +4603,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.restore();
   }
 
-  // â”€â”€ Leaderboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Leaderboard ──────────────────────────────────────────
   const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
   let lbFrame = 0;
 
@@ -4602,7 +4619,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           .filter(r => r.name !== playerName)
           .map(r => ({ n: r.name, s: r.score }));
       } else {
-        // Firebase boÅŸ / ulaÅŸÄ±lamadÄ± â†’ sahte NPC'ler
+        // Firebase boÅŸ / ulaÅŸÄ±lamadÄ± → sahte NPC'ler
         lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
         lbNPCScores.sort((a, b) => b.s - a.s);
       }
@@ -4612,7 +4629,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // Cross-player ghost trails for current mode â€” own ghost excluded.
+  // Cross-player ghost trails for current mode — own ghost excluded.
   // Uses ARC_DB.getCrossPlayerGhosts which reuses the leaderboard cache.
   async function fetchCrossPlayerGhosts() {
     try {
@@ -4646,12 +4663,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const slice = rows.slice(start, start + 13);
     lbEl.innerHTML = slice.map(r =>
       r.you
-        ? `<div class="lb-row you" style="color:${avc}">â–¶ ${r.n}</div>`
+        ? `<div class="lb-row you" style="color:${avc}">▶ ${r.n}</div>`
         : `<div class="lb-row">${r.n}</div>`
     ).join('');
   }
 
-  // â”€â”€ World helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── World helpers ─────────────────────────────────────────
   const W2S = y => y - camY;
   const S2W = y => y + camY;
 
@@ -4683,7 +4700,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
-    // Firestore'dan gerÃ§ek skorlarÄ± arka planda Ã§ek â€” ilk Ã§aÄŸrÄ± dÄ±ÅŸÄ±nda
+    // Firestore'dan gerÃ§ek skorlarÄ± arka planda Ã§ek — ilk Ã§aÄŸrÄ± dÄ±ÅŸÄ±nda
     // ARC_DB'nin 5dk TTL cache'ine dÃ¼ÅŸer, yani okuma yapmadan dÃ¶ner.
     fetchLiveScores();
     fetchCrossPlayerGhosts();
@@ -4692,7 +4709,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function spawnAhead() {
     while (nextSpawnY > player.y - 2200) {
-      // Difficulty driver â€” linear in distance, clamped 0..1 over 0..1000 m.
+      // Difficulty driver — linear in distance, clamped 0..1 over 0..1000 m.
       // Score is no longer a difficulty input; this gives a predictable curve.
       const distCm = (distancePx / H) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 7500));
@@ -4706,11 +4723,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const gMax = gMin + 100;
       const gap = gMin + Math.random() * (gMax - gMin);
 
-      // Wife Mode: 2Ã— green-bonus density (tighter threshold + boosted probability)
+      // Wife Mode: 2× green-bonus density (tighter threshold + boosted probability)
       const wife = gameMode === 'wife';
       const bonusGap = 540 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
-      // Pickup probabilities â€” tied to distance so they kick in quickly
+      // Pickup probabilities — tied to distance so they kick in quickly
       const spawnGold   = distCm >= 30 && Math.random() < 0.12;
       const spawnPurple = distCm >= 75 && Math.random() < 0.08;
 
@@ -4732,10 +4749,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         }
       } else {
         // Obstacle radius scales linearly with distance.
-        // Max width = W/4 â†’ max radius = W/8.
+        // Max width = W/4 → max radius = W/8.
         const R_MAX = W / 8;             // hard cap
-        const rMin = 30 + (R_MAX * 0.55 - 30) * t;  // 30 â†’ ~0.55Â·R_MAX
-        const rMax = 50 + (R_MAX        - 50) * t;  // 50 â†’ R_MAX
+        const rMin = 30 + (R_MAX * 0.55 - 30) * t;  // 30 → ~0.55·R_MAX
+        const rMax = 50 + (R_MAX        - 50) * t;  // 50 → R_MAX
         const r = rMin + Math.random() * (rMax - rMin);
 
         const ob = { x, y: nextSpawnY, r };
@@ -4790,7 +4807,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       trail.push({ x: player.x, y: player.y, h: th });
       if (trail.length > 600) trail.shift();
     }
-    // Sparse sample for ghost capture â€” every ~20 world-px upward.
+    // Sparse sample for ghost capture — every ~20 world-px upward.
     // No shift, so the trace keeps its true start at H - 200 (spawn).
     if (!ghostSampled.length || (ghostSampled.at(-1).y - player.y) > 20) {
       ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
@@ -4802,13 +4819,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (pyS < H * .5) camY -= (H * .5 - pyS);
 
     maxAscend = Math.max(maxAscend, -player.y);
-    // Distance from spawn â€” immediate, even before player has cleared y=0
+    // Distance from spawn — immediate, even before player has cleared y=0
     distancePx = Math.max(distancePx, (H - 200) - player.y);
 
     // PB fade-out timer ilerle
     if (pbCrossed && pbFadeT < PB_FADE_DUR) pbFadeT += dt;
 
-    // â”€â”€ PB distance line cross: +200 puan + rainbow burst (once per run) â”€
+    // ── PB distance line cross: +200 puan + rainbow burst (once per run) ─
     if (!pbCrossed) {
       const pbDist = (gameMode === 'extreme')
         ? (stats?.bestDistExtreme || 0)
@@ -4824,12 +4841,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         }
       }
     }
-    // Extreme mode: dynamic speed ramps linearly with distance (0 â†’ 1000m
-     // takes base to 2Ã—). Booster overrides this.
+    // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
+     // takes base to 2×). Booster overrides this.
     if (gameMode === 'extreme' && !boosterType) {
       const distCm = (distancePx / H) * CM_PER_SCREEN;
       const t = Math.max(0, Math.min(1, distCm / 7500));
-      player.speed = getBaseSpeed() * (1 + t); // 1Ã— â†’ 2Ã—
+      player.speed = getBaseSpeed() * (1 + t); // 1× → 2×
       GAME_SPEED = player.speed;
     }
     // Score: base altitude + scoreBonus (combo points from greens)
@@ -4848,7 +4865,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       comboVal.textContent = Number.isInteger(comboMul) ? comboMul.toFixed(1) : comboMul.toFixed(1);
       // Track max combo (countdown reflects raw streak count)
       if (countdown > stats.maxCombo) { stats.maxCombo = countdown; saveStats(); }
-      // Color: cool (high) â†’ warm (low)
+      // Color: cool (high) → warm (low)
       const comboHue = 120 * (energy);
       document.getElementById('combo-pill').style.borderColor = `hsl(${comboHue},100%,55%)`;
       document.getElementById('combo-pill').style.color = `hsl(${comboHue},100%,70%)`;
@@ -4905,7 +4922,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
-        // Base 10, sÃ¼re katsayÄ±sÄ± â†’ booster katsayÄ±sÄ± sÄ±rayla
+        // Base 10, sÃ¼re katsayÄ±sÄ± → booster katsayÄ±sÄ± sÄ±rayla
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
@@ -4917,7 +4934,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         spawnGreenParticles(b.x, b.y);
       }
     }
-    // AltÄ±n top toplama â€” combo Ã§arpanlÄ± + flying score + sahne flash
+    // AltÄ±n top toplama — combo Ã§arpanlÄ± + flying score + sahne flash
     for (let i = goldBalls.length - 1; i >= 0; i--) {
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       const hitR = player.r + Math.max(12, b.r * 9);
@@ -4931,13 +4948,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         scoreBonus += finalPts;
         // SarÄ± flash sahne kenarlarÄ±nda (puana gÃ¶re intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
-        // 3-aÅŸamalÄ± altÄ±n animasyonu: merkezde bÃ¼yÃ¼k "+base" â†’ Ã—combo â†’ HUD'a uÃ§
+        // 3-aÅŸamalÄ± altÄ±n animasyonu: merkezde bÃ¼yÃ¼k "+base" → ×combo → HUD'a uÃ§
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
       }
     }
-    // Mor booster toplama (base 100 + sÃ¼re Ã— booster katsayÄ±larÄ±; aktivasyon SONRA)
+    // Mor booster toplama (base 100 + sÃ¼re × booster katsayÄ±larÄ±; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
@@ -4958,7 +4975,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   async function endGame() {
     stopBgMusic();
-    haptic(2000); // Ã§arpÄ±ÅŸma titreÅŸimi â€” 2 saniye
+    haptic(2000); // Ã§arpÄ±ÅŸma titreÅŸimi — 2 saniye
     if (sfxOn) {
       if (!playSfxBuffer(deadBuffer, 0.8)) {
         const _d = deadAudioFallback.cloneNode(); _d.volume = 0.8; _d.play().catch(() => {});
@@ -4982,7 +4999,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_last', String(lastScore));
     const runDistCm = (distancePx / H) * CM_PER_SCREEN;
     const prevCoins = coins;
-    // Wife Mode is casual â€” no coin earnings either
+    // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
       distTotal += runDistCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
@@ -4996,7 +5013,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       bestDistanceM = runDistCm;
       localStorage.setItem('arc_bestdist', String(bestDistanceM));
     }
-    // â”€â”€ Stats gÃ¼ncelle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Stats gÃ¼ncelle ────────────────────────────────────
     stats.gamesTotal++;
     if (gameMode === 'extreme') {
       stats.gamesExtreme++;
@@ -5020,10 +5037,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const bd = bestDistanceM || 0;
       goBestDistInline.textContent = fmtDist(bd);
     }
-    // Ã–nce ekranÄ± aÃ§ â€” Firestore cevabÄ±nÄ± beklemeden
+    // Ã–nce ekranÄ± aÃ§ — Firestore cevabÄ±nÄ± beklemeden
     showScene('over');
 
-    // â”€â”€ Twin animation: score + distance count up together â”€
+    // ── Twin animation: score + distance count up together ─
     const scoreValEl = document.getElementById('go-score-val');
     const distValEl  = document.getElementById('go-dist-val');
     scoreValEl.textContent = pad(0);
@@ -5043,7 +5060,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     requestAnimationFrame(animScore);
 
-    // â”€â”€ Coin progress bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
     const distMod = distTotal % 100; // kalan cm (sonraki coin'e)
     const barPct  = Math.round(distMod); // % (0-100)
@@ -5074,17 +5091,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         thickness: upg.traceThickness | 0, // 0..20
       };
     }
-    // Wife Mode is casual-only â€” never submits to the leaderboard / ghost pool
+    // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (gameMode !== 'wife') {
       await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData);
       if (sc > 0) ARC_DB.invalidateTopCache();
     }
 
-    // Yeterli satÄ±r Ã§ek â€” 20 yeter, sÄ±ralama gÃ¶rmek iÃ§in.
+    // Yeterli satÄ±r Ã§ek — 20 yeter, sÄ±ralama gÃ¶rmek iÃ§in.
     const topRows = await ARC_DB.getTopScores(20, gameMode);
 
     if (topRows.length === 0) {
-      // Firebase config yok â†’ yerel fallback
+      // Firebase config yok → yerel fallback
       const r1 = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
       topRows.push(
         { name: 'NEXUS',    avatar: 0, score: r1 },
@@ -5093,7 +5110,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       );
     }
 
-    // Rank ata, oyuncuyu iÅŸaretle (aynÄ± isim + aynÄ± skor â†’ ilk eÅŸleÅŸme)
+    // Rank ata, oyuncuyu iÅŸaretle (aynÄ± isim + aynÄ± skor → ilk eÅŸleÅŸme)
     let markedYou = false;
     const ann = topRows.map((r, i) => {
       const isYou = !markedYou && r.name === playerName && r.score === sc;
@@ -5124,12 +5141,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (youIdx + 1 < ann.length)         showSet.add(youIdx + 1);
     const showArr = [...showSet].sort((a, b) => a - b);
 
-    // SatÄ±rlarÄ± oluÅŸtur; boÅŸluk varsa Â·Â·Â· ayÄ±rÄ±cÄ±
+    // SatÄ±rlarÄ± oluÅŸtur; boÅŸluk varsa ··· ayÄ±rÄ±cÄ±
     let html = '';
     let prev = -1;
     for (const idx of showArr) {
       if (prev >= 0 && idx > prev + 1) {
-        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">Â·Â·Â·</td></tr>`;
+        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
       }
       const r  = ann[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
@@ -5146,14 +5163,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     rankRows.innerHTML = html;
   }
 
-  // 5 haneli skor gÃ¶sterimi (00000 â†’ 99999+)
+  // 5 haneli skor gÃ¶sterimi (00000 → 99999+)
   const pad = n => {
     const v = Math.max(0, Math.floor(n));
     if (v < 100000)    return String(v).padStart(5, '0');
     return String(v); // above 99999: show as-is
   };
 
-  // â”€â”€ Main draw loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Main draw loop ────────────────────────────────────────
   let lastT = 0;
   // Rolling FPS sample for the debug overlay (no allocs in the hot path).
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
@@ -5233,7 +5250,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     requestAnimationFrame(loop);
   }
 
-  // â”€â”€ Scene management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Scene management ─────────────────────────────────────
   function showScene(s) {
     scene = s;
     profileSetupEl.classList.toggle('active', s === 'profile-setup');
@@ -5251,7 +5268,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     showScene('home');
   }
 
-  // â”€â”€ Reset Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Reset Data ────────────────────────────────────────────
   document.getElementById('btn-reset').addEventListener('click', () => {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
      'arc_coins','arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked', STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
@@ -5270,7 +5287,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }, 2000);
   });
 
-  // â”€â”€ Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Input ────────────────────────────────────────────────
   const haptic = (ms) => navigator.vibrate?.(ms); // sessizce desteklenmiyor ise atlar
 
   gc.addEventListener('pointerdown', e => {
@@ -5289,7 +5306,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   gc.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
-  // â”€â”€ Desktop: Space to flip arc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Desktop: Space to flip arc ────────────────────────────
   function spaceFlip() {
     if (scene !== 'play' || !running) return;
     haptic(40);
@@ -5297,7 +5314,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (boosterType === 'magnet') player.x = W / 2;
     beginArc(-player.dir, getRadius());
   }
-  // â”€â”€ Debug overlay (T twice on desktop, swipe RTL on mobile) â”€
+  // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
   let debugOverlayOn = false;
   let lastTPress = 0;
   let lastRPress = 0;
@@ -5308,7 +5325,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     coins = Math.floor(distTotal / 100);
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_coins', String(coins));
-    // Minimum 2000 score & 1500cm mesafe â€” her iki mode iÃ§in yÃ¼ksek olanÄ± tut
+    // Minimum 2000 score & 1500cm mesafe — her iki mode iÃ§in yÃ¼ksek olanÄ± tut
     stats.bestNormal     = Math.max(stats.bestNormal || 0, 2000);
     stats.bestExtreme    = Math.max(stats.bestExtreme || 0, 2000);
     stats.bestDistNormal  = Math.max(stats.bestDistNormal  || 0, 1500);
@@ -5342,7 +5359,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       else lastRPress = now;
     }
   });
-  // Horizontal swipe on mobile â€” rightâ†’left opens, leftâ†’right closes
+  // Horizontal swipe on mobile — right→left opens, left→right closes
   let swipeX0 = null, swipeY0 = null;
   document.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { swipeX0 = null; return; }
@@ -5356,17 +5373,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const dy = Math.abs(t.clientY - swipeY0);
     const minDx = window.innerWidth * 0.4;
     if (Math.abs(dx) > minDx && dy < Math.abs(dx) * 0.6) {
-      if (dx < 0) toggleDebug(true);   // RTL â†’ open
-      else        toggleDebug(false);  // LTR â†’ close
+      if (dx < 0) toggleDebug(true);   // RTL → open
+      else        toggleDebug(false);  // LTR → close
     }
     swipeX0 = null;
   }, { passive: true });
 
-  // â”€â”€ Profil UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Profil UI ─────────────────────────────────────────────
   renderAvPicker();
   applyProfile();
 
-  // â”€â”€ Settings UI â€” toggles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Settings UI — toggles ─────────────────────────────────
   function setSfx(v) {
     sfxOn = v;
     touchAudioFallback.volume = v ? 0.55 : 0;
@@ -5398,7 +5415,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   fbOff.addEventListener('click', () => setFeedback(false));
   setFeedback(feedbackOn);
 
-  // â”€â”€ High Scores Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── High Scores Modal ─────────────────────────────────────
   const lbModal = document.getElementById('lb-modal');
   let lbCurrentMode = 'normal';
   let lbMetric = 'score'; // 'score' (cloud) | 'distance' (local traces)
@@ -5413,7 +5430,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (lbMetric === 'distance') {
       // Hybrid: Firestore (cross-player) + local stats PB (self fallback).
       // The same Firestore docs that store score also carry a 'distance'
-      // field now, so we reuse getTopScores' cache â€” zero extra reads.
+      // field now, so we reuse getTopScores' cache — zero extra reads.
       const cloud = await ARC_DB.getTopScores(30, mode);
       // Re-project each cloud row so 'score' field carries the distance,
       // keeping the renderer (renderLbCard / renderLbPosition) generic.
@@ -5427,7 +5444,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           ts:       r.ts,
           mode:     r.mode || 'normal',
         }));
-      // Local PB fallback for self â€” covers games before distance field
+      // Local PB fallback for self — covers games before distance field
       // existed, or when Firestore submit failed.
       const statsPB = (mode === 'extreme')
         ? (stats?.bestDistExtreme || 0)
@@ -5450,7 +5467,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           mine._statsPB = true;
         }
       }
-      // Dedupe by name (each player one row â€” keep best distance) just in
+      // Dedupe by name (each player one row — keep best distance) just in
       // case dedupeBest in the read path didn't fully collapse them.
       const byName = new Map();
       for (const r of rows) {
@@ -5475,7 +5492,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return data;
   }
 
-  // Format a value depending on the current metric. No M suffix on distance â€”
+  // Format a value depending on the current metric. No M suffix on distance —
   // we want score and distance numbers to stack on the same baseline.
   function fmtMetric(v) {
     if (lbMetric === 'distance') {
@@ -5486,9 +5503,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
   function renderLbCard(prefix, entry, fallback) {
     document.getElementById('lb-' + prefix + '-name').textContent =
-      entry ? entry.name : (fallback || 'â€”');
+      entry ? entry.name : (fallback || '—');
     document.getElementById('lb-' + prefix + '-score').textContent =
-      entry ? fmtMetric(entry.score) : 'â€”';
+      entry ? fmtMetric(entry.score) : '—';
   }
 
   function renderLbPosition(rows, mode) {
@@ -5503,15 +5520,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const top0 = rows[0] ? { ...rows[0], rank: 0, _markTop: true } : null;
     let show = [];
     if (youIdx === -1) {
-      // Oyuncu listede yok â†’ 1. + boÅŸluk + sÄ±ralanmamÄ±ÅŸ placeholder + alttaki en yakÄ±n 4
+      // Oyuncu listede yok → 1. + boÅŸluk + sÄ±ralanmamÄ±ÅŸ placeholder + alttaki en yakÄ±n 4
       if (top0) show.push(top0);
       show.push({ _divider: true });
-      // Ä°lk 4 (1. hariÃ§) â€” baÄŸlam iÃ§in
+      // Ä°lk 4 (1. hariÃ§) — baÄŸlam iÃ§in
       const tail = rows.slice(1, 5).map((r, i) => ({ ...r, rank: i + 1 }));
       show = show.concat(tail);
       show.push({ _youPlaceholder: true });
     } else if (youIdx === 0) {
-      // Oyuncu zaten 1. â†’ altÄ±n Ã§erÃ§eve + altÄ±ndaki 5 oyuncu
+      // Oyuncu zaten 1. → altÄ±n Ã§erÃ§eve + altÄ±ndaki 5 oyuncu
       if (top0) { top0._markTop = true; show.push(top0); }
       const below = rows.slice(1, 6).map((r, i) => ({ ...r, rank: i + 1 }));
       show = show.concat(below);
@@ -5526,16 +5543,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       show = show.concat(middle);
     }
     listEl.innerHTML = show.map(r => {
-      if (r._divider) return `<div class="lb-list-row divider">Â·Â·Â·</div>`;
+      if (r._divider) return `<div class="lb-list-row divider">···</div>`;
       if (r._youPlaceholder) {
         return `<div class="lb-list-row you-placeholder">
-          <span class="lb-row-rank">â€”</span>
-          <span>${playerName || 'YOU'}  Â·  not ranked yet</span>
-          <span>â€”</span>
+          <span class="lb-row-rank">—</span>
+          <span>${playerName || 'YOU'}  ·  not ranked yet</span>
+          <span>—</span>
         </div>`;
       }
       const isYou = r.name === playerName;
-      // #1 always wears the gold frame â€” even when it's the player themself.
+      // #1 always wears the gold frame — even when it's the player themself.
       // (CSS rule order makes .top visually win over .you so the gold reads.)
       const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop ? ' top' : ''}`;
       const col = AVATAR_COLORS[r.avatar] || '#fff';
@@ -5575,9 +5592,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function openLbModal() {
     lbCurrentMode = gameMode || 'normal'; // mevcut moddan baÅŸla
     lbMetric = 'score';
-    // NOT clearing lbCache on open â€” the ARC_DB layer has its own TTL (5 min)
+    // NOT clearing lbCache on open — the ARC_DB layer has its own TTL (5 min)
     // and we rely on submitScore-triggered invalidation for freshness. This
-    // alone cuts Firestore reads by ~10Ã— for repeat opens in a session.
+    // alone cuts Firestore reads by ~10× for repeat opens in a session.
     document.querySelectorAll('.lb-metric-tab').forEach(b => {
       b.classList.toggle('active', b.dataset.metric === lbMetric);
     });
@@ -5602,7 +5619,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const m = btn.dataset.metric;
       if (lbMetric === m) return;
       lbMetric = m;
-      // metric deÄŸiÅŸti â†’ cache temizle (her metric iÃ§in ayrÄ± veri)
+      // metric deÄŸiÅŸti → cache temizle (her metric iÃ§in ayrÄ± veri)
       lbCache = { normal: null, extreme: null };
       document.querySelectorAll('.lb-metric-tab').forEach(b => {
         b.classList.toggle('active', b.dataset.metric === lbMetric);
@@ -5614,7 +5631,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (e.target === lbModal) closeLbModal();
   });
 
-  // â”€â”€ Profile Edit Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Profile Edit Modal ────────────────────────────────────
   const profModal = document.getElementById('prof-modal');
   let profAvatarGridOpen = false;
 
@@ -5653,7 +5670,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (dEl)  dEl.className  = 'prof-sum-val ' + tone;
   }
 
-  // Tap profile card â†’ open profile edit (but coin pill has its own handler)
+  // Tap profile card → open profile edit (but coin pill has its own handler)
   document.getElementById('home-profile').addEventListener('click', e => {
     if (e.target.closest('#home-side')) return;
     openProfModal();
@@ -5663,7 +5680,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     openUpgradesModal();
   });
 
-  // â”€â”€ Equippable slot state (placeholder) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Equippable slot state (placeholder) ─────────────────
   // Persisted in arc_slots_v1 as [slotItemId|null, slotItemId|null].
   // The Upgrades catalog will populate these once finalised.
   let slotItems = (() => {
@@ -5690,22 +5707,22 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         // TODO: trigger active booster (once catalog defines effect)
         console.log('[Slot] activate', i, slotItems[i]);
       } else {
-        // Empty â†’ open upgrades to equip
+        // Empty → open upgrades to equip
         upgradesModal.classList.add('open');
       }
     });
   });
   renderSlots();
 
-  // â•â• Upgrades â€” Passive catalog â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // â•â• Upgrades — Passive catalog â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const upgradesModal = document.getElementById('upgrades-modal');
 
-  // Pricing â€” every directional purchase chain uses [5,10,20,40].
-  // Trace thickness uses a longer curve (20 levels) â€” geometric early, linear later.
+  // Pricing — every directional purchase chain uses [5,10,20,40].
+  // Trace thickness uses a longer curve (20 levels) — geometric early, linear later.
   const DIR_PRICES = [5, 10, 20, 40];                // levels 1..4
   const THICKNESS_PRICES = [
     5, 10, 20, 40, 60, 80, 100, 120, 140, 160,
-    180, 200, 220, 240, 260, 280, 300, 320, 340, 360, // levels 1..20 â†’ +%10 each
+    180, 200, 220, 240, 260, 280, 300, 320, 340, 360, // levels 1..20 → +%10 each
   ];
   const TRACE_COLOR_PRICE = 10;       // rebuyable cost per change
   const DEATH_NAME_PRICE  = 15;       // one-time unlock
@@ -5763,7 +5780,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     { key: 'deathAvatar',    title: 'Death Avatar', icon: 'bust' },
   ];
 
-  // â”€â”€ Render: Passive tab is either the tile grid or a single detail view â”€â”€
+  // ── Render: Passive tab is either the tile grid or a single detail view ──
   function renderUpgrades() {
     const el = document.getElementById('upg-balance');
     if (el) el.textContent = String(coins);
@@ -5794,7 +5811,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       return;
     }
 
-    // Detail view â€” header with back button + the matching upgrade card body
+    // Detail view — header with back button + the matching upgrade card body
     const tileMeta = PASSIVE_TILES.find(t => t.key === upgPassiveView);
     if (!tileMeta) { upgPassiveView = 'grid'; renderUpgrades(); return; }
     const panel = document.createElement('div');
@@ -5820,7 +5837,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'timer')          return fwdCard('timer', '', '', 4, dirPrice, v => v > 0 ? `+${v}s` : 'base');
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'traceColor')     return colorCard();
-    if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot â€” visible to other players.');
+    if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot — visible to other players.');
     if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, 'Your avatar appears on the map at your best-run death spot.');
     const x = document.createElement('div'); x.textContent = '?'; return x;
   }
@@ -5864,7 +5881,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           })()}
         </div>
       `;
-      // Wire pip clicks â†’ switch active level (unlocked only)
+      // Wire pip clicks → switch active level (unlocked only)
       card.querySelectorAll('.upg-pip.unlocked').forEach(p => {
         p.addEventListener('click', () => {
           const v = parseInt(p.dataset.val, 10) || 0;
@@ -5898,7 +5915,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       return card;
     }
 
-    // Helper: forward-only ladder (timer 0..4 â†’ seconds)
+    // Helper: forward-only ladder (timer 0..4 → seconds)
     function fwdCard(key, title, icon, maxLevel, priceFn, labelFmt) {
       const cur = upg[key] | 0;
       const card = document.createElement('div');
@@ -6035,12 +6052,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   document.getElementById('coins-modal-close').addEventListener('click', () => coinsModal.classList.remove('open'));
   coinsModal.addEventListener('click', e => { if (e.target === coinsModal) coinsModal.classList.remove('open'); });
-  // Purchase tier buttons â€” IAP not wired yet, just acknowledges the tap.
+  // Purchase tier buttons — IAP not wired yet, just acknowledges the tap.
   document.querySelectorAll('.coins-buy').forEach(b => {
     b.addEventListener('click', () => {
       const amt = Number(b.dataset.amount) || 0;
       console.log('[Coins] purchase placeholder', { amount: amt });
-      alert(`In-app purchase coming soon â€” ${amt} coins.`);
+      alert(`In-app purchase coming soon — ${amt} coins.`);
     });
   });
   // Jump from Coins to Upgrades (closes coins, opens upgrades)
@@ -6083,7 +6100,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     });
   }
 
-  // Tap avatar â†’ toggle picker grid (with upload tile + preset avatars)
+  // Tap avatar → toggle picker grid (with upload tile + preset avatars)
   document.getElementById('prof-av-ring').addEventListener('click', () => {
     profAvatarGridOpen = !profAvatarGridOpen;
     const grid = document.getElementById('prof-av-grid');
@@ -6095,7 +6112,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   });
 
-  // Upload handler â€” now CENTER-CROPS non-square photos (cover behaviour).
+  // Upload handler — now CENTER-CROPS non-square photos (cover behaviour).
   document.getElementById('prof-av-file').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -6126,7 +6143,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     e.target.value = '';
   });
 
-  // â”€â”€ Badges (dummy set â€” real catalog later) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Badges (dummy set — real catalog later) ──────────────
   const BADGES = [
     { id: 'first-1k',   icon: 'medal',  name: 'FIRST 1K'   },
     { id: 'combo-9',    icon: 'fire',   name: 'COMBO 9'    },
@@ -6160,7 +6177,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (iconEl) iconEl.innerHTML = b ? iconHTML(b.icon, { size: 22 }) : '';
     });
   }
-  // Badges grid renderer â€” used by the standalone Badges modal.
+  // Badges grid renderer — used by the standalone Badges modal.
   function renderBadgeGrid() {
     const grid = document.getElementById('badges-modal-grid');
     if (!grid) return;
@@ -6196,13 +6213,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('badges-modal-close').addEventListener('click', closeBadgesModal);
   badgesModal.addEventListener('click', e => { if (e.target === badgesModal) closeBadgesModal(); });
 
-  // Tap any slot (empty or filled) â†’ open the Badges screen.
+  // Tap any slot (empty or filled) → open the Badges screen.
   document.querySelectorAll('.prof-eq-slot').forEach(el => {
     el.addEventListener('click', openBadgesModal);
   });
 
   // BACK + SAVE both close. Avatar / badges / upload are persisted the
-  // moment the player taps them, so there's no extra commit on SAVE â€”
+  // moment the player taps them, so there's no extra commit on SAVE —
   // the button exists as a confirming primary action.
   document.getElementById('prof-modal-back').addEventListener('click', () => {
     profModal.classList.remove('open');
@@ -6216,10 +6233,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (e.target === profModal) profModal.classList.remove('open');
   });
 
-  // â”€â”€ Nav buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
     initAudio(); // AudioContext unlock
-    // Skor kaydÄ± iÃ§in boÅŸ isim olmasÄ±n â€” varsayÄ±lan PLAYER
+    // Skor kaydÄ± iÃ§in boÅŸ isim olmasÄ±n — varsayÄ±lan PLAYER
     if (!playerName || !playerName.trim()) {
       playerName = 'PLAYER';
       localStorage.setItem('arc_name', playerName);
@@ -6228,12 +6245,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     resetGame();
     playBgMusic();
     showScene('play');
-    // Oyun hemen baÅŸlasÄ±n â€” ilk dokunuÅŸ bekleme
+    // Oyun hemen baÅŸlasÄ±n — ilk dokunuÅŸ bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
   }
 
-  // â”€â”€ Mode button decorations (ice crystals / flames) â”€â”€â”€â”€â”€â”€
+  // ── Mode button decorations (ice crystals / flames) ──────
   // Spawns small floating elements around the mode-fx-wrap that animate via CSS.
   const ICE_GLYPHS    = ['snowflake', 'sparkle'];
   const FLAME_GLYPHS  = ['fire', 'sparkle'];
@@ -6248,9 +6265,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const w = wrap.offsetWidth, h = wrap.offsetHeight;
     if (w < 10) return;
 
-    // Only spawn deco for the SELECTED mode â€” keeps ice off in Extreme and flames off in Normal.
+    // Only spawn deco for the SELECTED mode — keeps ice off in Extreme and flames off in Normal.
     if (gameMode === 'normal') {
-      // ICE deco â€” spread across full width above the mode selector
+      // ICE deco — spread across full width above the mode selector
       const el = document.createElement('span');
       el.className = 'mode-deco ice-deco';
       el.innerHTML = iconHTML(ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)], { size: 16 });
@@ -6266,7 +6283,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 3000);
     } else if (gameMode === 'extreme') {
-      // FLAME deco â€” spread across full width rising from the bottom
+      // FLAME deco — spread across full width rising from the bottom
       const el = document.createElement('span');
       el.className = 'mode-deco flame-deco';
       el.innerHTML = iconHTML(FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)], { size: 16 });
@@ -6280,7 +6297,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 2000);
     } else if (gameMode === 'wife') {
-      // FLOWER deco â€” clustered ONLY around the wife button (left: -42px, 36px wide)
+      // FLOWER deco — clustered ONLY around the wife button (left: -42px, 36px wide)
       const wifeBtn = document.getElementById('mode-btn-wife');
       if (!wifeBtn) return;
       const el = document.createElement('span');
@@ -6299,7 +6316,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // â”€â”€ Extreme popup flame particles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Extreme popup flame particles ────────────────────────
   let popupDecoTimer = 0;
   let popupDecoActive = false;
   const popupDecoEl = document.getElementById('extreme-modal-deco');
@@ -6326,7 +6343,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     setTimeout(() => el.remove(), 3000);
   }
 
-  // â”€â”€ Mode selector + Extreme popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mode selector + Extreme popup ────────────────────────
   const extremeModal = document.getElementById('extreme-modal');
 
   function setGameMode(m) {
@@ -6337,7 +6354,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     document.getElementById('mode-btn-extreme').className = 'mode-btn' + (m === 'extreme' ? ' active-extreme' : '');
     const wifeBtn = document.getElementById('mode-btn-wife');
     if (wifeBtn) wifeBtn.classList.toggle('active', m === 'wife');
-    // Outer glow on the selector container â€” Chill blue / Extreme flame / Wife off
+    // Outer glow on the selector container — Chill blue / Extreme flame / Wife off
     const modeSelEl = document.getElementById('mode-sel');
     if (modeSelEl) {
       modeSelEl.classList.toggle('glow-normal',  m === 'normal');
@@ -6358,7 +6375,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   document.getElementById('mode-btn-normal').addEventListener('click', () => setGameMode('normal'));
 
-  // â”€â”€ Wife Mode confirm popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Wife Mode confirm popup ──────────────────────────────
   const wifeModal = document.getElementById('wife-modal');
   const wifeDecoEl = document.getElementById('wife-modal-deco');
   let wifeDecoActive = false;
@@ -6390,7 +6407,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
-  // Extreme is a one-time 50-coin unlock â€” flag persists after first purchase.
+  // Extreme is a one-time 50-coin unlock — flag persists after first purchase.
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
@@ -6483,7 +6500,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('wrap-start').addEventListener('click', () => startGame());
 
   document.getElementById('btn-credits').addEventListener('click', () => {
-    alert('ArcRise\nv1.0 â€” 2025\nDesign & Code: BuÄŸra Sulukcu');
+    alert('ArcRise\nv1.0 — 2025\nDesign & Code: BuÄŸra Sulukcu');
   });
 
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
@@ -6498,7 +6515,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('btn-again').addEventListener('click', () => startGame());
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
 
-  // â”€â”€ Back to Menu: 2s hold required (with visual fill) â”€â”€â”€â”€â”€
+  // ── Back to Menu: 2s hold required (with visual fill) ─────
   (() => {
     const HOLD_MS = 500;
     const btn  = document.getElementById('btn-menu');
@@ -6545,7 +6562,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
   })();
 
-  // â”€â”€ Boot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Boot ─────────────────────────────────────────────────
   initBgArcs();
   // Populate static SVG icon placeholders defined in HTML markup
   (function populateStaticIcons() {
