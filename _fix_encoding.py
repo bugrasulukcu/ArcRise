@@ -69,7 +69,7 @@ for corrupted, proper in pairs:
     if cnt:
         data = data.replace(corrupted, proper)
         fixed_count += cnt
-        print(f'{cnt:5}x  {corrupted.hex():<24} -> {proper.decode("utf-8")!r}')
+        print(f'{cnt:5}x  {corrupted.hex():<24} -> U+{ord(proper.decode("utf-8")):04X}')
 
 # Also: triple-encoded patterns (chars that went through corruption twice)
 # Try one more round for the most common: ●, ·
