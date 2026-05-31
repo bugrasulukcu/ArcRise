@@ -83,7 +83,7 @@ for c in triple_chars:
         if cnt:
             data = data.replace(twice, c.encode('utf-8'))
             fixed_count += cnt
-            print(f'{cnt:5}x  TRIPLE {twice.hex():<22} -> {c!r}')
+            print(f'{cnt:5}x  TRIPLE {twice.hex():<22} -> U+{ord(c):04X}')
 
 with open(path, 'wb') as f:
     f.write(data)
