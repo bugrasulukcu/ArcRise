@@ -3459,16 +3459,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Physical cm per rendered canvas height — auto-calibrated from CSS px.
   // 96 CSS px = 1 inch = 2.54 cm. Falls back to 15 if layout not ready.
   // Display scale: 1 physical cm → 50 game-metres. Internal storage stays in cm.
-  const DISP_SCALE = 50;
-  const fmtDist = (cm) => (cm * DISP_SCALE).toFixed(1) + 'm';
-  let CM_PER_SCREEN = 15;
-  function recalcCmPerScreen() {
-    const r = gc.getBoundingClientRect();
-    if (r.height > 1) CM_PER_SCREEN = r.height * 2.54 / 96;
-  }
-  window.addEventListener('resize', recalcCmPerScreen);
-  window.addEventListener('orientationchange', recalcCmPerScreen);
-  setTimeout(recalcCmPerScreen, 0);
+  // 1 ekran yüksekliği = 15 cm (sabit referans). Mesafe metre cinsinden,
+  // 0.00 formatında gösteriliyor. fmtDist girdisi cm, çıktısı "X.XXm".
+  const CM_PER_SCREEN = 15;
+  const fmtDist = (cm) => (cm / 100).toFixed(2) + 'm';
 
   // Distance-based coin system: every 100cm total distance = 1 coin
   // Unit: cm (1 screen height H = 15 cm). Migration from old meter-based store: ×7.5.
