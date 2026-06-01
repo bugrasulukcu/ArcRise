@@ -4421,6 +4421,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Helper: stroke a trace's points with quadratic smoothing.
     // Cross-player ghosts are downsampled to ~150 pts so a raw polyline
     // looks polygonal; midpoint-quadratic smoothing hides that.
+    // Gap guard: if two consecutive samples are too far apart (bad recording
+    // or downsampling artefact), break the path so we don't draw a huge
+    // sweeping arc across the screen.
+    const MAX_SEG = 180; // px in screen space
     function strokeTrace(pts) {
       ctx.beginPath();
       let buf = [];
@@ -4439,11 +4443,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         }
         buf = [];
       };
+      let prev = null;
       for (let i = 0; i < pts.length; i++) {
         const p = pts[i];
         const sy = W2S(p.y);
-        if (sy < -80 || sy > H + 80) { flush(); continue; }
-        buf.push({ x: p.x, sy });
+        if (sy < -80 || sy > H + 80) { flush(); prev = null; continue; }
+        if (prev) {
+          const dx = p.x - prev.x, dy = sy - prev.sy;
+          if (dx * dx + dy * dy > MAX_SEG * MAX_SEG) { flush(); }
+        }
+        const node = { x: p.x, sy };
+        buf.push(node);
+        prev = node;
       }
       flush();
       ctx.stroke();
