@@ -5016,7 +5016,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (gameMode !== 'wife') {
       distTotal += runDistCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
-      coins = Math.floor(distTotal / 100);
+      coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
       localStorage.setItem('arc_coins', String(coins));
     }
     const earned = coins - prevCoins;
