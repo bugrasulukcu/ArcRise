@@ -252,13 +252,17 @@
     #lb-modal.open { display: flex; }
     #lb-modal-box {
       position: relative;
-      background: rgba(12,16,26,0.96);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(12,16,26,0.72) 0%, rgba(8,10,18,0.78) 100%);
+      backdrop-filter: blur(8px) saturate(1.1);
+      -webkit-backdrop-filter: blur(8px) saturate(1.1);
       border: 1.5px solid rgba(255,255,255,.18);
       border-radius: 22px;
       padding: 24px 20px 20px;
       width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 12px;
-      max-height: 88vh; overflow: visible;
+      height: 80vh; max-height: 720px; overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
     }
     /* Themed frame layers — fade in/out per mode, no rotation, no blur */
