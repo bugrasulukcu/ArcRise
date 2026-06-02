@@ -5075,9 +5075,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     // ── Coin progress bar ─────────────────────────────────
     document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    const distMod = distTotal % 100; // kalan cm (sonraki coin'e)
-    const barPct  = Math.round(distMod); // % (0-100)
-    document.getElementById('go-coin-progress').textContent = `${fmtDist(distMod)} / ${fmtDist(100)}`;
+    // Sıradaki coin için (currentEarned+1)'nci eşik
+    const earnedNow  = coinsEarnedFrom(distTotal);
+    const prevThresh = distCmForCoin(earnedNow);
+    const nextThresh = distCmForCoin(earnedNow + 1);
+    const span       = Math.max(1, nextThresh - prevThresh);
+    const into       = Math.max(0, distTotal - prevThresh);
+    const barPct     = Math.min(100, Math.round((into / span) * 100));
+    document.getElementById('go-coin-progress').textContent = `${fmtDist(into)} / ${fmtDist(span)}`;
     // Animate bar after short delay
     setTimeout(() => {
       document.getElementById('go-coin-bar').style.width = barPct + '%';
