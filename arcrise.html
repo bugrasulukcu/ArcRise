@@ -5591,33 +5591,29 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       listEl.innerHTML = `<div class="lb-empty">No scores yet for ${label}</div>`;
       return;
     }
-    // Layout: 1. (gold) + divider + 2 Ã¼st + sen (yeÅŸil) + 2 alt = 6 satÄ±r
+    // Layout kuralı: HER zaman tam 4 satır.
+    //  - Eğer oyuncu 1. ise: kendi + altındaki 3 kişi
+    //  - Eğer oyuncu 2. ise: 1. + kendi + altındaki 2 kişi
+    //  - Diğer: 1. + üst + kendi + alt
+    //  - Oyuncu listede yok: ilk 4 satır
     const youIdx = rows.findIndex(r => r.name === playerName);
-    const top0 = rows[0] ? { ...rows[0], rank: 0, _markTop: true } : null;
-    let show = [];
+    let pickIdx = [];
     if (youIdx === -1) {
-      // Oyuncu listede yok → 1. + boÅŸluk + sÄ±ralanmamÄ±ÅŸ placeholder + alttaki en yakÄ±n 4
-      if (top0) show.push(top0);
-      show.push({ _divider: true });
-      // Ä°lk 4 (1. hariÃ§) — baÄŸlam iÃ§in
-      const tail = rows.slice(1, 5).map((r, i) => ({ ...r, rank: i + 1 }));
-      show = show.concat(tail);
-      show.push({ _youPlaceholder: true });
+      pickIdx = [0, 1, 2, 3].filter(i => i < rows.length);
     } else if (youIdx === 0) {
-      // Oyuncu zaten 1. → altÄ±n Ã§erÃ§eve + altÄ±ndaki 5 oyuncu
-      if (top0) { top0._markTop = true; show.push(top0); }
-      const below = rows.slice(1, 6).map((r, i) => ({ ...r, rank: i + 1 }));
-      show = show.concat(below);
+      pickIdx = [0, 1, 2, 3].filter(i => i < rows.length);
+    } else if (youIdx === 1) {
+      pickIdx = [0, 1, 2, 3].filter(i => i < rows.length);
     } else {
-      // Normal durum: 2 Ã¼st + sen + 2 alt
-      const start = Math.max(1, youIdx - 2); // 1.'i ayrÄ±ca gÃ¶stereceÄŸiz
-      const end   = Math.min(rows.length, youIdx + 3);
-      const middle = rows.slice(start, end).map((r, i) => ({ ...r, rank: start + i }));
-      if (top0) show.push(top0);
-      // BoÅŸluk: eÄŸer 1. ile orta grup arasÄ±nda atlama varsa divider
-      if (start > 1) show.push({ _divider: true });
-      show = show.concat(middle);
+      pickIdx = [0, youIdx - 1, youIdx, youIdx + 1].filter(i => i < rows.length);
     }
+    // Tekrarsız ve sıralı
+    pickIdx = [...new Set(pickIdx)].sort((a, b) => a - b);
+    const show = pickIdx.map(i => ({
+      ...rows[i],
+      rank: i,
+      _markTop: i === 0,
+    }));
     listEl.innerHTML = show.map(r => {
       if (r._divider) return `<div class="lb-list-row divider">···</div>`;
       if (r._youPlaceholder) {
