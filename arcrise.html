@@ -3076,7 +3076,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Replaces emoji glyphs (which corrupted to mojibake in file). Each entry
   // is a path/markup string for a 24x24 viewBox; iconHTML wraps it in an svg.
   const ICONS = {
-    coin: '<circle cx="12" cy="12" r="9" fill="#ffcc44" stroke="#a87822" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-family="serif" font-weight="bold" font-size="12" fill="#7a5210">C</text>',
+    coin: '<defs><radialGradient id="cg" cx="30%" cy="30%" r="80%"><stop offset="0%" stop-color="#fff6b3"/><stop offset="45%" stop-color="#ffd866"/><stop offset="100%" stop-color="#b8860b"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#cg)" stroke="#6a4505" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-family="\'Sarpanch\', sans-serif" font-weight="800" font-size="11" fill="#4a2c00">C</text>',
     bolt: '<path d="M13 2 L4 14 H11 L9 22 L20 9 H13 Z" fill="currentColor" stroke="#000" stroke-width="0.5" stroke-linejoin="round"/>',
     flower: '<g fill="currentColor"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><circle cx="12" cy="18" r="3"/><circle cx="7.8" cy="7.8" r="2.8"/><circle cx="16.2" cy="7.8" r="2.8"/><circle cx="7.8" cy="16.2" r="2.8"/><circle cx="16.2" cy="16.2" r="2.8"/></g><circle cx="12" cy="12" r="2.5" fill="#ffee88"/>',
     hearts: '<path d="M12 20 C8 16 3 13 3 8 a4 4 0 0 1 9 -2 a4 4 0 0 1 9 2 c0 5 -5 8 -9 12 z" fill="currentColor"/>',
