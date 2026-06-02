@@ -5332,10 +5332,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let lastTPress = 0;
   let lastRPress = 0;
   function devCheatBoost() {
-    // +900 coin (distance-based ekosistemde distTotal'Ä± buna gÃ¶re arttÄ±r)
+    // +900 coin (triangular ekosistemde distTotal'ı yeterli eşiğe taşı)
     const targetCoins = coins + 900;
-    distTotal = targetCoins * 100;
-    coins = Math.floor(distTotal / 100);
+    distTotal = Math.max(distTotal, distCmForCoin(coinsSpent + targetCoins));
+    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_coins', String(coins));
     // Minimum 2000 score & 1500cm mesafe — her iki mode iÃ§in yÃ¼ksek olanÄ± tut
