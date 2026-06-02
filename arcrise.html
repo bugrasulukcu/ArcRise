@@ -5574,10 +5574,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Format a value depending on the current metric. No M suffix on distance —
   // we want score and distance numbers to stack on the same baseline.
   function fmtMetric(v) {
-    if (lbMetric === 'distance') {
-      const d = Number(v) || 0;
-      return d >= 10 ? String(Math.round(d)) : d.toFixed(1);
-    }
+    if (lbMetric === 'distance') return fmtDist(Number(v) || 0);
     return pad(Math.round(v || 0));
   }
   function renderLbCard(prefix, entry, fallback) {
