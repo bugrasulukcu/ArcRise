@@ -5060,24 +5060,28 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       localStorage.setItem('arc_coins', String(coins));
     }
     const earned = coins - prevCoins;
-    best = Math.max(best, lastScore);
-    localStorage.setItem('arc_best', String(best));
-    if (runDistCm > bestDistanceM) {
-      bestDistanceM = runDistCm;
-      localStorage.setItem('arc_bestdist', String(bestDistanceM));
+    // Wife Mode: skor/mesafe kaydı yok — sadece coin'lerle birlikte tamamen
+    // casual akış. (Daha aşağıdaki submitScore zaten guard'lı.)
+    if (gameMode !== 'wife') {
+      best = Math.max(best, lastScore);
+      localStorage.setItem('arc_best', String(best));
+      if (runDistCm > bestDistanceM) {
+        bestDistanceM = runDistCm;
+        localStorage.setItem('arc_bestdist', String(bestDistanceM));
+      }
+      // ── Stats güncelle ────────────────────────────────────
+      stats.gamesTotal++;
+      if (gameMode === 'extreme') {
+        stats.gamesExtreme++;
+        if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
+        if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
+      } else {
+        stats.gamesNormal++;
+        if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
+        if (runDistCm > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistCm;
+      }
+      saveStats();
     }
-    // ── Stats gÃ¼ncelle ────────────────────────────────────
-    stats.gamesTotal++;
-    if (gameMode === 'extreme') {
-      stats.gamesExtreme++;
-      if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
-      if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
-    } else {
-      stats.gamesNormal++;
-      if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
-      if (runDistCm > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistCm;
-    }
-    saveStats();
 
     const sc  = lastScore;
     const avc = AVATAR_COLORS[avatarIdx];
