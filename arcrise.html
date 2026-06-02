@@ -5071,20 +5071,56 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     requestAnimationFrame(animScore);
 
-    // ── Coin progress bar ─────────────────────────────────
-    document.getElementById('go-coin-earned').textContent = earned > 0 ? '+' + earned : '+0';
-    // Sıradaki coin için (currentEarned+1)'nci eşik
-    const earnedNow  = coinsEarnedFrom(distTotal);
-    const prevThresh = distCmForCoin(earnedNow);
-    const nextThresh = distCmForCoin(earnedNow + 1);
-    const span       = Math.max(1, nextThresh - prevThresh);
-    const into       = Math.max(0, distTotal - prevThresh);
-    const barPct     = Math.min(100, Math.round((into / span) * 100));
-    document.getElementById('go-coin-progress').textContent = `${fmtDist(into)} / ${fmtDist(span)}`;
-    // Animate bar after short delay
-    setTimeout(() => {
-      document.getElementById('go-coin-bar').style.width = barPct + '%';
-    }, 200);
+    // ── Coin progress bar (animated fill + +N pop on threshold) ──
+    const earnedEl = document.getElementById('go-coin-earned');
+    const progEl   = document.getElementById('go-coin-progress');
+    const barEl    = document.getElementById('go-coin-bar');
+    const distStart = (gameMode === 'wife') ? distTotal : Math.max(0, distTotal - runDistCm);
+    const distEnd   = distTotal;
+    const baseEarned = coinsEarnedFrom(distStart);
+    // Initialise UI to start state (no coins earned yet, bar at run-start position)
+    const startPrev = distCmForCoin(baseEarned);
+    const startSpan = Math.max(1, distCmForCoin(baseEarned + 1) - startPrev);
+    const startInto = Math.max(0, distStart - startPrev);
+    barEl.style.transition = 'none';
+    barEl.style.width = ((startInto / startSpan) * 100) + '%';
+    progEl.textContent = `${fmtDist(startInto)} / ${fmtDist(startSpan)}`;
+    earnedEl.textContent = '+0';
+    let lastEarnedShown = 0;
+    const popEarned = (n) => {
+      earnedEl.textContent = '+' + n;
+      earnedEl.style.transition = 'none';
+      earnedEl.style.transform = 'scale(1.55)';
+      earnedEl.style.color = '#ffee88';
+      requestAnimationFrame(() => {
+        earnedEl.style.transition = 'transform .35s cubic-bezier(.2,.8,.3,1), color .5s';
+        earnedEl.style.transform = 'scale(1)';
+        earnedEl.style.color = '#ffcc44';
+      });
+    };
+    const coinAnimDur = Math.min(2400, Math.max(800, (distEnd - distStart) * 3));
+    let coinAnimStart = 0;
+    function animCoin(ts) {
+      if (!coinAnimStart) coinAnimStart = ts;
+      const t = Math.min(1, (ts - coinAnimStart) / coinAnimDur);
+      const eased = 1 - Math.pow(1 - t, 2.4);
+      const cur = distStart + (distEnd - distStart) * eased;
+      const earnedSoFar = Math.max(0, coinsEarnedFrom(cur) - baseEarned);
+      const curEarned   = coinsEarnedFrom(cur);
+      const prevT = distCmForCoin(curEarned);
+      const nextT = distCmForCoin(curEarned + 1);
+      const span  = Math.max(1, nextT - prevT);
+      const into  = Math.max(0, cur - prevT);
+      barEl.style.width = ((into / span) * 100) + '%';
+      progEl.textContent = `${fmtDist(into)} / ${fmtDist(span)}`;
+      if (earnedSoFar !== lastEarnedShown) {
+        lastEarnedShown = earnedSoFar;
+        popEarned(earnedSoFar);
+        haptic(8);
+      }
+      if (t < 1) requestAnimationFrame(animCoin);
+    }
+    setTimeout(() => requestAnimationFrame(animCoin), 350);
 
     // GeÃ§ici "yÃ¼kleniyor" satÄ±rlarÄ±
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
