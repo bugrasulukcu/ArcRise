@@ -5755,12 +5755,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // Deduct coins via the distance-total ledger that derives them.
-  // 1 coin == 100cm of distTotal, so we subtract `n*100` from distTotal.
+  // Triangular: spend by incrementing coinsSpent; distTotal stays intact.
   function spendCoins(n) {
     if (coins < n) return false;
-    distTotal = Math.max(0, distTotal - n * 100);
-    coins = Math.floor(distTotal / 100);
-    localStorage.setItem('arc_dist_total', String(distTotal));
+    coinsSpent += n;
+    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
+    localStorage.setItem('arc_coins_spent', String(coinsSpent));
     localStorage.setItem('arc_coins', String(coins));
     try { applyProfile(); } catch(_){}
     return true;
