@@ -6054,11 +6054,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
-    // Next-coin progress: distance toward the next 100cm threshold
-    const distMod2 = distTotal % 100;
-    const pct      = Math.min(100, Math.max(0, distMod2));
+    // Next-coin progress: triangular — kalan mesafe (earned+1)'nci eşiğe
+    const earnedNow2  = coinsEarnedFrom(distTotal);
+    const prevT2      = distCmForCoin(earnedNow2);
+    const nextT2      = distCmForCoin(earnedNow2 + 1);
+    const span2       = Math.max(1, nextT2 - prevT2);
+    const into2       = Math.max(0, distTotal - prevT2);
+    const pct         = Math.min(100, Math.max(0, (into2 / span2) * 100));
     const pv = document.getElementById('coins-progress-val');
-    if (pv) pv.textContent = `${fmtDist(distMod2)} / ${fmtDist(100)}`;
+    if (pv) pv.textContent = `${fmtDist(into2)} / ${fmtDist(span2)}`;
     const pb = document.getElementById('coins-progress-bar');
     if (pb) {
       // Reset so the transition replays each open
