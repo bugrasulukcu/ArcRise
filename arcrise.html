@@ -3543,6 +3543,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     saveStats();
     localStorage.setItem('arc_stats_unit', 'cm');
   }
+  // One-shot: eski migration / RR cheat distance kayıtlarını sıfırla (v2).
+  // Önceki cm konversiyonu kullanıcı için yanıltıcı oldu — oyuncu organik
+  // olarak yeni rekorlarını oluştursun.
+  if (localStorage.getItem('arc_dist_reset_v2') !== '1') {
+    stats.bestDistNormal  = 0;
+    stats.bestDistExtreme = 0;
+    saveStats();
+    bestDistanceM = 0;
+    localStorage.setItem('arc_bestdist', '0');
+    localStorage.setItem('arc_dist_reset_v2', '1');
+  }
 
   // Float texts (combo bonuses)
   const floatTexts = [];
