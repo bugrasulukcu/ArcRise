@@ -2706,6 +2706,8 @@ const ARC_DB = (() => {
       console.warn('[ArcDB] no projectId configured — score not saved');
       return;
     }
+    // Wife Mode kayıt yok — defense in depth, caller guard'ı atlasa bile reddet.
+    if (mode === 'wife') { console.warn('[ArcDB] wife mode — score not saved'); return; }
     name = (name || '').toString().trim();
     if (!name) { console.warn('[ArcDB] empty name — score not saved'); return; }
     score = Number(score) || 0;
