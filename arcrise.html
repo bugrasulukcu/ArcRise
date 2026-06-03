@@ -3037,7 +3037,33 @@ const ARC_DB = (() => {
     }
     return out;
   }
-  return { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, wipeAllScores, dedupeScores };
+  // Admin: kullanıcının kendi adına olan scores satırlarını siler.
+  // Devtools: await ARC_DB.wipeMyScores('PLAYERNAME')
+  async function wipeMyScores(name) {
+    if (!projectId || projectId.startsWith('BURAYA')) return 0;
+    name = (name || '').toString().trim();
+    if (!name) { console.warn('[ArcDB] wipeMyScores: empty name'); return 0; }
+    const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: 'scores' }],
+        where: { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: name } } },
+        limit: 50,
+      }}),
+    });
+    const hits = (await qRes.json()).filter(r => r.document?.fields);
+    let n = 0;
+    for (const h of hits) {
+      const docId = h.document.name.split('/').pop();
+      const del = await fetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
+      if (del.ok) n++;
+    }
+    invalidateTopCache();
+    console.log(`[ArcDB] wiped ${n} score(s) for ${name}`);
+    return n;
+  }
+
+  return { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, wipeAllScores, dedupeScores, wipeMyScores };
 })();
 
 // ── One-shot data reset gate ──────────────────────────────
