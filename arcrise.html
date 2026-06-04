@@ -5437,7 +5437,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (scene !== 'play' || !running) return;
     haptic(40);
     playTouchSound();
-    if (boosterType === 'magnet') player.x = W / 2;
     beginArc(-player.dir, getRadius());
   }
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
