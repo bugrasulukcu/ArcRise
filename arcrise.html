@@ -4177,6 +4177,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Core
       ctx.fillStyle = '#b450ff';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+      // Type marker — küçük tek renk glyph core'un üzerinde
+      const info = BOOSTER_INFO[b.type];
+      if (info && info.mark) {
+        ctx.fillStyle = '#fff';
+        const isX = info.mark.length > 1; // ×2/×3/×4 daha küçük
+        ctx.font = `${isX ? 9 : 12}px 'Press Start 2P', monospace`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(info.mark, b.x, sy + 0.5);
+      }
       ctx.restore();
     }
   }
