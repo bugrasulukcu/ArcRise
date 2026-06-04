@@ -2152,21 +2152,23 @@
     /* Two slots anchored to the bottom-center of the play canvas.
        Tap to activate when filled (manual boosters); auto-trigger
        boosters consume themselves on the relevant event. */
+    /* Gameboy-style diagonal pair on the lower-left for left-thumb reach.
+       Primary slot at bottom-left, secondary up-and-right of it. */
     #slot-hud {
-      position: absolute; bottom: 28px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 16;
-      display: none; gap: 12px;
+      position: absolute; bottom: 22px; left: 18px;
+      width: 140px; height: 120px;
+      z-index: 16; display: none;
       pointer-events: auto;
     }
-    #hud.active #slot-hud { display: flex; }
+    #hud.active #slot-hud { display: block; }
     .slot {
-      width: 56px; height: 56px;
-      border-radius: 14px;
-      border: 1.5px solid rgba(255,255,255,.22);
+      position: absolute;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.30);
       background:
-        radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.10), transparent 60%),
-        linear-gradient(180deg, rgba(40,46,60,.65), rgba(14,18,28,.78));
+        radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.55), rgba(14,18,28,.70));
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       box-shadow:
@@ -2174,17 +2176,17 @@
         inset 0 1px 0 rgba(255,255,255,.10);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; padding: 0;
-      transition: transform .12s, border-color .2s, box-shadow .2s;
-      position: relative;
+      transition: transform .12s, opacity .2s, border-color .2s, box-shadow .2s;
     }
-    .slot:active { transform: scale(0.94); }
-    .slot.filled { border-color: rgba(170,120,255,.55); box-shadow: 0 0 14px rgba(170,120,255,.30), inset 0 1px 0 rgba(255,255,255,.15); }
-    .slot-icon { font-size: 24px; line-height: 1; }
-    .slot-empty {
-      font-size: 22px; line-height: 1;
-      color: rgba(255,255,255,.30); font-weight: 300;
+    #slot-1 { bottom: 0;    left: 0;  }
+    #slot-2 { bottom: 56px; left: 56px; }
+    .slot:active { transform: scale(0.92); }
+    .slot.filled {
+      border-color: rgba(170,120,255,.65);
+      box-shadow: 0 0 16px rgba(170,120,255,.35), inset 0 1px 0 rgba(255,255,255,.18);
     }
-    .slot.filled .slot-empty { display: none; }
+    .slot:not(.filled) { opacity: 0.2; }
+    .slot-icon { font-size: 26px; line-height: 1; }
     .slot:not(.filled) .slot-icon { display: none; }
   </style>
 </head>
