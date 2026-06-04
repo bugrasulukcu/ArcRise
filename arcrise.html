@@ -4980,6 +4980,27 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = goldBalls.length - 1; i >= 0; i--) if (goldBalls[i].y > cullY) goldBalls.splice(i, 1);
     for (let i = purpleBalls.length - 1; i >= 0; i--) if (purpleBalls[i].y > cullY) purpleBalls.splice(i, 1);
 
+    // Magnet: yeşil (bonuses), sarı (goldBalls) ve mor (purpleBalls) topları
+    // oyuncuya doğru hızla çek. Yarıçap H * 0.7 (ekran ~yarısı kadar).
+    if (boosterType === 'magnet') {
+      const MAG_R   = H * 0.7;
+      const MAG_PULL = 520; // px/s ivme yönü-vector boyunca
+      const pullToward = (arr) => {
+        for (const o of arr) {
+          const dx = player.x - o.x, dy = player.y - o.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 4 || d > MAG_R) continue;
+          const f = (1 - d / MAG_R);          // yakınlaştıkça daha güçlü
+          const step = MAG_PULL * f * dt;
+          o.x += (dx / d) * step;
+          o.y += (dy / d) * step;
+        }
+      };
+      pullToward(bonuses);
+      pullToward(goldBalls);
+      pullToward(purpleBalls);
+    }
+
     for (const ob of obstacles) {
       if (ob.mk) {
         ob.mt += dt;
