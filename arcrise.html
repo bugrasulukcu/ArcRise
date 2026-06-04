@@ -3370,14 +3370,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const BOOSTER_NAME = document.getElementById('booster-name');
   const BOOSTER_BAR  = document.getElementById('booster-bar');
   const BOOSTER_INFO = {
-    wide:    { icon: 'arrowLR', name: 'WIDE ARC',    dur: 8,  color: '#88ccff' },
-    narrow:  { icon: 'arrowUD', name: 'TIGHT ARC',   dur: 8,  color: '#aaffdd' },
-    magnet:  { icon: 'target',  name: 'X-MAGNET',    dur: 8,  color: '#ffcc44' },
-    x2:      { icon: '×2',      name: 'SCORE ×2',    dur: 8,  color: '#ff88ff', textIcon: true },
-    x3:      { icon: '×3',      name: 'SCORE ×3',    dur: 8,  color: '#ff55ff', textIcon: true },
-    x4:      { icon: '×4',      name: 'SCORE ×4',    dur: 8,  color: '#ff00ff', textIcon: true },
-    ghost:   { icon: 'ghost',   name: 'GHOST',        dur: 6,  color: '#aa88ff' },
-    speed:   { icon: 'bolt',    name: 'SPEED BOOST', dur: 6,  color: '#ffee44' },
+    wide:    { icon: 'arrowLR', name: 'WIDE ARC',    dur: 8,  color: '#88ccff', mark: '↔'  },
+    narrow:  { icon: 'arrowUD', name: 'TIGHT ARC',   dur: 8,  color: '#aaffdd', mark: '↕'  },
+    magnet:  { icon: 'target',  name: 'MAGNET',      dur: 8,  color: '#ffcc44', mark: 'M'  },
+    x2:      { icon: '×2',      name: 'SCORE ×2',    dur: 8,  color: '#ff88ff', textIcon: true, mark: '×2' },
+    x3:      { icon: '×3',      name: 'SCORE ×3',    dur: 8,  color: '#ff55ff', textIcon: true, mark: '×3' },
+    x4:      { icon: '×4',      name: 'SCORE ×4',    dur: 8,  color: '#ff00ff', textIcon: true, mark: '×4' },
+    ghost:   { icon: 'ghost',   name: 'GHOST',       dur: 6,  color: '#aa88ff', mark: 'G'  },
+    speed:   { icon: 'bolt',    name: 'SPEED BOOST', dur: 6,  color: '#ffee44', mark: '»'  },
+    mystery: { icon: 'sparkle', name: 'MYSTERY',     dur: 8,  color: '#ffffff', mark: '?'  },
   };
 
   function activateBooster(type) {
