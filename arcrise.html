@@ -3382,6 +3382,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   };
 
   function activateBooster(type) {
+    // Mystery: rastgele başka bir booster'a çevir (kendisi hariç)
+    if (type === 'mystery') {
+      const pool = ['wide','narrow','magnet','x2','x3','x4','ghost','speed'];
+      type = pool[Math.floor(Math.random() * pool.length)];
+    }
     const info = BOOSTER_INFO[type];
     boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
     isGhost   = (type === 'ghost');
