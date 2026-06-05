@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <script>
+    // Sarpanch font yüklenmeden body görünmesin (FOUT engelleme).
+    document.documentElement.classList.add('fonts-loading');
+    const _revealFonts = () => document.documentElement.classList.remove('fonts-loading');
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(_revealFonts);
+    }
+    setTimeout(_revealFonts, 1500); // yedek timeout — font failure'da bile aç
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>ArcRise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
