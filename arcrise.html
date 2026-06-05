@@ -3461,6 +3461,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     traceThickness: 0,                           // 0..20 (each +%10)
     deathName: false,
     deathAvatar: false,
+    profit: 0,                                   // 0..10 (each +%10 coin gain)
   };
   function loadUpg() {
     try { return Object.assign({}, UPG_DEFAULTS, JSON.parse(localStorage.getItem(UPG_KEY) || '{}')); }
