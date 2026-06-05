@@ -5958,15 +5958,42 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return '';
   }
 
+  // CORE — kalıcı sayısal buff'lar
   const PASSIVE_TILES = [
-    { key: 'profit',         title: 'Profit',       icon: 'coinUp' },
-    { key: 'radius',         title: 'Radius',       icon: 'ring' },
-    { key: 'speed',          title: 'Speed',        icon: 'bolt' },
-    { key: 'timer',          title: 'Combo Timer',  icon: 'timer' },
-    { key: 'traceThickness', title: 'Trace Width',  icon: 'wave' },
-    { key: 'traceColor',     title: 'Trace Color',  icon: 'palette' },
-    { key: 'deathName',      title: 'Death Name',   icon: 'headstone' },
-    { key: 'deathAvatar',    title: 'Death Avatar', icon: 'bust' },
+    { key: 'profit',      title: 'Profit',        icon: 'coinUp' },
+    { key: 'radius',      title: 'Radius',        icon: 'ring' },
+    { key: 'speed',       title: 'Speed',         icon: 'bolt' },
+    { key: 'timer',       title: 'Combo Timer',   icon: 'timer' },
+    { key: 'wallSoft',    title: 'Wall Forgive',  icon: 'wall' },
+    { key: 'boostDur',    title: 'Boost Duration',icon: 'boostDur' },
+    { key: 'magnetRange', title: 'Magnet Range',  icon: 'magnet' },
+  ];
+  // GEAR — run-by-run loadout (cosmetic) + planned consumables/abilities
+  const GEAR_GROUPS = [
+    { title: 'LOADOUT', items: [
+      { key: 'traceColor',     title: 'Trace Color',  icon: 'palette' },
+      { key: 'traceThickness', title: 'Trace Width',  icon: 'wave' },
+      { key: 'deathName',      title: 'Death Name',   icon: 'headstone' },
+      { key: 'deathAvatar',    title: 'Death Avatar', icon: 'bust' },
+    ]},
+    { title: 'CONSUMABLES', items: [
+      { key: '_revive',        title: 'Revive',       icon: 'revive',    locked: true },
+      { key: '_doubler',       title: 'Coin Doubler', icon: 'coinUp',    locked: true },
+      { key: '_preboost',      title: 'Pre-Booster',  icon: 'gift',      locked: true },
+      { key: '_headstart',     title: 'Head Start',   icon: 'rocket',    locked: true },
+      { key: '_insurance',     title: 'Insurance',    icon: 'shield',    locked: true },
+      { key: '_filter',        title: 'Boost Filter', icon: 'sparkle',   locked: true },
+      { key: '_coinrain',      title: 'Coin Rain',    icon: 'coinUp',    locked: true },
+    ]},
+    { title: 'ABILITIES', items: [
+      { key: '_timeslow',      title: 'Time Slow',    icon: 'hourglass', locked: true },
+      { key: '_phaseburst',    title: 'Phase Burst',  icon: 'ghost',     locked: true },
+      { key: '_coinpull',      title: 'Coin Pull',    icon: 'magnet',    locked: true },
+      { key: '_brake',         title: 'Brake',        icon: 'stop',      locked: true },
+      { key: '_mirror',        title: 'Mirror Flip',  icon: 'mirror',    locked: true },
+      { key: '_shock',         title: 'Shockwave',    icon: 'sparkle',   locked: true },
+      { key: '_anchor',        title: 'Anchor',       icon: 'target',    locked: true },
+    ]},
   ];
 
   // ── Render: Passive tab is either the tile grid or a single detail view ──
