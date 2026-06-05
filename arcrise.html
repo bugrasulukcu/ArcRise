@@ -5014,9 +5014,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = purpleBalls.length - 1; i >= 0; i--) if (purpleBalls[i].y > cullY) purpleBalls.splice(i, 1);
 
     // Magnet: yeşil (bonuses), sarı (goldBalls) ve mor (purpleBalls) topları
-    // oyuncuya doğru hızla çek. Yarıçap H * 0.7 (ekran ~yarısı kadar).
+    // oyuncuya doğru hızla çek. Magnet Range upgrade ile yarıçap büyür.
     if (boosterType === 'magnet') {
-      const MAG_R   = H * 0.7;
+      const MAG_R   = H * 0.7 * (1 + (upg.magnetRange || 0) * 0.10);
       const MAG_PULL = 520; // px/s ivme yönü-vector boyunca
       const pullToward = (arr) => {
         for (const o of arr) {
