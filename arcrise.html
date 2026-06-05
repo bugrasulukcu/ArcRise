@@ -5048,7 +5048,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
 
     if (!isGhost) {
-      if (player.x - player.r < walls.left || player.x + player.r > walls.right) {
+      // Wall Forgiveness: her seviye 1px collision yumuşatma
+      const wallTol = (upg.wallSoft || 0);
+      if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
         if (hasShield) { clearBooster(); } else { endGame(); return; }
       }
       for (const ob of obstacles) {
