@@ -5946,6 +5946,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'traceColor')     return upg.traceColor ? iconHTML('dot', { size: 12 }) : 'default';
     if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
     if (key === 'deathAvatar')    return upg.deathAvatar ? 'enabled' : 'locked';
+    if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     return '';
   }
 
