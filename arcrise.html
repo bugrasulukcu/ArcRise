@@ -5137,7 +5137,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
-      distTotal += runDistCm;
+      // Profit upgrade: +10% effective coin-distance per level (0..10)
+      const profitMul = 1 + (upg.profit || 0) * 0.10;
+      distTotal += runDistCm * profitMul;
       localStorage.setItem('arc_dist_total', String(distTotal));
       coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
       localStorage.setItem('arc_coins', String(coins));
