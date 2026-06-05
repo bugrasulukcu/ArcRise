@@ -5896,6 +5896,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     5, 10, 20, 40, 60, 80, 100, 120, 140, 160,
     180, 200, 220, 240, 260, 280, 300, 320, 340, 360, // levels 1..20 → +%10 each
   ];
+  // Profit (+%10 coin gain / level, 0..10). Triangular maliyet sistemiyle uyumlu:
+  // her seviye önceki gelirinizi kendi katsayısıyla geri ödüyor.
+  const PROFIT_PRICES = [10, 25, 50, 100, 175, 275, 400, 575, 800, 1100];
+  function profitPrice(nextLevel) {
+    if (nextLevel < 1 || nextLevel > PROFIT_PRICES.length) return null;
+    return PROFIT_PRICES[nextLevel - 1];
+  }
   const TRACE_COLOR_PRICE = 10;       // rebuyable cost per change
   const DEATH_NAME_PRICE  = 15;       // one-time unlock
   const DEATH_AV_PRICE    = 60;       // one-time unlock
