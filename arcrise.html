@@ -6,8 +6,11 @@
   <title>ArcRise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarpanch:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarpanch:wght@400;500;600;700;800;900&display=block" rel="stylesheet">
   <style>
+    /* FOUT guard — gerçek font yüklenene kadar body görünmesin. JS
+       document.fonts.ready ile gizlemeyi kaldırır; yedek 1500ms timeout. */
+    html.fonts-loading body { visibility: hidden; }
     *, *::before, *::after {
       box-sizing: border-box; margin: 0; padding: 0;
       user-select: none; -webkit-user-select: none;
