@@ -6052,6 +6052,62 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       upgPassiveView = 'grid';
       renderUpgrades();
     });
+    renderGear();
+  }
+
+  // GEAR tab: gruplu tile grid + LOADOUT item'larına detay açma. Locked
+  // tile'lar tıklanamaz, üzerinde "SOON" rozeti gösterir.
+  let upgGearView = 'grid';
+  function renderGear() {
+    const host = document.getElementById('upg-tab-gear');
+    if (!host) return;
+    host.innerHTML = '';
+    // Detail view (sadece LOADOUT item'ları için)
+    if (upgGearView !== 'grid') {
+      const allItems = GEAR_GROUPS.flatMap(g => g.items);
+      const meta = allItems.find(i => i.key === upgGearView);
+      if (!meta || meta.locked) { upgGearView = 'grid'; return renderGear(); }
+      const panel = document.createElement('div');
+      panel.className = 'upg-detail open';
+      panel.innerHTML = `
+        <div class="upg-detail-head">
+          <button class="upg-back-btn" id="upg-back-g">&#8592;</button>
+          <span class="upg-detail-title">${iconHTML(meta.icon, { size: 20 })} ${meta.title}</span>
+          <span class="upg-detail-active">${upgStateLabel(meta.key)}</span>
+        </div>
+      `;
+      panel.appendChild(buildDetailBody(meta.key));
+      host.appendChild(panel);
+      panel.querySelector('#upg-back-g').addEventListener('click', () => {
+        upgGearView = 'grid'; renderGear();
+      });
+      return;
+    }
+    // Grid + group headers
+    for (const grp of GEAR_GROUPS) {
+      const h = document.createElement('div');
+      h.className = 'upg-group-head';
+      h.textContent = grp.title;
+      host.appendChild(h);
+      const grid = document.createElement('div');
+      grid.className = 'upg-tile-grid';
+      for (const t of grp.items) {
+        const tile = document.createElement('button');
+        tile.className = 'upg-tile' + (t.locked ? ' locked' : '');
+        tile.innerHTML = `
+          <span class="upg-tile-icon">${iconHTML(t.icon, { size: 28 })}</span>
+          <span class="upg-tile-body">
+            <span class="upg-tile-title">${t.title}</span>
+            <span class="upg-tile-state">${t.locked ? 'SOON' : upgStateLabel(t.key)}</span>
+          </span>
+        `;
+        if (!t.locked) {
+          tile.addEventListener('click', () => { upgGearView = t.key; renderGear(); });
+        }
+        grid.appendChild(tile);
+      }
+      host.appendChild(grid);
+    }
   }
 
   // Returns the full body element for a single upgrade (ladder + buys / color grid / toggle)
