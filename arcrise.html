@@ -1471,7 +1471,11 @@
       color: #fff;
       text-shadow: 0 0 6px rgba(200,150,255,.65);
     }
-    #upg-tab-content { width: 100%; flex: 1; min-height: 0; overflow-y: auto; }
+    #upg-tab-content { width: 100%; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+    .upg-tab-pane { min-width: 0; }
+    .upg-tile { min-width: 0; }
+    .upg-tile-body { min-width: 0; overflow: hidden; }
+    .upg-tile-title, .upg-tile-state { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
     .upg-tab-pane { display: none; flex-direction: column; gap: 10px; }
     .upg-tab-pane.active { display: flex; }
 
