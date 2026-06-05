@@ -3406,7 +3406,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       type = pool[Math.floor(Math.random() * pool.length)];
     }
     const info = BOOSTER_INFO[type];
-    boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
+    // Boost Duration upgrade: her seviye tüm booster süresine +0.4s
+    const extra = (upg.boostDur || 0) * 0.4;
+    boosterType = type; boosterDur = info.dur + extra; boosterTime = info.dur + extra;
     isGhost   = (type === 'ghost');
     hasShield = (type === 'shield');
     if (type === 'speed') player.speed = GAME_SPEED * 1.6;
