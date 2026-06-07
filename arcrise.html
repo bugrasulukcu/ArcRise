@@ -5919,24 +5919,83 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function saveSlots() {
     try { localStorage.setItem('arc_slots_v1', JSON.stringify(slotItems)); } catch(_){}
   }
+  // Cooldown state per slot: 0 = ready, >0 = remaining seconds (ticks down in step())
+  const slotCD = [0, 0];
+  // SVG cooldown ring overlay injected once per slot
+  function ensureSlotRing(el) {
+    if (el.querySelector('.slot-ring')) return;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'slot-ring');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', '50'); c.setAttribute('cy', '50'); c.setAttribute('r', '46');
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', 'rgba(255,255,255,.85)');
+    c.setAttribute('stroke-width', '4'); c.setAttribute('stroke-linecap', 'round');
+    c.setAttribute('transform', 'rotate(-90 50 50)');
+    c.setAttribute('stroke-dasharray', '289'); c.setAttribute('stroke-dashoffset', '289');
+    svg.appendChild(c);
+    el.appendChild(svg);
+  }
   function renderSlots() {
     document.querySelectorAll('.slot').forEach(el => {
       const i = Number(el.dataset.slot);
       const item = slotItems[i];
       el.classList.toggle('filled', !!item);
       const iconEl = el.querySelector('.slot-icon');
-      if (iconEl) iconEl.innerHTML = item?.icon ? iconHTML(item.icon, { size: 22 }) : '';
+      if (iconEl) iconEl.innerHTML = item?.icon ? iconHTML(item.icon, { size: 28 }) : '';
+      ensureSlotRing(el);
     });
+  }
+  function updateSlotCooldownUI() {
+    document.querySelectorAll('.slot').forEach(el => {
+      const i = Number(el.dataset.slot);
+      const ring = el.querySelector('.slot-ring circle');
+      if (!ring) return;
+      const item = slotItems[i];
+      if (!item || item.type !== 'ability') {
+        el.classList.remove('cooling');
+        ring.setAttribute('stroke-dashoffset', '289');
+        return;
+      }
+      const baseCD = abilityCooldown(item.key);
+      const cd = slotCD[i];
+      if (cd <= 0) {
+        el.classList.remove('cooling');
+        ring.setAttribute('stroke-dashoffset', '289');
+      } else {
+        el.classList.add('cooling');
+        const t = Math.min(1, cd / baseCD);
+        ring.setAttribute('stroke-dashoffset', String(289 * (1 - t)));
+      }
+    });
+  }
+  function abilityCooldown(key) {
+    if (key === 'timeslow') return 15 - (upg.inv?.timeslow?.cdLvl || 0) * 2;
+    return 10;
+  }
+  function abilityDuration(key) {
+    if (key === 'timeslow') return 1.5 + (upg.inv?.timeslow?.durLvl || 0) * 0.3;
+    return 1;
+  }
+  // Aktif ability (anlık efekt): {key, t} — t saniye azalır
+  let activeAbility = null;
+  function triggerAbility(slotIdx) {
+    const item = slotItems[slotIdx];
+    if (!item || item.type !== 'ability') return;
+    if (slotCD[slotIdx] > 0) return;
+    if (scene !== 'play' || !running) return;
+    activeAbility = { key: item.key, t: abilityDuration(item.key) };
+    slotCD[slotIdx] = abilityCooldown(item.key);
+    haptic(40);
   }
   document.querySelectorAll('.slot').forEach(el => {
     el.addEventListener('click', e => {
       e.stopPropagation();
       const i = Number(el.dataset.slot);
       if (slotItems[i]) {
-        // TODO: trigger active booster (once catalog defines effect)
-        console.log('[Slot] activate', i, slotItems[i]);
+        triggerAbility(i);
       } else {
-        // Empty → open upgrades to equip
         upgradesModal.classList.add('open');
       }
     });
