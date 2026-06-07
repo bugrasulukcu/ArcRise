@@ -3491,6 +3491,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     profit: 0,                                   // 0..10 (each +%10 coin gain)
     wallSoft: 0,                                 // 0..5 (each +1px collision tolerance toward walls)
     magnetRange: 0,                              // 0..8 (each +10% magnet pull radius)
+    // GEAR envanteri — consumable stock + ability unlock/ladder durumu
+    inv: {
+      revive:   { count: 0 },                                 // her ticket = ölünce 1 kez devam
+      timeslow: { owned: false, durLvl: 0, cdLvl: 0 },        // dur 1.5 + 0.3/lvl, cd 15 - 2/lvl
+    },
   };
   function loadUpg() {
     try { return Object.assign({}, UPG_DEFAULTS, JSON.parse(localStorage.getItem(UPG_KEY) || '{}')); }
