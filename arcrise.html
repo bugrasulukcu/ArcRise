@@ -5173,7 +5173,40 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Tutorial pacing removed
   }
 
+  // Revive Ticket: ölüm anında envanterde ticket varsa modal göster, "Use" basılırsa
+  // oyuncuyu son güvenli noktaya geri al, 1 ticket harca, run devam etsin.
+  let _reviveOffered = false;     // bu run'da revive teklif edildi mi (tek seferlik)
+  let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
+  function offerRevive() {
+    if (_reviveOffered) return false;
+    if ((upg.inv?.revive?.count || 0) <= 0) return false;
+    _reviveOffered = true;
+    running = false;
+    const modal = document.getElementById('revive-modal');
+    document.getElementById('revive-count').textContent = String(upg.inv.revive.count);
+    modal.classList.add('open');
+    return true;
+  }
+  function doRevive() {
+    document.getElementById('revive-modal').classList.remove('open');
+    upg.inv.revive.count = Math.max(0, (upg.inv.revive.count || 0) - 1);
+    saveUpg();
+    if (_lastSafePos) { player.x = _lastSafePos.x; player.y = _lastSafePos.y; }
+    // Kısa dokunulmazlık penceresi
+    isGhost = true;
+    setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
+    running = true;
+    haptic(60);
+  }
+  function declineRevive() {
+    document.getElementById('revive-modal').classList.remove('open');
+    _proceedEndGame();
+  }
   async function endGame() {
+    if (offerRevive()) return;
+    _proceedEndGame();
+  }
+  async function _proceedEndGame() {
     stopBgMusic();
     haptic(2000); // Ã§arpÄ±ÅŸma titreÅŸimi — 2 saniye
     if (sfxOn) {
