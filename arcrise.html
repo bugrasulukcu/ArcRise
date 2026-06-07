@@ -1736,6 +1736,45 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #wife-modal.open { display: flex; }
+    /* Revive Ticket prompt */
+    #revive-modal {
+      position: fixed; inset: 0; z-index: 62;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.30);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #revive-modal.open { display: flex; }
+    #revive-modal-box {
+      position: relative;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,80,120,.20), transparent 60%),
+        linear-gradient(180deg, rgba(40,8,18,0.78) 0%, rgba(18,6,12,0.82) 100%);
+      backdrop-filter: blur(8px) saturate(1.1);
+      -webkit-backdrop-filter: blur(8px) saturate(1.1);
+      border: 1.5px solid rgba(255,90,140,.55);
+      border-radius: 22px;
+      padding: 28px 24px 22px;
+      width: min(90vw, 340px);
+      display: flex; flex-direction: column; gap: 16px; align-items: center;
+      box-shadow: 0 0 36px rgba(255,80,120,.25);
+    }
+    #revive-modal-title { font-size: 22px; letter-spacing: 3px; color: #ff88a8; }
+    #revive-modal-sub { font-size: 11px; letter-spacing: 1.5px; color: rgba(255,255,255,.75); text-align: center; line-height: 1.6; }
+    #revive-modal-actions { display: flex; gap: 10px; width: 100%; }
+    #revive-modal-actions button {
+      flex: 1; padding: 12px 0;
+      font-family: var(--font); font-size: 12px; letter-spacing: 1.4px;
+      border-radius: 10px; cursor: pointer;
+    }
+    #revive-use {
+      background: linear-gradient(180deg, rgba(255,120,150,.85), rgba(220,60,100,.95));
+      color: #fff; border: 1.5px solid rgba(255,200,210,.65);
+    }
+    #revive-skip {
+      background: rgba(255,255,255,.06); color: #fff;
+      border: 1px solid rgba(255,255,255,.18);
+    }
     #wife-modal-box {
       position: relative;
       background:
