@@ -3498,8 +3498,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     },
   };
   function loadUpg() {
-    try { return Object.assign({}, UPG_DEFAULTS, JSON.parse(localStorage.getItem(UPG_KEY) || '{}')); }
-    catch(_) { return Object.assign({}, UPG_DEFAULTS); }
+    try {
+      const raw = JSON.parse(localStorage.getItem(UPG_KEY) || '{}');
+      const merged = Object.assign({}, UPG_DEFAULTS, raw);
+      // Deep-merge inv so newly added items don't lose defaults
+      merged.inv = Object.assign({}, UPG_DEFAULTS.inv, raw.inv || {});
+      return merged;
+    } catch(_) { return JSON.parse(JSON.stringify(UPG_DEFAULTS)); }
   }
   function saveUpg() { try { localStorage.setItem(UPG_KEY, JSON.stringify(upg)); } catch(_){} }
   let upg = loadUpg();
