@@ -5967,7 +5967,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'deathAvatar')    return upg.deathAvatar ? 'enabled' : 'locked';
     if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     if (key === 'wallSoft')       return upg.wallSoft > 0 ? '+' + upg.wallSoft + 'px' : 'base';
-    if (key === 'boostDur')       return upg.boostDur > 0 ? '+' + (upg.boostDur * 0.4).toFixed(1) + 's' : 'base';
     if (key === 'magnetRange')    return '+' + (upg.magnetRange * 10) + '%';
     return '';
   }
