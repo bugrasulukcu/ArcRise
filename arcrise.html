@@ -5422,7 +5422,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // Rolling FPS sample for the debug overlay (no allocs in the hot path).
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
   function loop(ts) {
-    const dt   = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
+    const dtRaw = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
+    // Time Slow: aktifken simülasyonu yavaşlat (animasyon time tutarlı kalsın)
+    const slow = (activeAbility && activeAbility.key === 'timeslow') ? 0.5 : 1.0;
+    const dt = dtRaw * slow;
+    // Cooldown ve aktif ability gerçek zaman ile ilerler (slow'a tabi değil)
+    if (activeAbility) {
+      activeAbility.t -= dtRaw;
+      if (activeAbility.t <= 0) activeAbility = null;
+    }
+    if (slotCD[0] > 0) slotCD[0] = Math.max(0, slotCD[0] - dtRaw);
+    if (slotCD[1] > 0) slotCD[1] = Math.max(0, slotCD[1] - dtRaw);
+    if (scene === 'play') updateSlotCooldownUI();
     const time = ts / 1000;
     _fpsAccDt += dt; _fpsAccFr++;
     if (_fpsAccDt >= 0.5) {
