@@ -5993,6 +5993,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     if (key === 'wallSoft')       return upg.wallSoft > 0 ? '+' + upg.wallSoft + 'px' : 'base';
     if (key === 'magnetRange')    return '+' + (upg.magnetRange * 10) + '%';
+    if (key === 'revive')         return 'x' + (upg.inv?.revive?.count || 0);
+    if (key === 'timeslow') {
+      const t = upg.inv?.timeslow;
+      if (!t || !t.owned) return 'locked';
+      return (1.5 + (t.durLvl || 0) * 0.3).toFixed(1) + 's · CD ' + (15 - (t.cdLvl || 0) * 2) + 's';
+    }
     return '';
   }
 
