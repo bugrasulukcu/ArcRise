@@ -6122,7 +6122,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'profit')         return fwdCard('profit', '', '', 10, profitPrice, v => v > 0 ? `+${v * 10}% coin` : 'base');
     if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : 'base');
-    if (key === 'boostDur')       return fwdCard('boostDur', '', '', 10, boostDurPrice, v => v > 0 ? `+${(v*0.4).toFixed(1)}s` : 'base');
     if (key === 'magnetRange')    return fwdCard('magnetRange', '', '', 8, magRangePrice, v => `+${v*10}%`);
     if (key === 'traceColor')     return colorCard();
     if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot — visible to other players.');
