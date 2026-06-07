@@ -2247,6 +2247,15 @@
     .slot:not(.filled) { opacity: 0.2; }
     .slot-icon { font-size: 26px; line-height: 1; }
     .slot:not(.filled) .slot-icon { display: none; }
+    .slot-ring {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .slot.cooling .slot-ring { opacity: 1; }
+    .slot.cooling { opacity: 0.55; }
   </style>
 </head>
 <body>
