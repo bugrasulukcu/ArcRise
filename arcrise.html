@@ -5918,11 +5918,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // her seviye önceki gelirinizi kendi katsayısıyla geri ödüyor.
   const PROFIT_PRICES   = [10, 25, 50, 100, 175, 275, 400, 575, 800, 1100];
   const WALLSOFT_PRICES = [20, 60, 150, 320, 600];                            // 5 lvl, +1px each
-  const BOOSTDUR_PRICES = [15, 35, 75, 150, 250, 380, 540, 730, 950, 1200];   // 10 lvl, +0.4s each
   const MAGRANGE_PRICES = [15, 35, 70, 130, 220, 340, 500, 700];              // 8 lvl, +10% each
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
-  function boostDurPrice(n) { return (n < 1 || n > BOOSTDUR_PRICES.length) ? null : BOOSTDUR_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
   const TRACE_COLOR_PRICE = 10;       // rebuyable cost per change
   const DEATH_NAME_PRICE  = 15;       // one-time unlock
