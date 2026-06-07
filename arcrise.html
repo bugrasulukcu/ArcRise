@@ -5120,6 +5120,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           if (hasShield) { clearBooster(); break; } else { endGame(); return; }
         }
       }
+      // Bu frame'de kazasız: son güvenli pozisyonu güncelle (revive için)
+      _lastSafePos = { x: player.x, y: player.y };
     }
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
