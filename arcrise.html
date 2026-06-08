@@ -6095,14 +6095,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       }
     });
   }
-  function abilityCooldown(key) {
-    if (key === 'timeslow') return 15 - (upg.inv?.timeslow?.cdLvl || 0) * 2;
-    return 10;
-  }
-  function abilityDuration(key) {
-    if (key === 'timeslow') return 1.5 + (upg.inv?.timeslow?.durLvl || 0) * 0.3;
-    return 1;
-  }
+  // abilityCooldown / abilityDuration ABILITY_CFG'den hesaplanır (sonraki bölümde tanımlı).
   // Aktif ability (anlık efekt): {key, t} — t saniye azalır
   let activeAbility = null;
   function triggerAbility(slotIdx) {
