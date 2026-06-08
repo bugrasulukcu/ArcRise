@@ -6963,11 +6963,42 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       try { applyProfile(); } catch(_){}
     }
     resetGame();
+    consumeArmedConsumables();
     playBgMusic();
     showScene('play');
     // Oyun hemen baÅŸlasÄ±n — ilk dokunuÅŸ bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
+  }
+
+  // Per-run consumable flags
+  let runDoublerActive = false;
+  let runHeadstartT = 0;          // saniye geri sayım (0 olunca normal hız)
+  let runInsuranceActive = false; // ölünce coin gain refund
+  let runCoinRainActive = false;  // gold spawn x2
+  let runFilterActive = false;    // sadece ghost+speed
+  let _runPreboostPending = null; // beginArc sonrası activateBooster için
+  function consumeArmedConsumables() {
+    runDoublerActive = false;
+    runHeadstartT = 0;
+    runInsuranceActive = false;
+    runCoinRainActive = false;
+    runFilterActive = false;
+    _runPreboostPending = null;
+    if (gameMode === 'wife') return; // Wife mode coin/etki yok
+    const inv = upg.inv;
+    const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
+    if (inv.doubler.armed   && inv.doubler.count   > 0) { runDoublerActive = true;        consume('doubler');   }
+    if (inv.headstart.armed && inv.headstart.count > 0) { runHeadstartT = 5.0;            consume('headstart'); }
+    if (inv.insurance.armed && inv.insurance.count > 0) { runInsuranceActive = true;      consume('insurance'); }
+    if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
+    if (inv.filter.armed    && inv.filter.count    > 0) { runFilterActive = true;         consume('filter');    }
+    if (inv.preboost.armed  && inv.preboost.count  > 0) {
+      const pool = ['wide','narrow','magnet','x2','x3','ghost','speed'];
+      _runPreboostPending = pool[Math.floor(Math.random() * pool.length)];
+      consume('preboost');
+    }
+    saveUpg();
   }
 
   // ── Mode button decorations (ice crystals / flames) ──────
