@@ -5278,6 +5278,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
+        // Tutorial stage 3: yeşil toplandı → 4'e geç
+        if (tutActive && tutStage === 3) {
+          bonuses.splice(i, 1);
+          setTimeout(() => { if (tutActive && tutStage === 3) enterTutStage(4); }, 350);
+          continue;
+        }
         // Base 10, sÃ¼re katsayÄ±sÄ± → booster katsayÄ±sÄ± sÄ±rayla
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
