@@ -3540,7 +3540,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_name', playerName);
     localStorage.setItem('arc_avatar', avatarIdx);
     applyProfile();
-    showScene('home');
+    // İlk profil oluşturmadan sonra tutorial'ı otomatik aç
+    if (localStorage.getItem('arc_firstplay') !== '1') {
+      startTutorial();
+    } else {
+      showScene('home');
+    }
   });
   document.getElementById('ps-name-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('ps-confirm').click();
