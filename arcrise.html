@@ -2509,8 +2509,8 @@
     <div id="go-twin-row">
       <div class="go-twin-col">
         <div id="go-score-lbl" class="go-twin-lbl">SCORE</div>
-        <div id="go-score-val" class="go-twin-val">00000</div>
-        <div class="go-twin-best">BEST: <span id="go-best-val-inline">00000</span></div>
+        <div id="go-score-val" class="go-twin-val">000000</div>
+        <div class="go-twin-best">BEST: <span id="go-best-val-inline">000000</span></div>
       </div>
       <div class="go-twin-col">
         <div class="go-twin-lbl" id="go-dist-lbl">DISTANCE</div>
@@ -2693,7 +2693,7 @@
       <div class="lb-best-card card-alltime">
         <div class="lb-best-lbl">ALL-TIME</div>
         <div class="lb-best-name" id="lb-best-name">—</div>
-        <div class="lb-best-score" id="lb-best-score">00000</div>
+        <div class="lb-best-score" id="lb-best-score">000000</div>
       </div>
       <div class="lb-best-card card-today">
         <div class="lb-best-lbl">TODAY</div>
@@ -3397,13 +3397,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       ? (stats?.bestExtreme || 0)
       : (stats?.bestNormal  || 0);
     if (hBestEl) hBestEl.textContent = pad(modeBest);
-    // BEST DISTANCE — per-mode, no M suffix, integer (rounded)
+    // BEST DISTANCE — metre cinsinden, 0.00m formatı
     const hBestDistEl = document.getElementById('home-pbestdist');
     if (hBestDistEl) {
       const md = (gameMode === 'extreme')
         ? (stats?.bestDistExtreme || 0)
         : (stats?.bestDistNormal  || 0);
-      hBestDistEl.textContent = md >= 10 ? String(Math.round(md)) : md.toFixed(1);
+      hBestDistEl.textContent = fmtDist(md);
     }
     const hCoinsEl = document.getElementById('home-pcoins');
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
