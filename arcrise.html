@@ -7186,15 +7186,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
-  // Extreme is a one-time 50-coin unlock — flag persists after first purchase.
+  // Extreme: ya 50 coin direkt, ya 5m + 5000 puan + 5 coin (indirim).
+  // İlk satın alma sonrası unlock kalıcı.
+  const EX_DIRECT_PRICE   = 50;
+  const EX_DISCOUNT_PRICE = 5;
+  const EX_DIST_REQ_CM    = 500;   // 5.00 m
+  const EX_SCORE_REQ      = 5000;
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
-    const distOk    = bestDist >= 750;
-    const scoreOk   = bestScore >= 2000;
-    const coinOk    = extremeUnlocked || coins >= 50;
-    const allOk     = distOk && scoreOk && coinOk;
+    const distOk      = bestDist >= EX_DIST_REQ_CM;
+    const scoreOk     = bestScore >= EX_SCORE_REQ;
+    const discountOK  = distOk && scoreOk;
+    const price       = discountOK ? EX_DISCOUNT_PRICE : EX_DIRECT_PRICE;
+    const coinOk      = extremeUnlocked || coins >= price;
 
     const rowDist  = document.getElementById('ex-req-dist');
     const rowScore = document.getElementById('ex-req-score');
@@ -7206,11 +7212,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
     rowScore.querySelector('.ex-req-check').innerHTML = iconHTML(scoreOk ? 'check' : 'cross', { size: 14, color: scoreOk ? '#66ff88' : '#ff5566' });
-    document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(best: ${bestScore})`;
+    document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(best: ${pad(bestScore)})`;
 
     const coinIcon = document.getElementById('ex-coin-icon');
     const deficit  = document.getElementById('ex-coin-deficit');
     const coinVal  = document.getElementById('ex-req-coin-val');
+    const priceEl  = document.getElementById('extreme-price');
+    if (priceEl) priceEl.textContent = String(price);
     if (extremeUnlocked) {
       coinIcon.classList.remove('dim');
       deficit.textContent = '';
@@ -7219,7 +7227,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       rowCoin.querySelector('.ex-req-label').textContent  = 'Unlocked';
       coinVal.textContent = '';
     } else {
-      rowCoin.querySelector('.ex-req-label').textContent = '50 coin';
+      rowCoin.querySelector('.ex-req-label').textContent = price + ' coin' + (discountOK ? ' (discount)' : '');
       if (coinOk) {
         coinIcon.classList.remove('dim');
         deficit.textContent = '';
@@ -7227,18 +7235,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         rowCoin.querySelector('.ex-req-label').style.color = '';
       } else {
         coinIcon.classList.add('dim');
-        deficit.textContent = `(${50 - coins} short)`;
+        deficit.textContent = `(${price - coins} short)`;
         rowCoin.className = 'ex-req-row unmet';
       }
       coinVal.textContent = `(have: ${coins})`;
     }
 
     const btn = document.getElementById('extreme-confirm');
-    if (allOk) {
-      btn.classList.remove('locked');
-    } else {
-      btn.classList.add('locked');
-    }
+    if (extremeUnlocked || coinOk) btn.classList.remove('locked');
+    else                            btn.classList.add('locked');
   }
 
   function openExtremeModal() {
