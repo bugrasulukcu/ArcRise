@@ -6098,14 +6098,61 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // abilityCooldown / abilityDuration ABILITY_CFG'den hesaplanır (sonraki bölümde tanımlı).
   // Aktif ability (anlık efekt): {key, t} — t saniye azalır
   let activeAbility = null;
+  // Anchor: { x, y } veya null. Çift-tap mekaniği: 1) anchor bırak, 2) ışınla.
+  let anchorPoint = null;
+  // Mirror: tek-shot etkili; sadece player.x reflect.
   function triggerAbility(slotIdx) {
     const item = slotItems[slotIdx];
     if (!item || item.type !== 'ability') return;
     if (slotCD[slotIdx] > 0) return;
     if (scene !== 'play' || !running) return;
-    activeAbility = { key: item.key, t: abilityDuration(item.key) };
-    slotCD[slotIdx] = abilityCooldown(item.key);
-    haptic(40);
+    const key = item.key;
+    const dur = abilityDuration(key);
+    const cd  = abilityCooldown(key);
+    applyAbilityEffect(key, dur);
+    if (dur > 0) activeAbility = { key, t: dur };
+    slotCD[slotIdx] = cd;
+    haptic(60);
+  }
+  function applyAbilityEffect(key, dur) {
+    if (key === 'timeslow') {
+      // dt scaling loop'ta zaten activeAbility'e bakıyor
+    } else if (key === 'phaseburst') {
+      isGhost = true;
+      setTimeout(() => { if (scene === 'play') isGhost = false; }, dur * 1000);
+    } else if (key === 'coinpull') {
+      // Tek-shot: ekrandaki gold/purple/bonuses'u oyuncuya snap
+      const snap = (arr) => { for (const o of arr) { o.x = player.x; o.y = player.y; } };
+      snap(bonuses); snap(goldBalls); snap(purpleBalls);
+    } else if (key === 'brake') {
+      const restoreSpeed = player.speed;
+      player.speed = restoreSpeed * 0.5;
+      setTimeout(() => { if (scene === 'play') player.speed = GAME_SPEED; }, dur * 1000);
+    } else if (key === 'mirror') {
+      player.x = W - player.x;
+      // Yön de aynalansın
+      player.dir = -player.dir;
+      player.heading = Math.PI - player.heading;
+    } else if (key === 'shock') {
+      // Etrafındaki obstacle'ları yok et (R = 200px)
+      const R = 200;
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const o = obstacles[i];
+        const dx = player.x - o.x, dy = player.y - o.y;
+        if (dx*dx + dy*dy < R*R) {
+          spawnGoldParticles(o.x, o.y);
+          obstacles.splice(i, 1);
+        }
+      }
+    } else if (key === 'anchor') {
+      if (!anchorPoint) {
+        anchorPoint = { x: player.x, y: player.y };
+      } else {
+        player.x = anchorPoint.x; player.y = anchorPoint.y;
+        spawnGoldParticles(player.x, player.y);
+        anchorPoint = null;
+      }
+    }
   }
   document.querySelectorAll('.slot').forEach(el => {
     el.addEventListener('click', e => {
