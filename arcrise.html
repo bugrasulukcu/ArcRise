@@ -6360,8 +6360,165 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const x = document.createElement('div'); x.textContent = '?'; return x;
   }
 
-  // Consumable card — stock göstergesi + "Buy +1" butonu
-  function reviveCard() {
+  // ── Gear configs ─────────────────────────────────────────────────
+  const CONSUMABLE_CFG = {
+    revive:    { price: 80, max: 5, autoArm: true,  desc: 'On death, automatically continue from your last safe spot.' },
+    doubler:   { price: 50, max: 5, autoArm: false, desc: 'Next armed run: all coin gain ×2.' },
+    headstart: { price: 40, max: 5, autoArm: false, desc: 'Next armed run: first 5 seconds at half speed.' },
+    insurance: { price: 60, max: 3, autoArm: false, desc: 'Armed: refund this run\'s coin gain if you die.' },
+    coinrain:  { price: 40, max: 5, autoArm: false, desc: 'Armed: gold ball spawn rate ×2 for the run.' },
+    preboost:  { price: 30, max: 5, autoArm: false, desc: 'Armed: start the run with a random booster active.' },
+    filter:    { price: 80, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
+  };
+  const ABILITY_CFG = {
+    timeslow:   { unlock: 100, durBase: 1.5, durStep: 0.3, cdBase: 15, cdStep: 2, ladderLvl: 5,
+                  durPrices: [40, 80, 150, 280, 500], cdPrices: [50, 100, 180, 320, 550] },
+    phaseburst: { unlock: 120, durBase: 0.8, durStep: 0.2, cdBase: 10, cdStep: 1, ladderLvl: 5,
+                  durPrices: [50, 100, 180, 300, 500], cdPrices: [60, 120, 200, 320, 500] },
+    coinpull:   { unlock: 80,  durBase: 0,   durStep: 0,   cdBase: 20, cdStep: 2, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [40, 90, 160, 280, 460] },
+    brake:      { unlock: 60,  durBase: 1.0, durStep: 0.25,cdBase: 12, cdStep: 1, ladderLvl: 5,
+                  durPrices: [30, 60, 110, 200, 340], cdPrices: [40, 80, 150, 260, 420] },
+    mirror:     { unlock: 90,  durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [50, 110, 200, 340, 540] },
+    shock:      { unlock: 100, durBase: 0,   durStep: 0,   cdBase: 25, cdStep: 2, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [50, 110, 200, 340, 540] },
+    anchor:     { unlock: 110, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [60, 130, 230, 380, 580] },
+  };
+  function abilityCooldown(key) {
+    const cfg = ABILITY_CFG[key]; if (!cfg) return 10;
+    return cfg.cdBase - (upg.inv[key]?.cdLvl || 0) * cfg.cdStep;
+  }
+  function abilityDuration(key) {
+    const cfg = ABILITY_CFG[key]; if (!cfg) return 1;
+    return cfg.durBase + (upg.inv[key]?.durLvl || 0) * cfg.durStep;
+  }
+
+  // Consumable card — stock + ARM toggle + Buy +1
+  function consumableCard(key) {
+    const cfg = CONSUMABLE_CFG[key];
+    const inv = upg.inv[key] || (upg.inv[key] = { count: 0, armed: false });
+    const card = document.createElement('div');
+    card.className = 'upg-card';
+    const can = coins >= cfg.price && inv.count < cfg.max;
+    const showArm = !cfg.autoArm;
+    const isArmed = inv.armed || cfg.autoArm;
+    card.innerHTML = `
+      <div class="upg-card-sub" style="text-align:center;padding:6px 8px 10px">${cfg.desc}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;gap:8px">
+        <span style="font-size:13px;color:#ffd866">Stock: ${inv.count} / ${cfg.max}</span>
+        ${showArm
+          ? `<button class="upg-buy small" id="cn-arm" ${inv.count<1?'disabled':''} ${isArmed?'data-on="1"':''}>${isArmed?'ARMED':'ARM'}</button>`
+          : '<span class="upg-card-active" style="font-size:11px;color:var(--green)">AUTO</span>'}
+        <button class="upg-buy" id="cn-buy" ${can?'':'disabled'}>
+          Buy +1 <span class="upg-coin">${iconHTML('coin', { size: 14 })}${cfg.price}</span>
+        </button>
+      </div>
+    `;
+    card.querySelector('#cn-buy').addEventListener('click', () => {
+      if (!can) return;
+      if (!spendCoins(cfg.price)) return;
+      inv.count = Math.min(cfg.max, (inv.count || 0) + 1);
+      saveUpg();
+      renderUpgrades();
+    });
+    if (showArm) {
+      card.querySelector('#cn-arm').addEventListener('click', () => {
+        if (inv.count < 1) return;
+        inv.armed = !inv.armed;
+        saveUpg();
+        renderUpgrades();
+      });
+    }
+    return card;
+  }
+
+  // Ability card — Unlock veya Dur/CD ladders + Equip
+  function abilityCard(key) {
+    const cfg = ABILITY_CFG[key];
+    const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
+    const card = document.createElement('div');
+    card.className = 'upg-card';
+    if (!inv.owned) {
+      const can = coins >= cfg.unlock;
+      card.innerHTML = `
+        <div class="upg-card-sub" style="text-align:center;padding:6px 8px 10px">${ABILITY_DESC[key] || ''}</div>
+        <div style="display:flex;justify-content:center;padding:6px 4px">
+          <button class="upg-buy" id="ab-unlock" ${can?'':'disabled'}>
+            Unlock <span class="upg-coin">${iconHTML('coin', { size: 14 })}${cfg.unlock}</span>
+          </button>
+        </div>
+      `;
+      card.querySelector('#ab-unlock').addEventListener('click', () => {
+        if (!can) return; if (!spendCoins(cfg.unlock)) return;
+        inv.owned = true; saveUpg(); renderUpgrades();
+      });
+      return card;
+    }
+    const dur = abilityDuration(key);
+    const cd  = abilityCooldown(key);
+    const durNext = (inv.durLvl || 0) + 1;
+    const cdNext  = (inv.cdLvl  || 0) + 1;
+    const durPrice = durNext <= cfg.durPrices.length ? cfg.durPrices[durNext - 1] : null;
+    const cdPrice  = cdNext  <= cfg.cdPrices.length  ? cfg.cdPrices[cdNext - 1]   : null;
+    const equippedSlot = slotItems.findIndex(s => s && s.key === key);
+    const meta = GEAR_GROUPS.flatMap(g => g.items).find(i => i.key === key);
+    const ico = meta?.icon || 'sparkle';
+    const durBox = cfg.noDur ? '' : `
+      <div class="upg-stat-box">
+        <div class="upg-stat-lbl">DURATION</div>
+        <div class="upg-stat-val">${dur.toFixed(1)}s</div>
+        ${durPrice == null
+          ? '<div class="upg-stat-max">MAX</div>'
+          : `<button class="upg-buy small" id="ab-dur" ${coins<durPrice?'disabled':''}>+${cfg.durStep.toFixed(2)}s <span class="upg-coin">${iconHTML('coin',{size:12})}${durPrice}</span></button>`}
+      </div>`;
+    card.innerHTML = `
+      <div style="display:grid;grid-template-columns:${cfg.noDur ? '1fr' : '1fr 1fr'};gap:10px;padding:6px 0">
+        ${durBox}
+        <div class="upg-stat-box">
+          <div class="upg-stat-lbl">COOLDOWN</div>
+          <div class="upg-stat-val">${cd}s</div>
+          ${cdPrice == null
+            ? '<div class="upg-stat-max">MAX</div>'
+            : `<button class="upg-buy small" id="ab-cd" ${coins<cdPrice?'disabled':''}>-${cfg.cdStep}s <span class="upg-coin">${iconHTML('coin',{size:12})}${cdPrice}</span></button>`}
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;padding:8px 0 2px">
+        <button class="upg-buy" id="ab-eq1" ${equippedSlot===0?'data-on="1"':''}>Equip Slot 1</button>
+        <button class="upg-buy" id="ab-eq2" ${equippedSlot===1?'data-on="1"':''}>Equip Slot 2</button>
+      </div>
+    `;
+    if (!cfg.noDur && durPrice != null) card.querySelector('#ab-dur').addEventListener('click', () => {
+      if (coins < durPrice) return; if (!spendCoins(durPrice)) return;
+      inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
+    });
+    if (cdPrice != null) card.querySelector('#ab-cd').addEventListener('click', () => {
+      if (coins < cdPrice) return; if (!spendCoins(cdPrice)) return;
+      inv.cdLvl = (inv.cdLvl || 0) + 1; saveUpg(); renderUpgrades();
+    });
+    const equipTo = (idx) => {
+      const cur = slotItems.findIndex(s => s && s.key === key);
+      if (cur === idx) { slotItems[idx] = null; }
+      else { if (cur !== -1) slotItems[cur] = null; slotItems[idx] = { type: 'ability', key, icon: ico }; }
+      saveSlots(); renderSlots(); renderUpgrades();
+    };
+    card.querySelector('#ab-eq1').addEventListener('click', () => equipTo(0));
+    card.querySelector('#ab-eq2').addEventListener('click', () => equipTo(1));
+    return card;
+  }
+  const ABILITY_DESC = {
+    timeslow:   'Slow the world by 50% briefly. Tap an equipped slot to activate.',
+    phaseburst: 'Brief invincibility — pass through walls and obstacles.',
+    coinpull:   'Instantly pull all on-screen coins, gold and purple balls to you.',
+    brake:      'Halve your speed briefly — buy yourself reaction time.',
+    mirror:     'Snap to the mirrored x position — flip across the screen.',
+    shock:      'Destroy obstacles within a radius around you.',
+    anchor:     'First tap: drop an anchor. Second tap: teleport back to it.',
+  };
+
+  // Legacy alias kept for old code paths (no-op fall-through)
+  function reviveCard() { return consumableCard('revive'); }
     const REVIVE_PRICE = 80;
     const REVIVE_MAX = 5;
     const card = document.createElement('div');
