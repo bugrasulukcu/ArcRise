@@ -3570,8 +3570,22 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     magnetRange: 0,                              // 0..8 (each +10% magnet pull radius)
     // GEAR envanteri — consumable stock + ability unlock/ladder durumu
     inv: {
-      revive:   { count: 0 },                                 // her ticket = ölünce 1 kez devam
-      timeslow: { owned: false, durLvl: 0, cdLvl: 0 },        // dur 1.5 + 0.3/lvl, cd 15 - 2/lvl
+      // Consumables: count = stok, armed = sıradaki run'da otomatik kullan.
+      revive:    { count: 0, armed: false },  // ölünce devam (always-armed; armed flag yok sayılır)
+      doubler:   { count: 0, armed: false },  // run'da coin gain ×2
+      headstart: { count: 0, armed: false },  // ilk 5s yarı hız
+      insurance: { count: 0, armed: false },  // ölünce coin gain refund
+      coinrain:  { count: 0, armed: false },  // gold ball spawn ×2
+      preboost:  { count: 0, armed: false },  // run rastgele booster ile başlar
+      filter:    { count: 0, armed: false },  // sadece ghost+speed booster spawn
+      // Abilities: owned + dur/cd ladder seviyeleri
+      timeslow:   { owned: false, durLvl: 0, cdLvl: 0 },
+      phaseburst: { owned: false, durLvl: 0, cdLvl: 0 },
+      coinpull:   { owned: false, durLvl: 0, cdLvl: 0 },
+      brake:      { owned: false, durLvl: 0, cdLvl: 0 },
+      mirror:     { owned: false, durLvl: 0, cdLvl: 0 },
+      shock:      { owned: false, durLvl: 0, cdLvl: 0 },
+      anchor:     { owned: false, durLvl: 0, cdLvl: 0 },
     },
   };
   function loadUpg() {
