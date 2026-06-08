@@ -5331,6 +5331,92 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // Revive Ticket: ölüm anında envanterde ticket varsa modal göster, "Use" basılırsa
   // oyuncuyu son güvenli noktaya geri al, 1 ticket harca, run devam etsin.
+  // ── Tutorial state machine ───────────────────────────────────────
+  // 4 sahnelik onboarding. Oyuncu canvas'a basarak sahneleri ilerletir.
+  // tutorial sırasında: isGhost=true (ölmez), spawn doğal değil — manuel pushlanır.
+  let tutActive = false;
+  let tutStage  = 0;       // 0 = inactive, 1..4 = active stage
+  let _tutStageT = 0;      // stage süresi (s)
+  function setTutText(html) { document.getElementById('tut-text').innerHTML = html; }
+  function startTutorial() {
+    if (!playerName || !playerName.trim()) {
+      playerName = 'PLAYER';
+      localStorage.setItem('arc_name', playerName);
+      try { applyProfile(); } catch(_){}
+    }
+    tutActive = true;
+    resetGame();
+    isGhost = true; // tutorialda ölme yok
+    showScene('play');
+    document.getElementById('tut-overlay').classList.add('active');
+    // Tutorialda HUD'u sade tut — skor/distance görünmesin
+    hudEl.classList.add('tutorial');
+    enterTutStage(1);
+  }
+  function enterTutStage(s) {
+    tutStage = s;
+    _tutStageT = 0;
+    obstacles.length = 0; bonuses.length = 0; goldBalls.length = 0; purpleBalls.length = 0;
+    if (s === 1) {
+      setTutText('TAP TO START AN ARC');
+      running = false; started = false;
+      // Stage 1: ilk taptan sonra arc başlasın, ~1s'de freeze
+    } else if (s === 2) {
+      setTutText('TAP AGAIN — direction flips');
+      // Ball ters yöne arc atmaya başlar
+      beginArc(-player.dir || 1, W / 4);
+      running = true;
+    } else if (s === 3) {
+      setTutText('COLLECT <span class="accent-g">GREEN</span> FOR ENERGY');
+      // Ball ilerlemeye devam etsin; yola yeşil bir bonus koy
+      bonuses.push({ x: player.x, y: player.y - 220, r: 18 });
+      running = true;
+    } else if (s === 4) {
+      setTutText('AVOID <span class="accent-r">RED</span> — keep clear');
+      // Kırmızı engelden uzak dur — ball geçemesin diye yanına koy
+      obstacles.push({ x: player.x + 90, y: player.y - 180, r: 22, _ox: player.x + 90, _oy: player.y - 180 });
+      running = true;
+    }
+  }
+  function advanceTutStage() {
+    if (!tutActive) return;
+    if (tutStage === 1) {
+      // İlk tap: arc başlat, sonra ~1s sonra duraklat
+      if (!started) {
+        beginArc(Math.random() < 0.5 ? -1 : 1, W / 4);
+        started = true; running = true;
+        setTimeout(() => {
+          if (tutActive && tutStage === 1) {
+            running = false;
+            setTutText('NICE — TAP AGAIN TO FLIP');
+            // Otomatik 0.6s sonra stage 2'ye geç
+            setTimeout(() => { if (tutActive && tutStage === 1) enterTutStage(2); }, 700);
+          }
+        }, 1100);
+      }
+    } else if (tutStage === 2) {
+      // Tap → arc yönünü ters çevir (gerçek tap handler'ı zaten yapıyor)
+      // Stage 2 → 3 otomatik geçiş 1.2s sonra
+      setTimeout(() => { if (tutActive && tutStage === 2) enterTutStage(3); }, 1100);
+    } else if (tutStage === 3) {
+      // Yeşil toplandığında stage 4'e otomatik geçer (bonus collision'da kontrol)
+    } else if (tutStage === 4) {
+      // Tap → biraz daha izle, sonra tutorial biter
+      setTimeout(() => { if (tutActive && tutStage === 4) endTutorial(); }, 800);
+    }
+  }
+  function endTutorial() {
+    tutActive = false;
+    tutStage = 0;
+    document.getElementById('tut-overlay').classList.remove('active');
+    hudEl.classList.remove('tutorial');
+    isGhost = false;
+    running = false; started = false;
+    obstacles.length = 0; bonuses.length = 0;
+    localStorage.setItem('arc_firstplay', '1');
+    showScene('home');
+  }
+
   let _reviveOffered = false;     // bu run'da revive teklif edildi mi (tek seferlik)
   let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
   function offerRevive() {
