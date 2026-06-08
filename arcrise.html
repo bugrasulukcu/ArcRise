@@ -6355,8 +6355,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'traceColor')     return colorCard();
     if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot — visible to other players.');
     if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, 'Your avatar appears on the map at your best-run death spot.');
-    if (key === 'revive')         return reviveCard();
-    if (key === 'timeslow')       return timeslowCard();
+    if (CONSUMABLE_CFG[key])      return consumableCard(key);
+    if (ABILITY_CFG[key])         return abilityCard(key);
     const x = document.createElement('div'); x.textContent = '?'; return x;
   }
 
