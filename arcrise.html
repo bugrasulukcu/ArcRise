@@ -2556,9 +2556,14 @@
       <div class="extreme-row"><span class="extreme-lbl">Acceleration</span><span class="extreme-val">On</span></div>
     </div>
     <div id="extreme-reqs">
-      <div class="ex-req-row" id="ex-req-discount-head" style="justify-content:center;color:rgba(170,255,150,.85);font-size:10.5px;letter-spacing:1.5px">
-        DISCOUNT PATH — meet both to unlock at 5 coins
+      <div class="ex-path-head" id="ex-path-direct-head">DIRECT</div>
+      <div class="ex-req-row met" id="ex-req-direct">
+        <span class="ex-req-check"></span>
+        <span class="ex-req-label">Pay 50 coin</span>
+        <span class="ex-req-val" id="ex-req-direct-val"></span>
       </div>
+      <div class="ex-path-or">— OR —</div>
+      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 5 coin if both met</div>
       <div class="ex-req-row unmet" id="ex-req-dist">
         <span class="ex-req-check"></span>
         <span class="ex-req-label">5.00m distance</span>
@@ -2569,7 +2574,7 @@
         <span class="ex-req-label">5000 points</span>
         <span class="ex-req-val" id="ex-req-score-val"></span>
       </div>
-      <div class="ex-req-row" id="ex-req-coin">
+      <div class="ex-req-row" id="ex-req-coin" style="display:none">
         <span class="ex-coin-icon dim" id="ex-coin-icon"></span>
         <span class="ex-req-label">5 coin</span>
         <span id="ex-coin-deficit"></span>
