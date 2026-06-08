@@ -1745,6 +1745,40 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #revive-modal.open { display: flex; }
+    /* Tutorial overlay — text bubble + dashed highlight rings drawn on canvas */
+    #tut-overlay {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      z-index: 25;
+      display: none;
+    }
+    #tut-overlay.active { display: block; }
+    #tut-text {
+      position: absolute; top: 38%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-family: var(--font);
+      color: #fff;
+      letter-spacing: 2px;
+      line-height: 1.6;
+      font-size: 14px;
+      text-shadow: 0 2px 10px rgba(0,0,0,.9);
+      max-width: 75%;
+      pointer-events: none;
+    }
+    #tut-text .accent-r { color: var(--red); }
+    #tut-text .accent-g { color: var(--green); }
+    #tut-skip {
+      position: absolute; top: 18px; right: 18px;
+      pointer-events: auto;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(255,255,255,.7);
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.6px;
+      padding: 8px 12px; border-radius: 8px;
+      cursor: pointer;
+    }
+    #tut-skip:hover { color: #fff; border-color: rgba(255,255,255,.4); }
     #revive-modal-box {
       position: relative;
       background:
