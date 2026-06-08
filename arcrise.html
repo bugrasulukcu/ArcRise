@@ -7360,6 +7360,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (gameMode === 'wife') return;
     openWifeModal();
   });
+  document.getElementById('mode-btn-tutorial').addEventListener('click', startTutorial);
+  document.getElementById('tut-skip').addEventListener('click', endTutorial);
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
