@@ -7217,50 +7217,42 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const distOk      = bestDist >= EX_DIST_REQ_CM;
     const scoreOk     = bestScore >= EX_SCORE_REQ;
     const discountOK  = distOk && scoreOk;
+    const directOK    = coins >= EX_DIRECT_PRICE;
     const price       = discountOK ? EX_DISCOUNT_PRICE : EX_DIRECT_PRICE;
-    const coinOk      = extremeUnlocked || coins >= price;
+    const canBuy      = extremeUnlocked || coins >= price;
 
+    // Direct row
+    const rowDirect = document.getElementById('ex-req-direct');
+    rowDirect.className = 'ex-req-row ' + (directOK ? 'met' : 'unmet');
+    rowDirect.querySelector('.ex-req-check').innerHTML = iconHTML(directOK ? 'check' : 'cross', { size: 14, color: directOK ? '#66ff88' : '#ff5566' });
+    document.getElementById('ex-req-direct-val').textContent = directOK ? '' : `(have: ${coins})`;
+
+    // Discount path rows
     const rowDist  = document.getElementById('ex-req-dist');
     const rowScore = document.getElementById('ex-req-score');
-    const rowCoin  = document.getElementById('ex-req-coin');
-
     rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
     rowDist.querySelector('.ex-req-check').innerHTML  = iconHTML(distOk ? 'check' : 'cross', { size: 14, color: distOk ? '#66ff88' : '#ff5566' });
     document.getElementById('ex-req-dist-val').textContent = distOk ? '' : `(best: ${fmtDist(bestDist)})`;
-
     rowScore.className = 'ex-req-row ' + (scoreOk ? 'met' : 'unmet');
     rowScore.querySelector('.ex-req-check').innerHTML = iconHTML(scoreOk ? 'check' : 'cross', { size: 14, color: scoreOk ? '#66ff88' : '#ff5566' });
     document.getElementById('ex-req-score-val').textContent = scoreOk ? '' : `(best: ${pad(bestScore)})`;
 
-    const coinIcon = document.getElementById('ex-coin-icon');
-    const deficit  = document.getElementById('ex-coin-deficit');
-    const coinVal  = document.getElementById('ex-req-coin-val');
-    const priceEl  = document.getElementById('extreme-price');
-    if (priceEl) priceEl.textContent = String(price);
+    // Price on button (cheapest available)
+    const priceEl = document.getElementById('extreme-price');
+    if (priceEl) priceEl.textContent = String(extremeUnlocked ? 0 : price);
+
+    // Already unlocked: hide reqs
     if (extremeUnlocked) {
-      coinIcon.classList.remove('dim');
-      deficit.textContent = '';
-      rowCoin.className = 'ex-req-row met';
-      rowCoin.querySelector('.ex-req-label').style.color = '';
-      rowCoin.querySelector('.ex-req-label').textContent  = 'Unlocked';
-      coinVal.textContent = '';
-    } else {
-      rowCoin.querySelector('.ex-req-label').textContent = price + ' coin' + (discountOK ? ' (discount)' : '');
-      if (coinOk) {
-        coinIcon.classList.remove('dim');
-        deficit.textContent = '';
-        rowCoin.className = 'ex-req-row met';
-        rowCoin.querySelector('.ex-req-label').style.color = '';
-      } else {
-        coinIcon.classList.add('dim');
-        deficit.textContent = `(${price - coins} short)`;
-        rowCoin.className = 'ex-req-row unmet';
-      }
-      coinVal.textContent = `(have: ${coins})`;
+      document.getElementById('ex-path-direct-head').textContent = 'UNLOCKED';
+      document.getElementById('ex-path-discount-head').style.display = 'none';
+      rowDist.style.display = 'none';
+      rowScore.style.display = 'none';
+      rowDirect.style.display = 'none';
+      document.querySelector('.ex-path-or').style.display = 'none';
     }
 
     const btn = document.getElementById('extreme-confirm');
-    if (extremeUnlocked || coinOk) btn.classList.remove('locked');
+    if (extremeUnlocked || canBuy) btn.classList.remove('locked');
     else                            btn.classList.add('locked');
   }
 
