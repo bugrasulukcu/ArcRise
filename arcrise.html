@@ -7264,7 +7264,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   document.getElementById('extreme-confirm').addEventListener('click', () => {
     if (!extremeUnlocked) {
-      if (!spendCoins(50)) return;
+      const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
+      const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
+      const discountOK = bestDist >= EX_DIST_REQ_CM && bestScore >= EX_SCORE_REQ;
+      const price = discountOK ? EX_DISCOUNT_PRICE : EX_DIRECT_PRICE;
+      if (!spendCoins(price)) return;
       extremeUnlocked = true;
       localStorage.setItem('arc_extreme_unlocked', '1');
     }
