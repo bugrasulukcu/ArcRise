@@ -6241,11 +6241,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     if (key === 'wallSoft')       return upg.wallSoft > 0 ? '+' + upg.wallSoft + 'px' : 'base';
     if (key === 'magnetRange')    return '+' + (upg.magnetRange * 10) + '%';
-    if (key === 'revive')         return 'x' + (upg.inv?.revive?.count || 0);
-    if (key === 'timeslow') {
-      const t = upg.inv?.timeslow;
-      if (!t || !t.owned) return 'locked';
-      return (1.5 + (t.durLvl || 0) * 0.3).toFixed(1) + 's · CD ' + (15 - (t.cdLvl || 0) * 2) + 's';
+    // Consumables: stock + ARMED durumu
+    if (CONSUMABLE_CFG && CONSUMABLE_CFG[key]) {
+      const inv = upg.inv?.[key] || {};
+      const cfg = CONSUMABLE_CFG[key];
+      const armed = inv.armed || cfg.autoArm;
+      return 'x' + (inv.count || 0) + (armed && (inv.count || cfg.autoArm) ? ' · ON' : '');
+    }
+    // Abilities: locked / dur · cd
+    if (ABILITY_CFG && ABILITY_CFG[key]) {
+      const inv = upg.inv?.[key];
+      if (!inv?.owned) return 'locked';
+      const cfg = ABILITY_CFG[key];
+      const dur = cfg.durBase + (inv.durLvl || 0) * cfg.durStep;
+      const cd  = cfg.cdBase  - (inv.cdLvl  || 0) * cfg.cdStep;
+      return (cfg.noDur ? 'CD ' + cd + 's' : dur.toFixed(1) + 's · CD ' + cd + 's');
     }
     return '';
   }
