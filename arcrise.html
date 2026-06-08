@@ -5037,6 +5037,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   function spawnAhead() {
+    if (tutActive) return; // Tutorialda doğal spawn yok — manuel yerleştirilir
     while (nextSpawnY > player.y - 2200) {
       // Difficulty driver — linear in distance, clamped 0..1 over 0..1000 m.
       // Score is no longer a difficulty input; this gives a predictable curve.
