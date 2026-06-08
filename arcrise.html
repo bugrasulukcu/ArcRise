@@ -4990,7 +4990,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-          const PURPLE_TYPES = ['wide','narrow','magnet','x2','x3','x4','ghost','speed','mystery'];
+          const PURPLE_TYPES = runFilterActive
+            ? ['ghost','speed']
+            : ['wide','narrow','magnet','x2','x3','x4','ghost','speed','mystery'];
           const ptype = PURPLE_TYPES[Math.floor(Math.random() * PURPLE_TYPES.length)];
           purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
         }
