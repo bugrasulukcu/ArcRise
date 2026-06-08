@@ -5369,55 +5369,48 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function enterTutStage(s) {
     tutStage = s;
     _tutStageT = 0;
+    tutReady = false;
     obstacles.length = 0; bonuses.length = 0; goldBalls.length = 0; purpleBalls.length = 0;
+    setTutText('');
     if (s === 1) {
-      // Ball arcs once then freezes. Player needs to tap.
-      setTutText('');
       beginArc(1, W / 4);
       started = true; running = true;
       setTimeout(() => {
         if (tutActive && tutStage === 1) {
           running = false;
           setTutText('TAP SCREEN<br>TO ROTATE');
+          tutReady = true;
         }
       }, 900);
     } else if (s === 2) {
-      // Ball reverses direction, arcs once more, freezes. Player taps again.
-      setTutText('');
       beginArc(-player.dir, W / 4);
       running = true;
       setTimeout(() => {
         if (tutActive && tutStage === 2) {
           running = false;
           setTutText('EVERY TAP<br>FLIPS THE ARC');
+          tutReady = true;
         }
       }, 900);
     } else if (s === 3) {
-      // Static scene: ball paused, green bonus floating above. Tap to advance.
       running = false;
       bonuses.push({ x: player.x, y: player.y - 220, r: 22 });
       setTutText('COLLECT <span class="accent-g">GREEN</span><br>FOR ENERGY');
+      tutReady = true;
     } else if (s === 4) {
-      // Static scene: ball paused, red obstacle near. Tap to advance.
       running = false;
-      bonuses.length = 0;
       obstacles.push({ x: player.x + 70, y: player.y - 220, r: 26, _ox: player.x + 70, _oy: player.y - 220 });
       setTutText('STAY AWAY<br>FROM <span class="accent-r">RED</span>');
+      tutReady = true;
     }
   }
   function advanceTutStage() {
-    if (!tutActive) return;
-    if (tutStage === 1) {
-      // Stage 1 taptan sonra: ball duraklamış olabilir veya hala arc atıyor olabilir.
-      // İlk tap stage 2'ye geçişi tetikler.
-      enterTutStage(2);
-    } else if (tutStage === 2) {
-      enterTutStage(3);
-    } else if (tutStage === 3) {
-      enterTutStage(4);
-    } else if (tutStage === 4) {
-      endTutorial();
-    }
+    if (!tutActive || !tutReady) return;
+    tutReady = false;
+    if      (tutStage === 1) enterTutStage(2);
+    else if (tutStage === 2) enterTutStage(3);
+    else if (tutStage === 3) enterTutStage(4);
+    else if (tutStage === 4) endTutorial();
   }
   function endTutorial() {
     tutActive = false;
