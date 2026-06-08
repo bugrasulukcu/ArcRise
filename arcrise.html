@@ -6979,6 +6979,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Oyun hemen baÅŸlasÄ±n — ilk dokunuÅŸ bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
+    // Pre-Booster armed ise rastgele bir booster ile başlat
+    if (_runPreboostPending) {
+      activateBooster(_runPreboostPending);
+      _runPreboostPending = null;
+    }
   }
 
   // Per-run consumable flags
