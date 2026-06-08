@@ -5530,8 +5530,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
   function loop(ts) {
     const dtRaw = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
-    // Time Slow: aktifken simülasyonu yavaşlat (animasyon time tutarlı kalsın)
-    const slow = (activeAbility && activeAbility.key === 'timeslow') ? 0.5 : 1.0;
+    // Time Slow ability + Head Start consumable simulation yavaşlatır.
+    let slow = 1.0;
+    if (activeAbility && activeAbility.key === 'timeslow') slow *= 0.5;
+    if (runHeadstartT > 0 && scene === 'play' && running) {
+      slow *= 0.5;
+      runHeadstartT = Math.max(0, runHeadstartT - dtRaw);
+    }
     const dt = dtRaw * slow;
     // Cooldown ve aktif ability gerçek zaman ile ilerler (slow'a tabi değil)
     if (activeAbility) {
