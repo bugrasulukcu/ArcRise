@@ -1788,6 +1788,21 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #revive-modal.open { display: flex; }
+    /* Generic toast notifier — center bottom */
+    #toast {
+      position: fixed; left: 50%; bottom: 16%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(20,28,40,0.85);
+      border: 1.5px solid rgba(124,255,122,.55);
+      color: var(--green);
+      font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
+      padding: 12px 18px; border-radius: 11px;
+      box-shadow: 0 0 24px rgba(124,255,122,.20);
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s, transform .22s;
+      z-index: 90;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     /* Avatar picker popup — bağımsız modal, profil kutusunu hareket ettirmez */
     #avpick-modal {
       position: fixed; inset: 0; z-index: 62;
