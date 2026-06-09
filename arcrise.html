@@ -3670,6 +3670,35 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('ps-name-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('ps-confirm').click();
   });
+  // Profile setup upload — picks file then crops to 256×256 cover, sets customAvatarSrc
+  document.getElementById('ps-upload-btn').addEventListener('click', () => {
+    document.getElementById('ps-upload-file').click();
+  });
+  document.getElementById('ps-upload-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const tmpImg = new Image();
+      tmpImg.onload = () => {
+        const size = 256;
+        const cvs = document.createElement('canvas');
+        cvs.width = cvs.height = size;
+        const cctx = cvs.getContext('2d');
+        const scale = Math.max(size / tmpImg.width, size / tmpImg.height);
+        const w2 = tmpImg.width  * scale;
+        const h2 = tmpImg.height * scale;
+        cctx.drawImage(tmpImg, (size - w2) / 2, (size - h2) / 2, w2, h2);
+        customAvatarSrc = cvs.toDataURL('image/jpeg', 0.85);
+        try { localStorage.setItem('arc_avatar_custom', customAvatarSrc); } catch {}
+        // Profil-setup avatar grid'inde seçim temizle
+        document.querySelectorAll('#av-grid .av-img-opt').forEach(el => el.classList.remove('sel'));
+      };
+      tmpImg.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
 
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
