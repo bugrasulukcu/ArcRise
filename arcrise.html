@@ -5411,7 +5411,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if      (tutStage === 1) enterTutStage(2);
     else if (tutStage === 2) enterTutStage(3);
     else if (tutStage === 3) enterTutStage(4);
-    else if (tutStage === 4) endTutorial();
+    else if (tutStage === 4) { _tutWantsPlay = true; endTutorial(); }
   }
   function endTutorial() {
     const wasActive = tutActive;
