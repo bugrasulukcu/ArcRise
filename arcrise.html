@@ -5065,7 +5065,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     // Load ghost traces fresh each game so the next save shows up next run.
     allGhosts = loadGhostTraces();
-    nextSpawnY = player.y - 500; lastBonusY = player.y;
+    // İlk engel/bonus ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer
+    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y - H * 1.1;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
@@ -5479,7 +5480,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Tutorial sırasında biriken efektleri sıfırla
       particles.length = 0; floatTexts.length = 0;
       // Spawn pencerelerini player'ın mevcut konumuna göre sıfırla
-      nextSpawnY = player.y - 500; lastBonusY = player.y;
+      // İlk engel/bonus ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer
+    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y - H * 1.1;
       beginArc(-player.dir || 1, getRadius());
       started = true; running = true;
       try { playBgMusic(); } catch(_) {}
