@@ -5402,7 +5402,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     tutActive = true;
     resetGame();
-    isGhost = true; // tutorialda ölme yok
+    // Tutorialda ölme yok — collision tutActive ile zaten gate'leniyor
     showScene('play');
     document.getElementById('tut-overlay').classList.add('active');
     // Tutorialda HUD'u sade tut — skor/distance görünmesin
