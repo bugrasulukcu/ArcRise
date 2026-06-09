@@ -1788,6 +1788,60 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #revive-modal.open { display: flex; }
+    /* Avatar picker popup — bağımsız modal, profil kutusunu hareket ettirmez */
+    #avpick-modal {
+      position: fixed; inset: 0; z-index: 62;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.30);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #avpick-modal.open { display: flex; }
+    #avpick-modal-box {
+      position: relative;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(12,16,26,0.72) 0%, rgba(8,10,18,0.78) 100%);
+      backdrop-filter: blur(8px) saturate(1.1);
+      -webkit-backdrop-filter: blur(8px) saturate(1.1);
+      border: 1.5px solid rgba(255,255,255,.20);
+      border-radius: 22px;
+      padding: 22px 20px 18px;
+      width: min(92vw, 360px);
+      display: flex; flex-direction: column; gap: 12px; align-items: stretch;
+      box-shadow: 0 0 28px rgba(120,160,255,.18);
+    }
+    .avpick-title {
+      font-size: 16px; letter-spacing: 2.5px; color: #cfe2ff;
+      text-align: center;
+    }
+    #avpick-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 8px; width: 100%;
+    }
+    .avpick-or {
+      font-size: 10.5px; letter-spacing: 2.5px;
+      color: rgba(255,255,255,.4); text-align: center; padding-top: 4px;
+    }
+    .avpick-upload {
+      width: 100%; padding: 12px; border-radius: 11px;
+      border: 1.5px dashed rgba(255,255,255,.30);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.85);
+      font-family: var(--font); font-size: 11.5px; letter-spacing: 2px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .avpick-upload:hover  { border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.08); }
+    .avpick-upload:active { transform: scale(0.98); }
+    #avpick-close {
+      width: 100%; padding: 13px;
+      border: 1.5px solid rgba(255,255,255,.30);
+      background: rgba(255,255,255,.06); color: #fff;
+      font-family: var(--font); font-size: 12px; letter-spacing: 2px;
+      border-radius: 11px; cursor: pointer;
+    }
+    #avpick-close:hover  { border-color: rgba(255,255,255,.5); }
+    #avpick-close:active { transform: scale(0.97); }
     /* Tutorial overlay — text bubble + dashed highlight rings drawn on canvas */
     #tut-overlay {
       position: absolute; inset: 0;
