@@ -5067,8 +5067,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     allGhosts = loadGhostTraces();
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
-    // İlk engel/enerji ekranın üstünden akıp gelsin — pre-place yok.
-    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y - H * 1.1;
+    // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
+    nextSpawnY = player.y - H; lastBonusY = player.y - H;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
