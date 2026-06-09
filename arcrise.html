@@ -5414,16 +5414,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     else if (tutStage === 4) endTutorial();
   }
   function endTutorial() {
+    const wasActive = tutActive;
     tutActive = false;
     tutStage = 0;
+    tutReady = false;
     document.getElementById('tut-overlay').classList.remove('active');
     hudEl.classList.remove('tutorial');
     isGhost = false;
-    running = false; started = false;
     obstacles.length = 0; bonuses.length = 0;
     localStorage.setItem('arc_firstplay', '1');
-    showScene('home');
+    // Tutorial sonrası: skip butonu kullanılırsa home'a, doğal akışta gerçek oyuna geç
+    if (wasActive && _tutWantsPlay) {
+      _tutWantsPlay = false;
+      startGame();
+    } else {
+      running = false; started = false;
+      showScene('home');
+    }
   }
+  let _tutWantsPlay = false; // Stage 4'ten doğal geçişte gerçek oyuna geçilsin
 
   let _reviveOffered = false;     // bu run'da revive teklif edildi mi (tek seferlik)
   let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
