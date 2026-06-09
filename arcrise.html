@@ -7211,18 +7211,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     openUpgradesModal();
   });
 
-  // Render the avatar picker grid (including an "Upload Photo" tile first)
+  // Avatar picker — bağımsız popup; profil kutusunu kaydırmaz.
   function renderProfAvGrid() {
-    const grid = document.getElementById('prof-av-grid');
+    const grid = document.getElementById('avpick-grid');
     grid.innerHTML = '';
-    // Upload tile (full row)
-    const up = document.createElement('button');
-    up.type = 'button';
-    up.className = 'prof-av-upload-tile';
-    up.innerHTML = iconHTML('camera', { size: 16 }) + '&nbsp; UPLOAD PHOTO';
-    up.addEventListener('click', () => document.getElementById('prof-av-file').click());
-    grid.appendChild(up);
-    // Avatar tiles
     AVATARS.forEach((src, i) => {
       const d = document.createElement('div');
       d.className = 'av-modal-opt' + (i === avatarIdx && !customAvatarSrc ? ' sel' : '');
@@ -7244,17 +7236,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       grid.appendChild(d);
     });
   }
-
-  // Tap avatar → toggle picker grid (with upload tile + preset avatars)
-  document.getElementById('prof-av-ring').addEventListener('click', () => {
-    profAvatarGridOpen = !profAvatarGridOpen;
-    const grid = document.getElementById('prof-av-grid');
-    if (profAvatarGridOpen) {
-      renderProfAvGrid();
-      grid.classList.add('open');
-    } else {
-      grid.classList.remove('open');
-    }
+  const avpickModal = document.getElementById('avpick-modal');
+  function openAvpick() {
+    renderProfAvGrid();
+    avpickModal.classList.add('open');
+  }
+  function closeAvpick() { avpickModal.classList.remove('open'); }
+  document.getElementById('prof-av-ring').addEventListener('click', openAvpick);
+  document.getElementById('avpick-close').addEventListener('click', closeAvpick);
+  avpickModal.addEventListener('click', e => { if (e.target === avpickModal) closeAvpick(); });
+  document.getElementById('avpick-upload-btn').addEventListener('click', () => {
+    document.getElementById('prof-av-file').click();
   });
 
   // Upload handler — now CENTER-CROPS non-square photos (cover behaviour).
