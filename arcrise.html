@@ -5469,11 +5469,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     isGhost = false;
     obstacles.length = 0; bonuses.length = 0;
     localStorage.setItem('arc_firstplay', '1');
-    // Tutorial sonrası: skip butonu kullanılırsa home'a, doğal akışta gerçek oyuna geç
     if (wasActive && _tutWantsPlay) {
+      // SEAMLESS transition: tutorial overlay kalkar, ball ters yöne arc atar,
+      // gerçek gameplay devam eder (sahne değiştirmeden).
       _tutWantsPlay = false;
-      startGame();
+      score = 0; distancePx = 0; energy = 1; scoreBonus = 0;
+      // Tutorial sırasında biriken efektleri sıfırla
+      particles.length = 0; floatTexts.length = 0;
+      beginArc(-player.dir || 1, getRadius());
+      started = true; running = true;
+      try { playBgMusic(); } catch(_) {}
     } else {
+      // SKIP butonu veya manuel kapama: home'a dön
       running = false; started = false;
       showScene('home');
     }
