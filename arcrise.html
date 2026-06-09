@@ -4249,20 +4249,32 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // ── Grid ─────────────────────────────────────────────────
+  // Grid çizimi — fluid hissi için:
+  //   - Yatay çizgiler, kaydırma offset'inin kesirini de kullanır (alt-piksel)
+  //   - Üst ve alt kenarlarda alpha'ya gradient maske uygulanır (lines hard pop yapmaz)
   function drawGrid(ctx2, oy = 0, alpha = 0.13, sz = 40) {
     ctx2.save();
-    ctx2.globalAlpha  = alpha;
     ctx2.strokeStyle  = '#fff';
-    // AA on → 1px line, half-pixel offset so AA softens the edge nicely.
-    // AA off → 0.5px width, integer coords → fast & crisper-looking on low GPUs.
     ctx2.lineWidth    = aaOn ? 1 : 0.5;
     const half = aaOn ? 0.5 : 0;
+    // off: kesirli pozisyon — sub-pixel offset ile çizgi yumuşak kayar
     const off = ((oy % sz) + sz) % sz;
-    for (let y = off; y < H; y += sz) {
+    // Edge fade: ekran üstünde ve altında 80px'lik bölgede alpha taper
+    const fadeBand = 80;
+    for (let y = -sz + off; y < H + sz; y += sz) {
+      const yy = y + half;
+      // Vertical alpha taper
+      let a = alpha;
+      if (yy < fadeBand)        a *= Math.max(0, yy / fadeBand);
+      else if (yy > H - fadeBand) a *= Math.max(0, (H - yy) / fadeBand);
+      if (a <= 0.001) continue;
+      ctx2.globalAlpha = a;
       ctx2.beginPath();
-      ctx2.moveTo(0, y + half); ctx2.lineTo(W, y + half);
+      ctx2.moveTo(0, yy); ctx2.lineTo(W, yy);
       ctx2.stroke();
     }
+    // Dikey çizgiler — sabit, alpha sabit (yatay edge'lere değer)
+    ctx2.globalAlpha = alpha * 0.75;
     for (let x = 0; x < W; x += sz) {
       ctx2.beginPath();
       ctx2.moveTo(x + half, 0); ctx2.lineTo(x + half, H);
