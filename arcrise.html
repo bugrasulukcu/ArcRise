@@ -5831,7 +5831,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     // BG canvas: grid + arcs + beat flash
     bctx.clearRect(0, 0, W, H);
-    drawGrid(bctx, scene === 'play' || scene === 'over' ? camY : time * 22, .13);
+    // Grid sadece home/settings/tutorial dışı sahnelerde kullanılmıyor (kaldırıldı).
+    if (scene !== 'play' && scene !== 'over') {
+      drawGrid(bctx, time * 22, .13);
+    }
     if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
     if (scene === 'home') tickModeDeco(dt);
     tickPopupDeco(dt);
