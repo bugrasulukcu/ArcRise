@@ -5399,7 +5399,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       tutReady = true;
     } else if (s === 4) {
       running = false;
-      obstacles.push({ x: player.x + 70, y: player.y - 220, r: 26, _ox: player.x + 70, _oy: player.y - 220 });
+      // Ortada büyük bir kırmızı engel
+      obstacles.push({ x: W / 2, y: player.y - 260, r: 32, _ox: W / 2, _oy: player.y - 260 });
       setTutText('STAY AWAY<br>FROM <span class="accent-r">RED</span>');
       tutReady = true;
     }
