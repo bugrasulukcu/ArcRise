@@ -5309,7 +5309,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
-    if (!isGhost) {
+    if (!isGhost && !tutActive) {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
       const wallTol = (upg.wallSoft || 0);
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
