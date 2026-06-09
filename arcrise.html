@@ -5085,6 +5085,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     fetchLiveScores();
     fetchCrossPlayerGhosts();
     initBgArcs();
+    // Engel/enerji buffer'ını hemen doldur — bir ekran yukarıda hazır beklesin
+    spawnAhead();
   }
 
   function spawnAhead() {
