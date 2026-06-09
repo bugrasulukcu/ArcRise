@@ -6658,12 +6658,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (!meta || meta.locked) { upgGearView = 'grid'; return renderGear(); }
       const panel = document.createElement('div');
       panel.className = 'upg-detail open';
+      const desc = CORE_DESC[meta.key] || ABILITY_DESC[meta.key] || (CONSUMABLE_CFG[meta.key] && CONSUMABLE_CFG[meta.key].desc) || '';
       panel.innerHTML = `
         <div class="upg-detail-head">
-          <button class="upg-back-btn" id="upg-back-g">&#8592;</button>
+          <button class="upg-back-btn" id="upg-back-g"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 L7 12 L15 20"/></svg></button>
           <span class="upg-detail-title">${iconHTML(meta.icon, { size: 20 })} ${meta.title}</span>
           <span class="upg-detail-active">${upgStateLabel(meta.key)}</span>
         </div>
+        ${desc ? `<div class="upg-desc">${desc}</div>` : ''}
       `;
       panel.appendChild(buildDetailBody(meta.key));
       host.appendChild(panel);
