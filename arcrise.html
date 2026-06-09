@@ -4359,13 +4359,19 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // ── Bonuses ──────────────────────────────────────────────
   function drawBonuses() {
+    // Tutorial stage 3'te glow yanıp söner
+    const tutGlow3 = (tutActive && tutStage === 3) ? (0.55 + 0.45 * (0.5 + 0.5 * Math.sin(performance.now() / 200))) : 1;
     for (const b of bonuses) {
       const sy = W2S(b.y);
       if (sy < -100 || sy > H + 100) continue;
-      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 2.8);
-      g.addColorStop(0, 'rgba(124,255,122,.9)'); g.addColorStop(1, 'rgba(60,255,60,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, b.r * 2.8, 0, Math.PI*2); ctx.fill();
+      ctx.save();
+      const glowR = b.r * 2.8 * (tutGlow3 < 1 ? (1 + (tutGlow3 - 0.55) * 0.6) : 1);
+      let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, glowR);
+      g.addColorStop(0, `rgba(124,255,122,${0.9 * tutGlow3})`);
+      g.addColorStop(1, 'rgba(60,255,60,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, glowR, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#7CFF7A'; ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     }
   }
 
