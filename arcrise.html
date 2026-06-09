@@ -5067,13 +5067,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     allGhosts = loadGhostTraces();
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
-    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y;
-    // Görünür alana baştan birkaç yeşil dağıt
-    for (let i = 0; i < 3; i++) {
-      const bx = walls.left + 80 + Math.random() * (walls.right - walls.left - 160);
-      const by = player.y - 300 - i * 280;
-      bonuses.push({ x: bx, y: by, r: 13 + Math.random() * 4 });
-    }
+    // İlk engel/enerji ekranın üstünden akıp gelsin — pre-place yok.
+    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y - H * 1.1;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
