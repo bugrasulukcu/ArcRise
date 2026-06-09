@@ -7271,7 +7271,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const pImg = document.getElementById('prof-modal-av-img');
         if (pImg) pImg.src = customAvatarSrc;
         // Drop preset selection in the grid
-        document.querySelectorAll('#prof-av-grid .av-modal-opt').forEach(el => el.classList.remove('sel'));
+        document.querySelectorAll('#avpick-grid .av-modal-opt').forEach(el => el.classList.remove('sel'));
+        document.querySelectorAll('#av-grid .av-img-opt').forEach(el => el.classList.remove('sel'));
         applyProfile();
       };
       tmpImg.src = ev.target.result;
