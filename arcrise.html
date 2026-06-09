@@ -3682,6 +3682,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('ps-name-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('ps-confirm').click();
   });
+  // Generic toast (auto-hide after 1.6s)
+  let _toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+  }
   // Profile setup upload — picks file then crops to 256×256 cover, sets customAvatarSrc
   document.getElementById('ps-upload-btn').addEventListener('click', () => {
     document.getElementById('ps-upload-file').click();
