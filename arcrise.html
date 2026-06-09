@@ -5481,8 +5481,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Spawn pencerelerini player'ın mevcut konumuna göre sıfırla
       // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
-    nextSpawnY = player.y - H * 1.1; lastBonusY = player.y - H * 1.1;
+    nextSpawnY = player.y - H; lastBonusY = player.y - H;
       beginArc(-player.dir || 1, getRadius());
+      spawnAhead(); // buffer'ı hemen doldur
       started = true; running = true;
       try { playBgMusic(); } catch(_) {}
     } else {
