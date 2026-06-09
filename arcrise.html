@@ -7698,8 +7698,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   setGameMode(gameMode); // init buttons
 
-  document.getElementById('btn-start').addEventListener('click', () => startGame());
-  document.getElementById('wrap-start').addEventListener('click', () => startGame());
+  // İlk START tıklamasında oyuncu hiç oynamadıysa tutorial gösterilir;
+  // sonraki tıklamalarda normal oyuna geçer.
+  function handleStartTap() {
+    if (localStorage.getItem('arc_firstplay') !== '1') {
+      startTutorial();
+    } else {
+      startGame();
+    }
+  }
+  document.getElementById('btn-start').addEventListener('click', handleStartTap);
+  document.getElementById('wrap-start').addEventListener('click', handleStartTap);
 
   document.getElementById('btn-credits').addEventListener('click', () => {
     alert('ArcRise\nv1.0 — 2025\nDesign & Code: BuÄŸra Sulukcu');
