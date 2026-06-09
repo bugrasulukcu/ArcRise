@@ -1448,8 +1448,29 @@
       font-size: 21px; letter-spacing: 2px; color: #cfb5ff; text-align: center;
     }
     #upgrades-modal-sub {
-      font-size: 10px; letter-spacing: 1.4px;
-      color: rgba(255,255,255,.5); text-align: center; padding: 4px 0;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      align-self: center;
+      padding: 6px 14px; border-radius: 999px;
+      border: 1.5px solid rgba(255,210,80,.45);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
+        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
+      box-shadow:
+        0 0 12px rgba(255,170,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.16);
+      font-size: 13px; letter-spacing: 1.4px; font-weight: 700;
+      color: transparent;
+      background-clip: padding-box;
+    }
+    #upgrades-modal-sub .upg-bal-num {
+      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+      font-size: 15px;
+    }
+    #upgrades-modal-sub .upg-bal-lbl {
+      color: rgba(255,230,170,.85);
+      font-size: 11px; letter-spacing: 2px;
     }
     /* Tab strip */
     #upg-tabs {
