@@ -6634,6 +6634,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         <span class="upg-detail-title">${iconHTML(tileMeta.icon, { size: 20 })} ${tileMeta.title}</span>
         <span class="upg-detail-active">${upgStateLabel(tileMeta.key)}</span>
       </div>
+      ${CORE_DESC[tileMeta.key] ? `<div class="upg-desc">${CORE_DESC[tileMeta.key]}</div>` : ''}
     `;
     panel.appendChild(buildDetailBody(tileMeta.key));
     host.appendChild(panel);
