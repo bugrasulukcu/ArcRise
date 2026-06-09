@@ -5843,9 +5843,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     // BG canvas: grid + arcs + beat flash
     bctx.clearRect(0, 0, W, H);
-    // Grid sadece home/settings/tutorial dışı sahnelerde kullanılmıyor (kaldırıldı).
-    if (scene !== 'play' && scene !== 'over') {
-      drawGrid(bctx, time * 22, .13);
+    // Grid: play/over'da parallax (kamera hızının %45'i + üst/alt edge fade);
+    // diğer sahnelerde yavaş zaman tabanlı kayma.
+    if (scene === 'play' || scene === 'over') {
+      drawGrid(bctx, camY * 0.45, 0.11);
+    } else {
+      drawGrid(bctx, time * 22, 0.13);
     }
     if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
     if (scene === 'home') tickModeDeco(dt);
