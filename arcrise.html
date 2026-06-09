@@ -6554,6 +6554,19 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return '';
   }
 
+  // CORE upgrade açıklamaları — detay sayfasında üst kısımda gösterilir
+  const CORE_DESC = {
+    profit:       'Increase coins earned per metre. Stacks with every Profit level.',
+    radius:       'Adjust your arc radius. Bigger arcs cover more ground; tighter arcs squeeze through gaps.',
+    speed:        'Change your travel speed. Faster = harder, but more distance per second.',
+    timer:        'Extend the combo grace window. Longer timer = bigger combo multipliers.',
+    wallSoft:     'Forgiveness near walls. Each level adds 1px collision tolerance.',
+    magnetRange: 'Boosts the pull radius of the Magnet booster. Pull greens, gold and purples from farther away.',
+    traceColor:   'Pick a custom colour for your trail. Each change costs coins.',
+    traceThickness: 'Thicken your trail. Each level adds +10% width.',
+    deathName:    'When you die at a new PB distance, your name appears on the map for other players.',
+    deathAvatar:  'Same as Death Name but with your avatar shown at the death spot.',
+  };
   // CORE — kalıcı sayısal buff'lar
   const PASSIVE_TILES = [
     { key: 'profit',      title: 'Profit',        icon: 'coinUp' },
