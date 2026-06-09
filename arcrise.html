@@ -2455,12 +2455,19 @@
 <div class="screen" id="profile-setup">
   <div class="panel">
     <h2>CREATE PROFILE</h2>
-    <div class="ps-sub">Your name cannot be changed later.</div>
-    <div id="av-grid"></div>
     <div id="ps-name-row">
       <input type="text" id="ps-name-input" maxlength="8" placeholder="YOUR NAME"
              spellcheck="false" autocomplete="off">
     </div>
+    <div class="ps-sub">Your name cannot be changed later.</div>
+    <div class="ps-section-lbl">SELECT AN AVATAR</div>
+    <div id="av-grid"></div>
+    <div class="ps-section-lbl ps-or">OR UPLOAD AN IMAGE</div>
+    <button id="ps-upload-btn" class="ps-upload">
+      <span class="ic-camera"></span>
+      <span>UPLOAD PHOTO</span>
+    </button>
+    <input type="file" id="ps-upload-file" accept="image/*" style="display:none">
     <button id="ps-confirm">CONFIRM</button>
   </div>
 </div>
