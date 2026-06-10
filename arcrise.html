@@ -2193,19 +2193,11 @@
       position: relative;
       padding: 0 18px;  /* sadece yatay — dikey boşluk .menu gap'i ile eşit kalsın */
     }
-    /* High Scores — geniş buton (etiket solda, sıralama sağda) */
-    #btn-lb {
-      display: flex !important; align-items: center; justify-content: space-between;
-      width: 100%; padding: 13px 18px; font-size: 14.5px; letter-spacing: 1.4px;
+    /* High Scores — alt satırda kare kupa ikon butonu */
+    .share-settings-row #btn-lb {
+      flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
     }
-    #btn-lb .lb-wide-label {
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    #btn-lb .lb-wide-label svg { width: 22px; height: 22px; color: #ffd866; }
-    #btn-lb .lb-wide-rank {
-      font-size: 13px; letter-spacing: 1px; color: #ffd866;
-      font-variant-numeric: tabular-nums;
-    }
+    .share-settings-row #btn-lb svg { color: #ffd866; }
 
     /* Challenge + Settings yan yana */
     .share-settings-row {
