@@ -21,7 +21,8 @@ service cloud.firestore {
         && d.distance is number && d.distance >= 0 && d.distance <= 100000
         && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 200000))
         && (!('traceColor' in d) || d.traceColor is string)
-        && (!('traceThickness' in d) || d.traceThickness is int);
+        && (!('traceThickness' in d) || d.traceThickness is int)
+        && (!('badges' in d) || (d.badges is string && d.badges.size() <= 64));
     }
 
     match /scores/{doc} {
