@@ -5658,16 +5658,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
-    if (!isGhost && !tutActive) {
+    if (!isGhost && !tutActive && dyingT < 0) {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
       const wallTol = (upg.wallSoft || 0);
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
-        if (hasShield) { clearBooster(); } else { endGame(); return; }
+        if (hasShield) { clearBooster(); } else { beginDeath(); return; }
       }
       for (const ob of obstacles) {
         const dx = player.x - ob._ox, dy = player.y - ob._oy;
-        if (dx*dx + dy*dy < (player.r + ob.r)**2) {
-          if (hasShield) { clearBooster(); break; } else { endGame(); return; }
+        const rr = player.r + ob.r;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < rr*rr) {
+          if (hasShield) { clearBooster(); break; } else { beginDeath(); return; }
+        }
+        // Near-miss: engelin dibinden sıyırınca bonus — engel başına bir kez.
+        // Önce "yakın geçiş" bölgesine gir (≤22px), sonra uzaklaş (≥46px) → tetikle.
+        if (!ob._nm) {
+          if (d2 < (rr + 22) * (rr + 22)) ob._nmClose = true;
+          else if (ob._nmClose && d2 > (rr + 46) * (rr + 46)) {
+            ob._nm = true;
+            const pts = Math.round(25 * getBoostScoreMul());
+            scoreBonus += pts;
+            energy = Math.min(1, energy + 0.10);
+            spawnFloatText(player.x, player.y - 20, 'CLOSE! +' + pts, 200, 1.1);
+            haptic(15);
+          }
         }
       }
       // Bu frame'de kazasız: son güvenli pozisyonu güncelle (revive için)
