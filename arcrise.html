@@ -2187,9 +2187,32 @@
       position: relative;
       padding: 0 18px;  /* sadece yatay — dikey boşluk .menu gap'i ile eşit kalsın */
     }
+    /* High Scores — geniş buton (etiket solda, sıralama sağda) */
+    #btn-lb {
+      display: flex !important; align-items: center; justify-content: space-between;
+      width: 100%; padding: 13px 18px; font-size: 14.5px; letter-spacing: 1.4px;
+    }
+    #btn-lb .lb-wide-label {
+      display: inline-flex; align-items: center; gap: 9px;
+    }
+    #btn-lb .lb-wide-label svg { width: 22px; height: 22px; color: #ffd866; }
+    #btn-lb .lb-wide-rank {
+      font-size: 13px; letter-spacing: 1px; color: #ffd866;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Challenge + Settings yan yana */
+    .share-settings-row {
+      display: flex; flex-direction: row; gap: 8px;
+      width: 100%; align-self: stretch; align-items: stretch;
+    }
+    .share-settings-row #btn-settings {
+      flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
+    }
+
     /* Share & challenge a friend (home alt buton) */
     #btn-share-home {
-      width: calc(70% - 36px); align-self: center; /* Chill/Extreme seçici genişliğiyle aynı */
+      flex: 1 1 0; min-width: 0;
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       padding: 11px 14px; border-radius: 13px;
       border: 1.5px solid rgba(90,216,255,.40);
