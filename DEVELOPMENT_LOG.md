@@ -489,4 +489,120 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-05-15 (v15). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-06-10 (v16). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+
+---
+
+## 🆕 v16 (2026-06-10) — Distance system, GEAR economy, Tutorial, SVG icons
+
+### Mesafe ve coin sistemi
+- **Mesafe birimi**: `0.00m` formatında metre cinsinden. Internal storage cm; `fmtDist(cm)` = `(cm/100).toFixed(2) + 'm'`.
+- **Sabit ekran-cm referansı**: `CM_PER_SCREEN = 15` (auto-calibrate kaldırıldı). 1 ekran yüksekliği = 15 cm.
+- **Triangular coin earning**: N'inci coin için N metre EK mesafe. 1. coin 1m'de, 2. coin 3m'de, 3. coin 6m'de, N'inci coin N(N+1)/2 m'de. `coinsEarnedFrom(cm)` ve `distCmForCoin(n)` helpers.
+- **`coinsSpent` ledger**: Coin harcaması `distTotal`'ı geri sarmıyor — ayrı sayaçtan düşülür. `coins = max(0, coinsEarnedFrom(distTotal) - coinsSpent)`.
+- **Game-over coin bar animasyonu**: Bar run sırasındaki distance'ı RAF ile animate eder; her threshold geçildiğinde `+N` sayaç pulse atar (scale 1.55→1, color flash), haptic feedback. Coin sembolü olarak "C" (cent yerine) — SVG ve tüm UI'da tutarlı.
+
+### Extreme unlock yeniden tasarım
+- **İki yol** popup'ta net gösterilir:
+  - DIRECT: 50 coin, koşulsuz
+  - DISCOUNT: 5.00m + 5000 puan ulaşılırsa 5 coin'e iner
+- Confirm butonu en ucuz yolu otomatik seçer. Unlock kalıcı.
+
+### Skor padding 5 → 6 hane
+- `pad(n)` artık `padStart(6, '0')` — `000000` formatı. Tüm statik placeholder'lar da güncellendi.
+
+### Booster overhaul
+- **X-MAGNET kaldırıldı** (snap-to-center hareketi karmaşıktı).
+- **MAGNET** yeni davranış: yeşil (bonuses), sarı (goldBalls), mor (purpleBalls) topları `H * 0.7 * (1 + magnetRange * 0.10)` yarıçapında çeker.
+- **MYSTERY (?)** eklendi: yakalanınca rastgele 8 booster'dan birine dönüşür, HUD direkt çıkanı gösterir.
+- **Mor toplar üzerinde mini ikon**: ↔ wide, ↕ narrow, M magnet, ×2/×3/×4 score, G ghost, » speed, ? mystery. Press Start 2P font ile beyaz tek renk.
+
+### CORE upgrade ekonomisi (kalıcı sayısal buff'lar)
+- **Profit** 0→10 (each +%10 coin gain) — endGame'de `distTotal += runDistCm * profitMul`.
+- **Wall Forgive** 0→5 (each +1px collision tolerance) — `walls.left + wallSoft` ile gate.
+- **Magnet Range** 0→8 (each +%10 magnet pull radius).
+- **Boost Duration kaldırıldı** — bunun yerine her ability kendi süre/cooldown ladder'ını alır (GEAR'da).
+- CORE tile'ları artık dikey kart layout (büyük ikon üstte, başlık-state altta), `grid-auto-rows: 1fr` ile alanı doldurur.
+
+### GEAR sistemi (run loadout)
+- **3 alt grup tek tab'da**: LOADOUT (kozmetik) · CONSUMABLES · ABILITIES.
+- **Envanter modeli** (`upg.inv`):
+  - Consumable: `{ count, armed }` — sat al, ARM toggle ile bir sonraki run'a aktif et, run-start'ta otomatik tüketilir.
+  - Ability: `{ owned, durLvl, cdLvl }` — Unlock + iki ladder (duration ↑ / cooldown ↓) + slot equip.
+- **CONSUMABLES** (hepsi 80/60/50/40/30 coin):
+  - **Revive** (80/max 5, auto-armed): ölünce son safe spot'tan devam — revive modal popup
+  - **Coin Doubler** (50): run coin gain ×2
+  - **Head Start** (40): ilk 5s yarı hız (loop'ta `slow *= 0.5`)
+  - **Insurance** (60): ölünce coin gain refund
+  - **Coin Rain** (40): gold ball spawn rate ×2
+  - **Pre-Booster** (30): random booster ile başla
+  - **Boost Filter** (80): sadece ghost+speed booster
+- **ABILITIES** (Unlock 60-120 coin):
+  - **Time Slow**: dt × 0.5 (1.5+0.3s/lvl, CD 15-2s/lvl)
+  - **Phase Burst**: ghost mode (0.8+0.2s/lvl, CD 10-1s/lvl)
+  - **Coin Pull**: instant snap of bonuses/golds/purples to player (no dur, CD 20-2s/lvl)
+  - **Brake**: speed × 0.5 (1.0+0.25s/lvl, CD 12-1s/lvl)
+  - **Mirror Flip**: `player.x = W - player.x` + dir flip (no dur, CD 30-3s/lvl)
+  - **Shockwave**: 200px etrafındaki obstacle'ları yok et (no dur, CD 25-2s/lvl)
+  - **Anchor**: 1. tap drop anchor, 2. tap teleport back (no dur, CD 30-3s/lvl)
+- **Slot HUD**: Sol-altta Gameboy diagonal layout (slot-1 alt-sağ, slot-2 üst-sol), 76×76 yuvarlak, boş = %20 opacity. Tap ile ability tetiklenir, radial SVG cooldown ring (stroke-dasharray animation) gösterilir.
+- **Detay sayfa açıklamaları**: `CORE_DESC`, `ABILITY_DESC`, `CONSUMABLE_CFG.desc` üçü fallback ile detail panel'in tepesinde 1 satır description.
+
+### Tutorial sistemi
+- 4 sahnelik onboarding, ana sayfada wife mode'un simetrisinde cyan **"?"** butonu (`mode-btn-tutorial`).
+- **İlk START tıklamasında** otomatik açılır (`localStorage.arc_firstplay !== '1'`).
+- Stages:
+  1. Ball tek yay çizip durur → "TAP SCREEN TO ROTATE" (350ms timeout, duvardan önce freeze)
+  2. Ball ters yöne yay → "EVERY TAP FLIPS THE ARC"
+  3. Sahnenin üstünde merkezi yeşil + glow yanıp söner → "COLLECT GREEN FOR ENERGY"
+  4. Sahnenin üstünde merkezi kırmızı + duvar stroke pulse → "STAY AWAY FROM RED"
+- **Seamless transition**: Stage 4'te son tap → tutorial overlay kalkar, isGhost kapanır, beginArc(-player.dir), gerçek gameplay devam (sahne değiştirmeden).
+- **Güvenlik**: `tutActive` flag collision'ı atlatır (önceki "isGhost=true → mor top" sorunu çözüldü; collision şimdi `!isGhost && !tutActive` ile gate'leniyor, top normal renkte). `tutReady` flag tap'ın metni gösterilmeden önce skip'lemesini önler. spawnAhead tutorialde no-op.
+- SKIP butonu home'a döner, doğal akış gerçek oyuna geçer.
+
+### Spawn sistemi düzeltmesi
+- `nextSpawnY = lastBonusY = player.y - H` (1 ekran yukarı). Engel/bonuslar baştan kuyrukta beklerl, oyuncu yukarı çıktıkça akarak görünür alana girer.
+- `resetGame()` sonunda + tutorial seamless geçişte `spawnAhead()` manuel çağrılır — buffer baştan dolu.
+- Eski 0.2m spawn-gate kaldırıldı.
+
+### SVG ikon sistemi (FOUT + emoji corruption fix)
+- `ICONS` registry: 40+ inline SVG (24×24 viewBox, currentColor). `iconHTML(name, { size, color, cls })` helper. Coin için radial gradient ile gold look.
+- **Tüm emojiler SVG'ye çevrildi** — booster ikonları, upgrade tile ikonları, badge ikonları, particle glyph'leri, modal slot içerikleri.
+- **Encoding fix**: Python script ile dosya boyunca çift-encoded UTF-8 byte sequence'leri proper UTF-8'e döndü (2400+ replacement: `Â·` → `·`, `Ã—` → `×`, `â•` → `═`, vs).
+- **Sarpanch FOUT engelleme**: Google Fonts `display=swap` → `display=block` + `html.fonts-loading body { visibility: hidden }` CSS + `document.fonts.ready.then(reveal)` + 1500ms yedek timeout.
+
+### High Scores yeniden tasarım
+- Distance değerleri `fmtMetric` üzerinden `fmtDist()` → "X.XXm" format
+- **Tam 4 satır kural**: 1./top + üst + me + alt (oyuncu top 2'de ise ilk 4)
+- **Sabit kutu yüksekliği**: `#lb-list { min-height: 188px }` — tab geçişinde zıplamaz
+- **Backdrop blur tüm modal'larda** (lb, prof, badges, upgrades, wife, extreme, settings panel): box opacity 0.96 → 0.72-0.78 + her box'a `backdrop-filter: blur(8px) saturate(1.1)`. Wife-modal overlay 18px → 20px.
+
+### Wife Mode kalıcı izolasyon
+- Skor/mesafe/coin kaydı yok: `if (gameMode !== 'wife')` guard'ı `bestDistanceM`, `stats.*`, `submitScore`, `distTotal`'a uygulandı.
+- `submitScore` içinde de defense-in-depth: `if (mode === 'wife') return`.
+- `wipeMyScores(name)` admin helper eklendi (DevTools'tan çağrılır, kullanıcının kendi adına Firestore kayıtlarını siler).
+- Bir kerelik stats reset (`arc_dist_reset_v2` flag): eski migration/RR cheat ile bozulan distance bests sıfırlandı.
+
+### Ghost trace smooth rendering
+- `strokeTrace`'te midpoint-quadratic smoothing — 150 noktaya downsample edilmiş trace'ler polygonal değil yumuşak eğri olarak çizilir.
+- **Gap guard**: iki ardışık nokta ekranda 180px+ aralıkta ise path kesilir (büyük süpürme yayları önlenir).
+
+### Profile UI yenileme
+- **Profile-setup (ilk profil oluştur)**: Name input → "Your name cannot be changed later." (input altında) → "SELECT AN AVATAR" → grid → "OR UPLOAD AN IMAGE" → kamera ikonlu upload butonu → CONFIRM.
+- **Avatar picker bağımsız modal** (`#avpick-modal`): Profil ringe basınca popup açılır (eski `prof-av-grid` kutunun içinde açılıp kutuyu kaydırma sorunu çözüldü). Backdrop click ya da DONE ile kapanır.
+- **Toast helper** (`showToast(msg)`): Resim upload sonrası "PHOTO UPLOADED" — yeşil bordered pill, 1.6s gösterir. Her iki upload akışında entegre.
+
+### Görsel iyileştirmeler
+- **Grid yeniden**: parallax (camY × 0.45) + top/bottom 80px edge fade → akışkan kayma hissi. play/over'da kamera bağlı, diğer sahnelerde zaman bağlı yavaş kayma.
+- **Coins pill (Upgrades header)**: altın gradient border + coin SVG + altın text "Coins" (büyük C).
+- **Slot HUD**: 60→76px, sol-alt köşeden duvardan daha uzak (left:36px, bottom:44px).
+- **Hold-to-back**: 500ms → 200ms.
+- **Ölüm sesi**: 0.8 → 1.0 volume.
+
+### Bug fixes
+- Y → 6 haneli skorda HTML placeholder'lar `00000` → `000000`.
+- Distance ana sayfa profile card: `fmtDist` uygulanıp "2.13m" formatına geldi (önceden "213" gösteriyordu).
+- Tutorial Stage 1 timeout 900ms → 350ms (top duvara çarpmadan önce dondurma).
+- Tutorial top mor görünüyordu → isGhost=true kaldırıldı, collision tutActive ile gate'leniyor.
+- Back arrow (upg-back) inline SVG path — encoding-independent (önce Unicode ←/U+8592 emoji olarak render oluyordu desktop'ta).
+
