@@ -74,6 +74,8 @@
     .stack { transition: filter .3s ease; }
     body.over-blur .stack { filter: blur(9px) brightness(.65); }
     body { font-family: var(--font); color: #fff; touch-action: manipulation; -ms-touch-action: manipulation; text-transform: uppercase; }
+    /* <button>/form-control'ler text-transform'u miras almaz — zorla ata ki büyük harf kuralı her yerde geçsin */
+    button, input, select, textarea { text-transform: inherit; }
 
     /* ── Canvas layer ── */
     #wrap {
