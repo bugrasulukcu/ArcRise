@@ -2762,16 +2762,27 @@
     </table>
     <div style="width:100%;display:flex;flex-direction:column;gap:12px">
       <button class="btn-gray" id="btn-continue-ad" style="display:none;font-size:11.5px;white-space:nowrap;border-color:rgba(124,255,122,.4);color:var(--green)">
-        &#9654; WATCH AD &middot; CONTINUE RUN
+        <span style="display:inline-flex;align-items:center;gap:7px;justify-content:center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3.5v17a1 1 0 0 0 1.54.84l13-8.5a1 1 0 0 0 0-1.68l-13-8.5A1 1 0 0 0 5 3.5z"/></svg>
+          WATCH AD &middot; CONTINUE RUN
+        </span>
       </button>
       <div class="rb-wrap" id="wrap-again">
         <div class="rb-inner" id="btn-again">AGAIN!</div>
       </div>
       <div style="display:flex;gap:10px">
-        <button class="btn-gray" id="btn-share" style="flex:1;font-size:11.5px;white-space:nowrap;border-color:rgba(90,216,255,.4);color:#5ad8ff">SHARE</button>
+        <button class="btn-gray" id="btn-share" style="flex:1;font-size:11.5px;white-space:nowrap;border-color:rgba(90,216,255,.4);color:#5ad8ff">
+          <span style="display:inline-flex;align-items:center;gap:6px;justify-content:center">
+            SHARE
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
+          </span>
+        </button>
         <button class="btn-gray" id="btn-menu" style="flex:2;font-size: 11.5px;white-space:nowrap">
           <div class="hold-fill"></div>
-          <span class="hold-label">Back to Menu</span>
+          <span class="hold-label" style="display:inline-flex;align-items:center;gap:7px;justify-content:center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H6"/><path d="M11 6l-6 6 6 6"/></svg>
+            Back to Menu
+          </span>
         </button>
       </div>
     </div>
