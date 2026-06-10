@@ -6623,7 +6623,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       return `<div class="${cls}">
         <span class="lb-row-rank">${rankStr}</span>
-        <span><span class="lb-row-dot" style="background:${col}"></span>${r.name}</span>
+        <span><span class="lb-row-dot" style="background:${col}"></span>${r.name}${badgeIconsHTML(isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
         <span>${fmtMetric(r.score)}</span>
       </div>`;
     }).join('');
