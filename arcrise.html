@@ -6434,6 +6434,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     settingsEl.classList.toggle('active',     s === 'settings');
     gameoverEl.classList.toggle('active',     s === 'over');
     hudEl.classList.toggle('active',          s === 'play');
+    document.body.classList.toggle('over-blur', s === 'over');
     if (s === 'home') { applyProfile(); }
   }
 
