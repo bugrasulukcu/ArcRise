@@ -5319,7 +5319,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // ── Player ───────────────────────────────────────────────
   function drawPlayer() {
-    if (dyingT >= 0) return; // ölüm patlaması sırasında top görünmez (patlamış gibi)
+    if (dyingT >= 0 || scene === 'over') return; // patlama anında ve skor ekranında top görünmez (patlamış)
     ctx.save();
     const px = player.x, py = W2S(player.y), r = player.r;
 
