@@ -168,7 +168,7 @@
     .lb-row   { font-size: 7px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
     .lb-row.you { font-size: 8px; }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE (Settings içinde) ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ PROFILE (Settings içinde) ══════════ */
     .profile-sect {
       border-bottom: 1px solid rgba(255,255,255,.08);
       padding-bottom: 18px;
@@ -199,7 +199,7 @@
     }
     #name-save:active { transform: scale(0.95); }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ HOME ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ HOME ══════════ */
     #home { gap: 0; }
     #title {
       font-size: clamp(34px, 9vw, 52px);
@@ -286,7 +286,7 @@
     }
     .btn-gray:active { transform: scale(0.97); }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ LEADERBOARD POPUP ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ LEADERBOARD POPUP ══════════ */
     #lb-modal {
       position: fixed; inset: 0; z-index: 55;
       display: none; align-items: center; justify-content: center;
@@ -547,7 +547,7 @@
     .btn-icon svg { width: 26px; height: 26px; color: #fff; }
     #btn-lb { /* legacy reset — sizing handled by .menu-row */ }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ HOLD-TO-CONFIRM BACK TO MENU ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ HOLD-TO-CONFIRM BACK TO MENU ══════════ */
     #btn-menu {
       position: relative; overflow: hidden;
       width: 70%; align-self: center;
@@ -586,7 +586,7 @@
       font-size: 8.5px; color: rgba(255,255,255,.3); letter-spacing: 1px;
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ SETTINGS ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ SETTINGS ══════════ */
     /* Settings is a full-screen scene; give it the same translucent
        overlay used by popups so the home is visible-but-blurred behind. */
     #settings.active {
@@ -710,7 +710,7 @@
         inset 0 -4px 8px rgba(120,0,15,.35);
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ GAME OVER ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ GAME OVER ══════════ */
     #gameover .panel {
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.1);
@@ -742,7 +742,7 @@
     }
     .home-link:hover { color: rgba(255,255,255,.6); }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE SETUP (ilk açılış) ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ PROFILE SETUP (ilk açılış) ══════════ */
     #profile-setup .panel {
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.1);
@@ -801,7 +801,7 @@
 
     /* Difficulty selector kaldırıldı — tek seviye: EXTREME */
 
-    /* ╁╁╁╁╁╁╁╁╁╁ SETTINGS profile (read-only) ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ SETTINGS profile (read-only) ══════════ */
     #settings-profile-ro {
       display: flex; align-items: center; gap: 14px;
       padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.08);
@@ -824,7 +824,7 @@
     }
     #settings-name-lbl { font-size: 13px; letter-spacing: 2px; }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ AVATAR MODAL ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ AVATAR MODAL ══════════ */
     #av-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
@@ -895,7 +895,7 @@
       letter-spacing: 1px; text-align: center;
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ HOME PROFILE CARD ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ HOME PROFILE CARD ══════════ */
     /* White glass — sits in front of the logo (z-index 2) with backdrop blur */
     #home-profile {
       position: relative; z-index: 2;
@@ -1239,7 +1239,7 @@
     #coins-modal-close:hover { border-color: rgba(255,210,80,.7); }
     #coins-modal-close:active { transform: scale(0.97); }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE EDIT MODAL ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ PROFILE EDIT MODAL ══════════ */
     #prof-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
@@ -1802,8 +1802,8 @@
 
     #reset-confirm { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ EXTREME MODE POPUP ╁╁╁╁╁╁╁╁╁╁ */
-    /* ╁╁╁╁╁╁╁╁╁╁ WIFE MODE CONFIRM ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ EXTREME MODE POPUP ══════════ */
+    /* ══════════ WIFE MODE CONFIRM ══════════ */
     #wife-modal {
       position: fixed; inset: 0; z-index: 60;
       display: none; align-items: center; justify-content: center;
@@ -2174,7 +2174,7 @@
     /* All real content sits above the deco layer */
     #extreme-modal-box > *:not(#extreme-modal-deco) { position: relative; z-index: 1; }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ GAME MODE SELECTOR ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ GAME MODE SELECTOR ══════════ */
     /* Wrapper allows particles to escape rounded mode-sel container */
     #mode-fx-wrap {
       width: 70%; align-self: center;
@@ -2311,7 +2311,7 @@
              filter: brightness(1.22) hue-rotate(-8deg) saturate(1.15); }
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ HOME EXTREME FLAME FRAME ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ HOME EXTREME FLAME FRAME ══════════ */
     /* Soft edge-glow that fades in when extreme mode is selected.
        No rapid flicker — just a slow breathe so it reads as ambient warmth. */
     #home-flame-frame {
@@ -2372,7 +2372,7 @@
       100% { transform: translate(var(--dx,5px), -50px) scale(0.4); opacity: 0; }
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ COMBO HUD ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ COMBO HUD ══════════ */
     /* Combo + booster HUDs sit just under the top score row so they aren't
        hidden under the player's thumb during play. */
     #combo-hud {
@@ -2388,10 +2388,10 @@
       box-shadow: 0 0 12px rgba(124,255,122,.18);
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ FLOAT TEXTS (combo points) ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ FLOAT TEXTS (combo points) ══════════ */
     /* drawn on canvas — no CSS needed */
 
-    /* ╁╁╁╁╁╁╁╁╁╁ GAME OVER EXTRAS ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ GAME OVER EXTRAS ══════════ */
     #go-score-row { text-align: center; }
     /* Game-over twin row: SCORE + DISTANCE side by side, small BEST below each */
     #go-twin-row {
@@ -2430,10 +2430,10 @@
       width: 0%;
     }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ DIFFICULTY COLORS ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ DIFFICULTY COLORS ══════════ */
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
 
-    /* ╁╁╁╁╁╁╁╁╁╁ BOOSTER HUD ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ BOOSTER HUD ══════════ */
     /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
     #booster-hud {
       position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
@@ -2460,7 +2460,7 @@
       height: 100%; background: #cc88ff; border-radius: 3px;
       transition: width .1s linear;
     }
-    /* ╁╁╁╁╁╁╁╁╁╁ EQUIPPABLE BOOSTER SLOTS ╁╁╁╁╁╁╁╁╁╁ */
+    /* ══════════ EQUIPPABLE BOOSTER SLOTS ══════════ */
     /* Two slots anchored to the bottom-center of the play canvas.
        Tap to activate when filled (manual boosters); auto-trigger
        boosters consume themselves on the relevant event. */
@@ -2570,7 +2570,7 @@
   </div>
 </div>
 
-<!-- ╁╁ PROFILE SETUP ╁╁ -->
+<!-- ══ PROFILE SETUP ══ -->
 <div class="screen" id="profile-setup">
   <div class="panel">
     <h2>CREATE PROFILE</h2>
@@ -2591,7 +2591,7 @@
   </div>
 </div>
 
-<!-- ╁╁ HOME ╁╁ -->
+<!-- ══ HOME ══ -->
 <div class="screen" id="home">
   <div id="home-flame-frame"></div>
   <div id="home-flower-frame"></div>
@@ -2664,7 +2664,7 @@
   </div>
 </div>
 
-<!-- ╁╁ SETTINGS ╁╁ -->
+<!-- ══ SETTINGS ══ -->
 <div class="screen" id="settings">
   <div class="panel">
     <h2>Settings</h2>
@@ -2729,7 +2729,7 @@
   </div>
 </div>
 
-<!-- ╁╁ GAME OVER ╁╁ -->
+<!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
   <div class="panel">
     <!-- Animated score + distance, with small best lines under each -->
@@ -2772,7 +2772,7 @@
   </div>
 </div>
 
-<!-- ╁╁ EXTREME MODE POPUP ╁╁ -->
+<!-- ══ EXTREME MODE POPUP ══ -->
 <div id="extreme-modal">
   <div id="extreme-modal-box">
     <div id="extreme-modal-deco"></div>
@@ -2814,7 +2814,7 @@
   </div>
 </div>
 
-<!-- ╁╁ WIFE MODE CONFIRM ╁╁ -->
+<!-- ══ WIFE MODE CONFIRM ══ -->
 <!-- Revive Ticket prompt — shown when player dies and a revive ticket is available -->
 <div id="revive-modal">
   <div id="revive-modal-box">
@@ -2848,7 +2848,7 @@
   </div>
 </div>
 
-<!-- ╁╁ UPGRADES MODAL (placeholder until catalog finalised) ╁╁ -->
+<!-- ══ UPGRADES MODAL (placeholder until catalog finalised) ══ -->
 <div id="upgrades-modal">
   <div id="upgrades-modal-box">
     <div id="upgrades-modal-title">UPGRADES</div>
@@ -2869,7 +2869,7 @@
   </div>
 </div>
 
-<!-- ╁╁ COINS MODAL ╁╁ -->
+<!-- ══ COINS MODAL ══ -->
 <div id="coins-modal">
   <div id="coins-modal-box">
     <!-- Current balance: coin icon + number -->
@@ -2912,7 +2912,7 @@
   </div>
 </div>
 
-<!-- ╁╁ HIGH SCORES MODAL ╁╁ -->
+<!-- ══ HIGH SCORES MODAL ══ -->
 <div id="lb-modal">
   <div id="lb-modal-box">
     <div id="lb-modal-title">High Scores</div>
@@ -2949,7 +2949,7 @@
   </div>
 </div>
 
-<!-- ╁╁ PROFILE EDIT MODAL ╁╁ -->
+<!-- ══ PROFILE EDIT MODAL ══ -->
 <!-- Avatar picker — standalone popup, açıldığında profil kutusunu kaydırmaz -->
 <div id="avpick-modal">
   <div id="avpick-modal-box">
@@ -3015,7 +3015,7 @@
   </div>
 </div>
 
-<!-- ╁╁ BADGES MODAL (opened from equip slots) ╁╁ -->
+<!-- ══ BADGES MODAL (opened from equip slots) ══ -->
 <div id="badges-modal">
   <div id="badges-modal-box">
     <div id="badges-modal-title">Badges</div>
@@ -3025,7 +3025,7 @@
   </div>
 </div>
 
-<!-- ╁╁ AVATAR MODAL ╁╁ -->
+<!-- ══ AVATAR MODAL ══ -->
 <div id="av-modal">
   <div id="av-modal-box">
     <div id="av-modal-title">CHOOSE AVATAR</div>
@@ -3037,13 +3037,13 @@
 <!-- Tutorial system removed — players discover mechanics through play -->
 
 <!--
-  ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
+  ══════════════════════════════════════════════════════════
   Firebase kurulumu:
   1. console.firebase.google.com → yeni proje → "arcrise"
   2. Build → Firestore → "Start in test mode" → europe-west1
   3. Project Settings → Web app → firebaseConfig'i kopyala
   4. Aşağıdaki FIREBASE_CONFIG alanını doldur
-  ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
+  ══════════════════════════════════════════════════════════
 -->
 <script>
 // ── Firebase Firestore (REST API — SDK gerekmez) ────────────
@@ -3062,7 +3062,7 @@ const ARC_DB = (() => {
 
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
-  async function submitScore(name, avatar, score, mode, distance, traceData) {
+  async function submitScore(name, avatar, score, mode, distance, traceData, badges) {
     if (!projectId || projectId.startsWith('BURAYA')) {
       console.warn('[ArcDB] no projectId configured — score not saved');
       return;
@@ -6655,7 +6655,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   renderSlots();
 
-  // ╁╁ Upgrades — Passive catalog ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
+  // ══ Upgrades — Passive catalog ══════════════════════════════════════════
   const upgradesModal = document.getElementById('upgrades-modal');
 
   // Pricing — every directional purchase chain uses [5,10,20,40].
