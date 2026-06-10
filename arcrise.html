@@ -3424,7 +3424,11 @@ const ARC_DB = (() => {
     return n;
   }
 
-  return { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, wipeAllScores, dedupeScores, wipeMyScores };
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache };
+  // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
+  // Gerçek koruma Firestore security rules'ta — bu sadece kazara kullanım bariyeri.
+  if (window.ARC_DEBUG) Object.assign(api, { wipeAllScores, dedupeScores, wipeMyScores });
+  return api;
 })();
 
 // ── One-shot data reset gate ──────────────────────────────
