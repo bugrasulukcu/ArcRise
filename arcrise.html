@@ -4345,7 +4345,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // new Audio() her protokolde (file://, http://) çalışır — fetch'in aksine.
   const bgAudio    = new Audio('AUDIO/ArcRiseBGMusic.mp3');
   bgAudio.loop     = true;
-  bgAudio.volume   = 0.7;
+  bgAudio.volume   = 0.7; // _bgBaseVol ile senkron tutulur
 
   // HTMLAudioElement fallbacks (used only if AudioBuffer decode fails)
   const touchAudioFallback = new Audio('AUDIO/ArcRiseTouch.wav');
