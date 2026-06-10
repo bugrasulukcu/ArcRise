@@ -3163,6 +3163,7 @@ const ARC_DB = (() => {
         if (tracePts)       fields.tracePts       = { stringValue: tracePts };
         if (traceColor)     fields.traceColor     = { stringValue: traceColor };
         if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
+        if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
         const ins = await fetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields }),
