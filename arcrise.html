@@ -8311,6 +8311,57 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
   document.getElementById('btn-share').addEventListener('click', () => { shareScore(); });
 
+  // ── Home'dan paylaş: oyuncunun tüm zamanların en iyi skor + en uzun mesafesi ──
+  async function shareChallenge() {
+    const bestScore = Math.max(stats?.bestNormal || 0, stats?.bestExtreme || 0);
+    const bestDist  = Math.max(stats?.bestDistNormal || 0, stats?.bestDistExtreme || 0);
+    const accent = '#5ad8ff';
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 750;
+    const x = c.getContext('2d');
+    x.fillStyle = '#080a0e'; x.fillRect(0, 0, 600, 750);
+    x.strokeStyle = accent; x.lineWidth = 4; x.strokeRect(14, 14, 572, 722);
+    x.textAlign = 'center';
+    x.fillStyle = '#fff';
+    x.font = "700 64px 'Sarpanch', monospace";
+    x.fillText('ARCRISE', 300, 120);
+    x.fillStyle = accent;
+    x.font = "600 26px 'Sarpanch', monospace";
+    x.fillText((playerName || 'PLAYER').toUpperCase(), 300, 185);
+    x.fillStyle = 'rgba(255,255,255,.5)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('BEST SCORE', 300, 300);
+    x.fillStyle = '#fff';
+    x.font = "700 72px 'Sarpanch', monospace";
+    x.fillText(pad(bestScore), 300, 380);
+    x.fillStyle = 'rgba(255,255,255,.5)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('LONGEST DISTANCE', 300, 470);
+    x.fillStyle = '#9fd8ff';
+    x.font = "700 56px 'Sarpanch', monospace";
+    x.fillText(fmtDist(bestDist), 300, 545);
+    x.fillStyle = 'rgba(255,255,255,.35)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('CAN YOU BEAT ME?', 300, 660);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    if (!blob) return;
+    const file = new File([blob], 'arcrise-challenge.png', { type: 'image/png' });
+    const text = `ArcRise — best ${pad(bestScore)} pts, ${fmtDist(bestDist)}. Can you beat me?`;
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'ArcRise', text });
+        return;
+      } catch(_) { return; }
+    }
+    // Masaüstü fallback: PNG indir
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'arcrise-challenge.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  document.getElementById('btn-share-home').addEventListener('click', () => { shareChallenge(); });
+
   // ── Back to Menu: 2s hold required (with visual fill) ─────
   (() => {
     const HOLD_MS = 200;
