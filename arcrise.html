@@ -8230,6 +8230,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   document.getElementById('mode-btn-extreme').addEventListener('click', () => {
     if (gameMode === 'extreme') return;
+    // Bir kez satın alındıysa modal sormadan doğrudan geç (Chill gibi).
+    if (extremeUnlocked) { setGameMode('extreme'); return; }
     openExtremeModal();
   });
   document.getElementById('extreme-confirm').addEventListener('click', () => {
