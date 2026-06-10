@@ -5906,7 +5906,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     _proceedEndGame();
   }
   async function _proceedEndGame() {
-    stopBgMusic();
+    fadeOutMusic(); // sert pause yerine 0.4s fade — dead SFX sting olarak öne çıkar
     haptic(2000); // çarpışma titreşimi — 2 saniye
     if (sfxOn) {
       if (!playSfxBuffer(deadBuffer, 1.0)) {
