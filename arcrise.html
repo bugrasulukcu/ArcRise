@@ -5954,17 +5954,28 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         localStorage.setItem('arc_bestdist', String(bestDistanceM));
       }
       // ── Stats güncelle ────────────────────────────────────
-      stats.gamesTotal++;
+      // Reklamla devam edilen run ikinci ölümde tekrar sayılmasın
+      if (!_statsCounted) {
+        _statsCounted = true;
+        stats.gamesTotal++;
+        if (gameMode === 'extreme') stats.gamesExtreme++;
+        else stats.gamesNormal++;
+      }
       if (gameMode === 'extreme') {
-        stats.gamesExtreme++;
         if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
         if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
       } else {
-        stats.gamesNormal++;
         if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
         if (runDistCm > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistCm;
       }
+      // Badge koşulları için run metrikleri
+      const runTimeS = (performance.now() - _runStartTs) / 1000;
+      if (runDistCm >= 1000 && runTimeS <= 60 && !stats.speedrunDone) stats.speedrunDone = true;
+      if (runDistCm >= 1000 && !_runUsedRevive && !_adContinueUsed && !stats.survivorDone) stats.survivorDone = true;
+      const hr = new Date().getHours();
+      if (hr >= 0 && hr < 4 && !stats.nightOwlDone) stats.nightOwlDone = true;
       saveStats();
+      checkBadgeUnlocks(); // yeni badge açıldıysa toast gösterir
     }
 
     const sc  = lastScore;
