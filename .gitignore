@@ -26,3 +26,6 @@ RESOURCES/
 
 # Eski prototip
 arcie.html
+
+# WAV master (mp3 kullanılıyor)
+AUDIO/ArcRiseBGMusic.wav
