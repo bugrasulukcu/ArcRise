@@ -5218,7 +5218,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i];
       const t = i / (trail.length - 1);
-      const al = Math.pow(t, 1.4) * 0.9;
+      const al = Math.pow(t, 1.4) * (0.75 + 0.25 * comboT);
       const w  = (1 + t * 3.8) * thickMul;
       let stroke;
       if (userColor) {
