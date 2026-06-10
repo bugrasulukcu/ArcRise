@@ -2188,7 +2188,8 @@
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
     /* Settings "Mode" satırı: etiketin sağında wife + Chill/Extreme */
-    #settings .sctl-mode { gap: 8px; }
+    #settings .srow .slbl { min-width: 0; }
+    #settings .sctl-mode { gap: 8px; flex-shrink: 0; }
     #mode-fx-wrap {
       display: flex; align-items: center; gap: 8px;
       position: relative; padding: 0;
@@ -2197,12 +2198,12 @@
     #settings #mode-btn-wife {
       position: static; transform: none;
       left: auto; right: auto; top: auto;
-      flex: 0 0 auto; width: 38px; height: 38px;
+      flex: 0 0 auto; width: 36px; height: 36px;
     }
     #settings #mode-btn-wife:active { transform: scale(0.92); }
     /* mode-sel içeriğe göre daralsın, butonlar kompakt */
     #settings #mode-sel { width: auto; }
-    #settings .sctl-mode .mode-btn { flex: 0 0 auto; padding: 9px 16px; }
+    #settings .sctl-mode .mode-btn { flex: 0 0 auto; padding: 8px 13px; }
     /* High Scores — alt satırda kare kupa ikon butonu */
     .share-settings-row #btn-lb {
       flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
