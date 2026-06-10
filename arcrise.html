@@ -2660,14 +2660,9 @@
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">START</div>
     </div>
-    <div class="menu-row">
-      <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.01c.4.16.74.43 1 .77.27.34.44.74.5 1.16H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06z"/>
-        </svg>
-      </button>
-      <button class="btn-gray btn-icon" id="btn-lb" title="High Scores" aria-label="High Scores">
+    <!-- High Scores — geniş buton: sol tarafta etiket + kupa, sağda sıralamamız -->
+    <button class="btn-gray" id="btn-lb" title="High Scores" aria-label="High Scores">
+      <span class="lb-wide-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 21h8"/>
           <path d="M12 17v4"/>
@@ -2675,8 +2670,10 @@
           <path d="M17 4h3v3a3 3 0 0 1-3 3"/>
           <path d="M7 4H4v3a3 3 0 0 0 3 3"/>
         </svg>
-      </button>
-    </div>
+        HIGH SCORE
+      </span>
+      <span class="lb-wide-rank" id="home-lb-rank">—</span>
+    </button>
     <!-- Mode selector (wrapper holds floating deco particles) -->
     <div id="mode-fx-wrap">
       <button id="mode-btn-wife" title="Wife Mode" aria-label="Wife Mode"></button>
@@ -2686,14 +2683,22 @@
       </div>
       <button id="mode-btn-tutorial" title="Tutorial" aria-label="Tutorial">?</button>
     </div>
-    <!-- Share & challenge a friend -->
-    <button id="btn-share-home" type="button">
-      <span class="bsh-row">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
-        SHARE
-      </span>
-      <span class="bsh-sub">Challenge a friend</span>
-    </button>
+    <!-- Challenge a friend (paylaş) + Settings yan yana -->
+    <div class="share-settings-row">
+      <button id="btn-share-home" type="button">
+        <span class="bsh-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
+          SHARE
+        </span>
+        <span class="bsh-sub">Challenge a friend</span>
+      </button>
+      <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.01c.4.16.74.43 1 .77.27.34.44.74.5 1.16H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06z"/>
+        </svg>
+      </button>
+    </div>
   </div>
   <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
