@@ -2187,6 +2187,8 @@
     #extreme-modal-box > *:not(#extreme-modal-deco) { position: relative; z-index: 1; }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
+    /* Settings içindeki tüm metinler büyük harf (garanti) */
+    #settings, #mode-btn-tutorial { text-transform: uppercase; }
     /* Settings "Mode" satırı: etiketin sağında wife + Chill/Extreme */
     #settings .srow .slbl { min-width: 0; }
     #settings .sctl-mode { gap: 8px; flex-shrink: 0; }
@@ -2201,9 +2203,41 @@
       flex: 0 0 auto; width: 36px; height: 36px;
     }
     #settings #mode-btn-wife:active { transform: scale(0.92); }
-    /* mode-sel içeriğe göre daralsın, butonlar kompakt */
-    #settings #mode-sel { width: auto; }
-    #settings .sctl-mode .mode-btn { flex: 0 0 auto; padding: 8px 13px; }
+    /* Chill/Extreme — aşağıdaki On/Off toggle ile aynı format, eşit genişlik */
+    #settings #mode-sel {
+      width: 168px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px; overflow: hidden;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(40,46,60,.85), rgba(14,18,28,.85));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.20);
+      filter: none !important; animation: none !important; /* glow/flame kapalı — sade toggle */
+    }
+    #settings #mode-sel.glow-normal,
+    #settings #mode-sel.glow-extreme { filter: none !important; animation: none !important; }
+    #settings .sctl-mode .mode-btn {
+      flex: 1 1 0; min-width: 0; padding: 10px 0;
+      font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+      background: transparent; color: rgba(255,255,255,.45);
+      text-shadow: none; animation: none !important;
+    }
+    /* Chill aktif — mavi pill */
+    #settings .sctl-mode .mode-btn.active-normal {
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(180,225,255,.40), transparent 65%),
+        linear-gradient(180deg, #4499ee 0%, #2266cc 100%);
+      color: #fff; border-radius: 10px;
+      box-shadow: 0 0 14px rgba(90,170,255,.50), inset 0 1px 0 rgba(255,255,255,.30);
+    }
+    /* Extreme aktif — turuncu pill */
+    #settings .sctl-mode .mode-btn.active-extreme {
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,200,140,.40), transparent 65%),
+        linear-gradient(180deg, #ff7733 0%, #d9501a 100%);
+      color: #2a0f02; border-radius: 10px;
+      box-shadow: 0 0 14px rgba(255,120,50,.50), inset 0 1px 0 rgba(255,255,255,.30);
+    }
     /* High Scores — alt satırda kare kupa ikon butonu */
     .share-settings-row #btn-lb {
       flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
