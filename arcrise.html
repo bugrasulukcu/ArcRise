@@ -4571,6 +4571,43 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx2.restore();
   }
 
+  // ── Mesafe milestone'ları ────────────────────────────────
+  // Her tam metrede koridor boyunca kesikli çizgi + "kM" etiketi, ayrıca
+  // mesafe arttıkça sahneye çok hafif, sürekli kayan bir renk tonu biner.
+  function drawMilestoneLines() {
+    if (tutActive) return;
+    const m = Math.max(0, (distancePx / H) * CM_PER_SCREEN) / 100; // metre
+    // Ton kayması: 1m sonrasında ~her 5m'de bir tam hue adımı (sürekli)
+    if (m > 1) {
+      const hue = ((m / 5) * 36) % 360;
+      ctx.save();
+      ctx.globalAlpha = 0.05;
+      ctx.fillStyle = `hsl(${hue},70%,55%)`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+    const pxPerM = 100 * H / CM_PER_SCREEN;
+    const topW = S2W(-30), botW = S2W(H + 30);
+    const kMin = Math.max(1, Math.ceil(((H - 200) - botW) / pxPerM));
+    const kMax = Math.floor(((H - 200) - topW) / pxPerM);
+    if (kMax < kMin) return;
+    ctx.save();
+    ctx.font = "10px 'Press Start 2P', monospace";
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let k = kMin; k <= kMax; k++) {
+      const sy = W2S((H - 200) - k * pxPerM);
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = '#9fd8ff';
+      ctx.setLineDash([6, 9]);
+      ctx.beginPath(); ctx.moveTo(walls.left + 4, sy); ctx.lineTo(walls.right - 4, sy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.40;
+      ctx.fillStyle = '#9fd8ff';
+      ctx.fillText(k + 'M', walls.right - 10, sy - 10);
+    }
+    ctx.restore();
+  }
+
   // ── Walls ────────────────────────────────────────────────
   const walls = { left: 20, right: W - 20 };
   function drawWalls() {
