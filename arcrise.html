@@ -70,6 +70,9 @@
       --font:  'Sarpanch', 'Press Start 2P', monospace;
     }
     html, body { height: 100%; overflow: hidden; background: var(--bg); }
+    /* Game-over popup arkasındaki oyun alanı blur'lanır */
+    .stack { transition: filter .3s ease; }
+    body.over-blur .stack { filter: blur(9px) brightness(.65); }
     body { font-family: var(--font); color: #fff; touch-action: manipulation; -ms-touch-action: manipulation; text-transform: uppercase; }
 
     /* ── Canvas layer ── */
