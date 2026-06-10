@@ -3807,12 +3807,53 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     mystery: { icon: 'question', name: 'MYSTERY',    dur: 8,  color: '#ffffff', mark: '?'  },
   };
 
+  // ×N multiplier'ı mesafeye göre somut tier'a çevir: erken ×2, orta ×3, geç ×4
+  function resolveBoosterType(type) {
+    if (type !== 'xmult') return type;
+    const distCm = (distancePx / H) * CM_PER_SCREEN;
+    return distCm < 1500 ? 'x2' : distCm < 4000 ? 'x3' : 'x4';
+  }
+
+  // Mystery ruleti — HUD ikonu ~0.6s rastgele döner, sonra gerçek booster uygulanır
+  let _rouletteTimer = null, _roulettePending = false;
+  function cancelRoulette() {
+    if (_rouletteTimer) { clearInterval(_rouletteTimer); _rouletteTimer = null; }
+    _roulettePending = false;
+  }
+  function startMysteryRoulette(finalType) {
+    cancelRoulette();
+    _roulettePending = true;
+    const pool = ['wide','narrow','magnet','xmult','ghost','speed'];
+    BOOSTER_NAME.textContent = 'MYSTERY';
+    BOOSTER_NAME.style.color = '#ffffff';
+    BOOSTER_BAR.style.background = '#ffffff';
+    BOOSTER_BAR.style.width = '100%';
+    BOOSTER_EL.classList.add('active');
+    let ticks = 0;
+    _rouletteTimer = setInterval(() => {
+      ticks++;
+      const t = pool[Math.floor(Math.random() * pool.length)];
+      const info = BOOSTER_INFO[t];
+      if (info.textIcon) { BOOSTER_ICON.textContent = info.icon; }
+      else { BOOSTER_ICON.innerHTML = iconHTML(info.icon, { size: 22 }); }
+      if (ticks >= 8) {
+        cancelRoulette();
+        applyBooster(finalType);
+      }
+    }, 75);
+  }
+
   function activateBooster(type) {
-    // Mystery: rastgele başka bir booster'a çevir (kendisi hariç)
     if (type === 'mystery') {
-      const pool = ['wide','narrow','magnet','x2','x3','x4','ghost','speed'];
-      type = pool[Math.floor(Math.random() * pool.length)];
+      const pool = ['wide','narrow','magnet','xmult','ghost','speed'];
+      const final = resolveBoosterType(pool[Math.floor(Math.random() * pool.length)]);
+      startMysteryRoulette(final);
+      return;
     }
+    applyBooster(resolveBoosterType(type));
+  }
+  function applyBooster(type) {
+    cancelRoulette();
     const info = BOOSTER_INFO[type];
     boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
     isGhost   = (type === 'ghost');
