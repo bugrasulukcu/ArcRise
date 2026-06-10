@@ -6023,13 +6023,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     _proceedEndGame();
   }
   async function _proceedEndGame() {
-    fadeOutMusic(); // sert pause yerine 0.4s fade — dead SFX sting olarak öne çıkar
+    // Müzik fade + ölüm SFX'i artık beginDeath'te patlama anında tetikleniyor.
     haptic(2000); // çarpışma titreşimi — 2 saniye
-    if (sfxOn) {
-      if (!playSfxBuffer(deadBuffer, 1.0)) {
-        const _d = deadAudioFallback.cloneNode(); _d.volume = 1.0; _d.play().catch(() => {});
-      }
-    }
     // Ghost: save this run's sparse sample into the persistent ring buffer
     // (max 1000 traces, oldest dropped). All traces include the spawn point.
     if (ghostSampled.length >= 2) {
