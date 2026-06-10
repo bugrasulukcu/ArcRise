@@ -5211,7 +5211,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (trail.length < 2) return;
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     const userColor = (upg && upg.traceColor) || null;
-    const thickMul  = 1 + ((upg && upg.traceThickness) || 0) * 0.10;
+    // Combo arttıkça trace görünür şekilde kalınlaşır + parlar (+%60'a kadar)
+    const comboT = (scene === 'play') ? Math.max(0, Math.ceil(energy * comboDisplayMax())) / comboDisplayMax() : 0;
+    const comboMulVis = 1 + comboT * 0.6;
+    const thickMul  = (1 + ((upg && upg.traceThickness) || 0) * 0.10) * comboMulVis;
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i];
       const t = i / (trail.length - 1);
