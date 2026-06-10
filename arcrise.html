@@ -5746,6 +5746,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
         purpleBalls.splice(i, 1);
+        stats.purpleTotal = (stats.purpleTotal || 0) + 1; // badge sayacı
         activateBooster(b.type);
       }
     }
