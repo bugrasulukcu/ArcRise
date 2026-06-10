@@ -8163,6 +8163,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const by = bonuses[i].y;
       if (by < clearBelow && by > clearAbove) bonuses.splice(i, 1);
     }
+    for (let i = goldBalls.length - 1; i >= 0; i--) {
+      const gy = goldBalls[i].y;
+      if (gy < clearBelow && gy > clearAbove) goldBalls.splice(i, 1);
+    }
+    for (let i = purpleBalls.length - 1; i >= 0; i--) {
+      const py = purpleBalls[i].y;
+      if (py < clearBelow && py > clearAbove) purpleBalls.splice(i, 1);
+    }
     nextSpawnY = Math.min(nextSpawnY, player.y - H);
     energy = Math.max(energy, 0.6); // ölüme combo bitmişken dönmek anlamsız olmasın
     graceTimer = 0;
