@@ -8145,16 +8145,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     },
   };
 
-  // Reklam sonrası run'a devam — revive ile aynı mekanik, run başına tek hak
+  // Reklam sonrası run'a devam — son güvenli noktadaki dar koridor yerine
+  // ekranın ortasında, etraftaki engeller temizlenmiş ferah bir alanda
+  // sıfırdan devam ettiriyoruz (skor/mesafe/coin korunur).
   function continueAfterAd() {
     _adContinueUsed = true;
-    if (_lastSafePos) { player.x = _lastSafePos.x; player.y = _lastSafePos.y; }
+    player.x = W / 2;
+    player.y = (_lastSafePos ? _lastSafePos.y : player.y) - 40;
+    player.heading = -Math.PI / 2;
+    // Oyuncunun hemen önündeki/etrafındaki engel ve bonusları temizle.
+    const clearAbove = player.y - H * 1.2, clearBelow = player.y + H * 0.4;
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const oy = obstacles[i].y;
+      if (oy < clearBelow && oy > clearAbove) obstacles.splice(i, 1);
+    }
+    for (let i = bonuses.length - 1; i >= 0; i--) {
+      const by = bonuses[i].y;
+      if (by < clearBelow && by > clearAbove) bonuses.splice(i, 1);
+    }
+    nextSpawnY = Math.min(nextSpawnY, player.y - H);
     energy = Math.max(energy, 0.6); // ölüme combo bitmişken dönmek anlamsız olmasın
     graceTimer = 0;
     showScene('play');
     isGhost = true;
     setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
-    beginArc(-player.dir || 1, getRadius());
+    beginArc(1, getRadius());
     started = true; running = true;
     try { playBgMusic(); } catch(_){}
     haptic(40);
