@@ -8114,6 +8114,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       home.classList.toggle('extreme-mode', m === 'extreme');
       home.classList.toggle('wife-mode',    m === 'wife');
     }
+    // START butonundaki aktif mod etiketi
+    const smEl = document.getElementById('start-mode');
+    if (smEl) {
+      const label = m === 'extreme' ? 'EXTREME' : m === 'wife' ? 'WIFE' : 'CHILL';
+      const col   = m === 'extreme' ? '#ff7733' : m === 'wife' ? '#ff66aa' : '#66ccff';
+      smEl.textContent = ' · ' + label;
+      smEl.style.color = col;
+    }
     // Refresh BEST tile so it reflects the new mode's best score
     try { applyProfile(); } catch(_){}
   }
