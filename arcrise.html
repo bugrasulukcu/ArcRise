@@ -3753,6 +3753,29 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     const hCoinsEl = document.getElementById('home-pcoins');
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
+    updateHomeLbRank();
+  }
+
+  // ── Home HIGH SCORE butonunda sıralamamız / toplam oyuncu ──
+  // getTopScores deduped (oyuncu başına en iyi) skor listesi döner; cache TTL'i
+  // sayesinde ekstra okuma maliyeti yok. Sıramızı isimle bulur.
+  let _lbRankReq = 0;
+  async function updateHomeLbRank() {
+    const el = document.getElementById('home-lb-rank');
+    if (!el) return;
+    const myReq = ++_lbRankReq;
+    try {
+      const rows = await ARC_DB.getTopScores(250, gameMode);
+      if (myReq !== _lbRankReq) return; // mod değişti / yeni istek geldi
+      if (!rows || !rows.length) { el.textContent = '—'; return; }
+      const total = rows.length;
+      const idx = rows.findIndex(r => (r.name || '') === playerName);
+      el.textContent = (idx >= 0)
+        ? `${idx + 1}/${total}`
+        : `—/${total}`;
+    } catch(_) {
+      if (myReq === _lbRankReq) el.textContent = '—';
+    }
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
