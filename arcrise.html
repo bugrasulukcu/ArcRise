@@ -5442,6 +5442,40 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
         const ob = { x, y: nextSpawnY, r };
 
+        // ── Yeni engel tipleri — mesafeyle açılır ──────────────
+        // 10m+: PULSE (nefes alan), 20m+: SPIN (yörüngede ikiz), 30m+: SWEEP (süpürücü)
+        const typeRoll = Math.random();
+        if (distCm >= 2000 && typeRoll < 0.14) {
+          // SPIN — ortak pivot etrafında dönen iki küçük top
+          const orbR = 58 + Math.random() * 42;
+          const ow   = (0.9 + Math.random() * 0.7) * (Math.random() < 0.5 ? -1 : 1);
+          const oph  = Math.random() * Math.PI * 2;
+          const rr   = Math.max(20, r * 0.5);
+          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph, mt: 0 });
+          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph: oph + Math.PI, mt: 0 });
+          nextSpawnY -= gap;
+          continue;
+        }
+        if (distCm >= 3000 && typeRoll < 0.26) {
+          // SWEEP — koridoru duvardan duvara yavaşça süpüren top
+          ob.r  = Math.min(r, 36);
+          ob.x  = (walls.left + walls.right) / 2;
+          ob.mk = 'h';
+          ob.ma = (walls.right - walls.left) / 2 - 55 - ob.r;
+          ob.mf = 0.5 + Math.random() * 0.3;
+          ob.mt = Math.random() * Math.PI * 2;
+          obstacles.push(ob);
+          nextSpawnY -= gap;
+          continue;
+        }
+        if (distCm >= 1000 && typeRoll < 0.42) {
+          // PULSE — yarıçapı nefes alır gibi büyüyüp küçülen engel
+          ob.pk  = true;
+          ob.r0  = r;
+          ob.pph = Math.random() * Math.PI * 2;
+          ob.pt  = 0;
+        }
+
         // Movement starts at 200 m and ramps linearly to full at 1000 m.
         if (tMove > 0) {
           // Max amplitude = obstacle radius (= 50% of diameter, per spec).
