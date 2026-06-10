@@ -6154,6 +6154,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       slow *= 0.5;
       runHeadstartT = Math.max(0, runHeadstartT - dtRaw);
     }
+    // Ölüm hit-stop: dünya ağır çekime düşer, ~0.38s sonra gerçek endGame
+    if (dyingT >= 0) {
+      slow *= 0.12;
+      dyingT += dtRaw;
+      if (dyingT > 0.38) { dyingT = -1; endGame(); }
+    }
     const dt = dtRaw * slow;
     // Cooldown ve aktif ability gerçek zaman ile ilerler (slow'a tabi değil)
     if (activeAbility) {
