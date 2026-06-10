@@ -5970,10 +5970,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let _tutWantsPlay = false; // Stage 4'ten doğal geçişte gerçek oyuna geçilsin
 
   // ── Hit-stop: ölüm anında ~0.38s slow-motion, sonra gerçek endGame ──
-  let dyingT = -1; // -1 = normal; >=0 = ölüm slow-mo sayacı (loop'ta ilerler)
+  let dyingT = -1; // -1 = normal; >=0 = ölüm sonrası kısa patlama bekleme sayacı (loop'ta ilerler)
   function beginDeath() {
     if (dyingT >= 0) return;
     dyingT = 0;
+    running = false;                              // oyuncuyu dondur
+    spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
+    try { playSfx('die'); } catch(_){}
     haptic(120); // kısa darbe — uzun titreşim endGame'de
   }
 
