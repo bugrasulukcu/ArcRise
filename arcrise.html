@@ -5339,11 +5339,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function drawRipples() {
     const now = performance.now() / 1000;
     for (const rp of ripples) {
-      const age = now - rp.t; if (age > 1) continue;
+      const age = now - rp.t; if (age < 0 || age > 1) continue;
       ctx.save();
-      ctx.strokeStyle = `rgba(124,255,122,${(1-age)*.45})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(rp.x, W2S(rp.y), 20 + age * 80, 0, Math.PI*2); ctx.stroke();
+      const col = rp.col || '124,255,122';
+      const big = !!rp.col; // ölüm şok dalgaları daha hızlı/geniş açılır
+      ctx.strokeStyle = `rgba(${col},${(1-age)*(big?.7:.45)})`;
+      ctx.lineWidth = big ? 4 * (1 - age) + 1 : 1.5;
+      ctx.beginPath(); ctx.arc(rp.x, W2S(rp.y), 20 + age * (big ? 260 : 80), 0, Math.PI*2); ctx.stroke();
       ctx.restore();
     }
   }
