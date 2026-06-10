@@ -6186,7 +6186,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       html += `<tr class="${r.isYou ? 'you' : ''}" ${r.isYou ? `style="color:${avc}"` : ''}>
         <td style="white-space:nowrap">${rankStr}</td>
         <td style="padding:0 8px">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${r.name}
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${r.name}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}
         </td>
         <td style="text-align:right">${pad(r.score)}</td>
       </tr>`;
