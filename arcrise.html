@@ -2241,28 +2241,16 @@
       font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.45);
       text-transform: uppercase;
     }
-    /* Tutorial — floating cyan button anchored to the RIGHT of #mode-sel */
+    /* Tutorial — Settings çerçevesi dışında metin link (CREDITS gibi) */
     #mode-btn-tutorial {
-      position: absolute;
-      right: -42px; top: 50%; transform: translateY(-50%);
-      width: 36px; height: 36px;
-      border-radius: 11px;
-      border: 1.5px solid rgba(100,200,255,.80);
-      background: rgba(80, 180, 255, 0.08);
-      backdrop-filter: blur(10px) saturate(1.2);
-      -webkit-backdrop-filter: blur(10px) saturate(1.2);
-      color: #fff; font-family: var(--font);
-      font-size: 18px; line-height: 1; font-weight: 800;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow:
-        0 0 16px rgba(80,180,255,.55),
-        inset 0 1px 0 rgba(255,255,255,.18);
-      transition: transform .12s, filter .15s, box-shadow .2s;
-      z-index: 2;
+      margin-top: 14px; padding: 4px 10px;
+      font-size: 9px; letter-spacing: 1.4px;
+      color: rgba(120,200,255,.75); background: none; border: none;
+      font-family: var(--font); cursor: pointer;
+      transition: color .15s;
     }
-    #mode-btn-tutorial:hover  { filter: brightness(1.10); }
-    #mode-btn-tutorial:active { transform: translateY(-50%) scale(0.92); }
+    #mode-btn-tutorial:hover { color: rgba(150,220,255,1); }
+    #mode-btn-tutorial:active { transform: scale(0.96); }
     /* Wife Mode — floating pink button anchored to the LEFT of #mode-sel,
        outside the selector so Chill/Extreme keep their original positions. */
     #mode-btn-wife {
