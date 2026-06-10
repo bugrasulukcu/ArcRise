@@ -5855,6 +5855,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
   let _tutWantsPlay = false; // Stage 4'ten doğal geçişte gerçek oyuna geçilsin
 
+  // ── Hit-stop: ölüm anında ~0.38s slow-motion, sonra gerçek endGame ──
+  let dyingT = -1; // -1 = normal; >=0 = ölüm slow-mo sayacı (loop'ta ilerler)
+  function beginDeath() {
+    if (dyingT >= 0) return;
+    dyingT = 0;
+    haptic(120); // kısa darbe — uzun titreşim endGame'de
+  }
+
   let _reviveOffered = false;     // bu run'da revive teklif edildi mi (tek seferlik)
   let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
   function offerRevive() {
