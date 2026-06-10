@@ -8105,6 +8105,95 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('btn-again').addEventListener('click', () => startGame());
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
 
+  // ── Rewarded ad stub ──────────────────────────────────────
+  // TODO: gerçek SDK (AdMob / Unity Ads) entegre edilince showRewarded içini değiştir.
+  // Sözleşme: showRewarded(onDone) — reklam tamamlanırsa onDone(true), iptalde onDone(false).
+  const AdProvider = {
+    showRewarded(onDone) {
+      const ov = document.getElementById('ad-stub-overlay');
+      const cnt = document.getElementById('ad-stub-count');
+      let left = 3;
+      cnt.textContent = String(left);
+      ov.style.display = 'flex';
+      const iv = setInterval(() => {
+        left--;
+        if (left <= 0) {
+          clearInterval(iv);
+          ov.style.display = 'none';
+          onDone(true);
+        } else cnt.textContent = String(left);
+      }, 1000);
+    },
+  };
+
+  // Reklam sonrası run'a devam — revive ile aynı mekanik, run başına tek hak
+  function continueAfterAd() {
+    _adContinueUsed = true;
+    if (_lastSafePos) { player.x = _lastSafePos.x; player.y = _lastSafePos.y; }
+    energy = Math.max(energy, 0.6); // ölüme combo bitmişken dönmek anlamsız olmasın
+    graceTimer = 0;
+    showScene('play');
+    isGhost = true;
+    setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
+    beginArc(-player.dir || 1, getRadius());
+    started = true; running = true;
+    try { playBgMusic(); } catch(_){}
+    haptic(40);
+  }
+  document.getElementById('btn-continue-ad').addEventListener('click', () => {
+    if (_adContinueUsed) return;
+    AdProvider.showRewarded(ok => { if (ok) continueAfterAd(); });
+  });
+
+  // ── Share: skor kartı görseli + Web Share API (desteklenmezse indir) ──
+  async function shareScore() {
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 750;
+    const x = c.getContext('2d');
+    const extreme = gameMode === 'extreme';
+    const accent = extreme ? '#ff7733' : '#7CFF7A';
+    x.fillStyle = '#080a0e'; x.fillRect(0, 0, 600, 750);
+    x.strokeStyle = accent; x.lineWidth = 4; x.strokeRect(14, 14, 572, 722);
+    x.textAlign = 'center';
+    x.fillStyle = '#fff';
+    x.font = "700 64px 'Sarpanch', monospace";
+    x.fillText('ARCRISE', 300, 120);
+    x.fillStyle = accent;
+    x.font = "600 26px 'Sarpanch', monospace";
+    x.fillText((playerName || 'PLAYER').toUpperCase() + (extreme ? ' · EXTREME' : ''), 300, 185);
+    x.fillStyle = 'rgba(255,255,255,.5)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('SCORE', 300, 300);
+    x.fillStyle = '#fff';
+    x.font = "700 72px 'Sarpanch', monospace";
+    x.fillText(pad(lastScore), 300, 380);
+    x.fillStyle = 'rgba(255,255,255,.5)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('DISTANCE', 300, 470);
+    x.fillStyle = '#9fd8ff';
+    x.font = "700 56px 'Sarpanch', monospace";
+    x.fillText(fmtDist((distancePx / H) * CM_PER_SCREEN), 300, 545);
+    x.fillStyle = 'rgba(255,255,255,.35)';
+    x.font = "20px 'Sarpanch', monospace";
+    x.fillText('CAN YOU BEAT ME?', 300, 660);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    if (!blob) return;
+    const file = new File([blob], 'arcrise-score.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'ArcRise', text: `ArcRise — ${lastScore} pts. Can you beat me?` });
+        return;
+      } catch(_) { /* kullanıcı iptal etti — sessiz geç */ return; }
+    }
+    // Masaüstü fallback: PNG indir
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'arcrise-score.png';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  document.getElementById('btn-share').addEventListener('click', () => { shareScore(); });
+
   // ── Back to Menu: 2s hold required (with visual fill) ─────
   (() => {
     const HOLD_MS = 200;
