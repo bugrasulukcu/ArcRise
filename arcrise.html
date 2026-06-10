@@ -2187,24 +2187,22 @@
     #extreme-modal-box > *:not(#extreme-modal-deco) { position: relative; z-index: 1; }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
-    /* Wrapper allows particles to escape rounded mode-sel container */
-    .srow-mode { display: flex; flex-direction: column; gap: 12px; }
-    .srow-mode-head { display: flex; align-items: center; gap: 12px; }
-    /* Settings'te wife · Chill/Extreme · tutorial yan yana tek satır */
+    /* Settings "Mode" satırı: etiketin sağında wife + Chill/Extreme */
+    #settings .sctl-mode { gap: 8px; }
     #mode-fx-wrap {
-      display: flex; align-items: center; gap: 10px;
-      width: 100%; position: relative; padding: 0;
+      display: flex; align-items: center; gap: 8px;
+      position: relative; padding: 0;
     }
-    /* Settings içinde wife & tutorial artık floating değil — inline 40px kareler */
-    #settings #mode-btn-wife,
-    #settings #mode-btn-tutorial {
+    /* Settings içinde wife artık floating değil — inline kare */
+    #settings #mode-btn-wife {
       position: static; transform: none;
       left: auto; right: auto; top: auto;
-      flex: 0 0 auto; width: 40px; height: 40px;
+      flex: 0 0 auto; width: 38px; height: 38px;
     }
-    #settings #mode-btn-wife:active,
-    #settings #mode-btn-tutorial:active { transform: scale(0.92); }
-    #settings #mode-sel { flex: 1 1 auto; }
+    #settings #mode-btn-wife:active { transform: scale(0.92); }
+    /* mode-sel içeriğe göre daralsın, butonlar kompakt */
+    #settings #mode-sel { width: auto; }
+    #settings .sctl-mode .mode-btn { flex: 0 0 auto; padding: 9px 16px; }
     /* High Scores — alt satırda kare kupa ikon butonu */
     .share-settings-row #btn-lb {
       flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
