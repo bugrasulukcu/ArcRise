@@ -2182,6 +2182,29 @@
       position: relative;
       padding: 0 18px;  /* sadece yatay — dikey boşluk .menu gap'i ile eşit kalsın */
     }
+    /* Share & challenge a friend (home alt buton) */
+    #btn-share-home {
+      width: 70%; align-self: center;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 11px 14px; border-radius: 13px;
+      border: 1.5px solid rgba(90,216,255,.40);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(90,216,255,.14), transparent 60%),
+        linear-gradient(180deg, rgba(24,34,46,.92), rgba(12,18,28,.94));
+      color: #5ad8ff; font-family: var(--font); cursor: pointer;
+      box-shadow: 0 0 16px rgba(90,216,255,.12), inset 0 1px 0 rgba(255,255,255,.10);
+      transition: transform .12s, filter .15s, box-shadow .2s;
+    }
+    #btn-share-home:hover  { filter: brightness(1.12); box-shadow: 0 0 22px rgba(90,216,255,.22); }
+    #btn-share-home:active { transform: scale(0.97); }
+    #btn-share-home .bsh-row {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13.5px; letter-spacing: 2px; font-weight: 700;
+    }
+    #btn-share-home .bsh-sub {
+      font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+    }
     /* Tutorial — floating cyan button anchored to the RIGHT of #mode-sel */
     #mode-btn-tutorial {
       position: absolute;
