@@ -6042,6 +6042,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const bd = bestDistanceM || 0;
       goBestDistInline.textContent = fmtDist(bd);
     }
+    // Reklamla devam: run başına tek hak, wife mode'da ve güvenli nokta yoksa kapalı
+    const adBtn = document.getElementById('btn-continue-ad');
+    if (adBtn) adBtn.style.display =
+      (!_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
