@@ -2761,13 +2761,25 @@
       <tbody id="rank-rows"></tbody>
     </table>
     <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <button class="btn-gray" id="btn-continue-ad" style="display:none;font-size:11.5px;white-space:nowrap;border-color:rgba(124,255,122,.4);color:var(--green)">
+        &#9654; WATCH AD &middot; CONTINUE RUN
+      </button>
       <div class="rb-wrap" id="wrap-again">
         <div class="rb-inner" id="btn-again">AGAIN!</div>
       </div>
-      <button class="btn-gray" id="btn-menu" style="font-size: 11.5px;white-space:nowrap">
-        <div class="hold-fill"></div>
-        <span class="hold-label">Back to Menu</span>
-      </button>
+      <div style="display:flex;gap:10px">
+        <button class="btn-gray" id="btn-share" style="flex:1;font-size:11.5px;white-space:nowrap">SHARE</button>
+        <button class="btn-gray" id="btn-menu" style="flex:2;font-size: 11.5px;white-space:nowrap">
+          <div class="hold-fill"></div>
+          <span class="hold-label">Back to Menu</span>
+        </button>
+      </div>
+    </div>
+    <!-- Rewarded ad stub overlay — gerçek SDK entegre edilene kadar sahte 3sn "reklam" -->
+    <div id="ad-stub-overlay" style="display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column;gap:18px">
+      <div style="font-size:22px;letter-spacing:4px;color:rgba(255,255,255,.85)">AD</div>
+      <div id="ad-stub-count" style="font-size:48px;color:var(--green)">3</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.4)">REWARDED AD PLACEHOLDER</div>
     </div>
   </div>
 </div>
