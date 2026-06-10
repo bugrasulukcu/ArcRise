@@ -20,3 +20,9 @@ dist/
 # Ham kaynak ses dosyaları (sadece AUDIO/ klasörü commit'lenir)
 RESOURCES/
 *.zip
+
+# Tasarım kaynak dosyaları (PNG/ klasöründeki export'lar yeterli)
+*.pdf
+
+# Eski prototip
+arcie.html
