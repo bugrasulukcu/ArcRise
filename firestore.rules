@@ -1,0 +1,40 @@
+rules_version = '2';
+// ArcRise Firestore kuralları.
+// Deploy: Firebase Console > Firestore Database > Rules sekmesine yapıştır > Publish.
+//
+// Not: Client'ta auth olmadığı için kayıt sahipliği doğrulanamıyor —
+// bu kurallar yine de en büyük riskleri kapatır:
+//   - DELETE tamamen yasak (wipeAllScores artık dışarıdan çalışmaz)
+//   - score/distance üst sınırlı, alan tipleri ve isim uzunluğu doğrulanır
+//   - scores dışındaki tüm koleksiyonlar kapalı
+// Anonim auth eklenirse (bkz. DEVELOPMENT_LOG) uid bazlı sahiplik de eklenmeli.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function validScore(d) {
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
+        && d.score is int && d.score >= 0 && d.score <= 1000000
+        && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
+        && d.ts is int
+        && d.mode in ['normal', 'extreme']
+        && d.distance is number && d.distance >= 0 && d.distance <= 100000
+        && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 200000))
+        && (!('traceColor' in d) || d.traceColor is string)
+        && (!('traceThickness' in d) || d.traceThickness is int);
+    }
+
+    match /scores/{doc} {
+      allow read: if true;
+      allow create: if validScore(request.resource.data);
+      allow update: if validScore(request.resource.data)
+        // İsim değiştirilemez — başka oyuncunun kaydı "devralınamaz".
+        && request.resource.data.name == resource.data.name;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
