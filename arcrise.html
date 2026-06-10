@@ -3864,13 +3864,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     BOOSTER_NAME.style.color = info.color;
     BOOSTER_BAR.style.background = info.color;
     BOOSTER_EL.classList.add('active');
+    duckMusic(true); // boost sırasında müzik kısılır
   }
 
   function clearBooster() {
+    cancelRoulette();
     boosterType = null; boosterTime = 0;
     isGhost = false; hasShield = false;
     player.speed = GAME_SPEED; // GAME_SPEED is already dynamic in extreme
     BOOSTER_EL.classList.remove('active');
+    duckMusic(false);
   }
 
   function getRadius() {
