@@ -3140,6 +3140,10 @@ const ARC_DB = (() => {
           fields.traceThickness = { integerValue: String(traceThickness) };
           maskParts.push('traceThickness');
         }
+        if (typeof badges === 'string') {
+          fields.badges = { stringValue: badges.slice(0, 64) };
+          maskParts.push('badges');
+        }
         const mask = maskParts.map(f => `updateMask.fieldPaths=${f}`).join('&');
         const upd = await fetch(
           `${BASE}/scores/${docId}?key=${apiKey}&${mask}`,
