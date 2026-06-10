@@ -4951,6 +4951,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
+  // Ölüm patlaması — ateşli (kırmızı→turuncu→sarı→beyaz) yoğun burst + şok dalgası
+  function spawnDeathExplosion(wx, wy) {
+    const count = 120;
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 600 + Math.random() * 2600; // geniş hız aralığı → bazıları uzağa fırlar
+      const white = Math.random() < 0.22;     // beyaz-sıcak çekirdek parçacıkları
+      particles.push({
+        wx, wy, x: wx, y: wy,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r:    2 + Math.random() * 6,
+        life: 0.7 + Math.random() * 0.8,
+        hue:  white ? 50 : Math.random() * 45,  // 0–45 ateş, beyazlar sarımsı
+        sat:  white ? 30 : 100,
+        light: white ? 92 : 55,
+        sides: 3 + Math.floor(Math.random() * 4),
+        rot:   Math.random() * Math.PI * 2,
+      });
+    }
+    // İç içe genişleyen şok dalgaları
+    const now = performance.now() / 1000;
+    ripples.push({ x: wx, y: wy, t: now, col: '255,90,40' });
+    ripples.push({ x: wx, y: wy, t: now + 0.06, col: '255,180,80' });
+  }
+
   function updateParticles(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
