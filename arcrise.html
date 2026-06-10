@@ -10,6 +10,39 @@
       document.fonts.ready.then(_revealFonts);
     }
     setTimeout(_revealFonts, 1500); // yedek timeout — font failure'da bile aç
+
+    // ── localStorage guard ── iOS Safari private mode'da setItem throw
+    // eder; bozuksa in-memory shim'e geç ki oyun localStorage yüzünden çökmesin.
+    try {
+      localStorage.setItem('__arc_ls_test', '1');
+      localStorage.removeItem('__arc_ls_test');
+    } catch (_) {
+      const mem = {};
+      const shim = {
+        getItem: k => (k in mem ? mem[k] : null),
+        setItem: (k, v) => { mem[k] = String(v); },
+        removeItem: k => { delete mem[k]; },
+        clear: () => { for (const k in mem) delete mem[k]; },
+      };
+      try { Object.defineProperty(window, 'localStorage', { value: shim }); } catch (_) {}
+    }
+
+    // ── Debug flag ── ?debug URL paramı veya arc_debug=1 ile açılır.
+    // Kapalıyken console.log susturulur (warn/error her zaman açık kalır).
+    window.ARC_DEBUG = /[?&]debug/.test(location.search) ||
+      (() => { try { return localStorage.getItem('arc_debug') === '1'; } catch (_) { return false; } })();
+    if (!window.ARC_DEBUG) console.log = function () {};
+
+    // ── Global hata yakalama ── mobilde sessiz kırılmaları görünür kıl.
+    window.addEventListener('error', e => {
+      console.warn('[ArcRise error]', e.message, e.filename, e.lineno);
+      if (window.ARC_DEBUG && typeof showToast === 'function') {
+        try { showToast('ERR: ' + e.message); } catch (_) {}
+      }
+    });
+    window.addEventListener('unhandledrejection', e => {
+      console.warn('[ArcRise unhandled]', e.reason);
+    });
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>ArcRise</title>
