@@ -6013,6 +6013,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     isGhost = true;
     setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
     running = true;
+    try { playBgMusic(); } catch(_){} // ölümde fade olan müziği geri başlat
     haptic(60);
   }
   function declineRevive() {
