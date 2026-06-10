@@ -5731,6 +5731,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
+        stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
       }
     }
     // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
