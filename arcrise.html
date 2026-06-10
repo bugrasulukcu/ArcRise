@@ -2188,11 +2188,23 @@
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
     /* Wrapper allows particles to escape rounded mode-sel container */
+    .srow-mode { display: flex; flex-direction: column; gap: 12px; }
+    .srow-mode-head { display: flex; align-items: center; gap: 12px; }
+    /* Settings'te wife · Chill/Extreme · tutorial yan yana tek satır */
     #mode-fx-wrap {
-      width: 70%; align-self: center;
-      position: relative;
-      padding: 0 18px;  /* sadece yatay — dikey boşluk .menu gap'i ile eşit kalsın */
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; position: relative; padding: 0;
     }
+    /* Settings içinde wife & tutorial artık floating değil — inline 40px kareler */
+    #settings #mode-btn-wife,
+    #settings #mode-btn-tutorial {
+      position: static; transform: none;
+      left: auto; right: auto; top: auto;
+      flex: 0 0 auto; width: 40px; height: 40px;
+    }
+    #settings #mode-btn-wife:active,
+    #settings #mode-btn-tutorial:active { transform: scale(0.92); }
+    #settings #mode-sel { flex: 1 1 auto; }
     /* High Scores — alt satırda kare kupa ikon butonu */
     .share-settings-row #btn-lb {
       flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
