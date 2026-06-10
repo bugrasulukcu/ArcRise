@@ -4410,7 +4410,34 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function stopBgMusic() {
     bgAudio.pause();
+    bgAudio.volume = _bgBaseVol; // sıradaki çalış normal seviyeden başlasın
     // Don't reset currentTime — resume from same position next game
+  }
+
+  // ── Müzik dinamiği ──────────────────────────────────────
+  const _bgBaseVol = 0.7;
+  let _duckRAF = null;
+  // Hedef sese kısa rampla geç (boost ducking / ölüm fade)
+  function _rampMusicTo(target, ms) {
+    if (_duckRAF) cancelAnimationFrame(_duckRAF);
+    const from = bgAudio.volume, t0 = performance.now();
+    const stepFn = () => {
+      const t = Math.min(1, (performance.now() - t0) / ms);
+      bgAudio.volume = from + (target - from) * t;
+      if (t < 1) _duckRAF = requestAnimationFrame(stepFn);
+      else _duckRAF = null;
+    };
+    stepFn();
+  }
+  function duckMusic(on) {
+    if (bgAudio.paused) return;
+    _rampMusicTo(on ? _bgBaseVol * 0.45 : _bgBaseVol, 250);
+  }
+  // Ölümde sert pause yerine 0.4s fade-out — dead SFX sting olarak öne çıkar
+  function fadeOutMusic() {
+    if (bgAudio.paused) return;
+    _rampMusicTo(0, 400);
+    setTimeout(() => { stopBgMusic(); }, 430);
   }
 
   function playTouchSound() {
