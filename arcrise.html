@@ -44,9 +44,9 @@
     }
     .stack {
       position: relative;
-      /* Canvas iÃ§ Ã§Ã¶zÃ¼nÃ¼rlÃ¼k 600x1066 (â‰ˆ9:16). Hem geniÅŸliÄŸi hem
-         yÃ¼ksekliÄŸi bu orana gÃ¶re kÄ±s — yoksa 19.5:9 / 20:9 Android
-         ekranlarda canvas dikey eziliyor, daireler oval gÃ¶rÃ¼nÃ¼yor.
+      /* Canvas iç çözünürlük 600x1066 (≈9:16). Hem genişliği hem
+         yüksekliği bu orana göre kıs — yoksa 19.5:9 / 20:9 Android
+         ekranlarda canvas dikey eziliyor, daireler oval görünüyor.
          56.285vh = (600/1066)*100 ; 177.667vw = (1066/600)*100 */
       width:  min(100vw, 56.285vh);
       height: min(100vh, 177.667vw);
@@ -70,7 +70,7 @@
     .screen.active { display: flex; }
 
     /* ── HUD ── */
-    /* #hud artÄ±k .stack iÃ§inde — position: absolute ile canvas'a gÃ¶re konumlanÄ±r */
+    /* #hud artık .stack içinde — position: absolute ile canvas'a göre konumlanır */
     #hud {
       position: absolute; inset: 0;
       z-index: 15; pointer-events: none;
@@ -78,8 +78,8 @@
     }
     #hud.active { display: block; }
 
-    /* Duvar iÃ§ kenarÄ±: canvas 600px'de 20px sol/saÄŸ → %3.33
-       GÃ¼venli bÃ¶lge baÅŸlangÄ±cÄ± = calc(3.4% + 10px)                */
+    /* Duvar iç kenarı: canvas 600px'de 20px sol/sağ → %3.33
+       Güvenli bölge başlangıcı = calc(3.4% + 10px)                */
     .hud-tl {
       position: absolute; top: 18px;
       left: calc(3.4% + 12px);
@@ -119,10 +119,10 @@
     .hud-tr .hud-divider { margin-left: auto; }
     .hud-sub-lbl { font-size: 7px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
     .hud-sub-num { font-size: 11px; color: rgba(255,255,255,.75); letter-spacing: 1px; }
-    /* KÃ¼Ã§Ã¼k avatar renk noktasÄ± YOUR BEST yanÄ±nda */
+    /* Küçük avatar renk noktası YOUR BEST yanında */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
-    /* Leaderboard sidebar — saÄŸ duvarÄ±n iÃ§inde */
+    /* Leaderboard sidebar — sağ duvarın içinde */
     #lb {
       position: absolute; top: 0;
       right: calc(3.4% + 10px);
@@ -135,7 +135,7 @@
     .lb-row   { font-size: 7px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
     .lb-row.you { font-size: 8px; }
 
-    /* â•â•â•â•â•â•â•â•â•â• PROFILE (Settings iÃ§inde) â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE (Settings içinde) ╁╁╁╁╁╁╁╁╁╁ */
     .profile-sect {
       border-bottom: 1px solid rgba(255,255,255,.08);
       padding-bottom: 18px;
@@ -166,7 +166,7 @@
     }
     #name-save:active { transform: scale(0.95); }
 
-    /* â•â•â•â•â•â•â•â•â•â• HOME â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ HOME ╁╁╁╁╁╁╁╁╁╁ */
     #home { gap: 0; }
     #title {
       font-size: clamp(34px, 9vw, 52px);
@@ -253,7 +253,7 @@
     }
     .btn-gray:active { transform: scale(0.97); }
 
-    /* â•â•â•â•â•â•â•â•â•â• LEADERBOARD POPUP â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ LEADERBOARD POPUP ╁╁╁╁╁╁╁╁╁╁ */
     #lb-modal {
       position: fixed; inset: 0; z-index: 55;
       display: none; align-items: center; justify-content: center;
@@ -514,7 +514,7 @@
     .btn-icon svg { width: 26px; height: 26px; color: #fff; }
     #btn-lb { /* legacy reset — sizing handled by .menu-row */ }
 
-    /* â•â•â•â•â•â•â•â•â•â• HOLD-TO-CONFIRM BACK TO MENU â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ HOLD-TO-CONFIRM BACK TO MENU ╁╁╁╁╁╁╁╁╁╁ */
     #btn-menu {
       position: relative; overflow: hidden;
       width: 70%; align-self: center;
@@ -553,7 +553,7 @@
       font-size: 8.5px; color: rgba(255,255,255,.3); letter-spacing: 1px;
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• SETTINGS â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ SETTINGS ╁╁╁╁╁╁╁╁╁╁ */
     /* Settings is a full-screen scene; give it the same translucent
        overlay used by popups so the home is visible-but-blurred behind. */
     #settings.active {
@@ -617,7 +617,7 @@
       border-radius: 10px; padding: 8px 12px;
     }
 
-    /* Rainbow slider — tam yÃ¼kseklik, yuvarlak uÃ§lar */
+    /* Rainbow slider — tam yükseklik, yuvarlak uçlar */
     .rslide-wrap {
       position: relative; height: 14px; border-radius: 7px;
       background: linear-gradient(to right,#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
@@ -677,7 +677,7 @@
         inset 0 -4px 8px rgba(120,0,15,.35);
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• GAME OVER â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ GAME OVER ╁╁╁╁╁╁╁╁╁╁ */
     #gameover .panel {
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.1);
@@ -697,7 +697,7 @@
 
     /* Tutorial CSS removed — players discover mechanics by playing */
 
-    /* ── HOME alt baÄŸlantÄ±larÄ± ── */
+    /* ── HOME alt bağlantıları ── */
     #home-links {
       position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
       display: flex; gap: 24px; align-items: center;
@@ -709,7 +709,7 @@
     }
     .home-link:hover { color: rgba(255,255,255,.6); }
 
-    /* â•â•â•â•â•â•â•â•â•â• PROFILE SETUP (ilk aÃ§Ä±lÄ±ÅŸ) â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE SETUP (ilk açılış) ╁╁╁╁╁╁╁╁╁╁ */
     #profile-setup .panel {
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.1);
@@ -766,9 +766,9 @@
     }
     #ps-confirm:active { transform: scale(0.97); }
 
-    /* Difficulty selector kaldÄ±rÄ±ldÄ± — tek seviye: EXTREME */
+    /* Difficulty selector kaldırıldı — tek seviye: EXTREME */
 
-    /* â•â•â•â•â•â•â•â•â•â• SETTINGS profile (read-only) â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ SETTINGS profile (read-only) ╁╁╁╁╁╁╁╁╁╁ */
     #settings-profile-ro {
       display: flex; align-items: center; gap: 14px;
       padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.08);
@@ -791,7 +791,7 @@
     }
     #settings-name-lbl { font-size: 13px; letter-spacing: 2px; }
 
-    /* â•â•â•â•â•â•â•â•â•â• AVATAR MODAL â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ AVATAR MODAL ╁╁╁╁╁╁╁╁╁╁ */
     #av-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
@@ -852,7 +852,7 @@
     }
     .btn-danger:active { transform: scale(0.97); }
 
-    /* Reset outer — ekranÄ±n en altÄ±na */
+    /* Reset outer — ekranın en altına */
     #reset-outer {
       position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -862,7 +862,7 @@
       letter-spacing: 1px; text-align: center;
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• HOME PROFILE CARD â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ HOME PROFILE CARD ╁╁╁╁╁╁╁╁╁╁ */
     /* White glass — sits in front of the logo (z-index 2) with backdrop blur */
     #home-profile {
       position: relative; z-index: 2;
@@ -1206,7 +1206,7 @@
     #coins-modal-close:hover { border-color: rgba(255,210,80,.7); }
     #coins-modal-close:active { transform: scale(0.97); }
 
-    /* â•â•â•â•â•â•â•â•â•â• PROFILE EDIT MODAL â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ PROFILE EDIT MODAL ╁╁╁╁╁╁╁╁╁╁ */
     #prof-modal {
       position: fixed; inset: 0; z-index: 50;
       display: none; align-items: center; justify-content: center;
@@ -1654,7 +1654,7 @@
       font-size: 9px; letter-spacing: 1px;
       color: rgba(255,255,255,.45);
     }
-    /* Ladder pips for Â±radius / Â±speed / timer / thickness */
+    /* Ladder pips for ±radius / ±speed / timer / thickness */
     .upg-ladder {
       display: flex; gap: 3px; width: 100%;
       flex-wrap: wrap;
@@ -1769,8 +1769,8 @@
 
     #reset-confirm { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
 
-    /* â•â•â•â•â•â•â•â•â•â• EXTREME MODE POPUP â•â•â•â•â•â•â•â•â•â• */
-    /* â•â•â•â•â•â•â•â•â•â• WIFE MODE CONFIRM â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ EXTREME MODE POPUP ╁╁╁╁╁╁╁╁╁╁ */
+    /* ╁╁╁╁╁╁╁╁╁╁ WIFE MODE CONFIRM ╁╁╁╁╁╁╁╁╁╁ */
     #wife-modal {
       position: fixed; inset: 0; z-index: 60;
       display: none; align-items: center; justify-content: center;
@@ -2141,7 +2141,7 @@
     /* All real content sits above the deco layer */
     #extreme-modal-box > *:not(#extreme-modal-deco) { position: relative; z-index: 1; }
 
-    /* â•â•â•â•â•â•â•â•â•â• GAME MODE SELECTOR â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ GAME MODE SELECTOR ╁╁╁╁╁╁╁╁╁╁ */
     /* Wrapper allows particles to escape rounded mode-sel container */
     #mode-fx-wrap {
       width: 70%; align-self: center;
@@ -2278,7 +2278,7 @@
              filter: brightness(1.22) hue-rotate(-8deg) saturate(1.15); }
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• HOME EXTREME FLAME FRAME â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ HOME EXTREME FLAME FRAME ╁╁╁╁╁╁╁╁╁╁ */
     /* Soft edge-glow that fades in when extreme mode is selected.
        No rapid flicker — just a slow breathe so it reads as ambient warmth. */
     #home-flame-frame {
@@ -2339,7 +2339,7 @@
       100% { transform: translate(var(--dx,5px), -50px) scale(0.4); opacity: 0; }
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• COMBO HUD â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ COMBO HUD ╁╁╁╁╁╁╁╁╁╁ */
     /* Combo + booster HUDs sit just under the top score row so they aren't
        hidden under the player's thumb during play. */
     #combo-hud {
@@ -2355,10 +2355,10 @@
       box-shadow: 0 0 12px rgba(124,255,122,.18);
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• FLOAT TEXTS (combo points) â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ FLOAT TEXTS (combo points) ╁╁╁╁╁╁╁╁╁╁ */
     /* drawn on canvas — no CSS needed */
 
-    /* â•â•â•â•â•â•â•â•â•â• GAME OVER EXTRAS â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ GAME OVER EXTRAS ╁╁╁╁╁╁╁╁╁╁ */
     #go-score-row { text-align: center; }
     /* Game-over twin row: SCORE + DISTANCE side by side, small BEST below each */
     #go-twin-row {
@@ -2397,10 +2397,10 @@
       width: 0%;
     }
 
-    /* â•â•â•â•â•â•â•â•â•â• DIFFICULTY COLORS â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ DIFFICULTY COLORS ╁╁╁╁╁╁╁╁╁╁ */
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
 
-    /* â•â•â•â•â•â•â•â•â•â• BOOSTER HUD â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ BOOSTER HUD ╁╁╁╁╁╁╁╁╁╁ */
     /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
     #booster-hud {
       position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
@@ -2427,7 +2427,7 @@
       height: 100%; background: #cc88ff; border-radius: 3px;
       transition: width .1s linear;
     }
-    /* â•â•â•â•â•â•â•â•â•â• EQUIPPABLE BOOSTER SLOTS â•â•â•â•â•â•â•â•â•â• */
+    /* ╁╁╁╁╁╁╁╁╁╁ EQUIPPABLE BOOSTER SLOTS ╁╁╁╁╁╁╁╁╁╁ */
     /* Two slots anchored to the bottom-center of the play canvas.
        Tap to activate when filled (manual boosters); auto-trigger
        boosters consume themselves on the relevant event. */
@@ -2481,7 +2481,7 @@
 <body>
 <div id="toast"></div>
 
-<!-- ── Canvas + HUD (aynÄ± stack iÃ§inde, duvar sÄ±nÄ±rlarÄ±na gÃ¶re konumlanÄ±r) ── -->
+<!-- ── Canvas + HUD (aynı stack içinde, duvar sınırlarına göre konumlanır) ── -->
 <!-- Debug overlay: FPS + live game state. Toggled by T×2 or RTL swipe. -->
 <div id="debug-overlay">
   <div class="dbg-title">DEBUG</div>
@@ -2537,7 +2537,7 @@
   </div>
 </div>
 
-<!-- â•â• PROFILE SETUP â•â• -->
+<!-- ╁╁ PROFILE SETUP ╁╁ -->
 <div class="screen" id="profile-setup">
   <div class="panel">
     <h2>CREATE PROFILE</h2>
@@ -2558,7 +2558,7 @@
   </div>
 </div>
 
-<!-- â•â• HOME â•â• -->
+<!-- ╁╁ HOME ╁╁ -->
 <div class="screen" id="home">
   <div id="home-flame-frame"></div>
   <div id="home-flower-frame"></div>
@@ -2625,13 +2625,13 @@
       <button id="mode-btn-tutorial" title="Tutorial" aria-label="Tutorial">?</button>
     </div>
   </div>
-  <!-- Difficulty selector kaldÄ±rÄ±ldÄ± — sabit EXTREME seviye -->
+  <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
     <button class="home-link" id="btn-credits">CREDITS</button>
   </div>
 </div>
 
-<!-- â•â• SETTINGS â•â• -->
+<!-- ╁╁ SETTINGS ╁╁ -->
 <div class="screen" id="settings">
   <div class="panel">
     <h2>Settings</h2>
@@ -2696,7 +2696,7 @@
   </div>
 </div>
 
-<!-- â•â• GAME OVER â•â• -->
+<!-- ╁╁ GAME OVER ╁╁ -->
 <div class="screen" id="gameover">
   <div class="panel">
     <!-- Animated score + distance, with small best lines under each -->
@@ -2739,7 +2739,7 @@
   </div>
 </div>
 
-<!-- â•â• EXTREME MODE POPUP â•â• -->
+<!-- ╁╁ EXTREME MODE POPUP ╁╁ -->
 <div id="extreme-modal">
   <div id="extreme-modal-box">
     <div id="extreme-modal-deco"></div>
@@ -2781,7 +2781,7 @@
   </div>
 </div>
 
-<!-- â•â• WIFE MODE CONFIRM â•â• -->
+<!-- ╁╁ WIFE MODE CONFIRM ╁╁ -->
 <!-- Revive Ticket prompt — shown when player dies and a revive ticket is available -->
 <div id="revive-modal">
   <div id="revive-modal-box">
@@ -2815,7 +2815,7 @@
   </div>
 </div>
 
-<!-- â•â• UPGRADES MODAL (placeholder until catalog finalised) â•â• -->
+<!-- ╁╁ UPGRADES MODAL (placeholder until catalog finalised) ╁╁ -->
 <div id="upgrades-modal">
   <div id="upgrades-modal-box">
     <div id="upgrades-modal-title">UPGRADES</div>
@@ -2836,7 +2836,7 @@
   </div>
 </div>
 
-<!-- â•â• COINS MODAL â•â• -->
+<!-- ╁╁ COINS MODAL ╁╁ -->
 <div id="coins-modal">
   <div id="coins-modal-box">
     <!-- Current balance: coin icon + number -->
@@ -2879,7 +2879,7 @@
   </div>
 </div>
 
-<!-- â•â• HIGH SCORES MODAL â•â• -->
+<!-- ╁╁ HIGH SCORES MODAL ╁╁ -->
 <div id="lb-modal">
   <div id="lb-modal-box">
     <div id="lb-modal-title">High Scores</div>
@@ -2916,7 +2916,7 @@
   </div>
 </div>
 
-<!-- â•â• PROFILE EDIT MODAL â•â• -->
+<!-- ╁╁ PROFILE EDIT MODAL ╁╁ -->
 <!-- Avatar picker — standalone popup, açıldığında profil kutusunu kaydırmaz -->
 <div id="avpick-modal">
   <div id="avpick-modal-box">
@@ -2982,7 +2982,7 @@
   </div>
 </div>
 
-<!-- â•â• BADGES MODAL (opened from equip slots) â•â• -->
+<!-- ╁╁ BADGES MODAL (opened from equip slots) ╁╁ -->
 <div id="badges-modal">
   <div id="badges-modal-box">
     <div id="badges-modal-title">Badges</div>
@@ -2992,7 +2992,7 @@
   </div>
 </div>
 
-<!-- â•â• AVATAR MODAL â•â• -->
+<!-- ╁╁ AVATAR MODAL ╁╁ -->
 <div id="av-modal">
   <div id="av-modal-box">
     <div id="av-modal-title">CHOOSE AVATAR</div>
@@ -3004,13 +3004,13 @@
 <!-- Tutorial system removed — players discover mechanics through play -->
 
 <!--
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
   Firebase kurulumu:
   1. console.firebase.google.com → yeni proje → "arcrise"
   2. Build → Firestore → "Start in test mode" → europe-west1
   3. Project Settings → Web app → firebaseConfig'i kopyala
-  4. AÅŸaÄŸÄ±daki FIREBASE_CONFIG alanÄ±nÄ± doldur
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  4. Aşağıdaki FIREBASE_CONFIG alanını doldur
+  ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
 -->
 <script>
 // ── Firebase Firestore (REST API — SDK gerekmez) ────────────
@@ -3027,8 +3027,8 @@ const ARC_DB = (() => {
   // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
   function normMode(m) { return (m === 'extreme') ? 'extreme' : 'normal'; }
 
-  // Skor kaydet — her oyuncu iÃ§in (name + mode) baÅŸÄ±na sadece en yÃ¼ksek skor tutulur.
-  // Eski 'mode' alanÄ± olmayan kayÄ±tlar "normal" sayÄ±lÄ±r (geriye dÃ¶nÃ¼k uyumluluk).
+  // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
+  // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
   async function submitScore(name, avatar, score, mode, distance, traceData) {
     if (!projectId || projectId.startsWith('BURAYA')) {
       console.warn('[ArcDB] no projectId configured — score not saved');
@@ -3136,8 +3136,8 @@ const ARC_DB = (() => {
     } catch(e) { console.warn('[ArcDB] submit failed', e); }
   }
 
-  // YardÄ±mcÄ±: Firestore yanÄ±tÄ±nÄ± {name, avatar, score, ts, mode} listesine dÃ¶nÃ¼ÅŸtÃ¼r.
-  // mode alanÄ± olmayan ESKÄ° kayÄ±tlar `mode: null` olarak gelir — getTopScores bunlarÄ± filtreler.
+  // Yardımcı: Firestore yanıtını {name, avatar, score, ts, mode} listesine dönüştür.
+  // mode alanı olmayan ESKİ kayıtlar `mode: null` olarak gelir — getTopScores bunları filtreler.
   function parseRows(rows) {
     return rows
       .filter(r => r.document?.fields)
@@ -3173,9 +3173,9 @@ const ARC_DB = (() => {
     return Array.from(best.values()).sort((a, b) => b.score - a.score);
   }
 
-  // Top-N skor Ã§ek. mode girilmiÅŸse yerelde filtreler.
-  // (Firestore'da where+orderBy composite index gerektirdiÄŸi iÃ§in filtreyi
-  // app tarafÄ±nda yapÄ±yoruz — daha geniÅŸ query Ã§ekip mode'a gÃ¶re sÃ¼zÃ¼yoruz.)
+  // Top-N skor çek. mode girilmişse yerelde filtreler.
+  // (Firestore'da where+orderBy composite index gerektirdiği için filtreyi
+  // app tarafında yapıyoruz — daha geniş query çekip mode'a göre süzüyoruz.)
   // ── Read cache (sessionStorage + memory) ───────────────────
   // Cuts Firestore reads by 90%+ on repeat-views. TTL'd entries are reused;
   // expired ones trigger a single refetch. The cache key includes mode + n
@@ -3427,18 +3427,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
 (() => {
   // ── Mobile zoom kilidi ───────────────────────────────────
-  // viewport meta + touch-action yetmediÄŸi iOS Safari sÃ¼rÃ¼mleri iÃ§in gesture event'lerini blokla.
+  // viewport meta + touch-action yetmediği iOS Safari sürümleri için gesture event'lerini blokla.
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
     document.addEventListener(ev, e => e.preventDefault(), { passive: false });
   });
-  // Ã‡ift dokunma zoom'unu engelle (iOS)
+  // Çift dokunma zoom'unu engelle (iOS)
   let lastTouchEnd = 0;
   document.addEventListener('touchend', e => {
     const now = Date.now();
     if (now - lastTouchEnd <= 350) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
-  // Ä°ki parmak pinch'i her durumda engelle
+  // İki parmak pinch'i her durumda engelle
   document.addEventListener('touchmove', e => {
     if (e.touches && e.touches.length > 1) e.preventDefault();
   }, { passive: false });
@@ -3624,7 +3624,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
   }
 
-  // Herhangi bir avatar grid'ini render et (id + CSS class adÄ± verilir)
+  // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
   function renderAvatarGrid(containerId, optClass, onPick) {
     const p = document.getElementById(containerId);
     if (!p) return;
@@ -3737,9 +3737,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // it doesn't shift the score formula.
   let distancePx = 0;
   let best    = Number(localStorage.getItem('arc_best') || 0);
-  let scoreBonus = 0; // altÄ±n toplardan gelen ek puan
-  let pbCrossed = false; // PB distance line geÃ§ildi mi (run baÅŸÄ±na bir kez)
-  let pbFadeT   = 0;     // PB Ã§izgi fade-out animasyon zamanlayÄ±cÄ±sÄ± (sn)
+  let scoreBonus = 0; // altın toplardan gelen ek puan
+  let pbCrossed = false; // PB distance line geçildi mi (run başına bir kez)
+  let pbFadeT   = 0;     // PB çizgi fade-out animasyon zamanlayıcısı (sn)
   const PB_FADE_DUR = 0.7;
 
   // ── Booster state ────────────────────────────────────────
@@ -3796,7 +3796,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return base * mult;
   }
 
-  // Ghost: Ã¶nceki oyunun trail'i (world-space) — %20 alpha ile Ã§izilir
+  // Ghost: önceki oyunun trail'i (world-space) — %20 alpha ile çizilir
   let ghostTrail = [];          // legacy single-ghost (unused after the
                                 // multi-trace refactor below, kept to avoid
                                 // touching unrelated callsites)
@@ -3885,7 +3885,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
   }
 
-  // LB NPC sabit skorlarÄ± (her oyun baÅŸÄ±nda yeniden Ã§ekilir)
+  // LB NPC sabit skorları (her oyun başında yeniden çekilir)
   let lbNPCScores = [];
 
   // Tutorial system removed — players learn by playing.
@@ -4010,7 +4010,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // Audio Visualizer (AudioContext + AnalyserNode)
   let audioCtx = null, analyser = null, vizData = null;
-  // Gold vignette flash state (altÄ±n toptan kenar parlamasÄ±)
+  // Gold vignette flash state (altın toptan kenar parlaması)
   let goldFlashAlpha = 0;
 
   // The bg-flash viz used to read frequency bins from an AnalyserNode that
@@ -4074,7 +4074,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       t: 0,
       // Per-stage durations (seconds)
       growDur: 0.35,
-      mulDur:  (mul && Math.abs(mul - 1) > 0.05) ? 0.55 : 0.20, // skip the multiplier beat when mulâ‰ˆ1
+      mulDur:  (mul && Math.abs(mul - 1) > 0.05) ? 0.55 : 0.20, // skip the multiplier beat when mul≈1
       // Positions
       sx, sy,   // world spawn (where the gold ball was) — used as origin for grow
       cx, cy,   // center anchor
@@ -4253,7 +4253,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const goldBalls = [], purpleBalls = [], particles = [];
 
   // ── Audio ──────────────────────────────────────────────────
-  // new Audio() her protokolde (file://, http://) Ã§alÄ±ÅŸÄ±r — fetch'in aksine.
+  // new Audio() her protokolde (file://, http://) çalışır — fetch'in aksine.
   const bgAudio    = new Audio('AUDIO/ArcRiseBGMusic.wav');
   bgAudio.loop     = true;
   bgAudio.volume   = 0.7;
@@ -4339,10 +4339,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const RAINBOW = ['#ff2255','#ff6600','#ddcc00','#7CFF7A','#00b8ff','#7744ff','#ff44aa'];
   const bgArcs  = [];
 
-  // Her BG arc: bir "top" dairesel yay Ã¼zerinde hareket eder, arkasÄ±nda iz bÄ±rakÄ±r.
-  // TÄ±pkÄ± oyundaki topun yaptÄ±ÄŸÄ± gibi — gerÃ§ek dairesel kinematik.
+  // Her BG arc: bir "top" dairesel yay üzerinde hareket eder, arkasında iz bırakır.
+  // Tıpkı oyundaki topun yaptığı gibi — gerçek dairesel kinematik.
   function newBgArc(preAge) {
-    const hueStart = Math.random() * 360;              // gÃ¶kkuÅŸaÄŸÄ± baÅŸlangÄ±Ã§ rengi
+    const hueStart = Math.random() * 360;              // gökkuşağı başlangıç rengi
     const radius = 90 + Math.random() * 220;
     const cx     = (Math.random() * 0.85 + 0.075) * W;
     const cy     = (Math.random() * 0.85 + 0.075) * H;
@@ -4359,7 +4359,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function initBgArcs() {
     bgArcs.length = 0;
-    // AralarÄ±na daÄŸÄ±tÄ±lmÄ±ÅŸ preAge ile baÅŸlatÄ±lsÄ±n ki hepsi aynÄ± anda baÅŸlamasÄ±n
+    // Aralarına dağıtılmış preAge ile başlatılsın ki hepsi aynı anda başlamasın
     for (let i = 0; i < 8; i++) bgArcs.push(newBgArc(Math.random() * 4.5));
   }
 
@@ -4373,35 +4373,35 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   function drawBgArcs(ctx2) {
-    const SEGS  = 20; // gÃ¶kkuÅŸaÄŸÄ± segmenti sayÄ±sÄ±
+    const SEGS  = 20; // gökkuşağı segmenti sayısı
     const FADE_IN = 0.35;
     ctx2.save();
     ctx2.lineWidth = 1.6;
     ctx2.lineCap   = 'round';
 
     for (const a of bgArcs) {
-      // Ã‡izim fazÄ±: ne kadar radyan Ã§izildi (0..maxLen)
-      const headFrac = Math.min(1, a.age / a.drawT); // 0→1 Ã§izim ilerler
-      // Silme fazÄ±: Ã§izim bitti → kuyruk ilerler
+      // Çizim fazı: ne kadar radyan çizildi (0..maxLen)
+      const headFrac = Math.min(1, a.age / a.drawT); // 0→1 çizim ilerler
+      // Silme fazı: çizim bitti → kuyruk ilerler
       const tailFrac = a.age > a.drawT
         ? Math.min(1, (a.age - a.drawT) / a.FADE_OUT)
         : 0;
       if (tailFrac >= 1) continue;
 
-      // Genel opaklÄ±k: fade-in sÄ±rasÄ±nda aÃ§Ä±lÄ±r
+      // Genel opaklık: fade-in sırasında açılır
       const alpha = Math.min(1, a.age / FADE_IN) * 0.6;
 
       for (let s = 0; s < SEGS; s++) {
-        // Her segmentin [t0, t1] aralÄ±ÄŸÄ± toplam uzunluk iÃ§inde (0..1)
+        // Her segmentin [t0, t1] aralığı toplam uzunluk içinde (0..1)
         const t0 = tailFrac + (headFrac - tailFrac) * (s / SEGS);
         const t1 = tailFrac + (headFrac - tailFrac) * ((s + 1) / SEGS);
         if (t1 <= t0) continue;
 
-        // Segmentin aÃ§Ä±larÄ±
+        // Segmentin açıları
         const ang0 = a.startA + a.dir * a.maxLen * t0;
         const ang1 = a.startA + a.dir * a.maxLen * t1;
 
-        // GÃ¶kkuÅŸaÄŸÄ± rengi — baÅŸ tarafa doÄŸru daha parlak
+        // Gökkuşağı rengi — baş tarafa doğru daha parlak
         const segT   = s / (SEGS - 1);
         const hue    = (a.hueStart + segT * 280) % 360;
         const bright = 55 + segT * 12;
@@ -4526,7 +4526,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // ── Obstacles ────────────────────────────────────────────
   function drawObstacles() {
     ctx.save();
-    // DuvarÄ±n dÄ±ÅŸÄ±na taÅŸan kÄ±smÄ± kÄ±rp — siyah duvar gÃ¶rÃ¼nsÃ¼n
+    // Duvarın dışına taşan kısmı kırp — siyah duvar görünsün
     ctx.beginPath();
     ctx.rect(walls.left, 0, walls.right - walls.left, H);
     ctx.clip();
@@ -4603,7 +4603,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const sy = W2S(b.y);
       if (sy < -80 || sy > H + 80) continue;
       ctx.save();
-      // BÃ¼yÃ¼k glow (gÃ¶rÃ¼nÃ¼r olmalarÄ± iÃ§in r Ã§ok kÃ¼Ã§Ã¼k, glow geniÅŸ tutulur)
+      // Büyük glow (görünür olmaları için r çok küçük, glow geniş tutulur)
       const glowR = Math.max(12, b.r * 9);
       const pulse = 0.8 + 0.2 * Math.sin(now * 5 + b.x);
       let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, glowR);
@@ -4615,7 +4615,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Minik core (r=1..2 px)
       ctx.fillStyle = '#FFE44D';
       ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Puan (+100 / +50) — glowun Ã¼zerinde kÃ¼Ã§Ã¼k yazÄ±
+      // Puan (+100 / +50) — glowun üzerinde küçük yazı
       ctx.fillStyle = 'rgba(255,240,120,0.9)';
       ctx.font = `6px 'Press Start 2P', monospace`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
@@ -4658,7 +4658,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     floatTexts.push({ x: wx, y: wy, text, hue, life: 1, scale });
   }
 
-  // Aktif booster skoru kaÃ§ ile Ã§arpÄ±yor (x2/x3/x4 → 2/3/4, diÄŸerleri → 1)
+  // Aktif booster skoru kaç ile çarpıyor (x2/x3/x4 → 2/3/4, diğerleri → 1)
   function getBoostScoreMul() {
     if (boosterType === 'x2') return 2;
     if (boosterType === 'x3') return 3;
@@ -4783,7 +4783,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       p.x  += p.vx * dt;
       p.y  += p.vy * dt;
       p.rot += dt * 4;
-      p.life -= dt * 1.0;   // 1s Ã¶mÃ¼r
+      p.life -= dt * 1.0;   // 1s ömür
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -4863,7 +4863,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       ? (stats?.bestDistExtreme || 0)
       : (stats?.bestDistNormal  || 0);
     if (!bd || bd <= 0.05) return;
-    // GeÃ§ildiyse fade-out: kalÄ±nlÄ±k artar, opaklÄ±k 0'a iner; sonra hiÃ§ Ã§izme
+    // Geçildiyse fade-out: kalınlık artar, opaklık 0'a iner; sonra hiç çizme
     let lineAlpha = 0.55, labelAlpha = 0.7, lineW = 1.2, dash = [6, 6];
     if (pbCrossed) {
       if (pbFadeT >= PB_FADE_DUR) return;
@@ -4872,7 +4872,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       lineAlpha  = 0.55 * (1 - ease);
       labelAlpha = 0.7  * (1 - ease);
       lineW      = 1.2 + ease * 9; // 1.2 → ~10
-      dash       = []; // Ã§izgi kalÄ±nlaÅŸtÄ±kÃ§a dÃ¼z olsun, dash kaybolsun
+      dash       = []; // çizgi kalınlaştıkça düz olsun, dash kaybolsun
     }
     const worldY = (H - 200) - bd * (H / CM_PER_SCREEN); // bd is cm; 1cm = H/15 px
     const sy = W2S(worldY);
@@ -5091,13 +5091,13 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     else if (countdown >= 3) { glowR = 255; glowG = 140; glowB = 60;  }       // orange
     else                     { glowR = 255; glowG = 60;  glowB = 60;  }       // red
 
-    // Ghost efekti — mor renk, yarÄ± saydam
+    // Ghost efekti — mor renk, yarı saydam
     if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
 
     const glowCol = `rgb(${glowR},${glowG},${glowB})`;
     const glowA   = isGhost ? 0.5 : 1;
 
-    // BÃ¼yÃ¼k glow (r*4.5)
+    // Büyük glow (r*4.5)
     let g = ctx.createRadialGradient(px, py, 0, px, py, r * 4.5);
     g.addColorStop(0,   `rgba(${glowR},${glowG},${glowB},${.65 * energy * glowA})`);
     g.addColorStop(0.4, `rgba(${glowR},${glowG},${glowB},${.30 * energy * glowA})`);
@@ -5106,11 +5106,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     ctx.globalAlpha = isGhost ? 0.65 : 1;
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 4.5, 0, Math.PI*2); ctx.fill();
 
-    // Siyah gÃ¶vde
+    // Siyah gövde
     ctx.fillStyle = isGhost ? 'rgba(40,0,80,0.7)' : '#000';
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
 
-    // Ring stroke — glow rengiyle aynÄ± renk
+    // Ring stroke — glow rengiyle aynı renk
     ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${.95 * energy})`;
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
@@ -5151,7 +5151,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const lw    = maxLW * frac;
     const info  = BOOSTER_INFO[boosterType];
     const color = info?.color ?? '#b450ff';
-    // pulse hÄ±zlÄ± son 20%'de
+    // pulse hızlı son 20%'de
     const now   = performance.now() / 1000;
     const pulse = frac < 0.2 ? 0.5 + 0.5 * Math.abs(Math.sin(now * 8)) : 1;
     ctx.save();
@@ -5166,19 +5166,19 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
   let lbFrame = 0;
 
-  // Firestore'dan canlÄ± skorlarÄ± Ã§ek, lbNPCScores'u doldur.
-  // Rate-limited: Ã§aÄŸrÄ± baÅŸÄ±na en fazla 10 doc, ve aynÄ± oturumda 5 dk iÃ§inde
-  // yeniden istenirse cache'ten dÃ¶nÃ¼yor (getTopScores TTL'i devreye giriyor).
+  // Firestore'dan canlı skorları çek, lbNPCScores'u doldur.
+  // Rate-limited: çağrı başına en fazla 10 doc, ve aynı oturumda 5 dk içinde
+  // yeniden istenirse cache'ten dönüyor (getTopScores TTL'i devreye giriyor).
   async function fetchLiveScores() {
     try {
       const rows = await ARC_DB.getTopScores(10, gameMode);
       if (rows && rows.length > 0) {
-        // Oyuncunun kendi satÄ±rÄ±nÄ± dÄ±ÅŸarÄ±da bÄ±rak; refreshLB dinamik ekleyecek
+        // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
         lbNPCScores = rows
           .filter(r => r.name !== playerName)
           .map(r => ({ n: r.name, s: r.score }));
       } else {
-        // Firebase boÅŸ / ulaÅŸÄ±lamadÄ± → sahte NPC'ler
+        // Firebase boş / ulaşılamadı → sahte NPC'ler
         lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
         lbNPCScores.sort((a, b) => b.s - a.s);
       }
@@ -5212,12 +5212,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (lbFrame % 30 !== 0) return; // update every 30 frames
     const sc  = Math.floor(score);
     const avc = AVATAR_COLORS[avatarIdx];
-    // NPC'leri ve oyuncuyu birleÅŸtir, skora gÃ¶re sÄ±rala
+    // NPC'leri ve oyuncuyu birleştir, skora göre sırala
     const rows = [...lbNPCScores, { n: playerName, s: sc, you: true }];
     rows.sort((a, b) => b.s - a.s);
-    // Oyuncunun sÄ±rasÄ±
+    // Oyuncunun sırası
     const youIdx = rows.findIndex(r => r.you);
-    // Oyuncu ortada kalacak ÅŸekilde 12 satÄ±r dilim
+    // Oyuncu ortada kalacak şekilde 12 satır dilim
     const start = Math.max(0, youIdx - 5);
     const slice = rows.slice(start, start + 13);
     lbEl.innerHTML = slice.map(r =>
@@ -5264,8 +5264,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
-    // Firestore'dan gerÃ§ek skorlarÄ± arka planda Ã§ek — ilk Ã§aÄŸrÄ± dÄ±ÅŸÄ±nda
-    // ARC_DB'nin 5dk TTL cache'ine dÃ¼ÅŸer, yani okuma yapmadan dÃ¶ner.
+    // Firestore'dan gerçek skorları arka planda çek — ilk çağrı dışında
+    // ARC_DB'nin 5dk TTL cache'ine düşer, yani okuma yapmadan döner.
     fetchLiveScores();
     fetchCrossPlayerGhosts();
     initBgArcs();
@@ -5372,7 +5372,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const now = performance.now() / 1000;
 
     if (!trail.length || Math.hypot(player.x - trail.at(-1).x, player.y - trail.at(-1).y) > 2) {
-      const th = (now * 80 + trail.length * 3) % 360; // anlÄ±k ton rengi
+      const th = (now * 80 + trail.length * 3) % 360; // anlık ton rengi
       trail.push({ x: player.x, y: player.y, h: th });
       if (trail.length > 600) trail.shift();
     }
@@ -5442,7 +5442,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       comboEl.classList.remove('active');
     }
 
-    // Booster sayacÄ±
+    // Booster sayacı
     if (boosterType && boosterDur > 0) {
       boosterTime -= dt;
       if (boosterTime <= 0) { clearBooster(); }
@@ -5522,7 +5522,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           setTimeout(() => { if (tutActive && tutStage === 3) enterTutStage(4); }, 350);
           continue;
         }
-        // Base 10, sÃ¼re katsayÄ±sÄ± → booster katsayÄ±sÄ± sÄ±rayla
+        // Base 10, süre katsayısı → booster katsayısı sırayla
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
@@ -5534,27 +5534,27 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         spawnGreenParticles(b.x, b.y);
       }
     }
-    // AltÄ±n top toplama — combo Ã§arpanlÄ± + flying score + sahne flash
+    // Altın top toplama — combo çarpanlı + flying score + sahne flash
     for (let i = goldBalls.length - 1; i >= 0; i--) {
       const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       const hitR = player.r + Math.max(12, b.r * 9);
       if (dx*dx + dy*dy < hitR * hitR) {
-        // Base 100, sÃ¼re katsayÄ±sÄ± Ã¶nce, booster katsayÄ±sÄ± Ã¼stÃ¼ne
+        // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         const totalMul = timeMul * boostMul;
         const finalPts = Math.round((b.pts * totalMul) / 10) * 10;
         scoreBonus += finalPts;
-        // SarÄ± flash sahne kenarlarÄ±nda (puana gÃ¶re intensity)
+        // Sarı flash sahne kenarlarında (puana göre intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 800));
-        // 3-aÅŸamalÄ± altÄ±n animasyonu: merkezde bÃ¼yÃ¼k "+base" → ×combo → HUD'a uÃ§
+        // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
       }
     }
-    // Mor booster toplama (base 100 + sÃ¼re × booster katsayÄ±larÄ±; aktivasyon SONRA)
+    // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r)**2) {
@@ -5713,7 +5713,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
   async function _proceedEndGame() {
     stopBgMusic();
-    haptic(2000); // Ã§arpÄ±ÅŸma titreÅŸimi — 2 saniye
+    haptic(2000); // çarpışma titreşimi — 2 saniye
     if (sfxOn) {
       if (!playSfxBuffer(deadBuffer, 1.0)) {
         const _d = deadAudioFallback.cloneNode(); _d.volume = 1.0; _d.play().catch(() => {});
@@ -5784,7 +5784,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const bd = bestDistanceM || 0;
       goBestDistInline.textContent = fmtDist(bd);
     }
-    // Ã–nce ekranÄ± aÃ§ — Firestore cevabÄ±nÄ± beklemeden
+    // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
     // ── Twin animation: score + distance count up together ─
@@ -5858,10 +5858,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     setTimeout(() => requestAnimationFrame(animCoin), 350);
 
-    // GeÃ§ici "yÃ¼kleniyor" satÄ±rlarÄ±
+    // Geçici "yükleniyor" satırları
     rankRows.innerHTML = `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
 
-    // Skoru + distance'Ä± Firestore'a gÃ¶nder (config yoksa no-op).
+    // Skoru + distance'ı Firestore'a gönder (config yoksa no-op).
     // Build optional trace data: only meaningful if we have enough sample points.
     // Downsample to ~150 points to keep Firestore payload small.
     let traceData = null;
@@ -5885,7 +5885,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (sc > 0) ARC_DB.invalidateTopCache();
     }
 
-    // Yeterli satÄ±r Ã§ek — 20 yeter, sÄ±ralama gÃ¶rmek iÃ§in.
+    // Yeterli satır çek — 20 yeter, sıralama görmek için.
     const topRows = await ARC_DB.getTopScores(20, gameMode);
 
     if (topRows.length === 0) {
@@ -5898,7 +5898,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       );
     }
 
-    // Rank ata, oyuncuyu iÅŸaretle (aynÄ± isim + aynÄ± skor → ilk eÅŸleÅŸme)
+    // Rank ata, oyuncuyu işaretle (aynı isim + aynı skor → ilk eşleşme)
     let markedYou = false;
     const ann = topRows.map((r, i) => {
       const isYou = !markedYou && r.name === playerName && r.score === sc;
@@ -5906,7 +5906,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       return { ...r, rank: i, isYou };
     });
 
-    // Oyuncu top-50 dÄ±ÅŸÄ±ndaysa doÄŸru pozisyona ekle
+    // Oyuncu top-50 dışındaysa doğru pozisyona ekle
     if (!markedYou) {
       const ins = ann.findIndex(r => r.score < sc);
       const pe  = { name: playerName, avatar: avatarIdx, score: sc, isYou: true };
@@ -5922,14 +5922,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
     const youIdx = ann.findIndex(r => r.isYou);
 
-    // GÃ¶sterilecek 4 satÄ±r: #1 + bir Ã¼st + kendim + bir alt
+    // Gösterilecek 4 satır: #1 + bir üst + kendim + bir alt
     const showSet = new Set([0]);
     if (youIdx > 0)                      showSet.add(youIdx - 1);
     showSet.add(youIdx);
     if (youIdx + 1 < ann.length)         showSet.add(youIdx + 1);
     const showArr = [...showSet].sort((a, b) => a - b);
 
-    // SatÄ±rlarÄ± oluÅŸtur; boÅŸluk varsa ··· ayÄ±rÄ±cÄ±
+    // Satırları oluştur; boşluk varsa ··· ayırıcı
     let html = '';
     let prev = -1;
     for (const idx of showArr) {
@@ -5951,7 +5951,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     rankRows.innerHTML = html;
   }
 
-  // 6 haneli skor gÃ¶sterimi (000000 → 999999+)
+  // 6 haneli skor gösterimi (000000 → 999999+)
   const pad = n => {
     const v = Math.max(0, Math.floor(n));
     if (v < 1000000)   return String(v).padStart(6, '0');
@@ -6071,7 +6071,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (s === 'home') { applyProfile(); }
   }
 
-  // Ä°lk aÃ§Ä±lÄ±ÅŸta profil oluÅŸturma ekranÄ±nÄ± gÃ¶ster
+  // İlk açılışta profil oluşturma ekranını göster
   if (!localStorage.getItem('arc_name')) {
     showScene('profile-setup');
   } else {
@@ -6137,7 +6137,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_coins', String(coins));
-    // Minimum 2000 score & 1500cm mesafe — her iki mode iÃ§in yÃ¼ksek olanÄ± tut
+    // Minimum 2000 score & 1500cm mesafe — her iki mode için yüksek olanı tut
     stats.bestNormal     = Math.max(stats.bestNormal || 0, 2000);
     stats.bestExtreme    = Math.max(stats.bestExtreme || 0, 2000);
     stats.bestDistNormal  = Math.max(stats.bestDistNormal  || 0, 1500);
@@ -6148,7 +6148,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_bestdist', String(bestDistanceM));
     saveStats();
     try { applyProfile(); } catch(_){}
-    console.log('[ArcRise dev] RR cheat: +900 coins, bestâ‰¥2000, distâ‰¥1500cm');
+    console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥1500cm');
   }
   function toggleDebug(force) {
     debugOverlayOn = (force !== undefined) ? force : !debugOverlayOn;
@@ -6288,9 +6288,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       }
       rows = Array.from(byName.values()).sort((a,b) => b.score - a.score);
     } else {
-      // 30 sÄ±ra yeter: position widget en Ã§ok 6 satÄ±r gÃ¶steriyor, Ã¼Ã§ adet
-      // best-card (all-time / today / month) bunun iÃ§inden tÃ¼retilebiliyor.
-      // (Daha geriye uzanmak iÃ§in kullanÄ±cÄ± zaten Firestore quota'sÄ± yiyor.)
+      // 30 sıra yeter: position widget en çok 6 satır gösteriyor, üç adet
+      // best-card (all-time / today / month) bunun içinden türetilebiliyor.
+      // (Daha geriye uzanmak için kullanıcı zaten Firestore quota'sı yiyor.)
       rows = await ARC_DB.getTopScores(30, mode);
     }
     const now = Date.now();
@@ -6386,7 +6386,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     renderLbCard('monthly', null);
     document.getElementById('lb-list').innerHTML = `<div class="lb-empty">Loading...</div>`;
     const data = await loadLbData(mode);
-    // EÄŸer kullanÄ±cÄ± bu sÄ±rada tab deÄŸiÅŸtirdiyse, sonuÃ§larÄ± yazma
+    // Eğer kullanıcı bu sırada tab değiştirdiyse, sonuçları yazma
     if (lbCurrentMode !== mode) return;
     renderLbCard('best',    data.top);
     renderLbCard('daily',   data.daily);
@@ -6395,7 +6395,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   function openLbModal() {
-    lbCurrentMode = gameMode || 'normal'; // mevcut moddan baÅŸla
+    lbCurrentMode = gameMode || 'normal'; // mevcut moddan başla
     lbMetric = 'score';
     // NOT clearing lbCache on open — the ARC_DB layer has its own TTL (5 min)
     // and we rely on submitScore-triggered invalidation for freshness. This
@@ -6424,7 +6424,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const m = btn.dataset.metric;
       if (lbMetric === m) return;
       lbMetric = m;
-      // metric deÄŸiÅŸti → cache temizle (her metric iÃ§in ayrÄ± veri)
+      // metric değişti → cache temizle (her metric için ayrı veri)
       lbCache = { normal: null, extreme: null };
       document.querySelectorAll('.lb-metric-tab').forEach(b => {
         b.classList.toggle('active', b.dataset.metric === lbMetric);
@@ -6618,7 +6618,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   });
   renderSlots();
 
-  // â•â• Upgrades — Passive catalog â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ╁╁ Upgrades — Passive catalog ╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁╁
   const upgradesModal = document.getElementById('upgrades-modal');
 
   // Pricing — every directional purchase chain uses [5,10,20,40].
@@ -7427,7 +7427,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
     initAudio(); // AudioContext unlock
-    // Skor kaydÄ± iÃ§in boÅŸ isim olmasÄ±n — varsayÄ±lan PLAYER
+    // Skor kaydı için boş isim olmasın — varsayılan PLAYER
     if (!playerName || !playerName.trim()) {
       playerName = 'PLAYER';
       localStorage.setItem('arc_name', playerName);
@@ -7437,7 +7437,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     consumeArmedConsumables();
     playBgMusic();
     showScene('play');
-    // Oyun hemen baÅŸlasÄ±n — ilk dokunuÅŸ bekleme
+    // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
     // Pre-Booster armed ise rastgele bir booster ile başlat
@@ -7739,7 +7739,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('wrap-start').addEventListener('click', handleStartTap);
 
   document.getElementById('btn-credits').addEventListener('click', () => {
-    alert('ArcRise\nv1.0 — 2025\nDesign & Code: BuÄŸra Sulukcu');
+    alert('ArcRise\nv1.0 — 2025\nDesign & Code: Buğra Sulukcu');
   });
 
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
