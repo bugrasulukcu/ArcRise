@@ -7686,11 +7686,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (!grid) return;
     grid.innerHTML = '';
     BADGES.forEach(b => {
+      const locked = !earnedBadges.has(b.id);
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'prof-badge' + (equippedBadges.includes(b.id) ? ' sel' : '');
+      if (locked) { el.style.opacity = '0.32'; el.style.filter = 'grayscale(1)'; }
+      el.title = b.desc + (locked ? '' : ' ✓');
       el.innerHTML = `<span class="prof-badge-icon">${iconHTML(b.icon, { size: 26 })}</span><span class="prof-badge-name">${b.name}</span>`;
       el.addEventListener('click', () => {
+        if (locked) { try { showToast(b.desc.toUpperCase()); } catch(_){} return; }
         const idx = equippedBadges.indexOf(b.id);
         if (idx !== -1) {
           equippedBadges[idx] = null;
