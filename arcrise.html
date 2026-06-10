@@ -6086,7 +6086,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (gameMode !== 'wife') {
-      await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData);
+      // Takılı badge'ler leaderboard'da isim yanında gösterilir
+      const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
+      await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData, eqBadges);
       if (sc > 0) ARC_DB.invalidateTopCache();
     }
 
