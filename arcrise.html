@@ -5634,7 +5634,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
 
     for (const ob of obstacles) {
-      if (ob.mk) {
+      // PULSE: yarıçap nefes alır (collision da büyüyen yarıçapı kullanır)
+      if (ob.pk) {
+        ob.pt += dt;
+        ob.r = ob.r0 * (0.72 + 0.34 * Math.sin(ob.pt * 1.8 + ob.pph));
+      }
+      if (ob.mk === 'orbit') {
+        ob.mt += dt;
+        const a = ob.oph + ob.mt * ob.ow;
+        ob._ox = ob.x + Math.cos(a) * ob.orbR;
+        ob._oy = ob.y + Math.sin(a) * ob.orbR;
+      } else if (ob.mk) {
         ob.mt += dt;
         const s = Math.sin(ob.mt * ob.mf) * ob.ma;
         if      (ob.mk === 'h')    { ob._ox = ob.x + s;                            ob._oy = ob.y; }
