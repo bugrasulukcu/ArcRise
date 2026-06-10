@@ -2187,8 +2187,9 @@
     #extreme-modal-box > *:not(#extreme-modal-deco) { position: relative; z-index: 1; }
 
     /* ══════════ GAME MODE SELECTOR ══════════ */
-    /* Settings içindeki tüm metinler büyük harf (garanti) */
-    #settings, #mode-btn-tutorial { text-transform: uppercase; }
+    /* Settings içindeki tüm metinler büyük harf (garanti).
+       <button> elementleri text-transform'u miras almadığı için butonlara explicit veriyoruz. */
+    #settings, #settings button, #mode-btn-tutorial { text-transform: uppercase; }
     /* Settings "Mode" satırı: etiketin sağında wife + Chill/Extreme */
     #settings .srow .slbl { min-width: 0; }
     #settings .sctl-mode { gap: 8px; flex-shrink: 0; }
