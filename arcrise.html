@@ -5514,7 +5514,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       // Grace window: countdown shows "0" for up to GRACE_S so the player
       // has a forgiving moment to grab a green and recover before death.
       graceTimer += dt;
-      if (graceTimer >= GRACE_S) { endGame(); return; }
+      if (graceTimer >= GRACE_S) { beginDeath(); return; }
     } else {
       graceTimer = 0;
     }
