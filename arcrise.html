@@ -4228,6 +4228,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     localStorage.setItem('arc_name', playerName);
     localStorage.setItem('arc_avatar', avatarIdx);
     applyProfile();
+    try { ensureAccount(); } catch(_){} // name#tag hesabını oluştur + yayınla
     // Profil oluştur → her zaman home'a git. Tutorial ilk START tıklamasında açılacak.
     showScene('home');
   });
