@@ -2296,6 +2296,117 @@
     }
     #btn-challenge-link:hover  { color: rgba(120,228,255,1); }
     #btn-challenge-link:active { transform: scale(0.98); }
+
+    /* ══════════ QUESTS MODAL ══════════ */
+    #quests-modal, #friends-modal {
+      position: fixed; inset: 0; z-index: 56;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,0.30);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    #quests-modal.open, #friends-modal.open { display: flex; }
+    #quests-modal-box, #friends-modal-box {
+      position: relative; width: min(92vw, 360px);
+      border-radius: 22px; padding: 24px 20px 18px;
+      display: flex; flex-direction: column; gap: 14px; align-items: center;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(14,18,28,0.96) 0%, rgba(8,10,18,0.97) 100%);
+      border: 1.5px solid rgba(255,255,255,.18);
+      box-shadow: 0 0 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    #quests-modal-box { border-color: rgba(255,200,90,.45); }
+    .qm-title, .fm-title {
+      font-size: 18px; letter-spacing: 2.5px; color: #fff; text-align: center;
+    }
+    #quests-modal-box .qm-title { color: #ffce5a; }
+    .qm-sub { font-size: 9px; letter-spacing: 1.5px; color: rgba(255,255,255,.4); margin-top: -8px; }
+    #quests-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .quest-card {
+      width: 100%; padding: 12px 14px; border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(30,34,46,.7), rgba(16,20,30,.7));
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .quest-card.done { border-color: rgba(124,255,122,.45); }
+    .quest-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .quest-label { font-size: 11px; letter-spacing: .8px; color: #fff; flex: 1; }
+    .quest-reward { font-size: 11px; letter-spacing: .5px; color: #ffce5a; white-space: nowrap; }
+    .quest-bar-wrap { height: 7px; border-radius: 4px; background: rgba(255,255,255,.10); overflow: hidden; }
+    .quest-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ffaa33, #ffd866); transition: width .3s; }
+    .quest-card.done .quest-bar { background: linear-gradient(90deg, #3ad055, #7CFF7A); }
+    .quest-bottom { display: flex; justify-content: space-between; align-items: center; }
+    .quest-progress-txt { font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,.5); }
+    .quest-claim {
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.2px;
+      padding: 6px 14px; border-radius: 9px; cursor: pointer;
+      border: 1px solid rgba(124,255,122,.5); color: #062a08;
+      background: linear-gradient(180deg, #7CFF7A, #3ad055);
+    }
+    .quest-claim:active { transform: scale(0.95); }
+    .quest-claim.claimed,
+    .quest-claim:disabled {
+      background: none; color: rgba(255,255,255,.3);
+      border-color: rgba(255,255,255,.15); cursor: default;
+    }
+    #quests-modal-close, #friends-modal-close {
+      width: 100%; padding: 13px; border-radius: 11px; margin-top: 2px;
+      border: 1.5px solid rgba(255,255,255,.26);
+      background: linear-gradient(180deg, rgba(40,46,60,.9), rgba(14,18,28,.92));
+      color: #fff; font-family: var(--font); font-size: 13px; letter-spacing: 2px; cursor: pointer;
+    }
+    #quests-modal-close:active, #friends-modal-close:active { transform: scale(0.98); }
+
+    /* ══════════ FRIENDS MODAL ══════════ */
+    #friends-modal-box { border-color: rgba(90,216,255,.45); }
+    #friends-modal-box .fm-title { color: #5ad8ff; }
+    .fm-code-card {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 13px;
+      border: 1px dashed rgba(90,216,255,.4); background: rgba(90,216,255,.06);
+    }
+    .fm-code-lbl { font-size: 9px; letter-spacing: 1.4px; color: rgba(255,255,255,.5); }
+    .fm-code { flex: 1; font-size: 20px; letter-spacing: 4px; color: #5ad8ff; font-weight: 700; }
+    #friends-copy-code {
+      font-family: var(--font); font-size: 9px; letter-spacing: 1px;
+      padding: 6px 12px; border-radius: 8px; cursor: pointer;
+      border: 1px solid rgba(90,216,255,.5); color: #5ad8ff; background: rgba(90,216,255,.08);
+    }
+    #friends-copy-code:active { transform: scale(0.95); }
+    #friends-share-btn {
+      width: 100%; padding: 13px; border-radius: 11px;
+      border: 1.5px solid rgba(90,216,255,.5);
+      background: linear-gradient(180deg, rgba(40,80,110,.5), rgba(16,30,44,.6));
+      color: #5ad8ff; font-family: var(--font); font-size: 12px; letter-spacing: 2px; cursor: pointer;
+    }
+    #friends-share-btn:active { transform: scale(0.98); }
+    .fm-add-row { width: 100%; display: flex; gap: 8px; }
+    #friends-add-input {
+      flex: 1; min-width: 0; padding: 11px 12px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.05);
+      color: #fff; font-family: var(--font); font-size: 14px !important; letter-spacing: 3px; text-align: center;
+    }
+    #friends-add-btn {
+      flex: 0 0 auto; padding: 0 18px; border-radius: 10px; cursor: pointer;
+      border: 1px solid rgba(124,255,122,.5); color: #062a08;
+      background: linear-gradient(180deg, #7CFF7A, #3ad055);
+      font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
+    }
+    #friends-add-btn:active { transform: scale(0.96); }
+    .fm-add-msg { font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,.5); min-height: 11px; text-align: center; }
+    #friends-list { width: 100%; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
+    .friend-row {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+    }
+    .friend-row .fr-name { flex: 1; font-size: 11px; letter-spacing: .8px; color: #fff; }
+    .friend-row .fr-code { font-size: 10px; letter-spacing: 1.5px; color: rgba(90,216,255,.7); }
+    .friend-row .fr-remove {
+      background: none; border: none; color: rgba(255,90,110,.7);
+      font-size: 14px; cursor: pointer; padding: 0 4px;
+    }
+    .fm-empty { font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.3); text-align: center; padding: 8px 0; }
     /* Tutorial — Settings çerçevesi dışında metin link (CREDITS gibi) */
     #mode-btn-tutorial {
       margin-top: 16px; padding: 8px 16px;
