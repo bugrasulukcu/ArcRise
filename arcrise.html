@@ -8918,8 +8918,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('quests-modal-close').addEventListener('click', closeQuestsModal);
   document.getElementById('quests-modal').addEventListener('click', e => { if (e.target.id === 'quests-modal') closeQuestsModal(); });
 
-  // ══════════ FRIENDS (yerel altyapı — Firestore profil senkronu sonraki adım) ══════════
-  const FRIENDS_KEY = 'arc_friends_v1', FRIEND_CODE_KEY = 'arc_friend_code';
+  // ══════════ CHALLENGE / INVITE (referral link) ══════════
+  const FRIEND_CODE_KEY = 'arc_friend_code';
   function genFriendCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i=0;i<6;i++) s += A[Math.floor(Math.random()*A.length)]; return s; }
   function myFriendCode() {
     let c = null;
@@ -8927,45 +8927,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (!c) { c = genFriendCode(); try { localStorage.setItem(FRIEND_CODE_KEY, c); } catch(_){} }
     return c;
   }
-  function loadFriends() { try { const a = JSON.parse(localStorage.getItem(FRIENDS_KEY)); return Array.isArray(a) ? a : []; } catch(_){ return []; } }
-  function saveFriends(a) { try { localStorage.setItem(FRIENDS_KEY, JSON.stringify(a)); } catch(_){} }
-  function renderFriends() {
-    const codeEl = document.getElementById('friends-my-code');
-    if (codeEl) codeEl.textContent = myFriendCode();
-    const list = document.getElementById('friends-list');
-    if (!list) return;
-    const friends = loadFriends();
-    if (!friends.length) { list.innerHTML = `<div class="fm-empty">No friends added yet</div>`; return; }
-    list.innerHTML = friends.map((f, i) =>
-      `<div class="friend-row"><span class="fr-name">${(f.name||'PLAYER')}</span><span class="fr-code">${f.code}</span><button class="fr-remove" data-fi="${i}" aria-label="Remove">&times;</button></div>`
-    ).join('');
-    list.querySelectorAll('.fr-remove').forEach(b => b.addEventListener('click', () => {
-      const a = loadFriends(); a.splice(Number(b.dataset.fi), 1); saveFriends(a); renderFriends();
-    }));
-  }
-  function addFriendByCode(code) {
-    const msg = document.getElementById('friends-add-msg');
-    code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-    if (code.length !== 6) { if (msg) msg.textContent = 'Enter a 6-character code'; return; }
-    if (code === myFriendCode()) { if (msg) msg.textContent = "That's your own code!"; return; }
-    const a = loadFriends();
-    if (a.some(f => f.code === code)) { if (msg) msg.textContent = 'Already added'; return; }
-    a.push({ code, name: 'PLAYER ' + code }); // Firestore senkronu sonra gerçek isim/skoru doldurur
-    saveFriends(a); renderFriends();
-    const inp = document.getElementById('friends-add-input'); if (inp) inp.value = '';
-    if (msg) msg.textContent = 'Friend added';
-  }
-  function openFriendsModal()  { renderFriends(); claimReferralRewards(); const m = document.getElementById('friends-add-msg'); if (m) m.textContent = ''; document.getElementById('friends-modal').classList.add('open'); }
+  function openFriendsModal()  { claimReferralRewards(); document.getElementById('friends-modal').classList.add('open'); }
   function closeFriendsModal() { document.getElementById('friends-modal').classList.remove('open'); }
   document.getElementById('btn-challenge-link').addEventListener('click', openFriendsModal);
   document.getElementById('friends-modal-close').addEventListener('click', closeFriendsModal);
   document.getElementById('friends-modal').addEventListener('click', e => { if (e.target.id === 'friends-modal') closeFriendsModal(); });
-  document.getElementById('friends-add-btn').addEventListener('click', () => addFriendByCode(document.getElementById('friends-add-input').value));
-  document.getElementById('friends-add-input').addEventListener('keydown', e => { if (e.key === 'Enter') addFriendByCode(e.target.value); });
-  document.getElementById('friends-copy-code').addEventListener('click', () => {
-    const m = document.getElementById('friends-add-msg');
-    try { navigator.clipboard.writeText(myFriendCode()); if (m) m.textContent = 'Code copied'; } catch(_) { if (m) m.textContent = myFriendCode(); }
-  });
   document.getElementById('friends-share-btn').addEventListener('click', () => shareChallenge());
 
   // ── Referral (davet) ödülü: kişiye özel link, tıklama başına davet edene 1 coin ──
@@ -9006,6 +8972,124 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   })();
   // Sahibe: birikmiş referral tıklamalarını coine çevir (açılışta bir kez)
   claimReferralRewards();
+
+  // ══════════ HESAP (NAME#TAG) + ARKADAŞ LİSTESİ ══════════
+  const ACCOUNT_TAG_KEY = 'arc_tag', FRIENDS2_KEY = 'arc_friends_v2';
+  function myTag() { try { return localStorage.getItem(ACCOUNT_TAG_KEY) || ''; } catch(_) { return ''; } }
+  function myIdentity() { return playerName ? (playerName + (/^\d{4}$/.test(myTag()) ? '#' + myTag() : '')) : ''; }
+  function pickFreeTag(used) {
+    const set = new Set(used || []);
+    for (let i = 0; i < 60; i++) { const t = String(Math.floor(1000 + Math.random()*9000)); if (!set.has(t)) return t; }
+    return String(Math.floor(1000 + Math.random()*9000));
+  }
+  async function ensureAccount() {
+    if (!playerName) return;
+    let tag = myTag();
+    if (!/^\d{4}$/.test(tag)) {
+      let used = [];
+      try { used = await ARC_DB.findTagsForName(playerName) || []; } catch(_){}
+      tag = pickFreeTag(used);
+      try { localStorage.setItem(ACCOUNT_TAG_KEY, tag); } catch(_){}
+    }
+    publishPlayerProfile();
+  }
+  function publishPlayerProfile() {
+    const tag = myTag();
+    if (!playerName || !/^\d{4}$/.test(tag)) return;
+    const bestScore  = Math.max(stats?.bestNormal || 0, stats?.bestExtreme || 0);
+    const bestDistCm = Math.max(stats?.bestDistNormal || 0, stats?.bestDistExtreme || 0);
+    try { ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
+  }
+  function loadFriends2() { try { const a = JSON.parse(localStorage.getItem(FRIENDS2_KEY)); return Array.isArray(a) ? a : []; } catch(_){ return []; } }
+  function saveFriends2(a) { try { localStorage.setItem(FRIENDS2_KEY, JSON.stringify(a)); } catch(_){} }
+  let _flSort = 'score';
+  function flFmtDist(m) { return fmtDist((Number(m) || 0) * 100); } // registry metre → fmtDist cm bekler
+  function renderFriendsList() {
+    const idEl = document.getElementById('myid-code');
+    if (idEl) idEl.textContent = myIdentity() || '----';
+    const list = document.getElementById('fl-list');
+    if (!list) return;
+    const friends = loadFriends2().slice();
+    if (!friends.length) { list.innerHTML = `<div class="fm-empty">No friends yet — add one by ID above</div>`; return; }
+    friends.sort((a, b) => _flSort === 'dist' ? (b.dist||0) - (a.dist||0) : (b.score||0) - (a.score||0));
+    list.innerHTML = friends.map((f, i) => {
+      const known = (f.score != null) || (f.dist != null);
+      const metric = _flSort === 'dist'
+        ? `<span class="fl-metric dist">${known ? flFmtDist(f.dist) : '—'}</span>`
+        : `<span class="fl-metric score">${known ? pad(f.score||0) : '—'}</span>`;
+      return `<div class="fl-row">
+        <span class="fl-rank">${i+1}</span>
+        <span class="fl-info">
+          <span class="fl-name">${f.name}<span class="fl-tag">#${f.tag}</span></span>
+          <span class="fl-stats"><span class="fl-s-score">${known?pad(f.score||0):'—'}</span> PTS · <span class="fl-s-dist">${known?flFmtDist(f.dist):'—'}</span></span>
+        </span>
+        ${metric}
+        <button class="fl-remove" data-fi="${f.tag}|${f.name}" aria-label="Remove">&times;</button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.fl-remove').forEach(b => b.addEventListener('click', () => {
+      const [tag, name] = b.dataset.fi.split('|');
+      saveFriends2(loadFriends2().filter(f => !(f.tag === tag && f.name === name)));
+      renderFriendsList();
+    }));
+  }
+  async function refreshFriendProfiles() {
+    const a = loadFriends2();
+    if (!a.length) return;
+    let changed = false;
+    for (const f of a) {
+      try {
+        const p = await ARC_DB.getPlayer(f.name, f.tag);
+        if (p) { f.name = p.name; f.avatar = p.avatar; f.score = p.score; f.dist = p.dist; changed = true; }
+      } catch(_){}
+    }
+    if (changed) { saveFriends2(a); renderFriendsList(); }
+  }
+  async function addFriendById(input) {
+    const msg = document.getElementById('fl-add-msg');
+    const raw = (input || '').toUpperCase().replace(/\s+/g, '');
+    const m = raw.match(/^([A-Z0-9]{1,16})#?(\d{4})$/);
+    if (!m) { if (msg) msg.textContent = 'Format: NAME#0000'; return; }
+    const name = m[1], tag = m[2];
+    if (name === playerName && tag === myTag()) { if (msg) msg.textContent = "That's you!"; return; }
+    const a = loadFriends2();
+    if (a.some(f => f.name === name && f.tag === tag)) { if (msg) msg.textContent = 'Already added'; return; }
+    if (msg) msg.textContent = 'Looking up...';
+    let p = null;
+    try { p = await ARC_DB.getPlayer(name, tag); } catch(_){}
+    if (p) {
+      a.push({ name: p.name, tag: p.tag, avatar: p.avatar, score: p.score, dist: p.dist });
+      if (msg) msg.textContent = 'Friend added';
+    } else {
+      a.push({ name, tag, score: null, dist: null }); // bulunamadı → yine ekle, profil sonra senkronlanır
+      if (msg) msg.textContent = 'Added (stats will sync)';
+    }
+    saveFriends2(a); renderFriendsList();
+    const inp = document.getElementById('fl-add-input'); if (inp) inp.value = '';
+  }
+  function openFriendsListModal() {
+    renderFriendsList();
+    const m = document.getElementById('fl-add-msg'); if (m) m.textContent = '';
+    document.getElementById('friendslist-modal').classList.add('open');
+    refreshFriendProfiles();
+  }
+  function closeFriendsListModal() { document.getElementById('friendslist-modal').classList.remove('open'); }
+  document.getElementById('btn-friends').addEventListener('click', openFriendsListModal);
+  document.getElementById('friendslist-modal-close').addEventListener('click', closeFriendsListModal);
+  document.getElementById('friendslist-modal').addEventListener('click', e => { if (e.target.id === 'friendslist-modal') closeFriendsListModal(); });
+  document.getElementById('fl-add-btn').addEventListener('click', () => addFriendById(document.getElementById('fl-add-input').value));
+  document.getElementById('fl-add-input').addEventListener('keydown', e => { if (e.key === 'Enter') addFriendById(e.target.value); });
+  document.getElementById('myid-copy').addEventListener('click', () => {
+    const mEl = document.getElementById('fl-add-msg');
+    try { navigator.clipboard.writeText(myIdentity()); if (mEl) mEl.textContent = 'ID copied'; } catch(_) { if (mEl) mEl.textContent = myIdentity(); }
+  });
+  document.querySelectorAll('.fl-sort-btn').forEach(b => b.addEventListener('click', () => {
+    _flSort = b.dataset.sort;
+    document.querySelectorAll('.fl-sort-btn').forEach(x => x.classList.toggle('active', x === b));
+    renderFriendsList();
+  }));
+  // Hesabı oluştur (name#tag ata) + profili yayınla — açılışta
+  ensureAccount();
 
   updateQuestButton();
 
