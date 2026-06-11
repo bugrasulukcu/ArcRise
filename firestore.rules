@@ -34,6 +34,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Referral (davet) tıklama sayacı: her yazma clicks'i tam +1 artırabilir.
+    // Auth yok; düşük riskli (ödül 1 coin, cihaz başına bir kez client guard'ı var).
+    match /referrals/{code} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['clicks'])
+        && request.resource.data.clicks == 1;
+      allow update: if request.resource.data.keys().hasOnly(['clicks'])
+        && request.resource.data.clicks == resource.data.clicks + 1;
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
