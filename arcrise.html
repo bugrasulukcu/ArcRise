@@ -2717,7 +2717,7 @@
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start">START<span class="start-mode" id="start-mode"> · CHILL</span></div>
     </div>
-    <!-- Alt aksiyon satırı: High Scores (kupa) · Share · Settings -->
+    <!-- Alt aksiyon satırı: High Scores (kupa) · Quests · Settings -->
     <div class="share-settings-row">
       <button class="btn-gray btn-icon" id="btn-lb" title="High Scores" aria-label="High Scores">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2728,12 +2728,12 @@
           <path d="M7 4H4v3a3 3 0 0 0 3 3"/>
         </svg>
       </button>
-      <button id="btn-share-home" type="button">
+      <button id="btn-quests" type="button">
         <span class="bsh-row">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
-          SHARE
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          QUESTS
         </span>
-        <span class="bsh-sub">Challenge a friend</span>
+        <span class="bsh-sub" id="btn-quests-sub">Daily challenges</span>
       </button>
       <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2742,6 +2742,11 @@
         </svg>
       </button>
     </div>
+    <!-- Challenge a friend — ince tek satır link -->
+    <button id="btn-challenge-link" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
+      Challenge a friend
+    </button>
   </div>
   <!-- Difficulty selector kaldırıldı — sabit EXTREME seviye -->
   <div id="home-links">
