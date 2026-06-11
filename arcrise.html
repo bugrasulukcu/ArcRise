@@ -2256,29 +2256,46 @@
     }
     .share-settings-row #btn-lb svg { color: #ffd866; }
 
-    /* Share & challenge a friend (home alt buton) */
-    #btn-share-home {
+    /* Quests (home alt orta buton) */
+    #btn-quests {
       flex: 1 1 0; min-width: 0; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
       padding: 0 14px; border-radius: 13px;
-      border: 1.5px solid rgba(90,216,255,.40);
+      border: 1.5px solid rgba(255,200,90,.42);
       background:
-        radial-gradient(120% 80% at 50% 0%, rgba(90,216,255,.14), transparent 60%),
-        linear-gradient(180deg, rgba(24,34,46,.92), rgba(12,18,28,.94));
-      color: #5ad8ff; font-family: var(--font); cursor: pointer;
-      box-shadow: 0 0 16px rgba(90,216,255,.12), inset 0 1px 0 rgba(255,255,255,.10);
+        radial-gradient(120% 80% at 50% 0%, rgba(255,200,90,.14), transparent 60%),
+        linear-gradient(180deg, rgba(40,34,22,.92), rgba(20,16,10,.94));
+      color: #ffce5a; font-family: var(--font); cursor: pointer;
+      box-shadow: 0 0 16px rgba(255,200,90,.12), inset 0 1px 0 rgba(255,255,255,.10);
       transition: transform .12s, filter .15s, box-shadow .2s;
     }
-    #btn-share-home:hover  { filter: brightness(1.12); box-shadow: 0 0 22px rgba(90,216,255,.22); }
-    #btn-share-home:active { transform: scale(0.97); }
-    #btn-share-home .bsh-row {
+    #btn-quests:hover  { filter: brightness(1.12); box-shadow: 0 0 22px rgba(255,200,90,.22); }
+    #btn-quests:active { transform: scale(0.97); }
+    #btn-quests .bsh-row {
       display: inline-flex; align-items: center; gap: 7px;
       font-size: 13.5px; letter-spacing: 2px; font-weight: 700;
     }
-    #btn-share-home .bsh-sub {
+    #btn-quests .bsh-sub {
       font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.45);
       text-transform: uppercase;
     }
+    /* Quests'te tamamlanmış ödül varsa dikkat çeken nokta */
+    #btn-quests.has-reward { animation: questPulse 1.3s ease-in-out infinite alternate; }
+    @keyframes questPulse {
+      0%   { box-shadow: 0 0 16px rgba(255,200,90,.18), inset 0 1px 0 rgba(255,255,255,.10); }
+      100% { box-shadow: 0 0 26px rgba(255,200,90,.55), inset 0 1px 0 rgba(255,255,255,.10); }
+    }
+    /* Challenge a friend — ince tek satır link (menü içinde, full width) */
+    #btn-challenge-link {
+      width: 100%; margin-top: 2px; padding: 9px 0;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font); font-size: 11px; letter-spacing: 1.6px;
+      color: rgba(90,216,255,.80);
+      transition: color .15s;
+    }
+    #btn-challenge-link:hover  { color: rgba(120,228,255,1); }
+    #btn-challenge-link:active { transform: scale(0.98); }
     /* Tutorial — Settings çerçevesi dışında metin link (CREDITS gibi) */
     #mode-btn-tutorial {
       margin-top: 16px; padding: 8px 16px;
