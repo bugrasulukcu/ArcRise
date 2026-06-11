@@ -7071,22 +7071,24 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   // Pricing — every directional purchase chain uses [5,10,20,40].
   // Trace thickness uses a longer curve (20 levels) — geometric early, linear later.
-  const DIR_PRICES = [5, 10, 20, 40];                // levels 1..4
+  // ── Düz (flat) fiyatlandırma ──────────────────────────────
+  // Coin eğrisi üçgensel (n coin ≈ 0.5·n·(n+1) m), bu yüzden her seviye için
+  // SABİT fiyat alıyoruz: geç seviyeler "coin kazanmak zorlaştığı için" otomatik
+  // pahalılaşıyor. CORE: her seviye 2 coin. Dizi uzunlukları = max seviye (korunur).
+  const DIR_PRICES = [2, 2, 2, 2];                   // 4 seviye, her biri 2
   const THICKNESS_PRICES = [
-    5, 10, 20, 40, 60, 80, 100, 120, 140, 160,
-    180, 200, 220, 240, 260, 280, 300, 320, 340, 360, // levels 1..20 → +%10 each
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,                     // 20 seviye, her biri 2
   ];
-  // Profit (+%10 coin gain / level, 0..10). Triangular maliyet sistemiyle uyumlu:
-  // her seviye önceki gelirinizi kendi katsayısıyla geri ödüyor.
-  const PROFIT_PRICES   = [10, 25, 50, 100, 175, 275, 400, 575, 800, 1100];
-  const WALLSOFT_PRICES = [20, 60, 150, 320, 600];                            // 5 lvl, +1px each
-  const MAGRANGE_PRICES = [15, 35, 70, 130, 220, 340, 500, 700];              // 8 lvl, +10% each
+  const PROFIT_PRICES   = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2];                     // 10 lvl
+  const WALLSOFT_PRICES = [2, 2, 2, 2, 2];                                    // 5 lvl
+  const MAGRANGE_PRICES = [2, 2, 2, 2, 2, 2, 2, 2];                           // 8 lvl
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
-  const TRACE_COLOR_PRICE = 10;       // rebuyable cost per change
-  const DEATH_NAME_PRICE  = 15;       // one-time unlock
-  const DEATH_AV_PRICE    = 60;       // one-time unlock
+  const TRACE_COLOR_PRICE = 3;        // rebuyable cosmetic
+  const DEATH_NAME_PRICE  = 10;       // one-time unlock
+  const DEATH_AV_PRICE    = 10;       // one-time unlock
   const TRACE_COLORS = [
     '#88bbff', '#ff5566', '#ffaa44', '#ffee55', '#66ff88',
     '#66eeff', '#aa66ff', '#ff77cc', '#ffffff', '#aaaaaa',
