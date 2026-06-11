@@ -8828,7 +8828,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const inp = document.getElementById('friends-add-input'); if (inp) inp.value = '';
     if (msg) msg.textContent = 'Friend added';
   }
-  function openFriendsModal()  { renderFriends(); const m = document.getElementById('friends-add-msg'); if (m) m.textContent = ''; document.getElementById('friends-modal').classList.add('open'); }
+  function openFriendsModal()  { renderFriends(); claimReferralRewards(); const m = document.getElementById('friends-add-msg'); if (m) m.textContent = ''; document.getElementById('friends-modal').classList.add('open'); }
   function closeFriendsModal() { document.getElementById('friends-modal').classList.remove('open'); }
   document.getElementById('btn-challenge-link').addEventListener('click', openFriendsModal);
   document.getElementById('friends-modal-close').addEventListener('click', closeFriendsModal);
