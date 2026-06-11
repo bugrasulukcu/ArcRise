@@ -2422,6 +2422,37 @@
       font-size: 14px; cursor: pointer; padding: 0 4px;
     }
     .fm-empty { font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.3); text-align: center; padding: 8px 0; }
+    /* Davet ödülü banner'ı */
+    .fm-reward-banner {
+      width: 100%; display: flex; align-items: center; gap: 11px;
+      padding: 11px 14px; border-radius: 13px;
+      border: 1px solid rgba(255,200,90,.40);
+      background:
+        radial-gradient(120% 90% at 0% 50%, rgba(255,200,90,.16), transparent 70%),
+        linear-gradient(180deg, rgba(40,34,18,.7), rgba(22,18,10,.7));
+    }
+    .fm-reward-ic {
+      flex: 0 0 auto; display: inline-flex; align-items: center; gap: 1px;
+      font-size: 16px; font-weight: 700; color: #ffce5a; letter-spacing: -1px;
+    }
+    .fm-reward-ic .chip-ic {
+      width: 16px; height: 16px; font-size: 10px; line-height: 16px;
+      border-radius: 50%; text-align: center; color: #1a1206;
+      background: linear-gradient(180deg, #ffe27a, #f5a623); display: inline-block;
+    }
+    .fm-reward-txt { font-size: 10px; letter-spacing: .6px; line-height: 1.4; color: rgba(255,255,255,.78); }
+    .fm-reward-txt b { color: #ffce5a; }
+    .fm-reward-stat {
+      font-size: 9.5px; letter-spacing: 1px; color: #ffce5a;
+      text-align: center; min-height: 11px; margin-top: -4px;
+    }
+    .fm-divider {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      font-size: 8.5px; letter-spacing: 1.6px; color: rgba(255,255,255,.35); margin-top: 2px;
+    }
+    .fm-divider::before, .fm-divider::after {
+      content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.12);
+    }
     /* Tutorial — Settings çerçevesi dışında metin link (CREDITS gibi) */
     #mode-btn-tutorial {
       margin-top: 16px; padding: 8px 16px;
