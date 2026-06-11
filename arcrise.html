@@ -2285,21 +2285,33 @@
       0%   { box-shadow: 0 0 16px rgba(255,200,90,.18), inset 0 1px 0 rgba(255,255,255,.10); }
       100% { box-shadow: 0 0 26px rgba(255,200,90,.55), inset 0 1px 0 rgba(255,255,255,.10); }
     }
-    /* Challenge a friend — davet pill'i (menü içinde, full width) */
+    /* Challenge (davet) + Friends yan yana — challenge daha dar */
+    .challenge-friends-row {
+      width: 100%; margin-top: 2px; display: flex; gap: 8px;
+    }
+    #btn-challenge-link, #btn-friends {
+      flex: 1 1 0; min-width: 0; padding: 10px 10px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      cursor: pointer; font-family: var(--font); font-size: 11px; letter-spacing: 1.2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      transition: filter .15s, box-shadow .2s, transform .12s;
+    }
     #btn-challenge-link {
-      width: 100%; margin-top: 2px; padding: 10px 14px; border-radius: 12px;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      border: 1px solid rgba(90,216,255,.35); cursor: pointer;
+      border: 1px solid rgba(90,216,255,.35); color: #5ad8ff;
       background:
         radial-gradient(120% 90% at 50% 0%, rgba(90,216,255,.12), transparent 65%),
         linear-gradient(180deg, rgba(22,38,52,.7), rgba(12,20,32,.72));
-      font-family: var(--font); font-size: 11.5px; letter-spacing: 1.4px;
-      color: #5ad8ff;
-      box-shadow: 0 0 14px rgba(90,216,255,.10), inset 0 1px 0 rgba(255,255,255,.08);
-      transition: filter .15s, box-shadow .2s, transform .12s;
     }
-    #btn-challenge-link:hover  { filter: brightness(1.12); box-shadow: 0 0 22px rgba(90,216,255,.24), inset 0 1px 0 rgba(255,255,255,.08); }
-    #btn-challenge-link:active { transform: scale(0.98); }
+    #btn-challenge-link:hover  { filter: brightness(1.12); box-shadow: 0 0 18px rgba(90,216,255,.22), inset 0 1px 0 rgba(255,255,255,.08); }
+    #btn-challenge-link:active { transform: scale(0.97); }
+    #btn-friends {
+      border: 1px solid rgba(124,255,122,.32); color: #9fffa0;
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(124,255,122,.10), transparent 65%),
+        linear-gradient(180deg, rgba(22,40,28,.7), rgba(12,22,16,.72));
+    }
+    #btn-friends:hover  { filter: brightness(1.12); box-shadow: 0 0 18px rgba(124,255,122,.20), inset 0 1px 0 rgba(255,255,255,.08); }
+    #btn-friends:active { transform: scale(0.97); }
     #btn-challenge-link .cl-earn {
       display: inline-flex; align-items: center; gap: 3px;
       font-size: 9.5px; letter-spacing: .5px; color: #ffce5a;
