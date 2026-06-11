@@ -2285,17 +2285,32 @@
       0%   { box-shadow: 0 0 16px rgba(255,200,90,.18), inset 0 1px 0 rgba(255,255,255,.10); }
       100% { box-shadow: 0 0 26px rgba(255,200,90,.55), inset 0 1px 0 rgba(255,255,255,.10); }
     }
-    /* Challenge a friend — ince tek satır link (menü içinde, full width) */
+    /* Challenge a friend — davet pill'i (menü içinde, full width) */
     #btn-challenge-link {
-      width: 100%; margin-top: 2px; padding: 9px 0;
-      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-      background: none; border: none; cursor: pointer;
-      font-family: var(--font); font-size: 11px; letter-spacing: 1.6px;
-      color: rgba(90,216,255,.80);
-      transition: color .15s;
+      width: 100%; margin-top: 2px; padding: 10px 14px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 1px solid rgba(90,216,255,.35); cursor: pointer;
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(90,216,255,.12), transparent 65%),
+        linear-gradient(180deg, rgba(22,38,52,.7), rgba(12,20,32,.72));
+      font-family: var(--font); font-size: 11.5px; letter-spacing: 1.4px;
+      color: #5ad8ff;
+      box-shadow: 0 0 14px rgba(90,216,255,.10), inset 0 1px 0 rgba(255,255,255,.08);
+      transition: filter .15s, box-shadow .2s, transform .12s;
     }
-    #btn-challenge-link:hover  { color: rgba(120,228,255,1); }
+    #btn-challenge-link:hover  { filter: brightness(1.12); box-shadow: 0 0 22px rgba(90,216,255,.24), inset 0 1px 0 rgba(255,255,255,.08); }
     #btn-challenge-link:active { transform: scale(0.98); }
+    #btn-challenge-link .cl-earn {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 9.5px; letter-spacing: .5px; color: #ffce5a;
+      padding: 2px 7px; border-radius: 20px;
+      border: 1px solid rgba(255,200,90,.4); background: rgba(255,200,90,.10);
+    }
+    #btn-challenge-link .cl-earn .chip-ic {
+      width: 11px; height: 11px; font-size: 7px; line-height: 11px;
+      border-radius: 50%; text-align: center; color: #1a1206;
+      background: linear-gradient(180deg, #ffe27a, #f5a623); display: inline-block;
+    }
 
     /* ══════════ QUESTS MODAL ══════════ */
     #quests-modal, #friends-modal {
