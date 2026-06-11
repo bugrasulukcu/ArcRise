@@ -3878,7 +3878,68 @@ const ARC_DB = (() => {
     } catch (_) { return 0; }
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks };
+  // ── Oyuncu kayıt defteri (players/{NAME#TAG}) — arkadaş profili & isim#tag ──
+  function _sanName(n) { return (n || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16); }
+  function _playerKey(name, tag) { return `${_sanName(name)}#${tag}`; }
+  // Profil yayınla (upsert). bestScore/bestDist arkadaşların listede görür.
+  async function registerPlayer(name, tag, avatar, bestScore, bestDist) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    name = _sanName(name); tag = String(tag || '');
+    if (!name || !/^\d{4}$/.test(tag)) return false;
+    const key = encodeURIComponent(`${name}#${tag}`);
+    try {
+      const res = await fetch(`${BASE}/players/${key}?key=${apiKey}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: {
+          name:   { stringValue: name },
+          tag:    { stringValue: tag },
+          avatar: { integerValue: String(Number(avatar) || 0) },
+          score:  { integerValue: String(Math.max(0, Math.floor(Number(bestScore) || 0))) },
+          dist:   { doubleValue: Math.max(0, Number(bestDist) || 0) },
+          ts:     { integerValue: String(Date.now()) },
+        }}),
+      });
+      return res.ok;
+    } catch (_) { return false; }
+  }
+  async function getPlayer(name, tag) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    name = _sanName(name); tag = String(tag || '');
+    if (!name || !/^\d{4}$/.test(tag)) return null;
+    const key = encodeURIComponent(`${name}#${tag}`);
+    try {
+      const res = await fetch(`${BASE}/players/${key}?key=${apiKey}`);
+      if (!res.ok) return null;
+      const f = (await res.json()).fields || {};
+      return {
+        name:   f.name?.stringValue || name,
+        tag:    f.tag?.stringValue || tag,
+        avatar: parseInt(f.avatar?.integerValue || '0', 10),
+        score:  parseInt(f.score?.integerValue || '0', 10),
+        dist:   Number(f.dist?.doubleValue ?? f.dist?.integerValue ?? 0),
+      };
+    } catch (_) { return null; }
+  }
+  // Aynı isimdeki mevcut hesapların tag'lerini getir (yeni hesaba boş tag seçmek için).
+  async function findTagsForName(name) {
+    if (!projectId || projectId.startsWith('BURAYA')) return [];
+    name = _sanName(name);
+    if (!name) return [];
+    try {
+      const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'players' }],
+          where: { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: name } } },
+          limit: 50,
+        }}),
+      });
+      const rows = await res.json();
+      return (Array.isArray(rows) ? rows : []).map(r => r.document?.fields?.tag?.stringValue).filter(Boolean);
+    } catch (_) { return []; }
+  }
+
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName };
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
   // Gerçek koruma Firestore security rules'ta — bu sadece kazara kullanım bariyeri.
   if (window.ARC_DEBUG) Object.assign(api, { wipeAllScores, dedupeScores, wipeMyScores });
