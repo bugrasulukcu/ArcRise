@@ -3722,7 +3722,40 @@ const ARC_DB = (() => {
     return n;
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache };
+  // ── Referral (davet) sayacı ────────────────────────────────
+  // referrals/{code}.clicks: bir davet linkine tıklayan benzersiz cihaz sayısı.
+  // Atomik artırım (set merge + increment): doc yoksa oluşturur, varsa +1.
+  function _sanCode(code) { return (code || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); }
+  async function recordReferralClick(code) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    code = _sanCode(code);
+    if (code.length !== 6) return false;
+    try {
+      const res = await fetch(`${BASE}:commit?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ writes: [{
+          update: { name: `projects/${projectId}/databases/(default)/documents/referrals/${code}`, fields: {} },
+          updateMask: { fieldPaths: [] },
+          updateTransforms: [{ fieldPath: 'clicks', increment: { integerValue: '1' } }],
+        }] }),
+      });
+      return res.ok;
+    } catch (_) { return false; }
+  }
+  async function getReferralClicks(code) {
+    if (!projectId || projectId.startsWith('BURAYA')) return 0;
+    code = _sanCode(code);
+    if (code.length !== 6) return 0;
+    try {
+      const res = await fetch(`${BASE}/referrals/${code}?key=${apiKey}`);
+      if (!res.ok) return 0; // 404 → henüz tıklama yok
+      const j = await res.json();
+      const v = j.fields?.clicks?.integerValue;
+      return v ? parseInt(v, 10) : 0;
+    } catch (_) { return 0; }
+  }
+
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks };
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
   // Gerçek koruma Firestore security rules'ta — bu sadece kazara kullanım bariyeri.
   if (window.ARC_DEBUG) Object.assign(api, { wipeAllScores, dedupeScores, wipeMyScores });
