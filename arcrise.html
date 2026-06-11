@@ -3249,33 +3249,47 @@
   </div>
 </div>
 
-<!-- ══ FRIENDS / CHALLENGE MODAL ══ -->
+<!-- ══ CHALLENGE / INVITE MODAL ══ -->
 <div id="friends-modal">
   <div id="friends-modal-box">
     <div class="fm-title">CHALLENGE A FRIEND</div>
     <!-- Davet ödülü vurgusu -->
     <div class="fm-reward-banner">
       <span class="fm-reward-ic"><span class="chip-ic">C</span>+1</span>
-      <span class="fm-reward-txt">Earn <b>1 coin</b> every time a friend opens your link</span>
+      <span class="fm-reward-txt">Earn <b>1 coin</b> every time a friend opens your invite link</span>
     </div>
     <div class="fm-reward-stat" id="friends-reward-stat"></div>
     <button id="friends-share-btn" type="button">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
       SHARE MY INVITE LINK
     </button>
-    <div class="fm-code-card">
-      <span class="fm-code-lbl">Your code</span>
-      <span class="fm-code" id="friends-my-code">------</span>
-      <button id="friends-copy-code" type="button">COPY</button>
-    </div>
-    <div class="fm-divider"><span>ADD A FRIEND</span></div>
-    <div class="fm-add-row">
-      <input type="text" id="friends-add-input" maxlength="6" placeholder="FRIEND CODE" autocomplete="off">
-      <button id="friends-add-btn" type="button">ADD</button>
-    </div>
-    <div class="fm-add-msg" id="friends-add-msg"></div>
-    <div id="friends-list"></div>
+    <div class="fm-hint">Add friends in the <b>Friends</b> tab to compare scores &amp; distance.</div>
     <button id="friends-modal-close">Close</button>
+  </div>
+</div>
+
+<!-- ══ FRIENDS LIST MODAL ══ -->
+<div id="friendslist-modal">
+  <div id="friendslist-modal-box">
+    <div class="fm-title">FRIENDS</div>
+    <div class="fm-code-card">
+      <span class="fm-code-lbl">Your ID</span>
+      <span class="fm-code" id="myid-code">----</span>
+      <button id="myid-copy" type="button">COPY</button>
+    </div>
+    <div class="fm-divider"><span>ADD FRIEND BY ID</span></div>
+    <div class="fm-add-row">
+      <input type="text" id="fl-add-input" maxlength="16" placeholder="NAME#0000" autocomplete="off">
+      <button id="fl-add-btn" type="button">ADD</button>
+    </div>
+    <div class="fm-add-msg" id="fl-add-msg"></div>
+    <div class="fl-sort-row">
+      <span class="fl-sort-lbl">SORT BY</span>
+      <button class="fl-sort-btn active" data-sort="score" type="button">SCORE</button>
+      <button class="fl-sort-btn" data-sort="dist" type="button">DISTANCE</button>
+    </div>
+    <div id="fl-list"></div>
+    <button id="friendslist-modal-close">Close</button>
   </div>
 </div>
 
