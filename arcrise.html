@@ -7328,30 +7328,31 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   }
 
   // ── Gear configs ─────────────────────────────────────────────────
+  // Consumable: her stok düz 3 coin. Ability: unlock düz 10, ladder her seviye düz 4.
   const CONSUMABLE_CFG = {
-    revive:    { price: 80, max: 5, autoArm: true,  desc: 'On death, automatically continue from your last safe spot.' },
-    doubler:   { price: 50, max: 5, autoArm: false, desc: 'Next armed run: all coin gain ×2.' },
-    headstart: { price: 40, max: 5, autoArm: false, desc: 'Next armed run: first 5 seconds at half speed.' },
-    insurance: { price: 60, max: 3, autoArm: false, desc: 'Armed: refund this run\'s coin gain if you die.' },
-    coinrain:  { price: 40, max: 5, autoArm: false, desc: 'Armed: gold ball spawn rate ×2 for the run.' },
-    preboost:  { price: 30, max: 5, autoArm: false, desc: 'Armed: start the run with a random booster active.' },
-    filter:    { price: 80, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
+    revive:    { price: 3, max: 5, autoArm: true,  desc: 'On death, automatically continue from your last safe spot.' },
+    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Next armed run: all coin gain ×2.' },
+    headstart: { price: 3, max: 5, autoArm: false, desc: 'Next armed run: first 5 seconds at half speed.' },
+    insurance: { price: 3, max: 3, autoArm: false, desc: 'Armed: refund this run\'s coin gain if you die.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Armed: gold ball spawn rate ×2 for the run.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Armed: start the run with a random booster active.' },
+    filter:    { price: 3, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
   };
   const ABILITY_CFG = {
-    timeslow:   { unlock: 100, durBase: 1.5, durStep: 0.3, cdBase: 15, cdStep: 2, ladderLvl: 5,
-                  durPrices: [40, 80, 150, 280, 500], cdPrices: [50, 100, 180, 320, 550] },
-    phaseburst: { unlock: 120, durBase: 0.8, durStep: 0.2, cdBase: 10, cdStep: 1, ladderLvl: 5,
-                  durPrices: [50, 100, 180, 300, 500], cdPrices: [60, 120, 200, 320, 500] },
-    coinpull:   { unlock: 80,  durBase: 0,   durStep: 0,   cdBase: 20, cdStep: 2, ladderLvl: 5, noDur: true,
-                  durPrices: [], cdPrices: [40, 90, 160, 280, 460] },
-    brake:      { unlock: 60,  durBase: 1.0, durStep: 0.25,cdBase: 12, cdStep: 1, ladderLvl: 5,
-                  durPrices: [30, 60, 110, 200, 340], cdPrices: [40, 80, 150, 260, 420] },
-    mirror:     { unlock: 90,  durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
-                  durPrices: [], cdPrices: [50, 110, 200, 340, 540] },
-    shock:      { unlock: 100, durBase: 0,   durStep: 0,   cdBase: 25, cdStep: 2, ladderLvl: 5, noDur: true,
-                  durPrices: [], cdPrices: [50, 110, 200, 340, 540] },
-    anchor:     { unlock: 110, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
-                  durPrices: [], cdPrices: [60, 130, 230, 380, 580] },
+    timeslow:   { unlock: 10, durBase: 1.5, durStep: 0.3, cdBase: 15, cdStep: 2, ladderLvl: 5,
+                  durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
+    phaseburst: { unlock: 10, durBase: 0.8, durStep: 0.2, cdBase: 10, cdStep: 1, ladderLvl: 5,
+                  durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
+    coinpull:   { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 20, cdStep: 2, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
+    brake:      { unlock: 10, durBase: 1.0, durStep: 0.25,cdBase: 12, cdStep: 1, ladderLvl: 5,
+                  durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
+    mirror:     { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
+    shock:      { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 25, cdStep: 2, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
+    anchor:     { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+                  durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
   };
   function abilityCooldown(key) {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 10;
