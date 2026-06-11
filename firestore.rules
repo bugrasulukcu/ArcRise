@@ -45,6 +45,23 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Oyuncu kayıt defteri (players/{NAME#TAG}): isim#tag kimliği + en iyi skor/mesafe.
+    // Auth yok → herkes herhangi bir player doc'unu yazabilir (spoof riski düşük, sadece
+    // arkadaş listesinde gösterim için). Alan tipleri ve sınırlar doğrulanır.
+    function validPlayer(d) {
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
+        && d.tag is string && d.tag.size() == 4
+        && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
+        && d.score is int && d.score >= 0 && d.score <= 1000000
+        && d.dist is number && d.dist >= 0 && d.dist <= 100000
+        && d.ts is int;
+    }
+    match /players/{id} {
+      allow read: if true;
+      allow create, update: if validPlayer(request.resource.data);
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
