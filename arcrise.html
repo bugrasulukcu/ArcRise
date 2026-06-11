@@ -2388,6 +2388,41 @@
     /* ══════════ FRIENDS MODAL ══════════ */
     #friends-modal-box { border-color: rgba(90,216,255,.45); }
     #friends-modal-box .fm-title { color: #5ad8ff; }
+    #friendslist-modal-box { border-color: rgba(124,255,122,.42); }
+    #friendslist-modal-box .fm-title { color: #9fffa0; }
+    #friendslist-modal-close { /* shares #quests/#friends close style below */ }
+    .fm-hint { font-size: 9px; letter-spacing: .8px; line-height: 1.5; color: rgba(255,255,255,.4); text-align: center; }
+    .fm-hint b { color: #9fffa0; }
+    /* Friends list: sıralama satırı */
+    .fl-sort-row { width: 100%; display: flex; align-items: center; gap: 6px; }
+    .fl-sort-lbl { font-size: 8.5px; letter-spacing: 1.4px; color: rgba(255,255,255,.4); margin-right: 2px; }
+    .fl-sort-btn {
+      flex: 1; padding: 7px 0; border-radius: 9px; cursor: pointer;
+      font-family: var(--font); font-size: 9.5px; letter-spacing: 1.2px;
+      border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.5);
+    }
+    .fl-sort-btn.active {
+      border-color: rgba(124,255,122,.5); color: #062a08;
+      background: linear-gradient(180deg, #7CFF7A, #3ad055);
+    }
+    .fl-sort-btn:active { transform: scale(0.97); }
+    #fl-list { width: 100%; display: flex; flex-direction: column; gap: 7px; max-height: 230px; overflow-y: auto; }
+    .fl-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 11px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+    }
+    .fl-rank { font-size: 11px; color: rgba(255,255,255,.4); width: 18px; text-align: center; flex: 0 0 auto; }
+    .fl-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .fl-name { font-size: 11px; letter-spacing: .6px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fl-name .fl-tag { color: rgba(255,255,255,.4); font-size: 9px; }
+    .fl-stats { font-size: 8.5px; letter-spacing: .5px; color: rgba(255,255,255,.55); }
+    .fl-stats .fl-s-score { color: #ffd866; }
+    .fl-stats .fl-s-dist { color: #9fd8ff; }
+    .fl-metric { font-size: 13px; font-weight: 700; flex: 0 0 auto; }
+    .fl-metric.score { color: #ffd866; }
+    .fl-metric.dist  { color: #9fd8ff; }
+    .fl-remove { background: none; border: none; color: rgba(255,90,110,.6); font-size: 15px; cursor: pointer; padding: 0 2px; flex: 0 0 auto; }
     .fm-code-card {
       width: 100%; display: flex; align-items: center; gap: 10px;
       padding: 12px 14px; border-radius: 13px;
