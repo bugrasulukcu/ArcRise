@@ -8597,7 +8597,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const blob = await new Promise(r => c.toBlob(r, 'image/png'));
     if (!blob) return;
     const file = new File([blob], 'arcrise-challenge.png', { type: 'image/png' });
-    const text = `ArcRise — best ${pad(bestScore)} pts, ${fmtDist(bestDist)}. Can you beat me?`;
+    const text = `ArcRise — best ${pad(bestScore)} pts, ${fmtDist(bestDist)}. Can you beat me? Add me: ${myFriendCode()}`;
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: 'ArcRise', text });
