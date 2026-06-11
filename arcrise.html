@@ -2241,26 +2241,26 @@
       color: #2a0f02; border-radius: 10px;
       box-shadow: 0 0 14px rgba(255,120,50,.50), inset 0 1px 0 rgba(255,255,255,.30);
     }
-    /* High Scores — alt satırda kare kupa ikon butonu */
-    .share-settings-row #btn-lb {
-      flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
-    }
-    .share-settings-row #btn-lb svg { color: #ffd866; }
-
-    /* Challenge + Settings yan yana */
+    /* Challenge + Settings/High-Score yan yana — satıra kesin yükseklik ver ki
+       kare ikon butonlar (aspect-ratio) mobilde de güvenilir hesaplansın. */
     .share-settings-row {
       display: flex; flex-direction: row; gap: 8px;
       width: 100%; align-self: stretch; align-items: stretch;
+      height: 58px;
     }
+    /* Kare ikon butonlar: yükseklik satırdan (kesin), genişlik aspect-ratio'dan */
+    .share-settings-row #btn-lb,
     .share-settings-row #btn-settings {
-      flex: 0 0 auto; width: auto; aspect-ratio: 1 / 1; padding: 0;
+      flex: 0 0 auto; width: auto; height: 100%;
+      aspect-ratio: 1 / 1; padding: 0;
     }
+    .share-settings-row #btn-lb svg { color: #ffd866; }
 
     /* Share & challenge a friend (home alt buton) */
     #btn-share-home {
-      flex: 1 1 0; min-width: 0;
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 11px 14px; border-radius: 13px;
+      flex: 1 1 0; min-width: 0; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      padding: 0 14px; border-radius: 13px;
       border: 1.5px solid rgba(90,216,255,.40);
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(90,216,255,.14), transparent 60%),
