@@ -8689,14 +8689,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const blob = await new Promise(r => c.toBlob(r, 'image/png'));
     if (!blob) return;
     const file = new File([blob], 'arcrise-challenge.png', { type: 'image/png' });
-    const text = `ArcRise — best ${pad(bestScore)} pts, ${fmtDist(bestDist)}. Can you beat me? Add me: ${myFriendCode()}`;
+    const link = inviteLink();
+    const text = `ArcRise — best ${pad(bestScore)} pts, ${fmtDist(bestDist)}. Can you beat me? Play here: ${link}`;
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: 'ArcRise', text });
+        await navigator.share({ files: [file], title: 'ArcRise', text, url: link });
         return;
       } catch(_) { return; }
     }
-    // Masaüstü fallback: PNG indir
+    // Web Share yoksa: linki kopyala (davet linki en kritik kısım), kartı da indir
+    try { await navigator.clipboard.writeText(link); } catch(_){}
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'arcrise-challenge.png';
