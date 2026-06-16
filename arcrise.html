@@ -4188,6 +4188,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }
     const hCoinsEl = document.getElementById('home-pcoins');
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
+    try { renderSlots(); } catch(_){} // home gear slotlarını tazele (satın alma/equip durumu)
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
