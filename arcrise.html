@@ -7385,11 +7385,27 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function renderSlots() {
     document.querySelectorAll('.slot').forEach(el => {
       const i = Number(el.dataset.slot);
+      const isHome = el.classList.contains('home-slot');
+      const owned = i < slotsOwned;
       const item = slotItems[i];
-      el.classList.toggle('filled', !!item);
-      const iconEl = el.querySelector('.slot-icon');
-      if (iconEl) iconEl.innerHTML = item?.icon ? iconHTML(item.icon, { size: 28 }) : '';
-      ensureSlotRing(el);
+      const iconEl  = el.querySelector('.slot-icon');
+      const priceEl = el.querySelector('.slot-price');
+      el.classList.toggle('locked', !owned);
+      el.classList.toggle('filled', owned && !!item);
+      // Kilitli slotlar oyun-içinde gizli; home'da fiyatla görünür
+      el.style.display = (!owned && !isHome) ? 'none' : '';
+      if (owned) {
+        if (iconEl)  iconEl.innerHTML = item?.icon ? iconHTML(item.icon, { size: isHome ? 22 : 26 }) : '';
+        if (priceEl) priceEl.textContent = '';
+        el.classList.remove('next', 'buyable');
+      } else {
+        if (iconEl)  iconEl.innerHTML = '';
+        if (priceEl) priceEl.innerHTML = iconHTML('coin', { size: 11 }) + SLOT_PRICES[i];
+        const isNext = (i === slotsOwned);          // sadece sıradaki slot satın alınabilir
+        el.classList.toggle('next', isNext);
+        el.classList.toggle('buyable', isNext && coins >= SLOT_PRICES[i]);
+      }
+      if (!isHome) ensureSlotRing(el);
     });
   }
   function updateSlotCooldownUI() {
