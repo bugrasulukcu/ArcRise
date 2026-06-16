@@ -7893,9 +7893,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
             : `<button class="upg-buy small" id="ab-cd" ${coins<cdPrice?'disabled':''}>-${cfg.cdStep}s <span class="upg-coin">${iconHTML('coin',{size:12})}${cdPrice}</span></button>`}
         </div>
       </div>
-      <div style="display:flex;justify-content:center;gap:8px;padding:8px 0 2px">
-        <button class="upg-buy" id="ab-eq1" ${equippedSlot===0?'data-on="1"':''}>Equip Slot 1</button>
-        <button class="upg-buy" id="ab-eq2" ${equippedSlot===1?'data-on="1"':''}>Equip Slot 2</button>
+      <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 0 2px">
+        ${slotsOwned === 0
+          ? `<div style="font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1px;padding:6px 0">Buy a gear slot on the home screen to equip</div>`
+          : Array.from({ length: slotsOwned }, (_, s) =>
+              `<button class="upg-buy" data-eq="${s}" ${equippedSlot===s?'data-on="1"':''}>Slot ${s+1}</button>`
+            ).join('')}
       </div>
     `;
     if (!cfg.noDur && durPrice != null) card.querySelector('#ab-dur').addEventListener('click', () => {
