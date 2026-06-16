@@ -7313,18 +7313,41 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     openUpgradesModal();
   });
 
-  // ── Equippable slot state (placeholder) ─────────────────
-  // Persisted in arc_slots_v1 as [slotItemId|null, slotItemId|null].
-  // The Upgrades catalog will populate these once finalised.
+  // ── Equippable slot state ───────────────────────────────
+  // 4 gear slotu; coin ile sırayla satın alınır (2/4/8/16). Sadece satın alınanlar
+  // görünür (home + oyun-içi); kilitliler oyun-içinde gizli, home'da fiyatla.
+  const SLOT_COUNT  = 4;
+  const SLOT_PRICES = [2, 4, 8, 16];
   let slotItems = (() => {
-    try { return JSON.parse(localStorage.getItem('arc_slots_v1') || '[null,null]'); }
-    catch(_) { return [null, null]; }
+    let a; try { a = JSON.parse(localStorage.getItem('arc_slots_v1') || 'null'); } catch(_) { a = null; }
+    if (!Array.isArray(a)) a = [];
+    while (a.length < SLOT_COUNT) a.push(null);       // 2-slot eski kayıtları 4'e genişlet
+    return a.slice(0, SLOT_COUNT);
   })();
   function saveSlots() {
     try { localStorage.setItem('arc_slots_v1', JSON.stringify(slotItems)); } catch(_){}
   }
+  let slotsOwned = (() => {
+    let n = parseInt(localStorage.getItem('arc_slots_owned') || '', 10);
+    if (!Number.isFinite(n)) {
+      // Geçiş: önceden 2 slot ücretsizdi → equip edilmiş slot sayısını koru, en az dolu olanı aç
+      n = slotItems.filter(Boolean).length;
+    }
+    return Math.max(0, Math.min(SLOT_COUNT, n));
+  })();
+  function saveSlotsOwned() { try { localStorage.setItem('arc_slots_owned', String(slotsOwned)); } catch(_){} }
+  function buySlot() {
+    if (slotsOwned >= SLOT_COUNT) return;
+    const price = SLOT_PRICES[slotsOwned];
+    if (coins < price || !spendCoins(price)) return;
+    slotsOwned++; saveSlotsOwned();
+    renderSlots();
+    try { renderUpgrades(); } catch(_){}
+    try { applyProfile(); } catch(_){}
+    haptic(50);
+  }
   // Cooldown state per slot: 0 = ready, >0 = remaining seconds (ticks down in step())
-  const slotCD = [0, 0];
+  const slotCD = [0, 0, 0, 0];
   // SVG cooldown ring overlay injected once per slot
   function ensureSlotRing(el) {
     if (el.querySelector('.slot-ring')) return;
