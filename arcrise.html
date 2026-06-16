@@ -7915,8 +7915,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       else { if (cur !== -1) slotItems[cur] = null; slotItems[idx] = { type: 'ability', key, icon: ico }; }
       saveSlots(); renderSlots(); renderUpgrades();
     };
-    card.querySelector('#ab-eq1').addEventListener('click', () => equipTo(0));
-    card.querySelector('#ab-eq2').addEventListener('click', () => equipTo(1));
+    card.querySelectorAll('[data-eq]').forEach(b => b.addEventListener('click', () => equipTo(Number(b.dataset.eq))));
     return card;
   }
   const ABILITY_DESC = {
