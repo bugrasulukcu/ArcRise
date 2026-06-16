@@ -7349,8 +7349,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let slotsOwned = (() => {
     let n = parseInt(localStorage.getItem('arc_slots_owned') || '', 10);
     if (!Number.isFinite(n)) {
-      // Geçiş: önceden 2 slot ücretsizdi → equip edilmiş slot sayısını koru, en az dolu olanı aç
-      n = slotItems.filter(Boolean).length;
+      // Geçiş: önceden slotlar ücretsizdi → equip edilmiş en yüksek slota kadarını açık say
+      n = slotItems.reduce((mx, it, idx) => it ? idx + 1 : mx, 0);
     }
     return Math.max(0, Math.min(SLOT_COUNT, n));
   })();
