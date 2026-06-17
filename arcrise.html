@@ -4005,18 +4005,21 @@ const ARC_DB = (() => {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     name = _sanName(name); tag = String(tag || '');
     if (!name || !/^\d{4}$/.test(tag)) return false;
+    await ensureAuth(); const uid = getUid();
     const key = encodeURIComponent(`${name}#${tag}`);
     try {
+      const fields = {
+        name:   { stringValue: name },
+        tag:    { stringValue: tag },
+        avatar: { integerValue: String(Number(avatar) || 0) },
+        score:  { integerValue: String(Math.max(0, Math.floor(Number(bestScore) || 0))) },
+        dist:   { doubleValue: Math.max(0, Number(bestDist) || 0) },
+        ts:     { integerValue: String(Date.now()) },
+      };
+      if (uid) fields.owner = { stringValue: uid };
       const res = await fbFetch(`${BASE}/players/${key}?key=${apiKey}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: {
-          name:   { stringValue: name },
-          tag:    { stringValue: tag },
-          avatar: { integerValue: String(Number(avatar) || 0) },
-          score:  { integerValue: String(Math.max(0, Math.floor(Number(bestScore) || 0))) },
-          dist:   { doubleValue: Math.max(0, Number(bestDist) || 0) },
-          ts:     { integerValue: String(Date.now()) },
-        }}),
+        body: JSON.stringify({ fields }),
       });
       return res.ok;
     } catch (_) { return false; }
