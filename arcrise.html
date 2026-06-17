@@ -3532,6 +3532,62 @@ const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
   const BASE = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
+  // ── Anonymous Auth (Identity Toolkit REST — SDK gerekmez) ──────────────
+  // Kalıcı bir uid sağlar: skor/oyuncu/referral doc'ları bu uid'e bağlanır,
+  // böylece başkasının kaydı devralınamaz (firestore.rules uid sahipliği kontrol eder).
+  // KURULUM: Firebase Console > Authentication > Sign-in method > Anonymous > Enable.
+  // NOT: Coin bakiyesi tamamen client-side'dır; auth onu korumaz (sunucu cüzdanı yok).
+  const AUTH_RT_KEY = 'arc_fb_rt';        // refresh token → oturumlar arası aynı uid
+  let _idToken = null, _idTokenExp = 0, _uid = null, _authPromise = null;
+  function _setTokens(idTok, rt, expiresIn, uid) {
+    if (idTok) _idToken = idTok;
+    if (uid)   _uid = uid;
+    _idTokenExp = Date.now() + ((parseInt(expiresIn, 10) || 3600) * 1000) - 60000; // 1dk pay
+    try { if (rt) localStorage.setItem(AUTH_RT_KEY, rt); } catch(_){}
+  }
+  async function _signInAnon() {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnSecureToken: true }),
+    });
+    if (!res.ok) throw new Error('anon signin ' + res.status + ' ' + await res.text());
+    const j = await res.json();
+    _setTokens(j.idToken, j.refreshToken, j.expiresIn, j.localId);
+  }
+  async function _refreshTok(rt) {
+    const res = await fetch(`https://securetoken.googleapis.com/v1/token?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt),
+    });
+    if (!res.ok) throw new Error('refresh ' + res.status);
+    const j = await res.json();
+    _setTokens(j.id_token, j.refresh_token, j.expires_in, j.user_id);
+  }
+  async function ensureAuth() {
+    if (_idToken && Date.now() < _idTokenExp) return _idToken;
+    if (_authPromise) return _authPromise;
+    _authPromise = (async () => {
+      let rt = null; try { rt = localStorage.getItem(AUTH_RT_KEY); } catch(_){}
+      try {
+        if (rt) await _refreshTok(rt); else await _signInAnon();
+      } catch (_) {
+        // refresh başarısız (token iptal / proje değişti) → sıfırdan anon oturum
+        try { await _signInAnon(); } catch (e2) { console.warn('[ArcDB] auth failed', e2); }
+      }
+      _authPromise = null;
+      return _idToken;
+    })();
+    return _authPromise;
+  }
+  function getUid() { return _uid; }
+  // Tüm Firestore isteklerine geçerli idToken'ı Authorization başlığı olarak ekler.
+  async function fbFetch(url, opts = {}) {
+    let tok = null; try { tok = await ensureAuth(); } catch(_){}
+    const headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    return fetch(url, Object.assign({}, opts, { headers }));
+  }
+
   // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
   function normMode(m) { return (m === 'extreme') ? 'extreme' : 'normal'; }
 
