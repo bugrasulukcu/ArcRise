@@ -2,15 +2,30 @@ rules_version = '2';
 // ArcRise Firestore kuralları.
 // Deploy: Firebase Console > Firestore Database > Rules sekmesine yapıştır > Publish.
 //
-// Not: Client'ta auth olmadığı için kayıt sahipliği doğrulanamıyor —
-// bu kurallar yine de en büyük riskleri kapatır:
-//   - DELETE tamamen yasak (wipeAllScores artık dışarıdan çalışmaz)
-//   - score/distance üst sınırlı, alan tipleri ve isim uzunluğu doğrulanır
-//   - scores dışındaki tüm koleksiyonlar kapalı
-// Anonim auth eklenirse (bkz. DEVELOPMENT_LOG) uid bazlı sahiplik de eklenmeli.
+// ÖNCE: Firebase Console > Authentication > Sign-in method > Anonymous > ENABLE.
+// Oyun her cihaz için kalıcı bir anonim uid alır (arc_fb_rt refresh token'ı
+// localStorage'da saklanır). Yazımlar bu uid'e bağlanır:
+//   - scores / players: doc'a "owner" = uid yazılır; sadece sahibi günceller
+//     → başkasının leaderboard kaydı veya NAME#TAG profili devralınamaz/spoof'lanamaz
+//   - DELETE her yerde yasak
+//   - tüm yazımlar auth gerektirir
+// Geriye dönük uyumluluk: "owner" alanı OLMAYAN eski doc'lar bir kez herhangi bir
+// authed kullanıcı tarafından sahiplenilebilir (owner'ı kendi uid'ine set ederek);
+// owner set edildikten sonra kilitlenir.
+//
+// NOT: Coin bakiyesi tamamen client-side (localStorage) tutulur — sunucu cüzdanı
+// yoktur, dolayısıyla coin miktarı bu kurallarla korunamaz (bilinen, kabul edilen
+// kısıt; gerçek koruma sunucu tarafı cüzdan gerektirir).
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Yazan kişi authed mi?
+    function isAuthed() { return request.auth != null; }
+    // Yeni doc'un owner alanı yazanın uid'ine eşit mi?
+    function ownsNew()  { return request.resource.data.owner == request.auth.uid; }
+    // Mevcut doc ya sahipsiz (eski) ya da yazana ait mi?
+    function ownsOld()  { return !('owner' in resource.data) || resource.data.owner == request.auth.uid; }
 
     function validScore(d) {
       return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
@@ -22,43 +37,48 @@ service cloud.firestore {
         && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 200000))
         && (!('traceColor' in d) || d.traceColor is string)
         && (!('traceThickness' in d) || d.traceThickness is int)
-        && (!('badges' in d) || (d.badges is string && d.badges.size() <= 64));
+        && (!('badges' in d) || (d.badges is string && d.badges.size() <= 64))
+        && (!('owner' in d) || d.owner is string);
     }
 
     match /scores/{doc} {
       allow read: if true;
-      allow create: if validScore(request.resource.data);
-      allow update: if validScore(request.resource.data)
+      allow create: if isAuthed() && validScore(request.resource.data) && ownsNew();
+      allow update: if isAuthed() && validScore(request.resource.data)
         // İsim değiştirilemez — başka oyuncunun kaydı "devralınamaz".
-        && request.resource.data.name == resource.data.name;
+        && request.resource.data.name == resource.data.name
+        // Sadece sahibi (veya sahipsiz eski doc'u sahiplenen) günceller.
+        && ownsOld() && ownsNew();
       allow delete: if false;
     }
 
     // Referral (davet) tıklama sayacı: her yazma clicks'i tam +1 artırabilir.
-    // Auth yok; düşük riskli (ödül 1 coin, cihaz başına bir kez client guard'ı var).
+    // Authed gerektirir; coin client-side olduğundan self-increment koruması
+    // pratik fayda sağlamaz (cheater zaten kendine coin verebilir).
     match /referrals/{code} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['clicks'])
+      allow create: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
         && request.resource.data.clicks == 1;
-      allow update: if request.resource.data.keys().hasOnly(['clicks'])
+      allow update: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
         && request.resource.data.clicks == resource.data.clicks + 1;
       allow delete: if false;
     }
 
     // Oyuncu kayıt defteri (players/{NAME#TAG}): isim#tag kimliği + en iyi skor/mesafe.
-    // Auth yok → herkes herhangi bir player doc'unu yazabilir (spoof riski düşük, sadece
-    // arkadaş listesinde gösterim için). Alan tipleri ve sınırlar doğrulanır.
+    // owner = uid → NAME#TAG'i ilk alan uid sahibidir; başkası spoof edemez (race fix).
     function validPlayer(d) {
       return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
         && d.tag is string && d.tag.size() == 4
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
         && d.score is int && d.score >= 0 && d.score <= 1000000
         && d.dist is number && d.dist >= 0 && d.dist <= 100000
-        && d.ts is int;
+        && d.ts is int
+        && (!('owner' in d) || d.owner is string);
     }
     match /players/{id} {
       allow read: if true;
-      allow create, update: if validPlayer(request.resource.data);
+      allow create: if isAuthed() && validPlayer(request.resource.data) && ownsNew();
+      allow update: if isAuthed() && validPlayer(request.resource.data) && ownsOld() && ownsNew();
       allow delete: if false;
     }
 
