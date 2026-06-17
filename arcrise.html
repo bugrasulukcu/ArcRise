@@ -7801,12 +7801,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (b) b.addEventListener('click', () => buySlot());
     } else {
       const stage = document.createElement('div');
-      stage.className = 'upg-slots-stage';
+      stage.className = 'upg-slots-row';
       for (let i = 0; i < SLOT_COUNT; i++) {
         const owned = i < slotsOwned;
         const it = slotItems[i];
         const isNext = (i === slotsOwned);
-        let cls = `slot gear-slot slot-pos-${i}`;
+        let cls = `slot gear-slot slot-c${i}`;
         if (owned && it) cls += ' filled';
         if (!owned) { cls += ' locked'; cls += isNext ? (coins >= SLOT_PRICES[i] ? ' next buyable' : ' next') : ' disabled'; }
         const dot = document.createElement('button');
