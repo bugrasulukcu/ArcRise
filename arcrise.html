@@ -7752,6 +7752,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     host.innerHTML = '';
     // Detail view (sadece LOADOUT item'ları için)
     if (upgGearView !== 'grid') {
+      _gearPickerSlot = -1; // detaya geçince gear seçici kapansın
       const allItems = GEAR_GROUPS.flatMap(g => g.items);
       const meta = allItems.find(i => i.key === upgGearView);
       if (!meta || meta.locked) { upgGearView = 'grid'; return renderGear(); }
