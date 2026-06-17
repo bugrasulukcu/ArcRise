@@ -3614,8 +3614,9 @@ const ARC_DB = (() => {
     const traceColor     = (traceData && traceData.color) || null;
     const traceThickness = (traceData && Number.isFinite(traceData.thickness)) ? Number(traceData.thickness) : 0;
     console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum, hasTrace: !!tracePts });
+    await ensureAuth(); const uid = getUid();
     try {
-      const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+      const qRes = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
           from: [{ collectionId: 'scores' }],
@@ -3695,7 +3696,7 @@ const ARC_DB = (() => {
         if (traceColor)     fields.traceColor     = { stringValue: traceColor };
         if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
         if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
-        const ins = await fetch(`${BASE}/scores?key=${apiKey}`, {
+        const ins = await fbFetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields }),
         });
@@ -3787,7 +3788,7 @@ const ARC_DB = (() => {
       return target ? cached.filter(r => r.mode === target).slice(0, n) : cached.slice(0, n);
     }
     try {
-      const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
@@ -3823,7 +3824,7 @@ const ARC_DB = (() => {
     if (!confirm('WIPE ALL leaderboard scores? This cannot be undone.')) return 0;
     let total = 0, page = 0;
     while (true) {
-      const lst = await fetch(`${BASE}/scores?key=${apiKey}&pageSize=300`);
+      const lst = await fbFetch(`${BASE}/scores?key=${apiKey}&pageSize=300`);
       if (!lst.ok) {
         console.warn('[ArcDB] list failed', lst.status, await lst.text());
         break;
@@ -3833,7 +3834,7 @@ const ARC_DB = (() => {
       if (docs.length === 0) break;
       for (const d of docs) {
         const docId = d.name.split('/').pop();
-        const del = await fetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
+        const del = await fbFetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
         if (del.ok) total++;
         else console.warn('[ArcDB] delete failed', docId, del.status);
       }
@@ -3880,7 +3881,7 @@ const ARC_DB = (() => {
 
     let deleted = 0;
     for (const l of losers) {
-      const del = await fetch(`${BASE}/scores/${l.docId}?key=${apiKey}`, { method: 'DELETE' });
+      const del = await fbFetch(`${BASE}/scores/${l.docId}?key=${apiKey}`, { method: 'DELETE' });
       if (del.ok) deleted++;
       else console.warn('[ArcDB] dedupe delete failed', l.docId, del.status);
     }
@@ -3905,7 +3906,7 @@ const ARC_DB = (() => {
       parsed = cached;
     } else {
       try {
-        const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+        const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ structuredQuery: {
@@ -3941,7 +3942,7 @@ const ARC_DB = (() => {
     if (!projectId || projectId.startsWith('BURAYA')) return 0;
     name = (name || '').toString().trim();
     if (!name) { console.warn('[ArcDB] wipeMyScores: empty name'); return 0; }
-    const qRes = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+    const qRes = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ structuredQuery: {
         from: [{ collectionId: 'scores' }],
@@ -3953,7 +3954,7 @@ const ARC_DB = (() => {
     let n = 0;
     for (const h of hits) {
       const docId = h.document.name.split('/').pop();
-      const del = await fetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
+      const del = await fbFetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
       if (del.ok) n++;
     }
     invalidateTopCache();
@@ -3970,7 +3971,7 @@ const ARC_DB = (() => {
     code = _sanCode(code);
     if (code.length !== 6) return false;
     try {
-      const res = await fetch(`${BASE}:commit?key=${apiKey}`, {
+      const res = await fbFetch(`${BASE}:commit?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ writes: [{
           update: { name: `projects/${projectId}/databases/(default)/documents/referrals/${code}`, fields: {} },
@@ -3986,7 +3987,7 @@ const ARC_DB = (() => {
     code = _sanCode(code);
     if (code.length !== 6) return 0;
     try {
-      const res = await fetch(`${BASE}/referrals/${code}?key=${apiKey}`);
+      const res = await fbFetch(`${BASE}/referrals/${code}?key=${apiKey}`);
       if (!res.ok) return 0; // 404 → henüz tıklama yok
       const j = await res.json();
       const v = j.fields?.clicks?.integerValue;
@@ -4004,7 +4005,7 @@ const ARC_DB = (() => {
     if (!name || !/^\d{4}$/.test(tag)) return false;
     const key = encodeURIComponent(`${name}#${tag}`);
     try {
-      const res = await fetch(`${BASE}/players/${key}?key=${apiKey}`, {
+      const res = await fbFetch(`${BASE}/players/${key}?key=${apiKey}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: {
           name:   { stringValue: name },
@@ -4024,7 +4025,7 @@ const ARC_DB = (() => {
     if (!name || !/^\d{4}$/.test(tag)) return null;
     const key = encodeURIComponent(`${name}#${tag}`);
     try {
-      const res = await fetch(`${BASE}/players/${key}?key=${apiKey}`);
+      const res = await fbFetch(`${BASE}/players/${key}?key=${apiKey}`);
       if (!res.ok) return null;
       const f = (await res.json()).fields || {};
       return {
@@ -4042,7 +4043,7 @@ const ARC_DB = (() => {
     name = _sanName(name);
     if (!name) return [];
     try {
-      const res = await fetch(`${BASE}:runQuery?key=${apiKey}`, {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
           from: [{ collectionId: 'players' }],
