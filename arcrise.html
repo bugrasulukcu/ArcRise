@@ -6639,7 +6639,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       saveStats();
       checkBadgeUnlocks(); // yeni badge açıldıysa toast gösterir
       // Günlük görev ilerlemesi (wife mode hariç)
-      try { questOnRunEnd({ distCm: runDistCm, score: lastScore, coinsEarned: earned }); } catch(_){}
+      try { questOnRunEnd({ distCm: runDistCm, score: lastScore, coinsEarned: earned, countRun: firstDeathThisRun }); } catch(_){}
       // Arkadaş listesi için profil (en iyi skor/mesafe) güncelle
       try { publishPlayerProfile(); } catch(_){}
     }
