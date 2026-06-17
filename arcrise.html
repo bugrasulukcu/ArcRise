@@ -7867,9 +7867,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
             : 'Tap a slot to set gear · tap the dashed slot to unlock the next.');
       slotsBox.appendChild(msg);
       host.appendChild(slotsBox);
-      if (_gearPickerSlot >= 0 && _gearPickerSlot < slotsOwned) {
-        host.appendChild(buildGearPicker(_gearPickerSlot));
-      }
     }
     // Grid + grup başlıkları
     for (const grp of groups) {
