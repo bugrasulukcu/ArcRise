@@ -7390,20 +7390,17 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     svg.appendChild(c);
     el.appendChild(svg);
   }
+  // Sadece oyun-içi HUD slotları (satın alımlar/equip GEAR'da). Kilitli slotlar gizli.
   function renderSlots() {
-    document.querySelectorAll('.slot').forEach(el => {
+    document.querySelectorAll('#slot-hud .slot').forEach(el => {
       const i = Number(el.dataset.slot);
-      const isHome = el.classList.contains('home-slot');
       const owned = i < slotsOwned;
       const item = slotItems[i];
-      const iconEl  = el.querySelector('.slot-icon');
-      const priceEl = el.querySelector('.slot-price');
       el.classList.toggle('filled', owned && !!item);
-      // Satın alımlar GEAR'da yapılır → kilitli slotlar hiçbir yerde görünmez
       el.style.display = owned ? '' : 'none';
-      if (iconEl) iconEl.innerHTML = (owned && item?.icon) ? iconHTML(item.icon, { size: isHome ? 22 : 26 }) : '';
-      if (priceEl) priceEl.textContent = '';
-      if (!isHome) ensureSlotRing(el);
+      const iconEl = el.querySelector('.slot-icon');
+      if (iconEl) iconEl.innerHTML = (owned && item?.icon) ? iconHTML(item.icon, { size: 26 }) : '';
+      ensureSlotRing(el);
     });
   }
   function updateSlotCooldownUI() {
