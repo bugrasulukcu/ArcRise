@@ -9065,7 +9065,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     for (const q of questState.quests) {
       if (q.claimed) continue;
       if (q.metric === 'distCm' || q.metric === 'score') { const v = m[q.metric] || 0; if (v > q.progress) { q.progress = v; changed = true; } }
-      else if (q.metric === 'runs') { q.progress += 1; changed = true; }
+      else if (q.metric === 'runs') { if (m.countRun !== false) { q.progress += 1; changed = true; } }
       else if (q.metric === 'coinsEarned') { if ((m.coinsEarned||0) > 0) { q.progress += m.coinsEarned; changed = true; } }
     }
     if (changed) saveQuests();
