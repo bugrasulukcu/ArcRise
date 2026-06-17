@@ -2329,15 +2329,16 @@
     }
 
     /* ══════════ QUESTS MODAL ══════════ */
-    #quests-modal, #friends-modal, #friendslist-modal {
+    #quests-modal, #friends-modal, #friendslist-modal, #gearpick-modal {
       position: fixed; inset: 0; z-index: 56;
       display: none; align-items: center; justify-content: center;
       background: rgba(6,8,14,0.30);
       backdrop-filter: blur(20px) saturate(1.15);
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
-    #quests-modal.open, #friends-modal.open, #friendslist-modal.open { display: flex; }
-    #quests-modal-box, #friends-modal-box, #friendslist-modal-box {
+    #gearpick-modal { z-index: 64; } /* upgrades modal'ın (58) üstünde açılır */
+    #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open { display: flex; }
+    #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box {
       position: relative; width: min(92vw, 360px);
       border-radius: 22px; padding: 24px 20px 18px;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
