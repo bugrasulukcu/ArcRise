@@ -9197,6 +9197,9 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (!playerName || !/^\d{4}$/.test(tag)) return;
     const bestScore  = Math.max(stats?.bestNormal || 0, stats?.bestExtreme || 0);
     const bestDistCm = Math.max(stats?.bestDistNormal || 0, stats?.bestDistExtreme || 0);
+    // Reset Data / yeni cihaz: best değerleri 0'ken yayınlama — aksi halde
+    // kayıt defterindeki mevcut profil (gerçek skor) 0'a ezilir.
+    if (bestScore <= 0 && bestDistCm <= 0) return;
     try { ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
   }
   function loadFriends2() { try { const a = JSON.parse(localStorage.getItem(FRIENDS2_KEY)); return Array.isArray(a) ? a : []; } catch(_){ return []; } }
