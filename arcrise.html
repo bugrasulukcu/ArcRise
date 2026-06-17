@@ -7664,7 +7664,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const host = document.getElementById('upg-tab-passive');
     if (!host) return;
     host.innerHTML = '';
-    renderGear();
+    renderGearPane(document.getElementById('upg-tab-abilities'), ABILITIES_GROUPS, true);
+    renderGearPane(document.getElementById('upg-tab-items'), ITEMS_GROUPS, false);
 
     if (upgPassiveView === 'grid') {
       const grid = document.createElement('div');
