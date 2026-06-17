@@ -7726,6 +7726,34 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       });
       return;
     }
+    // ── Gear slots satın alma (grid görünümünün başında) ──
+    const slotsHead = document.createElement('div');
+    slotsHead.className = 'upg-group-head';
+    slotsHead.textContent = 'GEAR SLOTS';
+    host.appendChild(slotsHead);
+    const slotsBox = document.createElement('div');
+    slotsBox.className = 'upg-slots-box';
+    const dots = Array.from({ length: SLOT_COUNT }, (_, i) => {
+      const owned = i < slotsOwned;
+      const it = slotItems[i];
+      const cls = owned ? (it ? 'filled' : 'empty') : 'locked';
+      const inner = owned
+        ? (it ? iconHTML(it.icon, { size: 20 }) : '')
+        : `${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}`;
+      return `<span class="upg-slot-dot ${cls}">${inner}</span>`;
+    }).join('');
+    const nextPrice = slotsOwned < SLOT_COUNT ? SLOT_PRICES[slotsOwned] : null;
+    slotsBox.innerHTML = `
+      <div class="upg-slots-row">${dots}</div>
+      ${nextPrice == null
+        ? `<div class="upg-slots-msg">All slots unlocked</div>`
+        : `<button class="upg-buy" id="buy-slot" ${coins < nextPrice ? 'disabled' : ''}>Unlock Slot ${slotsOwned + 1} <span class="upg-coin">${iconHTML('coin', { size: 12 })}${nextPrice}</span></button>`}
+    `;
+    host.appendChild(slotsBox);
+    if (nextPrice != null) {
+      const b = slotsBox.querySelector('#buy-slot');
+      if (b) b.addEventListener('click', () => { buySlot(); }); // buySlot → renderUpgrades → renderGear
+    }
     // Grid + group headers
     for (const grp of GEAR_GROUPS) {
       const h = document.createElement('div');
