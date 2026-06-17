@@ -7852,7 +7852,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const dot = document.createElement('button');
         dot.className = cls;
         dot.innerHTML = owned
-          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span>`
+          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span><span class="slot-plus">+</span>`
           : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
         dot.addEventListener('click', () => {
           if (!owned) { if (isNext) buySlot(); return; }
