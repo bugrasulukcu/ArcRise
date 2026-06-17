@@ -13,7 +13,9 @@
       "PowerShell($edge = \"$env:ProgramFiles\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\"; if \\(-not \\(Test-Path $edge\\)\\) { $edge = \"${env:ProgramFiles\\(x86\\)}\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\" }; Test-Path $edge)",
       "PowerShell(where.exe msedge chrome 2>$null; Get-ChildItem -Path \"${env:ProgramFiles\\(x86\\)}\\\\Microsoft\\\\Edge\\\\Application\" -Filter msedge.exe -ErrorAction SilentlyContinue | Select-Object FullName)",
       "Bash(node -e ' *)",
-      "Bash(python3 _fix_encoding.py)"
+      "Bash(python3 _fix_encoding.py)",
+      "Bash(curl -s \"https://bugrasulukcu.github.io/ArcRise/arcrise.html?cb=$\\(date +%s\\)\")",
+      "Bash(curl -sI \"https://bugrasulukcu.github.io/ArcRise/arcrise.html\")"
     ]
   },
   "hooks": {
