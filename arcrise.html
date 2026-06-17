@@ -7743,15 +7743,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // tile'lar tıklanamaz, üzerinde "SOON" rozeti gösterir.
   let upgGearView = 'grid';
   let _gearPickerSlot = -1; // hangi slot için gear seçici açık (-1 = kapalı)
-  function openGearPicker(i) { _gearPickerSlot = (_gearPickerSlot === i) ? -1 : i; renderUpgrades(); }
-  // Slot'a basınca açılan seçici: sahip olunan ability'leri listeler.
-  function buildGearPicker(slotIdx) {
-    const wrap = document.createElement('div');
-    wrap.className = 'gear-picker';
+  // Slot'a basınca AYRI bir pencere (modal) açılır; sahip olunan ability'ler listelenir.
+  function openGearPicker(i) {
+    _gearPickerSlot = i;
+    fillGearPicker(i);
+    document.getElementById('gearpick-modal').classList.add('open');
+  }
+  function closeGearPicker() {
+    _gearPickerSlot = -1;
+    document.getElementById('gearpick-modal').classList.remove('open');
+  }
+  function fillGearPicker(slotIdx) {
+    const titleEl = document.getElementById('gearpick-title');
+    const host = document.getElementById('gearpick-content');
+    if (!host) return;
+    if (titleEl) titleEl.textContent = `SLOT ${slotIdx + 1} — CHOOSE GEAR`;
     const ownedKeys = Object.keys(ABILITY_CFG).filter(k => upg.inv?.[k]?.owned);
-    let inner = `<div class="gear-picker-head">SLOT ${slotIdx + 1} — CHOOSE GEAR</div><div class="gear-picker-grid">`;
+    let inner = `<div class="gear-picker-grid">`;
     if (!ownedKeys.length) {
-      inner += `<div class="upg-slots-msg" style="padding:6px 0">No abilities unlocked yet — unlock one below first.</div>`;
+      inner += `<div class="upg-slots-msg" style="padding:6px 0">No abilities unlocked yet — unlock one in the ABILITIES list first.</div>`;
     } else {
       for (const k of ownedKeys) {
         const meta = GEAR_GROUPS.flatMap(g => g.items).find(it => it.key === k);
@@ -7760,15 +7770,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const inSlot = slotItems.findIndex(s => s && s.key === k);
         const stateCls = inSlot === slotIdx ? 'equipped-here' : (inSlot !== -1 ? 'equipped-other' : '');
         const tag = (inSlot !== -1 && inSlot !== slotIdx) ? ` ·S${inSlot + 1}` : '';
-        inner += `<button class="gp-item ${stateCls}" data-k="${k}"><span>${iconHTML(ico, { size: 24 })}</span><span class="gp-item-name">${title}${tag}</span></button>`;
+        inner += `<button class="gp-item ${stateCls}" data-k="${k}"><span>${iconHTML(ico, { size: 26 })}</span><span class="gp-item-name">${title}${tag}</span></button>`;
       }
     }
     inner += `</div>`;
     if (slotItems[slotIdx]) {
-      inner += `<button class="gp-item gp-remove" data-k="__remove__" style="width:auto;flex-direction:row;gap:6px;align-self:center;padding:7px 16px"><span class="gp-item-name" style="color:#ff6a7a;font-size:10px">REMOVE</span></button>`;
+      inner += `<button class="gp-item gp-remove" data-k="__remove__" style="width:auto;flex-direction:row;gap:6px;align-self:center;margin:10px auto 0;padding:8px 18px"><span class="gp-item-name" style="color:#ff6a7a;font-size:10px">REMOVE GEAR</span></button>`;
     }
-    wrap.innerHTML = inner;
-    wrap.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
+    host.innerHTML = inner;
+    host.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k;
       if (k === '__remove__') { slotItems[slotIdx] = null; }
       else {
@@ -7777,9 +7787,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         const meta = GEAR_GROUPS.flatMap(g => g.items).find(it => it.key === k);
         slotItems[slotIdx] = { type: 'ability', key: k, icon: meta?.icon || 'sparkle' };
       }
-      saveSlots(); _gearPickerSlot = -1; renderSlots(); renderUpgrades();
+      saveSlots(); closeGearPicker(); renderSlots(); renderUpgrades();
     }));
-    return wrap;
   }
   // Hangi grup hangi sekmede: ABILITIES → abilities sekmesi (slotlarla),
   // CONSUMABLES + LOADOUT → items sekmesi.
