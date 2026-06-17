@@ -7984,6 +7984,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         </div>
       `;
       card.querySelector('#ab-unlock').addEventListener('click', () => {
+        if (slotsOwned === 0) { showToast('You need to buy a gear slot first'); return; }
         if (!can) return; if (!spendCoins(cfg.unlock)) return;
         inv.owned = true; saveUpg(); renderUpgrades();
       });
