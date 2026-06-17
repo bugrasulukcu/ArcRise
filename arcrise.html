@@ -1542,14 +1542,15 @@
       border-radius: 11px; overflow: hidden;
     }
     .upg-tab {
-      flex: 1; padding: 10px 6px;
+      flex: 1; padding: 10px 4px;
       background: rgba(255,255,255,.04);
       color: rgba(255,255,255,.50);
       border: none; font-family: var(--font);
-      font-size: 10.5px; letter-spacing: 1.4px;
+      font-size: 9.5px; letter-spacing: .8px; white-space: nowrap;
       cursor: pointer;
       transition: background .15s, color .15s;
     }
+    .upg-tab + .upg-tab { border-left: 1px solid rgba(170,120,255,.25); }
     .upg-tab.active {
       background: linear-gradient(180deg, rgba(120,70,200,.55), rgba(50,20,100,.65));
       color: #fff;
