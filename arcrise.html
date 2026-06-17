@@ -8572,10 +8572,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     _runPreboostPending = null;
     if (gameMode === 'wife') return; // Wife mode coin/etki yok
     const inv = upg.inv;
-    const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
+    // Insurance: bu run'da DİĞER armed consumable'lar tüketilmez (sadece insurance harcanır).
+    const insured = inv.insurance.armed && inv.insurance.count > 0;
+    const consume = (k) => {
+      if (insured && k !== 'insurance') return; // sigortalıysa diğer item'lar korunur
+      inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false;
+    };
     if (inv.doubler.armed   && inv.doubler.count   > 0) { runDoublerActive = true;        consume('doubler');   }
     if (inv.headstart.armed && inv.headstart.count > 0) { runHeadstartT = 5.0;            consume('headstart'); }
-    if (inv.insurance.armed && inv.insurance.count > 0) { runInsuranceActive = true;      consume('insurance'); }
+    if (insured)                                        { runInsuranceActive = true;      consume('insurance'); }
     if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
     if (inv.filter.armed    && inv.filter.count    > 0) { runFilterActive = true;         consume('filter');    }
     if (inv.preboost.armed  && inv.preboost.count  > 0) {
