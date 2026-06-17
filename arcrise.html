@@ -7707,6 +7707,45 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   // GEAR tab: gruplu tile grid + LOADOUT item'larına detay açma. Locked
   // tile'lar tıklanamaz, üzerinde "SOON" rozeti gösterir.
   let upgGearView = 'grid';
+  let _gearPickerSlot = -1; // hangi slot için gear seçici açık (-1 = kapalı)
+  function openGearPicker(i) { _gearPickerSlot = (_gearPickerSlot === i) ? -1 : i; renderUpgrades(); }
+  // Slot'a basınca açılan seçici: sahip olunan ability'leri listeler.
+  function buildGearPicker(slotIdx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'gear-picker';
+    const ownedKeys = Object.keys(ABILITY_CFG).filter(k => upg.inv?.[k]?.owned);
+    let inner = `<div class="gear-picker-head">SLOT ${slotIdx + 1} — CHOOSE GEAR</div><div class="gear-picker-grid">`;
+    if (!ownedKeys.length) {
+      inner += `<div class="upg-slots-msg" style="padding:6px 0">No abilities unlocked yet — unlock one below first.</div>`;
+    } else {
+      for (const k of ownedKeys) {
+        const meta = GEAR_GROUPS.flatMap(g => g.items).find(it => it.key === k);
+        const ico = meta?.icon || 'sparkle';
+        const title = meta?.title || k;
+        const inSlot = slotItems.findIndex(s => s && s.key === k);
+        const stateCls = inSlot === slotIdx ? 'equipped-here' : (inSlot !== -1 ? 'equipped-other' : '');
+        const tag = (inSlot !== -1 && inSlot !== slotIdx) ? ` ·S${inSlot + 1}` : '';
+        inner += `<button class="gp-item ${stateCls}" data-k="${k}"><span>${iconHTML(ico, { size: 24 })}</span><span class="gp-item-name">${title}${tag}</span></button>`;
+      }
+    }
+    inner += `</div>`;
+    if (slotItems[slotIdx]) {
+      inner += `<button class="gp-item gp-remove" data-k="__remove__" style="width:auto;flex-direction:row;gap:6px;align-self:center;padding:7px 16px"><span class="gp-item-name" style="color:#ff6a7a;font-size:10px">REMOVE</span></button>`;
+    }
+    wrap.innerHTML = inner;
+    wrap.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.k;
+      if (k === '__remove__') { slotItems[slotIdx] = null; }
+      else {
+        const cur = slotItems.findIndex(s => s && s.key === k);
+        if (cur !== -1) slotItems[cur] = null;            // başka slotta varsa oradan sil
+        const meta = GEAR_GROUPS.flatMap(g => g.items).find(it => it.key === k);
+        slotItems[slotIdx] = { type: 'ability', key: k, icon: meta?.icon || 'sparkle' };
+      }
+      saveSlots(); _gearPickerSlot = -1; renderSlots(); renderUpgrades();
+    }));
+    return wrap;
+  }
   function renderGear() {
     const host = document.getElementById('upg-tab-gear');
     if (!host) return;
