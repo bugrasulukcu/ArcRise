@@ -7773,42 +7773,58 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       });
       return;
     }
-    // ── Gear slots (dairesel — home/oyun-içi ile aynı görünüm) ──
+    // ── Gear slots (bal peteği) + satın alma + seçici ──
     const slotsHead = document.createElement('div');
     slotsHead.className = 'upg-group-head';
     slotsHead.textContent = 'GEAR SLOTS';
     host.appendChild(slotsHead);
     const slotsBox = document.createElement('div');
     slotsBox.className = 'upg-slots-box';
-    const row = document.createElement('div');
-    row.className = 'upg-slots-row';
-    for (let i = 0; i < SLOT_COUNT; i++) {
-      const owned = i < slotsOwned;
-      const it = slotItems[i];
-      const isNext = (i === slotsOwned);
-      const dot = document.createElement('button');
-      dot.className = 'slot gear-slot'
-        + (owned && it ? ' filled' : '')
-        + (!owned ? ' locked' : '')
-        + (isNext ? ' next' : '')
-        + (isNext && coins >= SLOT_PRICES[i] ? ' buyable' : '');
-      dot.innerHTML = owned
-        ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span>`
-        : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
-      dot.addEventListener('click', () => {
-        if (!owned) { if (isNext) buySlot(); return; }          // kilitli → sıradakini satın al
-        if (it) { slotItems[i] = null; saveSlots(); renderSlots(); renderUpgrades(); } // dolu → boşalt
-      });
-      row.appendChild(dot);
+    if (slotsOwned === 0) {
+      // Hiç slot yok → uyarı + ilk slotu satın al
+      const warn = document.createElement('div');
+      warn.className = 'upg-slots-warn';
+      warn.innerHTML = `
+        <div class="upg-slots-warn-txt">You need a gear slot before you can equip abilities.</div>
+        <button class="upg-buy" id="buy-first-slot" ${coins < SLOT_PRICES[0] ? 'disabled' : ''}>Buy Slot 1 <span class="upg-coin">${iconHTML('coin', { size: 12 })}${SLOT_PRICES[0]}</span></button>
+      `;
+      slotsBox.appendChild(warn);
+      host.appendChild(slotsBox);
+      const b = warn.querySelector('#buy-first-slot');
+      if (b) b.addEventListener('click', () => buySlot());
+    } else {
+      const stage = document.createElement('div');
+      stage.className = 'upg-slots-stage';
+      for (let i = 0; i < SLOT_COUNT; i++) {
+        const owned = i < slotsOwned;
+        const it = slotItems[i];
+        const isNext = (i === slotsOwned);
+        let cls = `slot gear-slot slot-pos-${i}`;
+        if (owned && it) cls += ' filled';
+        if (!owned) { cls += ' locked'; cls += isNext ? (coins >= SLOT_PRICES[i] ? ' next buyable' : ' next') : ' disabled'; }
+        const dot = document.createElement('button');
+        dot.className = cls;
+        dot.innerHTML = owned
+          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span>`
+          : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
+        dot.addEventListener('click', () => {
+          if (!owned) { if (isNext) buySlot(); return; } // sadece sıradaki kilitli satın alınır
+          openGearPicker(i);                              // owned → gear seçici
+        });
+        stage.appendChild(dot);
+      }
+      slotsBox.appendChild(stage);
+      const msg = document.createElement('div');
+      msg.className = 'upg-slots-msg';
+      msg.textContent = slotsOwned >= SLOT_COUNT
+        ? 'Tap a slot to set its gear.'
+        : 'Tap a slot to set gear · tap the dashed slot to unlock the next.';
+      slotsBox.appendChild(msg);
+      host.appendChild(slotsBox);
+      if (_gearPickerSlot >= 0 && _gearPickerSlot < slotsOwned) {
+        host.appendChild(buildGearPicker(_gearPickerSlot));
+      }
     }
-    slotsBox.appendChild(row);
-    const msg = document.createElement('div');
-    msg.className = 'upg-slots-msg';
-    msg.textContent = slotsOwned >= SLOT_COUNT
-      ? 'All slots unlocked'
-      : `Tap the dashed slot to unlock (${SLOT_PRICES[slotsOwned]} coins). Equip from an ability below.`;
-    slotsBox.appendChild(msg);
-    host.appendChild(slotsBox);
     // Grid + group headers
     for (const grp of GEAR_GROUPS) {
       const h = document.createElement('div');
