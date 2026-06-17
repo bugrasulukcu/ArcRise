@@ -7752,16 +7752,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     }));
     return wrap;
   }
-  function renderGear() {
-    const host = document.getElementById('upg-tab-gear');
+  // Hangi grup hangi sekmede: ABILITIES → abilities sekmesi (slotlarla),
+  // CONSUMABLES + LOADOUT → items sekmesi.
+  const ABILITIES_GROUPS = [ GEAR_GROUPS.find(g => g.title === 'ABILITIES') ].filter(Boolean);
+  const ITEMS_GROUPS     = [ GEAR_GROUPS.find(g => g.title === 'CONSUMABLES'),
+                             GEAR_GROUPS.find(g => g.title === 'LOADOUT') ].filter(Boolean);
+  // Ortak gear pane render'ı: detay görünümü + (opsiyonel) slotlar + tile grid.
+  function renderGearPane(host, groups, includeSlots) {
     if (!host) return;
     host.innerHTML = '';
-    // Detail view (sadece LOADOUT item'ları için)
-    if (upgGearView !== 'grid') {
-      _gearPickerSlot = -1; // detaya geçince gear seçici kapansın
-      const allItems = GEAR_GROUPS.flatMap(g => g.items);
-      const meta = allItems.find(i => i.key === upgGearView);
-      if (!meta || meta.locked) { upgGearView = 'grid'; return renderGear(); }
+    const groupKeys = groups.flatMap(g => g.items.map(it => it.key));
+    // Detay görünümü — sadece bu sekmeye ait bir item seçiliyse
+    if (upgGearView !== 'grid' && groupKeys.includes(upgGearView)) {
+      _gearPickerSlot = -1;
+      const meta = groups.flatMap(g => g.items).find(i => i.key === upgGearView);
+      if (!meta || meta.locked) { upgGearView = 'grid'; return renderGearPane(host, groups, includeSlots); }
       const panel = document.createElement('div');
       panel.className = 'upg-detail open';
       const desc = CORE_DESC[meta.key] || ABILITY_DESC[meta.key] || (CONSUMABLE_CFG[meta.key] && CONSUMABLE_CFG[meta.key].desc) || '';
@@ -7775,65 +7780,64 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       `;
       panel.appendChild(buildDetailBody(meta.key));
       host.appendChild(panel);
-      panel.querySelector('#upg-back-g').addEventListener('click', () => {
-        upgGearView = 'grid'; renderGear();
-      });
+      panel.querySelector('#upg-back-g').addEventListener('click', () => { upgGearView = 'grid'; renderUpgrades(); });
       return;
     }
-    // ── Gear slots (bal peteği) + satın alma + seçici ──
-    const slotsHead = document.createElement('div');
-    slotsHead.className = 'upg-group-head';
-    slotsHead.textContent = 'GEAR SLOTS';
-    host.appendChild(slotsHead);
-    const slotsBox = document.createElement('div');
-    slotsBox.className = 'upg-slots-box';
-    if (slotsOwned === 0) {
-      // Hiç slot yok → uyarı + ilk slotu satın al
-      const warn = document.createElement('div');
-      warn.className = 'upg-slots-warn';
-      warn.innerHTML = `
-        <div class="upg-slots-warn-txt">You need a gear slot before you can equip abilities.</div>
-        <button class="upg-buy" id="buy-first-slot" ${coins < SLOT_PRICES[0] ? 'disabled' : ''}>Buy Slot 1 <span class="upg-coin">${iconHTML('coin', { size: 12 })}${SLOT_PRICES[0]}</span></button>
-      `;
-      slotsBox.appendChild(warn);
-      host.appendChild(slotsBox);
-      const b = warn.querySelector('#buy-first-slot');
-      if (b) b.addEventListener('click', () => buySlot());
-    } else {
-      const stage = document.createElement('div');
-      stage.className = 'upg-slots-row';
-      for (let i = 0; i < SLOT_COUNT; i++) {
-        const owned = i < slotsOwned;
-        const it = slotItems[i];
-        const isNext = (i === slotsOwned);
-        let cls = `slot gear-slot slot-c${i}`;
-        if (owned && it) cls += ' filled';
-        if (!owned) { cls += ' locked'; cls += isNext ? (coins >= SLOT_PRICES[i] ? ' next buyable' : ' next') : ' disabled'; }
-        const dot = document.createElement('button');
-        dot.className = cls;
-        dot.innerHTML = owned
-          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span>`
-          : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
-        dot.addEventListener('click', () => {
-          if (!owned) { if (isNext) buySlot(); return; } // sadece sıradaki kilitli satın alınır
-          openGearPicker(i);                              // owned → gear seçici
-        });
-        stage.appendChild(dot);
-      }
-      slotsBox.appendChild(stage);
-      const msg = document.createElement('div');
-      msg.className = 'upg-slots-msg';
-      msg.textContent = slotsOwned >= SLOT_COUNT
-        ? 'Tap a slot to set its gear.'
-        : 'Tap a slot to set gear · tap the dashed slot to unlock the next.';
-      slotsBox.appendChild(msg);
-      host.appendChild(slotsBox);
-      if (_gearPickerSlot >= 0 && _gearPickerSlot < slotsOwned) {
-        host.appendChild(buildGearPicker(_gearPickerSlot));
+    // ── Gear slots (sadece abilities sekmesi) ──
+    if (includeSlots) {
+      const slotsHead = document.createElement('div');
+      slotsHead.className = 'upg-group-head';
+      slotsHead.textContent = 'GEAR SLOTS';
+      host.appendChild(slotsHead);
+      const slotsBox = document.createElement('div');
+      slotsBox.className = 'upg-slots-box';
+      if (slotsOwned === 0) {
+        const warn = document.createElement('div');
+        warn.className = 'upg-slots-warn';
+        warn.innerHTML = `
+          <div class="upg-slots-warn-txt">You need a gear slot before you can equip abilities.</div>
+          <button class="upg-buy" id="buy-first-slot" ${coins < SLOT_PRICES[0] ? 'disabled' : ''}>Buy Slot 1 <span class="upg-coin">${iconHTML('coin', { size: 12 })}${SLOT_PRICES[0]}</span></button>
+        `;
+        slotsBox.appendChild(warn);
+        host.appendChild(slotsBox);
+        const b = warn.querySelector('#buy-first-slot');
+        if (b) b.addEventListener('click', () => buySlot());
+      } else {
+        const stage = document.createElement('div');
+        stage.className = 'upg-slots-row';
+        for (let i = 0; i < SLOT_COUNT; i++) {
+          const owned = i < slotsOwned;
+          const it = slotItems[i];
+          const isNext = (i === slotsOwned);
+          let cls = `slot gear-slot slot-c${i}`;
+          if (owned && it) cls += ' filled';
+          if (!owned) { cls += ' locked'; cls += isNext ? (coins >= SLOT_PRICES[i] ? ' next buyable' : ' next') : ' disabled'; }
+          const dot = document.createElement('button');
+          dot.className = cls;
+          dot.innerHTML = owned
+            ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span>`
+            : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
+          dot.addEventListener('click', () => {
+            if (!owned) { if (isNext) buySlot(); return; }
+            openGearPicker(i);
+          });
+          stage.appendChild(dot);
+        }
+        slotsBox.appendChild(stage);
+        const msg = document.createElement('div');
+        msg.className = 'upg-slots-msg';
+        msg.textContent = slotsOwned >= SLOT_COUNT
+          ? 'Tap a slot to set its gear.'
+          : 'Tap a slot to set gear · tap the dashed slot to unlock the next.';
+        slotsBox.appendChild(msg);
+        host.appendChild(slotsBox);
+        if (_gearPickerSlot >= 0 && _gearPickerSlot < slotsOwned) {
+          host.appendChild(buildGearPicker(_gearPickerSlot));
+        }
       }
     }
-    // Grid + group headers
-    for (const grp of GEAR_GROUPS) {
+    // Grid + grup başlıkları
+    for (const grp of groups) {
       const h = document.createElement('div');
       h.className = 'upg-group-head';
       h.textContent = grp.title;
@@ -7851,7 +7855,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           </span>
         `;
         if (!t.locked) {
-          tile.addEventListener('click', () => { upgGearView = t.key; renderGear(); });
+          tile.addEventListener('click', () => { upgGearView = t.key; renderUpgrades(); });
         }
         grid.appendChild(tile);
       }
