@@ -7993,12 +7993,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
             : `<button class="upg-buy small" id="ab-cd" ${coins<cdPrice?'disabled':''}>-${cfg.cdStep}s <span class="upg-coin">${iconHTML('coin',{size:12})}${cdPrice}</span></button>`}
         </div>
       </div>
-      <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 0 2px">
-        ${slotsOwned === 0
-          ? `<div style="font-size:10px;color:rgba(255,255,255,.5);letter-spacing:1px;padding:6px 0">Buy a gear slot on the home screen to equip</div>`
-          : Array.from({ length: slotsOwned }, (_, s) =>
-              `<button class="upg-buy" data-eq="${s}" ${equippedSlot===s?'data-on="1"':''}>Slot ${s+1}</button>`
-            ).join('')}
+      <div style="text-align:center;padding:8px 0 2px;font-size:9.5px;letter-spacing:.6px;color:${equippedSlot !== -1 ? 'rgba(170,140,255,.9)' : 'rgba(255,255,255,.5)'}">
+        ${equippedSlot !== -1
+          ? `Equipped in Slot ${equippedSlot + 1}`
+          : (slotsOwned === 0
+              ? 'Unlock a GEAR SLOT above, then tap it to equip'
+              : 'Tap a GEAR SLOT above to equip this')}
       </div>
     `;
     if (!cfg.noDur && durPrice != null) card.querySelector('#ab-dur').addEventListener('click', () => {
@@ -8009,13 +8009,6 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (coins < cdPrice) return; if (!spendCoins(cdPrice)) return;
       inv.cdLvl = (inv.cdLvl || 0) + 1; saveUpg(); renderUpgrades();
     });
-    const equipTo = (idx) => {
-      const cur = slotItems.findIndex(s => s && s.key === key);
-      if (cur === idx) { slotItems[idx] = null; }
-      else { if (cur !== -1) slotItems[cur] = null; slotItems[idx] = { type: 'ability', key, icon: ico }; }
-      saveSlots(); renderSlots(); renderUpgrades();
-    };
-    card.querySelectorAll('[data-eq]').forEach(b => b.addEventListener('click', () => equipTo(Number(b.dataset.eq))));
     return card;
   }
   const ABILITY_DESC = {
