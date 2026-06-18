@@ -6903,6 +6903,25 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return String(v); // above 999999: show as-is
   };
 
+  // Reklamla dönüşte top üzerinde 3→1 geri sayımını çizer (her saniye nabız atar).
+  function drawResumeCountdown() {
+    if (resumeCountdown <= 0) return;
+    const n = Math.ceil(resumeCountdown);
+    const frac = resumeCountdown - (n - 1);        // saniye içinde 1→0
+    const px = player.x, py = W2S(player.y);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(0.8 + 0.45 * frac, 0.8 + 0.45 * frac); // her sayıda büyükten küçüğe nabız
+    ctx.globalAlpha = Math.min(1, frac * 1.6);
+    ctx.font = '700 70px Sarpanch, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.55)';
+    ctx.fillStyle = '#fff';
+    ctx.strokeText(n, 0, 0);
+    ctx.fillText(n, 0, 0);
+    ctx.restore();
+  }
+
   // ── Main draw loop ────────────────────────────────────────
   let lastT = 0;
   // Rolling FPS sample for the debug overlay (no allocs in the hot path).
