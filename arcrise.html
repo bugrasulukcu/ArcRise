@@ -7138,9 +7138,41 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     function think(dt) {
       if (flipCD > 0) flipCD -= dt;
       const noFlip = simulate(false), doFlip = simulate(true);
-      if (flipCD <= 0 && doFlip + 15 < noFlip) {  // histerezis → jitter önler
+      // Bot kendi temposunu ayarlar: SADECE çevirmek daha iyiyse çevirir (histerezis
+      // → jitter önler). Çevirdiğinde min bekleme = 1/MAX_TAP_HZ uygulanır, yani
+      // tıklama hızı asla MAX_TAP_HZ'i (sn başına) aşmaz.
+      const flipChosen = (flipCD <= 0 && doFlip.cost + 15 < noFlip.cost);
+      if (flipChosen) {
         beginArc(-player.dir, getRadius());
-        flipCD = nextTapCD();                      // insani 3-5 tap/sn
+        flipCD = nextTapCD();
+      }
+      botAbilities(dt, flipChosen ? doFlip : noFlip);
+    }
+
+    // Hazır (dolu + cooldown bitmiş) ilk slotu öncelik sırasına göre tetikler.
+    function fireReady(keys) {
+      for (const k of keys) {
+        for (let i = 0; i < slotItems.length; i++) {
+          const it = slotItems[i];
+          if (it && it.type === 'ability' && it.key === k && slotCD[i] <= 0) { triggerAbility(i); return true; }
+        }
+      }
+      return false;
+    }
+    function pickupsNear() {
+      const near = (arr, R) => arr.some(o => o.y < player.y + 40 && Math.hypot(player.x - o.x, player.y - o.y) < R);
+      return near(goldBalls, 260) || near(purpleBalls, 260) || (energy < 0.45 && near(bonuses, 300));
+    }
+    function botAbilities(dt, chosen) {
+      abilTimer -= dt;
+      // Acil: seçilen rota ufuk içinde çarpacaksa savunma ability'si bas
+      if (chosen.crash && chosen.crashFrac < 0.6 && fireReady(['phaseburst', 'shock', 'timeslow', 'brake'])) return;
+      // Fırsat: yakında coin/enerji varsa coinpull
+      if (pickupsNear() && fireReady(['coinpull'])) return;
+      // Kalanları (mirror/anchor dahil) ara sıra tetikle → hepsi test edilsin
+      if (abilTimer <= 0) {
+        fireReady(['mirror', 'anchor', 'brake', 'timeslow', 'shock', 'phaseburst', 'coinpull']);
+        abilTimer = 6 + Math.random() * 4;
       }
     }
 
