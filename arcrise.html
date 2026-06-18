@@ -6099,11 +6099,12 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   function spawnAhead() {
     if (tutActive) return; // Tutorialda doğal spawn yok — manuel yerleştirilir
     while (nextSpawnY > player.y - 2200) {
-      // Difficulty driver — linear in distance, clamped 0..1 over 0..1000 m.
-      // Score is no longer a difficulty input; this gives a predictable curve.
+      // Difficulty driver — linear in distance. Eşikler gerçek oynanan aralığa
+      // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
+      // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
       const distCm = (distancePx / H) * CM_PER_SCREEN;
-      const t  = Math.max(0, Math.min(1, distCm / 7500));
-      const tMove = Math.max(0, (distCm - 1500) / 6000); // movement after 1500 cm
+      const t  = Math.max(0, Math.min(1, distCm / 500));
+      const tMove = Math.max(0, (distCm - 100) / 400); // movement after ~1m
       const tMoveC = Math.max(0, Math.min(1, tMove));
 
       const x  = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
