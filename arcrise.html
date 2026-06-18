@@ -7102,7 +7102,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const nextTapCD = () => (1 / MAX_TAP_HZ) * (0.95 + Math.random() * 0.1);
 
     // Bir karar adayını ileri simüle et, "maliyet" döndür (düşük = iyi).
-    function simulate(flip) {
+    // target verilirse o yeşil enerji topuna yönelmeyi ödüllendirir (ufuk ötesi).
+    function simulate(flip, target, gw) {
       let dir = player.dir, radius = player.radius;
       let cx = player.cx, cy = player.cy, ang = player.ang, heading = player.heading;
       let x = player.x, y = player.y;
@@ -7113,7 +7114,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         ang = Math.atan2(y - cy, x - cx); dir = sign;
       }
       const speed = player.speed, startY = y, steps = Math.round(HORIZON / SUBDT);
-      let cost = 0, nearestGreen = Infinity, crash = false, crashFrac = 1;
+      let cost = 0, crash = false, crashFrac = 1, minT = Infinity;
       for (let s = 0; s < steps; s++) {
         ang += (speed / radius) * SUBDT * dir;
         x = cx + Math.cos(ang) * radius;
@@ -7125,20 +7126,32 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           if (dx*dx + dy*dy < rr*rr) { cost += 1000 * (1 - s / steps); hit = true; break; }
         }
         if (hit) { crash = true; crashFrac = s / steps; break; }
-        for (const b of bonuses) {
-          if (b.y > y + 40) continue;            // sadece önümüzdeki (yukarı) yeşiller
-          const d = Math.hypot(x - b.x, y - b.y);
-          if (d < nearestGreen) nearestGreen = d;
-        }
+        if (target) { const d = Math.hypot(x - target.x, y - target.y); if (d < minT) minT = d; }
       }
       cost -= (startY - y) * 0.4;                 // yukarı çıkmak iyi
-      if (nearestGreen < Infinity) cost += nearestGreen * (energy < 0.5 ? 1.2 : 0.4);
+      if (target) {                                // yeşile yönel: ufuk sonu + en yakın yaklaşım
+        const endD = Math.hypot(x - target.x, y - target.y);
+        cost += (endD * 0.6 + minT * 0.4) * gw;
+      }
       return { cost, crash, crashFrac };
+    }
+    // En yakın yeşil enerji topu (yukarıda, makul menzilde) — hedef olarak seçilir.
+    function pickGreen() {
+      let best = null, bd = Infinity;
+      for (const b of bonuses) {
+        if (b.y >= player.y || player.y - b.y > 950) continue;
+        const d = Math.hypot(player.x - b.x, player.y - b.y);
+        if (d < bd) { bd = d; best = b; }
+      }
+      return best;
     }
 
     function think(dt) {
       if (flipCD > 0) flipCD -= dt;
-      const noFlip = simulate(false), doFlip = simulate(true);
+      const target = pickGreen();
+      // Enerji düştükçe yeşile yönelim güçlenir; yüksek hızda (Extreme) pervasızlık azalır.
+      const gw = (energy < 0.4 ? 4 : energy < 0.7 ? 2 : 0.8) * (400 / player.speed);
+      const noFlip = simulate(false, target, gw), doFlip = simulate(true, target, gw);
       // Bot kendi temposunu ayarlar: SADECE çevirmek daha iyiyse çevirir (histerezis
       // → jitter önler). Çevirdiğinde min bekleme = 1/MAX_TAP_HZ uygulanır, yani
       // tıklama hızı asla MAX_TAP_HZ'i (sn başına) aşmaz.
