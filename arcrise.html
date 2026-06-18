@@ -6603,6 +6603,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
   let _statsCounted   = false;    // gamesTotal bu run için sayıldı mı (ad-continue çift saymasın)
   let _adContinueUsed = false;    // reklamla devam bu run'da kullanıldı mı (tek hak)
+  let resumeCountdown = 0;        // reklamla dönünce top üzerinde 3→1 geri sayım (sn)
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
