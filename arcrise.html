@@ -7098,7 +7098,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Maksimum dokunma hızı (sn başına tap). Bot temposunu kendi ayarlar — sadece
     // gerektiğinde çevirir — ama iki tap arası min 1/MAX_TAP_HZ olduğundan hız bunu
     // asla aşmaz. İnsani his için minik (±%10) rastgele jitter eklenir.
-    let MAX_TAP_HZ = 3;
+    let MAX_TAP_HZ = 5;
     const nextTapCD = () => (1 / MAX_TAP_HZ) * (0.95 + Math.random() * 0.1);
 
     // Bir karar adayını ileri simüle et, "maliyet" döndür (düşük = iyi).
