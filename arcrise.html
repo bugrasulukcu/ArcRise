@@ -6918,6 +6918,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       if (dyingT > 0.55) { dyingT = -1; endGame(); }
     }
     const dt = dtRaw * slow;
+    ARC_BOT.frame(dtRaw); // test otopilotu (aktifse): kaçış/flip kararı + auto-restart
     // Cooldown ve aktif ability gerçek zaman ile ilerler (slow'a tabi değil)
     if (activeAbility) {
       activeAbility.t -= dtRaw;
