@@ -9119,10 +9119,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     energy = Math.max(energy, 0.6); // ölüme combo bitmişken dönmek anlamsız olmasın
     graceTimer = 0;
     showScene('play');
-    isGhost = true;
-    setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
+    isGhost = true; // geri sayım boyunca + dönüş sonrası kısa dokunulmazlık
     beginArc(1, getRadius());
-    started = true; running = true;
+    started = true; running = false;   // geri sayım bitene kadar top donuk
+    resumeCountdown = 3.0;             // loop'ta 3→1 sayar, biter bitmez akar
     try { playBgMusic(); } catch(_){}
     haptic(40);
   }
