@@ -8101,19 +8101,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     filter:    { price: 3, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
   };
   const ABILITY_CFG = {
-    timeslow:   { unlock: 10, durBase: 1.5, durStep: 0.3, cdBase: 15, cdStep: 2, ladderLvl: 5,
+    // Temiz tam-sayı değerler (booster ölçeğine uyumlu: aktif efektler 6-8s).
+    // dur (lvl 0→5):  durBase + durLvl*durStep   |   cd (lvl 0→5): cdBase − cdLvl*cdStep
+    timeslow:   { unlock: 10, durBase: 2, durStep: 1, cdBase: 20, cdStep: 2, ladderLvl: 5,  // dur 2→7s,  cd 20→10s
                   durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
-    phaseburst: { unlock: 10, durBase: 0.8, durStep: 0.2, cdBase: 10, cdStep: 1, ladderLvl: 5,
+    phaseburst: { unlock: 10, durBase: 1, durStep: 1, cdBase: 20, cdStep: 2, ladderLvl: 5,  // dur 1→6s,  cd 20→10s
                   durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
-    coinpull:   { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 20, cdStep: 2, ladderLvl: 5, noDur: true,
+    coinpull:   { unlock: 10, durBase: 0, durStep: 0, cdBase: 20, cdStep: 2, ladderLvl: 5, noDur: true,  // cd 20→10s
                   durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
-    brake:      { unlock: 10, durBase: 1.0, durStep: 0.25,cdBase: 12, cdStep: 1, ladderLvl: 5,
+    brake:      { unlock: 10, durBase: 2, durStep: 1, cdBase: 15, cdStep: 1, ladderLvl: 5,  // dur 2→7s,  cd 15→10s
                   durPrices: [4, 4, 4, 4, 4], cdPrices: [4, 4, 4, 4, 4] },
-    mirror:     { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+    mirror:     { unlock: 10, durBase: 0, durStep: 0, cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,  // cd 30→15s
                   durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
-    shock:      { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 25, cdStep: 2, ladderLvl: 5, noDur: true,
+    shock:      { unlock: 10, durBase: 0, durStep: 0, cdBase: 24, cdStep: 2, ladderLvl: 5, noDur: true,  // cd 24→14s
                   durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
-    anchor:     { unlock: 10, durBase: 0,   durStep: 0,   cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,
+    anchor:     { unlock: 10, durBase: 0, durStep: 0, cdBase: 30, cdStep: 3, ladderLvl: 5, noDur: true,  // cd 30→15s
                   durPrices: [], cdPrices: [4, 4, 4, 4, 4] },
   };
   function abilityCooldown(key) {
