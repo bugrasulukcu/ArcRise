@@ -7084,6 +7084,82 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     playTouchSound();
     beginArc(-player.dir, getRadius());
   }
+
+  // ── Test Otopilotu (debug) ─────────────────────────────────
+  // Oyunu otomatik oynar: kısa-ufuk ileri-simülasyon ile her kare "yayı çevir mi"
+  // kararı verir; duvar/kırmızı engelden kaçar, enerji için yeşillere yönelir,
+  // ölünce otomatik yeniden başlar. Coin/quest/skor/auth akışını uçtan uca
+  // test etmek + balance/stres testi için.
+  //   Aktivasyon:  ?bot=1  (URL) ya da konsoldan  ARC_BOT.start() / .stop() / .toggle()
+  const ARC_BOT = (() => {
+    let on = false, flipCD = 0, _overScheduled = false;
+    const HORIZON = 0.45, SUBDT = 1 / 60;
+
+    // Bir karar adayını ileri simüle et, "maliyet" döndür (düşük = iyi).
+    function simulate(flip) {
+      let dir = player.dir, radius = player.radius;
+      let cx = player.cx, cy = player.cy, ang = player.ang, heading = player.heading;
+      let x = player.x, y = player.y;
+      if (flip) {
+        const sign = -dir || 1; radius = getRadius();
+        const nx = -Math.sin(heading) * sign, ny = Math.cos(heading) * sign;
+        cx = x + nx * radius; cy = y + ny * radius;
+        ang = Math.atan2(y - cy, x - cx); dir = sign;
+      }
+      const speed = player.speed, startY = y, steps = Math.round(HORIZON / SUBDT);
+      let cost = 0, nearestGreen = Infinity;
+      for (let s = 0; s < steps; s++) {
+        ang += (speed / radius) * SUBDT * dir;
+        x = cx + Math.cos(ang) * radius;
+        y = cy + Math.sin(ang) * radius;
+        if (x - player.r < walls.left + 2 || x + player.r > walls.right - 2) { cost += 1000 * (1 - s / steps); break; }
+        let hit = false;
+        for (const ob of obstacles) {
+          const dx = x - (ob._ox ?? ob.x), dy = y - (ob._oy ?? ob.y), rr = player.r + ob.r + 6;
+          if (dx*dx + dy*dy < rr*rr) { cost += 1000 * (1 - s / steps); hit = true; break; }
+        }
+        if (hit) break;
+        for (const b of bonuses) {
+          if (b.y > y + 40) continue;            // sadece önümüzdeki (yukarı) yeşiller
+          const d = Math.hypot(x - b.x, y - b.y);
+          if (d < nearestGreen) nearestGreen = d;
+        }
+      }
+      cost -= (startY - y) * 0.4;                 // yukarı çıkmak iyi
+      if (nearestGreen < Infinity) cost += nearestGreen * (energy < 0.5 ? 1.2 : 0.4);
+      return cost;
+    }
+
+    function think(dt) {
+      if (flipCD > 0) flipCD -= dt;
+      const noFlip = simulate(false), doFlip = simulate(true);
+      if (flipCD <= 0 && doFlip + 15 < noFlip) {  // histerezis → jitter önler
+        beginArc(-player.dir, getRadius());
+        flipCD = 0.12;
+      }
+    }
+
+    function manageScene() {
+      const rm = document.getElementById('revive-modal');
+      if (rm && rm.classList.contains('open')) { try { declineRevive(); } catch(_){} }
+      if (scene === 'over' && !_overScheduled) {
+        _overScheduled = true;
+        setTimeout(() => { _overScheduled = false; if (on) { try { startGame(); } catch(_){} } }, 1200);
+      }
+    }
+
+    function frame(dt) {
+      if (!on) return;
+      manageScene();
+      if (scene === 'play' && running && !tutActive) think(dt);
+    }
+    function start() { on = true; if (scene !== 'play') { try { startGame(); } catch(_){} } console.log('[ARC_BOT] başladı — ARC_BOT.stop() ile durdur'); }
+    function stop()  { on = false; console.log('[ARC_BOT] durdu'); }
+    function toggle(){ on ? stop() : start(); }
+    return { start, stop, toggle, frame, get active() { return on; } };
+  })();
+  window.ARC_BOT = ARC_BOT;
+  try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
   let debugOverlayOn = false;
   let lastTPress = 0;
