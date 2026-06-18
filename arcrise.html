@@ -7194,7 +7194,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     function start() { on = true; if (scene !== 'play') { try { startGame(); } catch(_){} } console.log('[ARC_BOT] başladı — ARC_BOT.stop() ile durdur'); }
     function stop()  { on = false; console.log('[ARC_BOT] durdu'); }
     function toggle(){ on ? stop() : start(); }
-    return { start, stop, toggle, frame, get active() { return on; } };
+    function setTapRate(hz) { MAX_TAP_HZ = Math.max(0.5, Number(hz) || MAX_TAP_HZ); console.log('[ARC_BOT] max tap/sn =', MAX_TAP_HZ); }
+    return { start, stop, toggle, frame, setTapRate, get active() { return on; }, get tapRate() { return MAX_TAP_HZ; } };
   })();
   window.ARC_BOT = ARC_BOT;
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
