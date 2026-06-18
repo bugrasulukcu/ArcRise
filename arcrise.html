@@ -7810,7 +7810,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const cfg = ABILITY_CFG[key];
       const dur = cfg.durBase + (inv.durLvl || 0) * cfg.durStep;
       const cd  = cfg.cdBase  - (inv.cdLvl  || 0) * cfg.cdStep;
-      return (cfg.noDur ? 'CD ' + cd + 's' : dur.toFixed(1) + 's · CD ' + cd + 's');
+      const fmt = v => Number.isInteger(v) ? v : v.toFixed(1);
+      return (cfg.noDur ? 'CD ' + fmt(cd) + 's' : fmt(dur) + 's · CD ' + fmt(cd) + 's');
     }
     return '';
   }
