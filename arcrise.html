@@ -6115,13 +6115,15 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
       // Wife Mode: 2× green-bonus density (tighter threshold + boosted probability)
       const wife = gameMode === 'wife';
-      const bonusGap = 540 * (wife ? 0.5 : 1.0);
+      // Yeşil (enerji) yoğunluğu artırıldı: oyuncu enerjiden daha az ölsün, run'lar
+      // uzasın (sim: ort. mesafe 1.43→2.37m, run 27→45s). Eskiden 540 / .36-.52'ydi.
+      const bonusGap = 460 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
       const spawnGold   = distCm >= 30 && Math.random() < (runCoinRainActive ? 0.24 : 0.12);
       const spawnPurple = distCm >= 75 && Math.random() < 0.08;
 
-      const bonusProb = (t < 0.15 ? .36 : .52) * (wife ? 1.7 : 1.0);
+      const bonusProb = (t < 0.15 ? .42 : .58) * (wife ? 1.7 : 1.0);
       if (needBonus || Math.random() < bonusProb) {
         bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
         lastBonusY = nextSpawnY;
