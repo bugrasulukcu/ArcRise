@@ -7140,7 +7140,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const noFlip = simulate(false), doFlip = simulate(true);
       if (flipCD <= 0 && doFlip + 15 < noFlip) {  // histerezis → jitter önler
         beginArc(-player.dir, getRadius());
-        flipCD = 0.12;
+        flipCD = nextTapCD();                      // insani 3-5 tap/sn
       }
     }
 
