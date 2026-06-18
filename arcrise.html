@@ -6988,7 +6988,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
-      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); }
+      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); }
+    }
+
+    // Reklamla dönüşte top üzerinde 3→1 geri sayım; biter bitmez oyun akmaya başlar.
+    if (resumeCountdown > 0 && scene === 'play') {
+      resumeCountdown = Math.max(0, resumeCountdown - dtRaw);
+      if (resumeCountdown === 0) {
+        running = true;
+        setTimeout(() => { if (scene === 'play') isGhost = false; }, 1000);
+      }
     }
 
     if (scene === 'play' && running) {
