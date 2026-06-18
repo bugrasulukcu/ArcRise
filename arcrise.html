@@ -8201,10 +8201,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     const durBox = cfg.noDur ? '' : `
       <div class="upg-stat-box">
         <div class="upg-stat-lbl">DURATION</div>
-        <div class="upg-stat-val">${dur.toFixed(1)}s</div>
+        <div class="upg-stat-val">${dur}s</div>
         ${durPrice == null
           ? '<div class="upg-stat-max">MAX</div>'
-          : `<button class="upg-buy small" id="ab-dur" ${coins<durPrice?'disabled':''}>+${cfg.durStep.toFixed(2)}s <span class="upg-coin">${iconHTML('coin',{size:12})}${durPrice}</span></button>`}
+          : `<button class="upg-buy small" id="ab-dur" ${coins<durPrice?'disabled':''}>+${cfg.durStep}s <span class="upg-coin">${iconHTML('coin',{size:12})}${durPrice}</span></button>`}
       </div>`;
     card.innerHTML = `
       <div style="display:grid;grid-template-columns:${cfg.noDur ? '1fr' : '1fr 1fr'};gap:10px;padding:6px 0">
