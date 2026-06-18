@@ -7112,18 +7112,18 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         ang = Math.atan2(y - cy, x - cx); dir = sign;
       }
       const speed = player.speed, startY = y, steps = Math.round(HORIZON / SUBDT);
-      let cost = 0, nearestGreen = Infinity;
+      let cost = 0, nearestGreen = Infinity, crash = false, crashFrac = 1;
       for (let s = 0; s < steps; s++) {
         ang += (speed / radius) * SUBDT * dir;
         x = cx + Math.cos(ang) * radius;
         y = cy + Math.sin(ang) * radius;
-        if (x - player.r < walls.left + 2 || x + player.r > walls.right - 2) { cost += 1000 * (1 - s / steps); break; }
+        if (x - player.r < walls.left + 2 || x + player.r > walls.right - 2) { cost += 1000 * (1 - s / steps); crash = true; crashFrac = s / steps; break; }
         let hit = false;
         for (const ob of obstacles) {
           const dx = x - (ob._ox ?? ob.x), dy = y - (ob._oy ?? ob.y), rr = player.r + ob.r + 6;
           if (dx*dx + dy*dy < rr*rr) { cost += 1000 * (1 - s / steps); hit = true; break; }
         }
-        if (hit) break;
+        if (hit) { crash = true; crashFrac = s / steps; break; }
         for (const b of bonuses) {
           if (b.y > y + 40) continue;            // sadece önümüzdeki (yukarı) yeşiller
           const d = Math.hypot(x - b.x, y - b.y);
@@ -7132,7 +7132,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       }
       cost -= (startY - y) * 0.4;                 // yukarı çıkmak iyi
       if (nearestGreen < Infinity) cost += nearestGreen * (energy < 0.5 ? 1.2 : 0.4);
-      return cost;
+      return { cost, crash, crashFrac };
     }
 
     function think(dt) {
