@@ -7095,10 +7095,11 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   const ARC_BOT = (() => {
     let on = false, flipCD = 0, abilTimer = 5, _overScheduled = false;
     const HORIZON = 0.45, SUBDT = 1 / 60;
-    // İnsani dokunma hızı: saniyede 3-5 tap. Her flip sonrası bu aralıkta rastgele
-    // bir bekleme seçilir → bot insanüstü hızda ardışık basamaz.
-    const TAP_HZ_MIN = 3, TAP_HZ_MAX = 5;
-    const nextTapCD = () => 1 / (TAP_HZ_MIN + Math.random() * (TAP_HZ_MAX - TAP_HZ_MIN));
+    // Maksimum dokunma hızı (sn başına tap). Bot temposunu kendi ayarlar — sadece
+    // gerektiğinde çevirir — ama iki tap arası min 1/MAX_TAP_HZ olduğundan hız bunu
+    // asla aşmaz. İnsani his için minik (±%10) rastgele jitter eklenir.
+    let MAX_TAP_HZ = 3;
+    const nextTapCD = () => (1 / MAX_TAP_HZ) * (0.95 + Math.random() * 0.1);
 
     // Bir karar adayını ileri simüle et, "maliyet" döndür (düşük = iyi).
     function simulate(flip) {
