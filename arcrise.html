@@ -6166,8 +6166,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           nextSpawnY -= gap;
           continue;
         }
-        if (distCm >= 3000 && typeRoll < 0.26) {
-          // SWEEP — koridoru duvardan duvara yavaşça süpüren top
+        if (distCm >= 200 && typeRoll < 0.26) {
+          // SWEEP — koridoru duvardan duvara yavaşça süpüren top (~2m+)
           ob.r  = Math.min(r, 36);
           ob.x  = (walls.left + walls.right) / 2;
           ob.mk = 'h';
