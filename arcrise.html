@@ -6155,8 +6155,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         // ── Yeni engel tipleri — mesafeyle açılır ──────────────
         // 10m+: PULSE (nefes alan), 20m+: SPIN (yörüngede ikiz), 30m+: SWEEP (süpürücü)
         const typeRoll = Math.random();
-        if (distCm >= 2000 && typeRoll < 0.14) {
-          // SPIN — ortak pivot etrafında dönen iki küçük top
+        if (distCm >= 133 && typeRoll < 0.14) {
+          // SPIN — ortak pivot etrafında dönen iki küçük top (~1.3m+)
           const orbR = 58 + Math.random() * 42;
           const ow   = (0.9 + Math.random() * 0.7) * (Math.random() < 0.5 ? -1 : 1);
           const oph  = Math.random() * Math.PI * 2;
