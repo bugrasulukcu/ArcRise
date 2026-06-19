@@ -3517,19 +3517,37 @@
     <div id="prof-name-static" data-name>PLAYER</div>
     <div id="prof-name-divider"></div>
 
-    <!-- Horizontal stats: BEST SCORE / BEST DISTANCE / COINS (mode-aware) -->
+    <!-- Lifetime totals -->
     <div id="prof-summary">
       <div class="prof-sum">
-        <div class="prof-sum-lbl" id="ps-bestscore-lbl">BEST</div>
-        <div class="prof-sum-val ps-blue" id="ps-bestscore">0</div>
+        <div class="prof-sum-lbl">GAMES</div>
+        <div class="prof-sum-val ps-blue" id="ps-games">0</div>
       </div>
       <div class="prof-sum">
-        <div class="prof-sum-lbl" id="ps-bestdist-lbl">DIST.</div>
-        <div class="prof-sum-val ps-blue" id="ps-bestdist">0</div>
+        <div class="prof-sum-lbl">DISTANCE</div>
+        <div class="prof-sum-val ps-blue" id="ps-distlife">0m</div>
       </div>
       <div class="prof-sum">
         <div class="prof-sum-lbl">COINS</div>
         <div class="prof-sum-val ps-gold" id="ps-coins">0</div>
+      </div>
+    </div>
+    <!-- Per-mode bests (Chill / Extreme) -->
+    <div id="prof-modes">
+      <div class="pm-row pm-head"><span class="pm-lbl"></span><span class="pm-c-chill">CHILL</span><span class="pm-c-ext">EXTREME</span></div>
+      <div class="pm-row"><span class="pm-lbl">SCORE</span><span id="pm-score-n">0</span><span id="pm-score-e">0</span></div>
+      <div class="pm-row"><span class="pm-lbl">DIST.</span><span id="pm-dist-n">0m</span><span id="pm-dist-e">0m</span></div>
+      <div class="pm-row"><span class="pm-lbl">GAMES</span><span id="pm-games-n">0</span><span id="pm-games-e">0</span></div>
+    </div>
+    <!-- Extras: best multiplier + day streak -->
+    <div id="prof-extra">
+      <div class="prof-sum">
+        <div class="prof-sum-lbl">BEST &times;</div>
+        <div class="prof-sum-val ps-flame" id="ps-mul">&times;1</div>
+      </div>
+      <div class="prof-sum">
+        <div class="prof-sum-lbl">STREAK</div>
+        <div class="prof-sum-val ps-gold" id="ps-streak">0d</div>
       </div>
     </div>
 
