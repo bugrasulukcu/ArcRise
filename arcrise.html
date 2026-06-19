@@ -6612,6 +6612,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
         scoreBonus += finalPts;
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
+        addCombo(b.x, b.y);
         spawnGreenParticles(b.x, b.y);
       }
     }
