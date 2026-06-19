@@ -9690,8 +9690,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     document.querySelectorAll('.fl-sort-btn').forEach(x => x.classList.toggle('active', x === b));
     renderFriendsList();
   }));
-  // Hesabı oluştur (name#tag ata) + profili yayınla — açılışta
-  ensureAccount();
+  // Hesabı oluştur (name#tag ata) + profili yayınla, ardından sosyal kenarları yükle (bildirim rozeti)
+  ensureAccount().then(() => loadSocial()).catch(() => {});
+  // Bildirimleri arada bir tazele (push yok; ana ekranda gelen davet rozeti güncellensin)
+  setInterval(() => { try { loadSocial(); } catch(_){} }, 60000);
 
   updateQuestButton();
 
