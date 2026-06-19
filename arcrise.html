@@ -6828,6 +6828,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
         stats.gamesTotal++;
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
+        // Profil: ömür boyu mesafe + en yüksek çarpan + günlük seri
+        stats.distLifetimeCm = (stats.distLifetimeCm || 0) + runDistCm;
+        if (_runMaxMul > (stats.maxMul || 1)) stats.maxMul = _runMaxMul;
+        const todayStr = questTodayStr();
+        if (stats.lastPlayDate !== todayStr) {
+          const yd = new Date(); yd.setDate(yd.getDate() - 1);
+          const ydStr = `${yd.getFullYear()}-${yd.getMonth()+1}-${yd.getDate()}`;
+          stats.streak = (stats.lastPlayDate === ydStr) ? (stats.streak || 0) + 1 : 1;
+          stats.lastPlayDate = todayStr;
+        }
       }
       if (gameMode === 'extreme') {
         if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
