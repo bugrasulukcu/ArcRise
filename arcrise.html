@@ -7016,7 +7016,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     let prev = -1;
     for (const idx of showArr) {
       if (prev >= 0 && idx > prev + 1) {
-        html += `<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
+        html += `<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
       }
       const r  = ann[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
