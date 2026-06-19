@@ -7022,13 +7022,14 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       const canAdd = !r.isYou && !lbFallback;
-      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${r.name}" data-t="${r.tag || ''}" title="Add friend" aria-label="Add friend">+</button>` : '';
+      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${r.name}" data-t="${r.tag || ''}" aria-label="Add friend">Add</button>` : '';
       html += `<tr class="${r.isYou ? 'you' : ''}" ${r.isYou ? `style="color:${avc}"` : ''}>
         <td style="white-space:nowrap">${rankStr}</td>
         <td style="padding:0 8px">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${r.name}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}${addBtn}
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${r.name}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}
         </td>
         <td style="text-align:right">${pad(r.score)}</td>
+        <td style="text-align:right;padding-left:8px">${addBtn}</td>
       </tr>`;
       prev = idx;
     }
