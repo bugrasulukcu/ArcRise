@@ -3622,7 +3622,7 @@ const ARC_DB = (() => {
 
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
-  async function submitScore(name, avatar, score, mode, distance, traceData, badges) {
+  async function submitScore(name, avatar, score, mode, distance, traceData, badges, tag) {
     if (!projectId || projectId.startsWith('BURAYA')) {
       console.warn('[ArcDB] no projectId configured — score not saved');
       return;
