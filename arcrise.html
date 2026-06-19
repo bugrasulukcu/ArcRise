@@ -9683,7 +9683,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   document.getElementById('fl-add-input').addEventListener('keydown', e => { if (e.key === 'Enter') addFriendById(e.target.value); });
   document.getElementById('myid-copy').addEventListener('click', () => {
     const mEl = document.getElementById('fl-add-msg');
-    try { navigator.clipboard.writeText(myIdentity()); if (mEl) mEl.textContent = 'ID copied'; } catch(_) { if (mEl) mEl.textContent = myIdentity(); }
+    try { navigator.clipboard.writeText(myId()); if (mEl) mEl.textContent = 'ID copied'; } catch(_) { if (mEl) mEl.textContent = myId(); }
   });
   document.querySelectorAll('.fl-sort-btn').forEach(b => b.addEventListener('click', () => {
     _flSort = b.dataset.sort;
