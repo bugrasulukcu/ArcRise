@@ -9542,17 +9542,68 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     } catch(_){}
     try { ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
   }
-  function loadFriends2() { try { const a = JSON.parse(localStorage.getItem(FRIENDS2_KEY)); return Array.isArray(a) ? a : []; } catch(_){ return []; } }
-  function saveFriends2(a) { try { localStorage.setItem(FRIENDS2_KEY, JSON.stringify(a)); } catch(_){} }
+  // ══ Sosyal: onaylı arkadaşlık (sunucu-tabanlı friendreqs kenarları) ══
+  const SOCIAL_KEY = 'arc_social_v1';
+  const _sanId = s => (s || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
+  function myId() { const t = myTag(); return (playerName && /^\d{4}$/.test(t)) ? _sanId(playerName) + '#' + t : ''; }
+  function parseId(id) { const i = (id || '').lastIndexOf('#'); return i < 0 ? { name: id || '', tag: '' } : { name: id.slice(0, i), tag: id.slice(i + 1) }; }
+  let socialEdges = [];
+  try { socialEdges = JSON.parse(localStorage.getItem(SOCIAL_KEY)) || []; } catch(_){ socialEdges = []; }
+  function saveSocial() { try { localStorage.setItem(SOCIAL_KEY, JSON.stringify(socialEdges)); } catch(_){} }
+  const _friendProfiles = {};
   let _flSort = 'score';
   function flFmtDist(m) { return fmtDist((Number(m) || 0) * 100); } // registry metre → fmtDist cm bekler
+  function incomingInvites() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.to === me); }
+  function acceptedFriends() { return socialEdges.filter(e => e.status === 'accepted'); }
+  function outgoingPending() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.from === me); }
+  function updateFriendsBadge() {
+    const b = document.getElementById('friends-badge'); if (!b) return;
+    const n = incomingInvites().length;
+    if (n > 0) { b.textContent = n > 9 ? '9+' : String(n); b.hidden = false; } else b.hidden = true;
+  }
+  async function loadSocial() {
+    const me = myId(); if (!me) return;
+    try { const edges = await ARC_DB.getMySocial(me); if (Array.isArray(edges)) { socialEdges = edges; saveSocial(); } } catch(_){}
+    updateFriendsBadge();
+    const modal = document.getElementById('friendslist-modal');
+    if (modal && modal.classList.contains('open')) { renderFriendsList(); refreshFriendProfiles(); }
+  }
+  function renderInvites() {
+    const host = document.getElementById('fl-invites'); if (!host) return;
+    const inv = incomingInvites();
+    if (!inv.length) { host.innerHTML = ''; return; }
+    host.innerHTML = `<div class="fl-inv-hdr">INVITES · ${inv.length}</div>` + inv.map(e => {
+      const nm = e.fromName || parseId(e.from).name, tg = e.fromTag || parseId(e.from).tag;
+      return `<div class="fl-inv-row">
+        <span class="fl-inv-name">${nm}<span class="fl-tag">#${tg}</span></span>
+        <button class="fl-inv-acc" data-acc="${e.id}" aria-label="Accept">&#10003;</button>
+        <button class="fl-inv-rej" data-rej="${e.id}" aria-label="Reject">&times;</button>
+      </div>`;
+    }).join('');
+    host.querySelectorAll('.fl-inv-acc').forEach(b => b.addEventListener('click', () => respondInvite(b.dataset.acc, true)));
+    host.querySelectorAll('.fl-inv-rej').forEach(b => b.addEventListener('click', () => respondInvite(b.dataset.rej, false)));
+  }
+  async function respondInvite(id, accept) {
+    let ok = false;
+    try { ok = accept ? await ARC_DB.acceptFriendRequest(id) : await ARC_DB.removeFriendEdge(id); } catch(_){}
+    if (!ok) return;
+    if (accept) { const e = socialEdges.find(x => x.id === id); if (e) e.status = 'accepted'; }
+    else socialEdges = socialEdges.filter(x => x.id !== id);
+    saveSocial(); renderFriendsList(); updateFriendsBadge();
+    if (accept) refreshFriendProfiles();
+  }
   function renderFriendsList() {
     const idEl = document.getElementById('myid-code');
-    if (idEl) idEl.textContent = myIdentity() || '----';
-    const list = document.getElementById('fl-list');
-    if (!list) return;
-    const friends = loadFriends2().slice();
-    if (!friends.length) { list.innerHTML = `<div class="fm-empty">No friends yet — add one by ID above</div>`; return; }
+    if (idEl) idEl.textContent = myId() || '----';
+    renderInvites();
+    const list = document.getElementById('fl-list'); if (!list) return;
+    const me = myId();
+    const friends = acceptedFriends().map(e => {
+      const oid = e.from === me ? e.to : e.from; const p = parseId(oid); const pr = _friendProfiles[oid] || {};
+      return { id: e.id, name: p.name, tag: p.tag, score: pr.score, dist: pr.dist };
+    });
+    const pend = outgoingPending().map(e => { const p = parseId(e.to); return { id: e.id, name: p.name, tag: p.tag }; });
+    if (!friends.length && !pend.length) { list.innerHTML = `<div class="fm-empty">No friends yet — add by ID, they accept your request</div>`; return; }
     friends.sort((a, b) => _flSort === 'dist' ? (b.dist||0) - (a.dist||0) : (b.score||0) - (a.score||0));
     list.innerHTML = friends.map((f, i) => {
       const known = (f.score != null) || (f.dist != null);
@@ -9566,48 +9617,56 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
           <span class="fl-stats"><span class="fl-s-score">${known?pad(f.score||0):'—'}</span> PTS · <span class="fl-s-dist">${known?flFmtDist(f.dist):'—'}</span></span>
         </span>
         ${metric}
-        <button class="fl-remove" data-fi="${f.tag}|${f.name}" aria-label="Remove">&times;</button>
+        <button class="fl-remove" data-id="${f.id}" aria-label="Remove">&times;</button>
       </div>`;
-    }).join('');
-    list.querySelectorAll('.fl-remove').forEach(b => b.addEventListener('click', () => {
-      const [tag, name] = b.dataset.fi.split('|');
-      saveFriends2(loadFriends2().filter(f => !(f.tag === tag && f.name === name)));
-      renderFriendsList();
+    }).join('') + pend.map(f => `<div class="fl-row" style="opacity:.55">
+        <span class="fl-rank">·</span>
+        <span class="fl-info"><span class="fl-name">${f.name}<span class="fl-tag">#${f.tag}</span></span>
+        <span class="fl-stats">Request sent — pending</span></span>
+        <button class="fl-remove" data-id="${f.id}" aria-label="Cancel">&times;</button>
+      </div>`).join('');
+    list.querySelectorAll('.fl-remove').forEach(b => b.addEventListener('click', async () => {
+      const id = b.dataset.id;
+      socialEdges = socialEdges.filter(x => x.id !== id); saveSocial(); renderFriendsList(); updateFriendsBadge();
+      try { await ARC_DB.removeFriendEdge(id); } catch(_){}
     }));
   }
   async function refreshFriendProfiles() {
-    const a = loadFriends2();
-    if (!a.length) return;
+    const me = myId();
+    const ids = acceptedFriends().map(e => e.from === me ? e.to : e.from);
     let changed = false;
-    for (const f of a) {
-      try {
-        const p = await ARC_DB.getPlayer(f.name, f.tag);
-        if (p) { f.name = p.name; f.avatar = p.avatar; f.score = p.score; f.dist = p.dist; changed = true; }
-      } catch(_){}
+    for (const oid of ids) {
+      const p = parseId(oid);
+      try { const pr = await ARC_DB.getPlayer(p.name, p.tag); if (pr) { _friendProfiles[oid] = { score: pr.score, dist: pr.dist, avatar: pr.avatar }; changed = true; } } catch(_){}
     }
-    if (changed) { saveFriends2(a); renderFriendsList(); }
+    if (changed) renderFriendsList();
+  }
+  // Arkadaş ekle = istek gönder (onay bekler). Oyun-sonu listesinden de çağrılır.
+  async function sendRequestTo(name, tag, msgEl) {
+    const me = myId();
+    if (!me) { if (msgEl) msgEl.textContent = 'Set your name first'; return false; }
+    const toId = _sanId(name) + '#' + tag;
+    if (toId === me) { if (msgEl) msgEl.textContent = "That's you!"; return false; }
+    if (acceptedFriends().some(e => (e.from === me ? e.to : e.from) === toId)) { if (msgEl) msgEl.textContent = 'Already friends'; return false; }
+    if (outgoingPending().some(e => e.to === toId)) { if (msgEl) msgEl.textContent = 'Request already sent'; return false; }
+    if (msgEl) msgEl.textContent = 'Looking up…';
+    let p = null; try { p = await ARC_DB.getPlayer(name, tag); } catch(_){}
+    if (!p) { if (msgEl) msgEl.textContent = 'No such player'; return false; }
+    await ensureAccount(); // kendi profilim sunucuda olmalı (kurallar gerektiriyor)
+    let ok = false; try { ok = await ARC_DB.sendFriendRequest(me, toId, _sanId(playerName), myTag(), avatarIdx); } catch(_){}
+    if (!ok) { if (msgEl) msgEl.textContent = 'Could not send (try again)'; return false; }
+    if (msgEl) msgEl.textContent = 'Request sent ✓ — waiting for accept';
+    socialEdges.push({ id: me + '__' + toId, from: me, to: toId, status: 'pending', fromName: _sanId(playerName), fromTag: myTag(), fromAvatar: avatarIdx, ts: Date.now() });
+    saveSocial(); renderFriendsList();
+    return true;
   }
   async function addFriendById(input) {
     const msg = document.getElementById('fl-add-msg');
     const raw = (input || '').toUpperCase().replace(/\s+/g, '');
     const m = raw.match(/^([A-Z0-9]{1,16})#?(\d{4})$/);
     if (!m) { if (msg) msg.textContent = 'Format: NAME#0000'; return; }
-    const name = m[1], tag = m[2];
-    if (name === playerName && tag === myTag()) { if (msg) msg.textContent = "That's you!"; return; }
-    const a = loadFriends2();
-    if (a.some(f => f.name === name && f.tag === tag)) { if (msg) msg.textContent = 'Already added'; return; }
-    if (msg) msg.textContent = 'Looking up...';
-    let p = null;
-    try { p = await ARC_DB.getPlayer(name, tag); } catch(_){}
-    if (p) {
-      a.push({ name: p.name, tag: p.tag, avatar: p.avatar, score: p.score, dist: p.dist });
-      if (msg) msg.textContent = 'Friend added';
-    } else {
-      a.push({ name, tag, score: null, dist: null }); // bulunamadı → yine ekle, profil sonra senkronlanır
-      if (msg) msg.textContent = 'Added (stats will sync)';
-    }
-    saveFriends2(a); renderFriendsList();
-    const inp = document.getElementById('fl-add-input'); if (inp) inp.value = '';
+    const ok = await sendRequestTo(m[1], m[2], msg);
+    if (ok) { const inp = document.getElementById('fl-add-input'); if (inp) inp.value = ''; }
   }
   function openFriendsListModal() {
     renderFriendsList();
