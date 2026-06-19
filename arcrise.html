@@ -3690,6 +3690,7 @@ const ARC_DB = (() => {
         };
         const maskParts = ['score','avatar','ts','mode','distance'];
         if (uid) { fields.owner = { stringValue: uid }; maskParts.push('owner'); }
+        if (tag) { fields.tag = { stringValue: String(tag) }; maskParts.push('tag'); } // arkadaş ekleme için kimlik
         if (writeTracePts) {
           fields.tracePts = { stringValue: tracePts };
           maskParts.push('tracePts');
