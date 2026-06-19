@@ -16,7 +16,8 @@
       "Bash(python3 _fix_encoding.py)",
       "Bash(curl -s \"https://bugrasulukcu.github.io/ArcRise/arcrise.html?cb=$\\(date +%s\\)\")",
       "Bash(curl -sI \"https://bugrasulukcu.github.io/ArcRise/arcrise.html\")",
-      "Bash(cd \"c:/Users/DELL/Desktop/BUGRA/ArcRise\" && rm -f /tmp/bottest.js && git log --oneline -5 && echo \"---STATUS---\" && git status --short)"
+      "Bash(cd \"c:/Users/DELL/Desktop/BUGRA/ArcRise\" && rm -f /tmp/bottest.js && git log --oneline -5 && echo \"---STATUS---\" && git status --short)",
+      "WebSearch"
     ],
     "additionalDirectories": [
       "\\tmp"

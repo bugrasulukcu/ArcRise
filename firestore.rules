@@ -82,6 +82,31 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Arkadaşlık istekleri / kenarları (friendreqs/{fromId__toId}).
+    // parties = [from, to] (NAME#TAG). status: pending → accepted.
+    // Sahiplik players/{id}.owner üzerinden doğrulanır (get ile).
+    function ownsPlayer(pid) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/players/$(pid)).data.owner == request.auth.uid;
+    }
+    match /friendreqs/{id} {
+      allow read: if request.auth != null;
+      // Oluşturma: gönderen 'from' oyuncusunun sahibi olmalı; status pending.
+      allow create: if request.auth != null
+        && request.resource.data.status == 'pending'
+        && request.resource.data.parties == [request.resource.data.from, request.resource.data.to]
+        && request.resource.data.fromUid == request.auth.uid
+        && ownsPlayer(request.resource.data.from);
+      // Kabul: yalnızca alıcı (to'nun sahibi) pending → accepted yapabilir.
+      allow update: if request.auth != null
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.parties == resource.data.parties
+        && ownsPlayer(resource.data.to);
+      // Silme (ret / arkadaşlıktan çıkarma): iki taraftan biri.
+      allow delete: if ownsPlayer(resource.data.from) || ownsPlayer(resource.data.to);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
