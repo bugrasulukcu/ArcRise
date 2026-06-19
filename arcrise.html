@@ -6953,8 +6953,10 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Yeterli satır çek — 20 yeter, sıralama görmek için.
     const topRows = await ARC_DB.getTopScores(20, gameMode);
 
+    let lbFallback = false; // sahte NPC satırları → arkadaş ekleme butonu gösterme
     if (topRows.length === 0) {
       // Firebase config yok → yerel fallback
+      lbFallback = true;
       const r1 = Math.max(0, best + 1), r3 = Math.max(0, sc - 1);
       topRows.push(
         { name: 'NEXUS',    avatar: 0, score: r1 },
