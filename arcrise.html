@@ -6936,7 +6936,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     if (gameMode !== 'wife') {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
       const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
-      await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData, eqBadges);
+      await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData, eqBadges, myTag());
       if (sc > 0) ARC_DB.invalidateTopCache();
     }
 
