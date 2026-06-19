@@ -7774,20 +7774,21 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
 
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
-    const fmtD = d => Number(d || 0).toFixed(1);
-    const isExt   = gameMode === 'extreme';
-    const bScore  = isExt ? (stats?.bestExtreme    || 0) : (stats?.bestNormal     || 0);
-    const bDist   = isExt ? (stats?.bestDistExtreme || 0) : (stats?.bestDistNormal || 0);
-    set('ps-coins',      String(coins));
-    set('ps-bestscore',  pad(bScore));
-    set('ps-bestdist',   fmtDist(bDist));
-    // Mode-tinted colours so the player can read at a glance which mode
-    // they're looking at.
-    const tone = isExt ? 'ps-flame' : 'ps-blue';
-    const scEl = document.getElementById('ps-bestscore');
-    const dEl  = document.getElementById('ps-bestdist');
-    if (scEl) scEl.className = 'prof-sum-val ' + tone;
-    if (dEl)  dEl.className  = 'prof-sum-val ' + tone;
+    const s = stats || {};
+    // Lifetime totals
+    set('ps-games',    s.gamesTotal || 0);
+    set('ps-distlife', fmtDist(s.distLifetimeCm || 0));
+    set('ps-coins',    coinsEarnedFrom(distTotal));            // toplam kazanılan coin
+    // Per-mode bests
+    set('pm-score-n',  pad(s.bestNormal  || 0));
+    set('pm-score-e',  pad(s.bestExtreme || 0));
+    set('pm-dist-n',   fmtDist(s.bestDistNormal  || 0));
+    set('pm-dist-e',   fmtDist(s.bestDistExtreme || 0));
+    set('pm-games-n',  s.gamesNormal  || 0);
+    set('pm-games-e',  s.gamesExtreme || 0);
+    // Extras
+    set('ps-mul',      '×' + (s.maxMul || 1));
+    set('ps-streak',   (s.streak || 0) + 'd');
   }
 
   // Tap profile card → open profile edit (but coin pill has its own handler)
