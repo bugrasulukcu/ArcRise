@@ -6383,6 +6383,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
     }
   }
 
+  // Combo zinciri: timer canlıyken bir kazanım toplandığında +1; ≥2'de geri bildirim.
+  function addCombo(wx, wy) {
+    runCombo++;
+    if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
+    if (runCombo >= 2) spawnFloatText(wx, wy - 30, 'COMBO ×' + runCombo, 50, 0.9 + Math.min(0.6, runCombo * 0.05));
+  }
+
   function step(dt) {
     if (!running) return;
     const w  = player.speed / player.radius;
