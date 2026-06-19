@@ -3757,6 +3757,7 @@ const ARC_DB = (() => {
           traceColor:     f.traceColor?.stringValue || null,
           traceThickness: parseInt(f.traceThickness?.integerValue ?? 0) || 0,
           badges:   f.badges?.stringValue || '',
+          tag:      f.tag?.stringValue || '',
           docId:    r.document.name.split('/').pop(),
         };
       });
