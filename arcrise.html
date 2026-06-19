@@ -2804,11 +2804,12 @@
     .slot-c1 { --sc: 74,163,255; }   /* slot 2 (sağ alt)  — mavi    */
     .slot-c2 { --sc: 74,222,106; }   /* slot 3 (sol üst)  — yeşil   */
     .slot-c3 { --sc: 255,85,102; }   /* slot 4 (sağ üst)  — kırmızı */
-    /* Oyun-içi 2x2: dolum sırası sol alt → sağ alt → sol üst → sağ üst */
-    .slot-pos-0 { left: 0;    top: 126px; }  /* slot 1 → sol alt  */
-    .slot-pos-1 { left: 84px; top: 126px; }  /* slot 2 → sağ alt  */
-    .slot-pos-2 { left: 0;    top: 42px;  }  /* slot 3 → sol üst  */
-    .slot-pos-3 { left: 84px; top: 42px;  }  /* slot 4 → sağ üst  */
+    /* Oyun-içi asimetrik (kademeli) 2x2: sağ kolon sol kolondan 40px kaydık.
+       Dolum sırası sol alt → sağ alt → sol üst → sağ üst. */
+    .slot-pos-0 { left: 0;    top: 84px;  }  /* slot 1 → sol alt  */
+    .slot-pos-1 { left: 84px; top: 124px; }  /* slot 2 → sağ alt  */
+    .slot-pos-2 { left: 0;    top: 0;     }  /* slot 3 → sol üst  */
+    .slot-pos-3 { left: 84px; top: 40px;  }  /* slot 4 → sağ üst  */
     .slot:active { transform: scale(0.92); }
     .slot.filled {
       border-color: rgba(var(--sc, 170,120,255), .95);
