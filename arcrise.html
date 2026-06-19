@@ -7006,8 +7006,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const r  = ann[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
-      const canAdd = !r.isYou && /^\d{4}$/.test(r.tag || '');
-      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${r.name}" data-t="${r.tag}" title="Add friend" aria-label="Add friend">+</button>` : '';
+      const canAdd = !r.isYou && !lbFallback;
+      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${r.name}" data-t="${r.tag || ''}" title="Add friend" aria-label="Add friend">+</button>` : '';
       html += `<tr class="${r.isYou ? 'you' : ''}" ${r.isYou ? `style="color:${avc}"` : ''}>
         <td style="white-space:nowrap">${rankStr}</td>
         <td style="padding:0 8px">
