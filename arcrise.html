@@ -2417,6 +2417,31 @@
       background: linear-gradient(180deg, #7CFF7A, #3ad055);
     }
     .fl-sort-btn:active { transform: scale(0.97); }
+    /* Friends butonunda bildirim rozeti (bekleyen davet sayısı) */
+    #btn-friends { position: relative; }
+    .fr-badge {
+      position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px;
+      padding: 0 4px; border-radius: 8px; background: #ff4d6a; color: #fff;
+      font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
+      box-shadow: 0 0 8px rgba(255,77,106,.6); pointer-events: none;
+    }
+    /* Davetler bölümü */
+    #fl-invites { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+    #fl-invites:not(:empty) { margin: 4px 0 2px; }
+    .fl-inv-hdr { font-size: 8.5px; letter-spacing: 1.4px; color: #ffd166; margin-bottom: 1px; }
+    .fl-inv-row {
+      display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 11px;
+      background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.28);
+    }
+    .fl-inv-name { flex: 1 1 auto; font-size: 12px; }
+    .fl-inv-name .fl-tag { color: rgba(255,255,255,.4); font-size: 10px; }
+    .fl-inv-acc, .fl-inv-rej {
+      flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; border: none;
+      cursor: pointer; font-size: 15px; font-weight: 700; line-height: 30px;
+    }
+    .fl-inv-acc { background: rgba(74,222,106,.85); color: #07210d; }
+    .fl-inv-rej { background: rgba(255,77,106,.85); color: #2a0a10; }
+    .fl-inv-acc:active, .fl-inv-rej:active { transform: scale(0.92); }
     #fl-list { width: 100%; display: flex; flex-direction: column; gap: 7px; max-height: 230px; overflow-y: auto; }
     .fl-row {
       display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 11px;
