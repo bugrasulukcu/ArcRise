@@ -6392,7 +6392,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
     energy = Math.max(0, energy - dt / comboTimerSec());
-    if (boosterType) { const mm = getBoostScoreMul(); if (mm > _runMaxMul) _runMaxMul = mm; } // profil: en yüksek çarpan
+    if (energy <= 0) runCombo = 0; // timer bitti → combo zinciri kırılır
     if (energy <= 0) {
       // Grace window: countdown shows "0" for up to GRACE_S so the player
       // has a forgiving moment to grab a green and recover before death.
