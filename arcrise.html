@@ -7021,8 +7021,16 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     // Oyun-sonu listesinden arkadaş ekle (istek gönder)
     rankRows.querySelectorAll('.go-add-fr').forEach(b => b.addEventListener('click', async () => {
       b.disabled = true;
+      const name = b.dataset.n;
+      let tag = b.dataset.t;
+      // Skor satırında tag yoksa (eski kayıt) isimden çöz — tek eşleşme varsa kullan.
+      if (!/^\d{4}$/.test(tag)) {
+        let tags = []; try { tags = await ARC_DB.findTagsForName(name) || []; } catch(_){}
+        if (tags.length === 1) tag = tags[0];
+        else { try { showToast(tags.length ? 'Multiple players — open Friends to add by ID' : 'Player not found'); } catch(_){} b.disabled = false; return; }
+      }
       let ok = false;
-      try { ok = await sendRequestTo(b.dataset.n, b.dataset.t, null); } catch(_){}
+      try { ok = await sendRequestTo(name, tag, null); } catch(_){}
       if (ok) { b.textContent = '✓'; try { showToast('Friend request sent'); } catch(_){} }
       else { b.textContent = '+'; b.disabled = false; }
     }));
