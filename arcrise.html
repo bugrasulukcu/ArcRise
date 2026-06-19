@@ -742,13 +742,14 @@
     /* Oyun-sonu listesinde arkadaş ekle butonu */
     .go-add-fr {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 18px; height: 18px; margin-left: 6px; vertical-align: middle;
-      border-radius: 50%; border: 1px solid rgba(90,216,255,.5);
+      padding: 3px 10px; border-radius: 9px; border: 1px solid rgba(90,216,255,.5);
       background: rgba(90,216,255,.12); color: #5ad8ff;
-      font-size: 13px; line-height: 1; font-weight: 700; cursor: pointer; padding: 0;
+      font-size: 9.5px; letter-spacing: 1px; line-height: 1.4; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: transform .12s, filter .2s;
     }
-    .go-add-fr:active { transform: scale(0.9); }
-    .go-add-fr:disabled { opacity: .7; cursor: default; }
+    .go-add-fr:hover { filter: brightness(1.15); }
+    .go-add-fr:active { transform: scale(0.92); }
+    .go-add-fr:disabled { opacity: .6; cursor: default; }
     #go-best { font-size: 13px; color: var(--green); letter-spacing: 1.6px; text-align: center; }
     #go-best span { color: #fff; }
 
