@@ -9624,8 +9624,8 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       const nm = e.fromName || parseId(e.from).name, tg = e.fromTag || parseId(e.from).tag;
       return `<div class="fl-inv-row">
         <span class="fl-inv-name">${nm}<span class="fl-tag">#${tg}</span></span>
-        <button class="fl-inv-acc" data-acc="${e.id}" aria-label="Accept">&#10003;</button>
-        <button class="fl-inv-rej" data-rej="${e.id}" aria-label="Reject">&times;</button>
+        <button class="fl-inv-acc" data-acc="${e.id}" aria-label="Accept"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+        <button class="fl-inv-rej" data-rej="${e.id}" aria-label="Reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
     host.querySelectorAll('.fl-inv-acc').forEach(b => b.addEventListener('click', () => respondInvite(b.dataset.acc, true)));
