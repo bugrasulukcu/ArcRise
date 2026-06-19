@@ -6875,9 +6875,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
         stats.gamesTotal++;
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
-        // Profil: ömür boyu mesafe + en yüksek çarpan + günlük seri
+        // Profil: ömür boyu mesafe + en uzun combo + günlük seri
         stats.distLifetimeCm = (stats.distLifetimeCm || 0) + runDistCm;
-        if (_runMaxMul > (stats.maxMul || 1)) stats.maxMul = _runMaxMul;
+        if (_runMaxCombo > (stats.maxCombo || 0)) stats.maxCombo = _runMaxCombo;
         const todayStr = questTodayStr();
         if (stats.lastPlayDate !== todayStr) {
           const yd = new Date(); yd.setDate(yd.getDate() - 1);
