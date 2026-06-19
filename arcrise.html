@@ -9672,6 +9672,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     renderFriendsList();
     const m = document.getElementById('fl-add-msg'); if (m) m.textContent = '';
     document.getElementById('friendslist-modal').classList.add('open');
+    loadSocial();            // sunucudan tazele (davetler + arkadaşlar)
     refreshFriendProfiles();
   }
   function closeFriendsListModal() { document.getElementById('friendslist-modal').classList.remove('open'); }
