@@ -6743,6 +6743,7 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
+  let _runMaxMul      = 1;        // bu run'da ulaşılan en yüksek skor çarpanı (x2/x3/x4)
   function offerRevive() {
     if (_reviveOffered) return false;
     if ((upg.inv?.revive?.count || 0) <= 0) return false;
