@@ -3728,6 +3728,7 @@ const ARC_DB = (() => {
         if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
         if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
         if (uid)            fields.owner          = { stringValue: uid };
+        if (tag)            fields.tag            = { stringValue: String(tag) }; // arkadaş ekleme için kimlik
         const ins = await fbFetch(`${BASE}/scores?key=${apiKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields }),
