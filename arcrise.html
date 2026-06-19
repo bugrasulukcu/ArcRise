@@ -4063,7 +4063,85 @@ const ARC_DB = (() => {
     } catch (_) { return []; }
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid };
+  // ── Arkadaşlık istekleri (friendreqs/{from__to}) ─────────────
+  const _reqId = (fromId, toId) => `${fromId}__${toId}`;
+  // İstek gönder (pending). fromId/toId = NAME#TAG. Döner: true/false.
+  async function sendFriendRequest(fromId, toId, fromName, fromTag, fromAvatar) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    await ensureAuth(); const uid = getUid();
+    if (!uid || !fromId || !toId || fromId === toId) return false;
+    const key = encodeURIComponent(_reqId(fromId, toId));
+    try {
+      const res = await fbFetch(`${BASE}/friendreqs/${key}?key=${apiKey}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: {
+          parties:    { arrayValue: { values: [{ stringValue: fromId }, { stringValue: toId }] } },
+          from:       { stringValue: fromId },
+          to:         { stringValue: toId },
+          fromUid:    { stringValue: uid },
+          fromName:   { stringValue: String(fromName || '') },
+          fromTag:    { stringValue: String(fromTag || '') },
+          fromAvatar: { integerValue: String(Number(fromAvatar) || 0) },
+          status:     { stringValue: 'pending' },
+          ts:         { integerValue: String(Date.now()) },
+        }}),
+      });
+      return res.ok;
+    } catch (_) { return false; }
+  }
+  // Beni içeren tüm kenarları getir (gelen/giden istek + arkadaşlar).
+  async function getMySocial(myId) {
+    if (!projectId || projectId.startsWith('BURAYA') || !myId) return [];
+    try {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'friendreqs' }],
+          where: { fieldFilter: { field: { fieldPath: 'parties' }, op: 'ARRAY_CONTAINS', value: { stringValue: myId } } },
+          limit: 200,
+        }}),
+      });
+      const rows = await res.json();
+      return (Array.isArray(rows) ? rows : []).filter(r => r.document?.fields).map(r => {
+        const f = r.document.fields;
+        return {
+          id:     r.document.name.split('/').pop(),
+          from:   f.from?.stringValue || '',
+          to:     f.to?.stringValue || '',
+          status: f.status?.stringValue || 'pending',
+          fromName:   f.fromName?.stringValue || '',
+          fromTag:    f.fromTag?.stringValue || '',
+          fromAvatar: parseInt(f.fromAvatar?.integerValue || '0', 10),
+          ts:     parseInt(f.ts?.integerValue || '0', 10),
+        };
+      });
+    } catch (_) { return []; }
+  }
+  // İsteği kabul et (pending → accepted). docId = from__to (kodlanmamış).
+  async function acceptFriendRequest(docId) {
+    if (!projectId || projectId.startsWith('BURAYA') || !docId) return false;
+    await ensureAuth();
+    const key = encodeURIComponent(docId);
+    try {
+      const res = await fbFetch(`${BASE}/friendreqs/${key}?key=${apiKey}&updateMask.fieldPaths=status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: { status: { stringValue: 'accepted' } } }),
+      });
+      return res.ok;
+    } catch (_) { return false; }
+  }
+  // İsteği/arkadaşlığı sil (ret veya çıkarma).
+  async function removeFriendEdge(docId) {
+    if (!projectId || projectId.startsWith('BURAYA') || !docId) return false;
+    await ensureAuth();
+    const key = encodeURIComponent(docId);
+    try {
+      const res = await fbFetch(`${BASE}/friendreqs/${key}?key=${apiKey}`, { method: 'DELETE' });
+      return res.ok;
+    } catch (_) { return false; }
+  }
+
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
