@@ -2798,16 +2798,16 @@
       cursor: pointer; padding: 0;
       transition: transform .12s, opacity .2s, border-color .2s, box-shadow .2s;
     }
-    /* PlayStation-tarzı slot renkleri (her slotu tanımlar) */
-    .slot-c0 { --sc: 74,222,106; }   /* sol üst — yeşil */
-    .slot-c1 { --sc: 255,85,102; }   /* sağ üst — kırmızı */
-    .slot-c2 { --sc: 74,163,255; }   /* sol alt — mavi */
-    .slot-c3 { --sc: 255,95,176; }   /* sağ alt — pembe */
-    /* Oyun-içi staggered 2x2: sol kolon (0,2) yukarıda, sağ kolon (1,3) yarım kaydık */
-    .slot-pos-0 { left: 0;    top: 0;    }
-    .slot-pos-1 { left: 84px; top: 40px; }
-    .slot-pos-2 { left: 0;    top: 84px; }
-    .slot-pos-3 { left: 84px; top: 124px; }
+    /* PlayStation-tarzı slot renkleri (her slotu tanımlar, konumdan bağımsız) */
+    .slot-c0 { --sc: 74,222,106; }   /* slot 1 — yeşil */
+    .slot-c1 { --sc: 255,85,102; }   /* slot 2 — kırmızı */
+    .slot-c2 { --sc: 74,163,255; }   /* slot 3 — mavi */
+    .slot-c3 { --sc: 255,95,176; }   /* slot 4 — pembe */
+    /* Oyun-içi 2x2: dolum sırası sol alt → sağ alt → sol üst → sağ üst */
+    .slot-pos-0 { left: 0;    top: 126px; }  /* slot 1 → sol alt  */
+    .slot-pos-1 { left: 84px; top: 126px; }  /* slot 2 → sağ alt  */
+    .slot-pos-2 { left: 0;    top: 42px;  }  /* slot 3 → sol üst  */
+    .slot-pos-3 { left: 84px; top: 42px;  }  /* slot 4 → sağ üst  */
     .slot:active { transform: scale(0.92); }
     .slot.filled {
       border-color: rgba(var(--sc, 170,120,255), .95);
