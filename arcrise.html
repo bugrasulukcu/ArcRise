@@ -6903,22 +6903,23 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
     return String(v); // above 999999: show as-is
   };
 
-  // Reklamla dönüşte top üzerinde 3→1 geri sayımını çizer (her saniye nabız atar).
+  // Reklamla dönüşte topun İÇİNDE 3→1 geri sayımını çizer — topu kapatmaz.
   function drawResumeCountdown() {
     if (resumeCountdown <= 0) return;
     const n = Math.ceil(resumeCountdown);
     const frac = resumeCountdown - (n - 1);        // saniye içinde 1→0
     const px = player.x, py = W2S(player.y);
+    // Font, topun içine sığacak boyutta (yarıçap ~18px). Nabız sadece hafif opaklıkta.
+    const size = Math.min(26, player.r * 1.45);
     ctx.save();
     ctx.translate(px, py);
-    ctx.scale(0.8 + 0.45 * frac, 0.8 + 0.45 * frac); // her sayıda büyükten küçüğe nabız
-    ctx.globalAlpha = Math.min(1, frac * 1.6);
-    ctx.font = '700 70px Sarpanch, system-ui, sans-serif';
+    ctx.globalAlpha = 0.55 + 0.45 * frac;          // her saniye hafif nabız (boyut sabit)
+    ctx.font = '700 ' + size + 'px Sarpanch, system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.55)';
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)';
     ctx.fillStyle = '#fff';
-    ctx.strokeText(n, 0, 0);
-    ctx.fillText(n, 0, 0);
+    ctx.strokeText(n, 0, 1);
+    ctx.fillText(n, 0, 1);
     ctx.restore();
   }
 
