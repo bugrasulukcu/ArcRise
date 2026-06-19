@@ -1366,6 +1366,24 @@
     .ps-gold   { color: #ffd866; }
     .ps-purple { color: #c099ff; }
 
+    /* Per-mode bests mini-table (Chill / Extreme) */
+    #prof-modes {
+      width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 4px;
+      border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px;
+    }
+    .pm-row { display: grid; grid-template-columns: 1.1fr 1fr 1fr; align-items: center; gap: 6px; }
+    .pm-row > span { font-size: 12px; text-align: right; letter-spacing: .5px; }
+    .pm-lbl { text-align: left !important; font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.5); }
+    .pm-row:not(.pm-head) { padding: 5px 8px; border-radius: 8px; background: rgba(255,255,255,.035); }
+    .pm-head > span { font-size: 8.5px; letter-spacing: 1.4px; }
+    .pm-c-chill { color: #66ccff; }
+    .pm-c-ext   { color: #ff8866; }
+    .pm-row:not(.pm-head) span:nth-child(2) { color: rgba(180,225,255,.92); }
+    .pm-row:not(.pm-head) span:nth-child(3) { color: rgba(255,200,180,.92); }
+
+    /* Extras row (best multiplier + streak) */
+    #prof-extra { width: 100%; margin-top: 8px; display: flex; align-items: stretch; }
+
     /* Avatar picker sub-grid (toggled when avatar is tapped) */
     #prof-av-grid {
       display: none; grid-template-columns: repeat(5, 1fr);
