@@ -9526,16 +9526,20 @@ const ARC_RESET_VERSION = 'r-2026-05-15-1';
       tag = pickFreeTag(used);
       try { localStorage.setItem(ACCOUNT_TAG_KEY, tag); } catch(_){}
     }
-    publishPlayerProfile();
+    await publishPlayerProfile();
   }
-  function publishPlayerProfile() {
+  // Profili yayınla (upsert, max-merge): doc'u HER ZAMAN oluşturur (social için
+  // gerekli — kurallar players/{me}.owner kontrol ediyor), ama mevcut registry
+  // skorunu ASLA düşürmez (reset/yeni cihaz koruması, sunucudan okuyup max alır).
+  async function publishPlayerProfile() {
     const tag = myTag();
     if (!playerName || !/^\d{4}$/.test(tag)) return;
-    const bestScore  = Math.max(stats?.bestNormal || 0, stats?.bestExtreme || 0);
-    const bestDistCm = Math.max(stats?.bestDistNormal || 0, stats?.bestDistExtreme || 0);
-    // Reset Data / yeni cihaz: best değerleri 0'ken yayınlama — aksi halde
-    // kayıt defterindeki mevcut profil (gerçek skor) 0'a ezilir.
-    if (bestScore <= 0 && bestDistCm <= 0) return;
+    let bestScore  = Math.max(stats?.bestNormal || 0, stats?.bestExtreme || 0);
+    let bestDistCm = Math.max(stats?.bestDistNormal || 0, stats?.bestDistExtreme || 0);
+    try {
+      const ex = await ARC_DB.getPlayer(playerName, tag);
+      if (ex) { bestScore = Math.max(bestScore, ex.score || 0); bestDistCm = Math.max(bestDistCm, (ex.dist || 0) * 100); }
+    } catch(_){}
     try { ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
   }
   function loadFriends2() { try { const a = JSON.parse(localStorage.getItem(FRIENDS2_KEY)); return Array.isArray(a) ? a : []; } catch(_){ return []; } }
