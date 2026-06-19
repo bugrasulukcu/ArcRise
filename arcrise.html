@@ -2798,11 +2798,12 @@
       cursor: pointer; padding: 0;
       transition: transform .12s, opacity .2s, border-color .2s, box-shadow .2s;
     }
-    /* PlayStation-tarzı slot renkleri (her slotu tanımlar, konumdan bağımsız) */
-    .slot-c0 { --sc: 74,222,106; }   /* slot 1 — yeşil */
-    .slot-c1 { --sc: 255,85,102; }   /* slot 2 — kırmızı */
-    .slot-c2 { --sc: 74,163,255; }   /* slot 3 — mavi */
-    .slot-c3 { --sc: 255,95,176; }   /* slot 4 — pembe */
+    /* PlayStation-tarzı slot renkleri (slota bağlı). Oyun-içi konuma göre:
+       sol üst yeşil, sağ üst kırmızı, sol alt pembe, sağ alt mavi. */
+    .slot-c0 { --sc: 255,95,176; }   /* slot 1 (sol alt)  — pembe   */
+    .slot-c1 { --sc: 74,163,255; }   /* slot 2 (sağ alt)  — mavi    */
+    .slot-c2 { --sc: 74,222,106; }   /* slot 3 (sol üst)  — yeşil   */
+    .slot-c3 { --sc: 255,85,102; }   /* slot 4 (sağ üst)  — kırmızı */
     /* Oyun-içi 2x2: dolum sırası sol alt → sağ alt → sol üst → sağ üst */
     .slot-pos-0 { left: 0;    top: 126px; }  /* slot 1 → sol alt  */
     .slot-pos-1 { left: 84px; top: 126px; }  /* slot 2 → sağ alt  */
