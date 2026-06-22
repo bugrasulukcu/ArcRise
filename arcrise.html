@@ -1845,6 +1845,31 @@
     #prof-av-grid.open { display: grid; }
 
     #reset-confirm { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: 1px; text-align: center; display: none; }
+    /* Reset Data onay modalı (danger) */
+    #reset-modal {
+      position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    #reset-modal.open { display: flex; }
+    #reset-modal-box {
+      width: min(86vw, 320px);
+      background: linear-gradient(180deg, rgba(30,18,22,.97), rgba(16,10,12,.98));
+      border: 1px solid rgba(255,77,106,.5); border-radius: 18px; padding: 24px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      box-shadow: 0 0 40px rgba(255,77,106,.22);
+    }
+    #reset-modal-title { font-size: 20px; letter-spacing: 3px; color: #ff7d92; }
+    #reset-modal-sub { font-size: 11px; letter-spacing: .6px; color: rgba(255,255,255,.82); text-align: center; line-height: 1.65; }
+    #reset-modal-sub b { color: #ff9aad; }
+    #reset-modal-actions { display: flex; gap: 10px; width: 100%; }
+    #reset-modal-actions button {
+      flex: 1; padding: 12px 0; border-radius: 11px; font-size: 12px; letter-spacing: 1.5px;
+      cursor: pointer; border: 1px solid; transition: transform .12s, filter .2s;
+    }
+    #reset-cancel { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.22); color: #fff; }
+    #reset-confirm-btn { background: rgba(255,77,106,.88); border-color: rgba(255,77,106,.6); color: #2a0a10; font-weight: 700; }
+    #reset-modal-actions button:hover { filter: brightness(1.1); }
+    #reset-modal-actions button:active { transform: scale(0.97); }
 
     /* ══════════ EXTREME MODE POPUP ══════════ */
     /* ══════════ WIFE MODE CONFIRM ══════════ */
