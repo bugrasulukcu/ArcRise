@@ -7816,7 +7816,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
     set('pm-games-n',  s.gamesNormal  || 0);
     set('pm-games-e',  s.gamesExtreme || 0);
     // Extras
-    set('ps-mul',      '×' + (s.maxMul || 1));
+    set('ps-mul',      s.maxCombo || 0);
     set('ps-streak',   (s.streak || 0) + 'd');
   }
 
