@@ -7312,11 +7312,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
   }
 
   // ── Reset Data ────────────────────────────────────────────
-  document.getElementById('btn-reset').addEventListener('click', () => {
+  function doReset() {
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
      'arc_coins','arc_coins_spent','arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
-     'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag',
+     'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
      'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1',
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0;
@@ -7330,16 +7330,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
     equippedBadges = [null, null]; earnedBadges = new Set();
     extremeUnlocked = false;
     try { questState = loadQuests(); } catch(_){}
+    try { socialEdges = []; updateFriendsBadge(); } catch(_){}
     try { renderSlots(); } catch(_){}
     try { updateQuestButton(); } catch(_){}
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
-    const confirm = document.getElementById('reset-confirm');
-    confirm.style.display = 'block';
+    const done = document.getElementById('reset-confirm');
+    done.style.display = 'block';
     setTimeout(() => {
-      confirm.style.display = 'none';
+      done.style.display = 'none';
       showScene('profile-setup');
     }, 2000);
+  }
+  // Reset Data → önce onay modalı; CONTINUE ile sil, CANCEL ile vazgeç.
+  const resetModal = document.getElementById('reset-modal');
+  document.getElementById('btn-reset').addEventListener('click', () => resetModal.classList.add('open'));
+  document.getElementById('reset-cancel').addEventListener('click', () => resetModal.classList.remove('open'));
+  document.getElementById('reset-modal').addEventListener('click', e => { if (e.target.id === 'reset-modal') resetModal.classList.remove('open'); });
+  document.getElementById('reset-confirm-btn').addEventListener('click', () => {
+    resetModal.classList.remove('open');
+    doReset();
   });
 
   // ── Input ────────────────────────────────────────────────
