@@ -9639,9 +9639,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     let changed = false;
     for (const q of questState.quests) {
       if (q.claimed) continue;
-      if (q.metric === 'distCm' || q.metric === 'score') { const v = m[q.metric] || 0; if (v > q.progress) { q.progress = v; changed = true; } }
-      else if (q.metric === 'runs') { if (m.countRun !== false) { q.progress += 1; changed = true; } }
-      else if (q.metric === 'coinsEarned') { if ((m.coinsEarned||0) > 0) { q.progress += m.coinsEarned; changed = true; } }
+      if (q.metric === 'score' || q.metric === 'distCm' || q.metric === 'combo') {
+        // tek-run en iyi (idempotent; ad-continue'da da final değeri yakalar)
+        const v = q.metric === 'combo' ? (m.maxCombo || 0) : (m[q.metric] || 0);
+        if (v > q.progress) { q.progress = v; changed = true; }
+      } else if (m.countRun !== false) {
+        // kümülatif / adet — run başına bir kez
+        if (q.metric === 'scoreTotal')     { q.progress += (m.score  || 0); changed = true; }
+        else if (q.metric === 'distTotal') { q.progress += (m.distCm || 0); changed = true; }
+        else if (q.metric === 'goodRuns')  { if ((m.distCm || 0) >= q.param) { q.progress += 1; changed = true; } }
+      }
     }
     if (changed) saveQuests();
     updateQuestButton();
