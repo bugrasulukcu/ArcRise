@@ -6850,6 +6850,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   let dyingT = -1; // -1 = normal; >=0 = ölüm sonrası kısa patlama bekleme sayacı (loop'ta ilerler)
   function beginDeath() {
     if (dyingT >= 0) return;
+    // Bekleyen combo potunu skora ekle (ölümde kaybolmasın)
+    if (_comboPot > 0) { scoreBonus += _comboPot; _comboPot = 0; runCombo = 0; }
     dyingT = 0;
     running = false;                              // oyuncuyu dondur
     spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
