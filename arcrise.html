@@ -9602,11 +9602,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
   // ══════════ DAILY QUESTS ══════════
   const QUESTS_KEY = 'arc_quests_v1';
+  // Performans temelli görevler — "start'a bas" tipi yok. Her biri +1 coin.
   const QUEST_DEFS = [
-    { metric: 'distCm',      targets: [300, 500, 800, 1200], reward: 3, mk: t => `Reach ${fmtDist(t)} in one run` },
-    { metric: 'score',       targets: [300, 600, 1000, 1500], reward: 3, mk: t => `Score ${t} in one run` },
-    { metric: 'runs',        targets: [3, 5, 8],             reward: 2, mk: t => `Play ${t} runs` },
-    { metric: 'coinsEarned', targets: [3, 5, 8],             reward: 2, mk: t => `Earn ${t} coins` },
+    // Tek run (skill)
+    { metric: 'score',      targets: [500, 900, 1500],   reward: 1, mk: t => `Score ${t} in one run` },
+    { metric: 'distCm',     targets: [300, 500, 800],    reward: 1, mk: t => `Reach ${fmtDist(t)} in one run` },
+    { metric: 'combo',      targets: [5, 8, 12],          reward: 1, mk: t => `Hit a ×${t} combo` },
+    // Bugünkü toplam (hacim + istikrar)
+    { metric: 'scoreTotal', targets: [2000, 4000, 7000],  reward: 1, mk: t => `Score ${t} total today` },
+    { metric: 'distTotal',  targets: [2000, 3500, 5000],  reward: 1, mk: t => `Travel ${fmtDist(t)} total today` },
+    // Performans + adet
+    { metric: 'goodRuns',   targets: [3, 5], param: 300,  reward: 1, mk: (t, p) => `Finish ${t} runs over ${fmtDist(p)}` },
   ];
   function questTodayStr() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
   function rollDailyQuests() {
