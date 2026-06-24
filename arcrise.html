@@ -6662,7 +6662,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         scoreBonus += finalPts;
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
-        addCombo(b.x, b.y);
+        addCombo(b.x, b.y, cd >= 7);
         spawnGreenParticles(b.x, b.y);
       }
     }
@@ -6683,7 +6683,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×combo → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul, finalPts);
         spawnGoldParticles(b.x, b.y);
-        addCombo(b.x, b.y);
+        addCombo(b.x, b.y, cd >= 7);
         goldBalls.splice(i, 1);
         stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
       }
@@ -6699,7 +6699,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         scoreBonus += finalPts;
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
-        addCombo(b.x, b.y);
+        addCombo(b.x, b.y, cd >= 7);
         purpleBalls.splice(i, 1);
         stats.purpleTotal = (stats.purpleTotal || 0) + 1; // badge sayacı
         activateBooster(b.type);
