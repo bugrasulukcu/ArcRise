@@ -6842,6 +6842,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let runCombo        = 0;        // timer canlıyken art arda toplanan kazanım zinciri
   let _runMaxCombo    = 0;        // bu run'da ulaşılan en uzun combo zinciri
+  let _comboPopT      = 0;        // combo etiketi pop animasyonu (sn)
   function offerRevive() {
     if (_reviveOffered) return false;
     if ((upg.inv?.revive?.count || 0) <= 0) return false;
