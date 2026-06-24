@@ -4297,7 +4297,7 @@ const ARC_DB = (() => {
 //   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
 //      sessionStorage
 //   3) writes the new version so the wipe doesn't repeat
-const ARC_RESET_VERSION = 'r-2026-06-19-1';
+const ARC_RESET_VERSION = 'r-2026-06-19-2';
 (() => {
   try {
     if (localStorage.getItem('arc_reset_v') === ARC_RESET_VERSION) return;
