@@ -6861,6 +6861,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   let runCombo        = 0;        // timer canlıyken art arda toplanan kazanım zinciri
   let _runMaxCombo    = 0;        // bu run'da ulaşılan en uzun combo zinciri
   let _comboPopT      = 0;        // combo etiketi pop animasyonu (sn)
+  let _comboPot       = 0;        // biriken combo puanı — zincir kırılınca patlayıp skora eklenir
   function offerRevive() {
     if (_reviveOffered) return false;
     if ((upg.inv?.revive?.count || 0) <= 0) return false;
