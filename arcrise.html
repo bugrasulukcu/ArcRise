@@ -9620,9 +9620,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     const quests = pool.slice(0, 3).map(def => {
       const target = def.targets[Math.floor(Math.random()*def.targets.length)];
-      return { metric: def.metric, target, reward: def.reward, label: def.mk(target), progress: 0, claimed: false };
+      return { metric: def.metric, target, param: def.param || 0, reward: def.reward, label: def.mk(target, def.param), progress: 0, claimed: false };
     });
-    const q = { date: questTodayStr(), quests };
+    const q = { date: questTodayStr(), quests, allBonusClaimed: false };
     try { localStorage.setItem(QUESTS_KEY, JSON.stringify(q)); } catch(_){}
     return q;
   }
