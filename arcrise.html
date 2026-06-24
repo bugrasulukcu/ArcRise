@@ -6436,9 +6436,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
-    // Combo ödülü: her seviyede KATLANARAK artan bonus puan (10,20,40,80,160,320,640,…).
-    scoreBonus += 10 * Math.pow(2, runCombo - 1);
+    // Combo puanı POT'ta birikir (10,20,40,80,…), zincir kırılınca patlayıp skora eklenir.
+    _comboPot += 10 * Math.pow(2, runCombo - 1);
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
+  }
+  // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
+  function comboBreak() {
+    if (runCombo <= 0) return;
+    if (_comboPot > 0) {
+      scoreBonus += _comboPot;
+      spawnGoldParticles(player.x, player.y);                 // patlama
+      spawnFloatText(player.x, player.y - player.r - 30, '+' + _comboPot, 48, 1.1 + Math.min(0.8, _comboPot / 2000));
+      haptic(20);
+    }
+    runCombo = 0; _comboPot = 0; _comboPopT = 0;
   }
   // Combo etiketi: topun ÜSTÜNDE sabit kalır (oyuncuyla birlikte hareket eder), her kare çizilir.
   function drawComboLabel() {
