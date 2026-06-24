@@ -29,7 +29,7 @@ service cloud.firestore {
 
     function validScore(d) {
       return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
-        && d.score is int && d.score >= 0 && d.score <= 1000000
+        && d.score is int && d.score >= 0 && d.score <= 1000000000
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
         && d.ts is int
         && d.mode in ['normal', 'extreme']
@@ -70,7 +70,7 @@ service cloud.firestore {
       return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
         && d.tag is string && d.tag.size() == 4
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
-        && d.score is int && d.score >= 0 && d.score <= 1000000
+        && d.score is int && d.score >= 0 && d.score <= 1000000000
         && d.dist is number && d.dist >= 0 && d.dist <= 100000
         && d.ts is int
         && (!('owner' in d) || d.owner is string);
