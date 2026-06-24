@@ -9755,7 +9755,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     haptic(40);
     renderQuests(); updateQuestButton();
   }
-  function openQuestsModal()  { renderQuests(); document.getElementById('quests-modal').classList.add('open'); }
+  function openQuestsModal()  { renderQuests(true); document.getElementById('quests-modal').classList.add('open'); }
   function closeQuestsModal() { document.getElementById('quests-modal').classList.remove('open'); }
   document.getElementById('btn-quests').addEventListener('click', openQuestsModal);
   document.getElementById('quests-modal-close').addEventListener('click', closeQuestsModal);
