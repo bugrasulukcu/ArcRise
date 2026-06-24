@@ -9620,12 +9620,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Performans temelli görevler — "start'a bas" tipi yok. Her biri +1 coin.
   // base = seri günü 1'deki hedef; hedefler "seri günü" (1→200) ile kademeli artar.
   const QUEST_DEFS = [
-    { metric: 'score',      base: 500,  reward: 1, mk: t => `Score ${t} in one run` },
-    { metric: 'distCm',     base: 300,  reward: 1, mk: t => `Reach ${fmtDist(t)} in one run` },
-    { metric: 'combo',      base: 4,    reward: 1, mk: t => `Hit a ×${t} combo` },
-    { metric: 'scoreTotal', base: 2000, reward: 1, mk: t => `Score ${t} total today` },
-    { metric: 'distTotal',  base: 1500, reward: 1, mk: t => `Travel ${fmtDist(t)} total today` },
-    { metric: 'goodRuns',   base: 3, param: 300, reward: 1, mk: (t, p) => `Finish ${t} runs over ${fmtDist(p)}` },
+    { metric: 'score',      base: 1500, reward: 1, mk: t => `Score ${t} in one run` },
+    { metric: 'distCm',     base: 350,  reward: 1, mk: t => `Reach ${fmtDist(t)} in one run` },
+    { metric: 'combo',      base: 5,    reward: 1, mk: t => `Hit a ×${t} combo` },
+    { metric: 'scoreTotal', base: 6000, reward: 1, mk: t => `Score ${t} total today` },
+    { metric: 'distTotal',  base: 2500, reward: 1, mk: t => `Travel ${fmtDist(t)} total today` },
+    { metric: 'goodRuns',   base: 3, param: 400, reward: 1, mk: (t, p) => `Finish ${t} runs over ${fmtDist(p)}` },
   ];
   const SERIES_LEN = 200; // 200 günlük ilerleyen kişisel seri
   function questTodayStr() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
