@@ -9631,6 +9631,18 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return rollDailyQuests();
   }
   let questState = loadQuests();
+  // Günlük giriş bonusu: her yeni günün ilk açılışında +1 coin.
+  function checkDailyLoginBonus() {
+    try {
+      const today = questTodayStr();
+      if (localStorage.getItem('arc_login_day') !== today) {
+        localStorage.setItem('arc_login_day', today);
+        grantCoins(1);
+        try { showToast('Daily login · +1 coin'); } catch(_){}
+      }
+    } catch(_){}
+  }
+  checkDailyLoginBonus();
   function saveQuests() { try { localStorage.setItem(QUESTS_KEY, JSON.stringify(questState)); } catch(_){} }
   function questDone(q) { return q.progress >= q.target; }
   function questClaimableCount() { return questState.quests.filter(q => questDone(q) && !q.claimed).length; }
