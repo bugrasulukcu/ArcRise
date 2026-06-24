@@ -3,13 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="refresh" content="0; url=./arcrise.html">
+  <meta http-equiv="refresh" content="0; url=./arcrise.html?v=20260619b">
   <link rel="canonical" href="./arcrise.html">
   <link rel="icon" type="image/png" href="PNG/GAME_ICON.png">
   <title>ArcRise</title>
   <script>
-    // Davet linklerindeki ?ref= ve #hash korunarak oyuna yönlendir.
-    location.replace('./arcrise.html' + location.search + location.hash);
+    // Davet linklerindeki ?ref= ve #hash korunur. ?v=<timestamp> ile arcrise.html
+    // HER açılışta TAZE çekilir — böylece tarayıcı cache'i yüzünden eski sürüm
+    // (ve eski reset/skor durumu) takılı kalmaz. index.html'in kendi cache'i
+    // (~10 dk) dışında stale HTML servis edilmez.
+    var q = location.search ? location.search + '&' : '?';
+    location.replace('./arcrise.html' + q + 'v=' + Date.now() + location.hash);
   </script>
 </head>
 <body style="margin:0;background:#080a0e;color:#fff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh">
