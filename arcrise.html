@@ -6436,8 +6436,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
-    // Combo puanı POT'ta birikir (10,20,40,80,…), zincir kırılınca patlayıp skora eklenir.
-    _comboPot += 10 * Math.pow(2, runCombo - 1);
+    // Combo puanı POT'ta birikir (×1.5: 10,15,23,34,…), zincir kırılınca patlayıp skora eklenir.
+    _comboPot += Math.round(10 * Math.pow(1.5, runCombo - 1));
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
