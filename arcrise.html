@@ -6436,8 +6436,24 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
-    // Combo yazısı oyuncu dairesinin ÜSTÜNDE, skor pop'undan daha yukarıda (üst üste binmesin).
-    if (runCombo >= 2) spawnFloatText(player.x, player.y - player.r - 34, 'COMBO ×' + runCombo, 50, 0.9 + Math.min(0.6, runCombo * 0.05));
+    if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
+  }
+  // Combo etiketi: topun ÜSTÜNDE sabit kalır (oyuncuyla birlikte hareket eder), her kare çizilir.
+  function drawComboLabel() {
+    if (runCombo < 2) return;
+    if (_comboPopT > 0) _comboPopT = Math.max(0, _comboPopT - (1 / 60));
+    const px = player.x, py = W2S(player.y) - player.r - 24;
+    const pop = 1 + _comboPopT * 1.4; // tetiklenince hafif büyüyüp normale döner
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(pop, pop);
+    ctx.font = '700 18px Sarpanch, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.fillStyle = '#ffe066';
+    const t = '×' + runCombo;
+    ctx.strokeText(t, 0, 0); ctx.fillText(t, 0, 0);
+    ctx.restore();
   }
 
   function step(dt) {
