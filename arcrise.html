@@ -6436,6 +6436,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
+    // Combo ödülü: her seviyede katlanan bonus puan (10,20,40,80,160,320,640 → sonra sabit).
+    scoreBonus += Math.min(640, 10 * Math.pow(2, runCombo - 1));
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
   }
   // Combo etiketi: topun ÜSTÜNDE sabit kalır (oyuncuyla birlikte hareket eder), her kare çizilir.
