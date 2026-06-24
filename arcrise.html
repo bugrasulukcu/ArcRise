@@ -9705,11 +9705,21 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (sub) sub.textContent = claimable > 0 ? `${claimable} reward${claimable>1?'s':''} ready!` : `${doneCount}/${questState.quests.length} done`;
     if (btn) btn.classList.toggle('has-reward', claimable > 0);
   }
-  function renderQuests() {
+  function renderQuests(animate) {
     const list = document.getElementById('quests-list');
     if (!list) return;
     if (questState.date !== questTodayStr()) questState = rollDailyQuests();
-    list.innerHTML = questState.quests.map((q, i) => {
+    const anim = n => animate ? ` style="animation: questIn .34s cubic-bezier(.2,.8,.2,1) ${n * 60}ms both"` : '';
+    // Günlük giriş kartı — açılışta otomatik alınır; burada "toplandı" olarak gösterilir.
+    let loginGot = false;
+    try { loginGot = localStorage.getItem('arc_login_day') === questTodayStr(); } catch(_){}
+    const loginCard = `<div class="quest-card done"${anim(0)}>
+        <div class="quest-top"><span class="quest-label">Daily login</span></div>
+        <div class="quest-bar-wrap"><div class="quest-bar" style="width:${loginGot ? 100 : 0}%"></div></div>
+        <div class="quest-bottom"><span class="quest-progress-txt">${loginGot ? 'Collected today' : 'Opens automatically'}</span>
+          <button class="quest-claim claimed" disabled>+1${loginGot ? ' ✓' : ''}</button></div>
+      </div>`;
+    const questCards = questState.quests.map((q, i) => {
       const done = questDone(q);
       const pct  = Math.min(100, Math.round(q.progress / q.target * 100));
       const isDist = q.metric === 'distCm' || q.metric === 'distTotal';
@@ -9721,12 +9731,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         : done
           ? `<button class="quest-claim" data-qi="${i}">CLAIM +${q.reward}</button>`
           : `<button class="quest-claim" disabled>+${q.reward}</button>`;
-      return `<div class="quest-card ${done?'done':''}">
+      return `<div class="quest-card ${done?'done':''}"${anim(i + 1)}>
         <div class="quest-top"><span class="quest-label">${q.label}</span></div>
         <div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%"></div></div>
         <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span>${claimBtn}</div>
       </div>`;
     }).join('');
+    list.innerHTML = loginCard + questCards;
     list.querySelectorAll('.quest-claim[data-qi]').forEach(b => b.addEventListener('click', () => claimQuest(Number(b.dataset.qi))));
   }
   function claimQuest(i) {
