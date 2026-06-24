@@ -9726,9 +9726,6 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span>${claimBtn}</div>
       </div>`;
     }).join('');
-    // Seri günü göstergesi (kişisel ilerleme: gün geçtikçe questler zorlaşır)
-    list.insertAdjacentHTML('afterbegin',
-      `<div style="text-align:center;font-size:9px;letter-spacing:1.6px;color:rgba(255,255,255,.45);margin-bottom:4px">DAY ${questState.day || currentSeriesDay()} / ${SERIES_LEN}</div>`);
     list.querySelectorAll('.quest-claim[data-qi]').forEach(b => b.addEventListener('click', () => claimQuest(Number(b.dataset.qi))));
   }
   function claimQuest(i) {
