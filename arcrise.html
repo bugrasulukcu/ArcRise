@@ -9689,8 +9689,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function claimQuest(i) {
     const q = questState.quests[i];
     if (!q || q.claimed || !questDone(q)) return;
-    q.claimed = true; saveQuests();
+    q.claimed = true;
     grantCoins(q.reward);
+    // 3 görevin hepsi alındıysa +1 bonus (günde bir kez)
+    if (!questState.allBonusClaimed && questState.quests.every(x => x.claimed)) {
+      questState.allBonusClaimed = true;
+      grantCoins(1);
+      try { showToast('All daily quests done · +1 bonus coin'); } catch(_){}
+    }
+    saveQuests();
     haptic(40);
     renderQuests(); updateQuestButton();
   }
