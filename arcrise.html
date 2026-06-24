@@ -9080,6 +9080,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
   // ── Nav buttons ───────────────────────────────────────────
   function startGame(withTutorial) {
     initAudio(); // AudioContext unlock
+    lastPurchase = null; try { updateRefundBtn(); } catch(_){} // run başladı → refund penceresi kapanır
     // Skor kaydı için boş isim olmasın — varsayılan PLAYER
     if (!playerName || !playerName.trim()) {
       playerName = 'PLAYER';
