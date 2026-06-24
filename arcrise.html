@@ -7199,8 +7199,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // 6 haneli skor gösterimi (000000 → 999999+)
   const pad = n => {
     const v = Math.max(0, Math.floor(n));
-    if (v < 100000000) return String(v).padStart(8, '0'); // 8 haneli scoreboard
-    return String(v); // 99.999.999 üstü: olduğu gibi
+    if (v < 1000000) return String(v).padStart(6, '0'); // 6 haneli scoreboard
+    return String(v); // 999.999 üstü: olduğu gibi
   };
 
   // Reklamla dönüşte topun İÇİNDE 3→1 geri sayımını çizer — topu kapatmaz.
