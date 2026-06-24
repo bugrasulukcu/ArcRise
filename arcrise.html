@@ -8090,14 +8090,55 @@ const ARC_RESET_VERSION = 'r-2026-06-19-1';
 
   // Deduct coins via the distance-total ledger that derives them.
   // Triangular: spend by incrementing coinsSpent; distTotal stays intact.
+  // Son satın alma snapshot'ı (undo için). Run başında veya yeni alımda yenilenir.
+  let lastPurchase = null;
   function spendCoins(n) {
     if (coins < n) return false;
+    // Undo snapshot: mutasyon ÇAĞIRAN tarafta spendCoins'ten SONRA olduğu için
+    // buradaki klon "satın alma öncesi" durumu yakalar (upg/slots/extreme).
+    lastPurchase = {
+      price:     n,
+      coinsSpent,                                       // harcama öncesi
+      slotsOwned,
+      extremeUnlocked,
+      upg:       JSON.parse(JSON.stringify(upg)),
+      slotItems: JSON.parse(JSON.stringify(slotItems)),
+    };
     coinsSpent += n;
     coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
     localStorage.setItem('arc_coins_spent', String(coinsSpent));
     localStorage.setItem('arc_coins', String(coins));
     try { applyProfile(); } catch(_){}
+    try { updateRefundBtn(); } catch(_){}
     return true;
+  }
+  // Son alımı geri al: durum + coin iade (yalnızca son alım; run başında pencere kapanır).
+  function refundLast() {
+    const lp = lastPurchase; if (!lp) return;
+    try { upg = JSON.parse(JSON.stringify(lp.upg)); } catch(_){}
+    try { slotItems = JSON.parse(JSON.stringify(lp.slotItems)); } catch(_){}
+    coinsSpent = lp.coinsSpent;
+    slotsOwned = lp.slotsOwned;
+    extremeUnlocked = lp.extremeUnlocked;
+    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
+    try { saveUpg(); saveSlots(); saveSlotsOwned(); } catch(_){}
+    try {
+      localStorage.setItem('arc_coins_spent', String(coinsSpent));
+      localStorage.setItem('arc_coins', String(coins));
+      localStorage.setItem('arc_extreme_unlocked', extremeUnlocked ? '1' : '0');
+    } catch(_){}
+    const amt = lp.price;
+    lastPurchase = null;
+    try { applyProfile(); } catch(_){}
+    try { renderSlots(); } catch(_){}
+    try { renderUpgrades(); } catch(_){}
+    updateRefundBtn();
+    try { showToast('Last purchase refunded · +' + amt); } catch(_){}
+  }
+  function updateRefundBtn() {
+    const b = document.getElementById('upg-refund'); if (!b) return;
+    if (lastPurchase) { b.textContent = 'UNDO LAST PURCHASE · +' + lastPurchase.price; b.hidden = false; }
+    else b.hidden = true;
   }
 
   // Currently visible Passive sub-view: 'grid' or one of the upgrade keys
