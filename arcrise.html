@@ -8600,6 +8600,141 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return card;
   }
 
+  // ── GEAR kartları (ABILITIES / ITEMS) — CORE kart formatında ──
+  const _fmtS = v => Number.isInteger(v) ? v : v.toFixed(1);
+  // Ortak kart iskeleti: info + (equipped) + ikon placeholder + başlık + değer + butonlar.
+  function gearCardShell(meta, valHTML, buttonsHTML, opts) {
+    opts = opts || {};
+    const card = document.createElement('div');
+    card.className = 'core-card' + (opts.dim ? '' : '');
+    if (opts.dim) card.style.opacity = '.55';
+    card.innerHTML = `
+      <button class="core-info" type="button" aria-label="Info">i</button>
+      ${opts.eq ? '<span class="core-eq">EQUIPPED</span>' : ''}
+      <div class="core-icon"></div>
+      <div class="core-card-title">${meta.title}</div>
+      <div class="core-card-foot">
+        <div class="core-card-val${opts.lockedVal ? ' core-val-locked' : ''}">${valHTML}</div>
+        ${buttonsHTML ? `<div class="core-card-buys">${buttonsHTML}</div>` : ''}
+      </div>`;
+    const info = card.querySelector('.core-info');
+    if (info) info.addEventListener('click', () => { if (opts.desc) try { showToast(opts.desc); } catch(_){} });
+    return card;
+  }
+  // Yeşil satın alma butonu (yüzen coin rozeti + adım etiketi). price null → MAX.
+  function gearBuyBtn(act, price, step) {
+    if (price == null) return `<button class="core-buy maxed">MAX</button>`;
+    return `<button class="core-buy" data-act="${act}" ${coins < price ? 'disabled' : ''}>`
+      + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${price}</span>`
+      + `<span>${step}</span></button>`;
+  }
+  function gearWire(card, act, fn) {
+    const el = card.querySelector(`[data-act="${act}"]`);
+    if (el && !el.hasAttribute('disabled')) el.addEventListener('click', fn);
+  }
+  // Tek bir gear item'ı için doğru kart tipini üretir.
+  function buildGearCard(meta) {
+    const key = meta.key;
+    if (meta.locked) return gearCardShell(meta, 'SOON', '', { dim: true });
+    if (ABILITY_CFG[key])     return buildAbilityCard(meta);
+    if (CONSUMABLE_CFG[key])  return buildConsumableCard(meta);
+    if (key === 'traceColor') return buildColorCardSquare(meta);
+    if (key === 'traceThickness') {
+      const cur = upg.traceThickness | 0;
+      const price = thicknessPrice(cur + 1);
+      const card = gearCardShell(meta, `+${cur * 10}%`, gearBuyBtn('buy', price, '+10%'), { desc: CORE_DESC.traceThickness });
+      gearWire(card, 'buy', () => confirmPurchase(meta.title + ' +10%', price, () => {
+        if (!spendCoins(price)) return; upg.traceThickness = cur + 1; saveUpg(); renderUpgrades();
+      }));
+      return card;
+    }
+    if (key === 'deathName' || key === 'deathAvatar') {
+      const price = key === 'deathName' ? DEATH_NAME_PRICE : DEATH_AV_PRICE;
+      const owned = !!upg[key];
+      const buttons = owned ? `<button class="core-buy maxed">ON</button>` : gearBuyBtn('buy', price, 'UNLOCK');
+      const card = gearCardShell(meta, owned ? 'ENABLED' : 'OFF', buttons, { desc: CORE_DESC[key], lockedVal: !owned });
+      gearWire(card, 'buy', () => confirmPurchase(meta.title, price, () => {
+        if (!spendCoins(price)) return; upg[key] = true; saveUpg(); renderUpgrades();
+      }));
+      return card;
+    }
+    return gearCardShell(meta, '—', '');
+  }
+  // Ability kartı — kilitliyse UNLOCK, açıksa DURATION (+) ve COOLDOWN (−) ladder'ı.
+  function buildAbilityCard(meta) {
+    const key = meta.key, cfg = ABILITY_CFG[key];
+    const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
+    const desc = ABILITY_DESC[key] || '';
+    if (!inv.owned) {
+      const card = gearCardShell(meta, 'LOCKED', gearBuyBtn('unlock', cfg.unlock, 'UNLOCK'), { desc, lockedVal: true });
+      gearWire(card, 'unlock', () => {
+        if (slotsOwned === 0) { try { showToast('You need to buy a gear slot first'); } catch(_){} return; }
+        confirmPurchase(meta.title, cfg.unlock, () => {
+          if (slotsOwned === 0 || !spendCoins(cfg.unlock)) return;
+          inv.owned = true; saveUpg(); renderUpgrades();
+        });
+      });
+      return card;
+    }
+    const dur = abilityDuration(key), cd = abilityCooldown(key);
+    const durNext = (inv.durLvl || 0) + 1, cdNext = (inv.cdLvl || 0) + 1;
+    const durPrice = durNext <= cfg.durPrices.length ? cfg.durPrices[durNext - 1] : null;
+    const cdPrice  = cdNext  <= cfg.cdPrices.length  ? cfg.cdPrices[cdNext - 1]   : null;
+    const eq = slotItems.findIndex(s => s && s.key === key) !== -1;
+    const val = cfg.noDur ? `CD ${_fmtS(cd)}s` : `${_fmtS(dur)}s · ${_fmtS(cd)}s`;
+    let buttons = '';
+    if (!cfg.noDur) buttons += gearBuyBtn('dur', durPrice, `+${cfg.durStep}s`);
+    buttons += gearBuyBtn('cd', cdPrice, `−${cfg.cdStep}s`);
+    const card = gearCardShell(meta, val, buttons, { desc, eq });
+    gearWire(card, 'dur', () => durPrice != null && confirmPurchase(meta.title + ' +' + cfg.durStep + 's duration', durPrice, () => {
+      if (!spendCoins(durPrice)) return; inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
+    }));
+    gearWire(card, 'cd', () => cdPrice != null && confirmPurchase(meta.title + ' −' + cfg.cdStep + 's cooldown', cdPrice, () => {
+      if (!spendCoins(cdPrice)) return; inv.cdLvl = (inv.cdLvl || 0) + 1; saveUpg(); renderUpgrades();
+    }));
+    return card;
+  }
+  // Consumable kartı — stok değeri + ARM toggle + BUY +1.
+  function buildConsumableCard(meta) {
+    const key = meta.key, cfg = CONSUMABLE_CFG[key];
+    const inv = upg.inv[key] || (upg.inv[key] = { count: 0, armed: false });
+    const full = inv.count >= cfg.max;
+    let buttons = cfg.autoArm
+      ? `<button class="core-buy toggle on" disabled>AUTO</button>`
+      : `<button class="core-buy toggle ${inv.armed ? 'on' : ''}" data-act="arm" ${inv.count < 1 ? 'disabled' : ''}>${inv.armed ? 'ARMED' : 'ARM'}</button>`;
+    buttons += full ? `<button class="core-buy maxed">FULL</button>` : gearBuyBtn('buy', cfg.price, '+1');
+    const card = gearCardShell(meta, `${inv.count}/${cfg.max}`, buttons, { desc: cfg.desc });
+    gearWire(card, 'arm', () => { if (inv.count < 1) return; inv.armed = !inv.armed; saveUpg(); renderUpgrades(); });
+    gearWire(card, 'buy', () => confirmPurchase(meta.title, cfg.price, () => {
+      if (inv.count >= cfg.max || !spendCoins(cfg.price)) return;
+      inv.count = Math.min(cfg.max, (inv.count || 0) + 1); saveUpg(); renderUpgrades();
+    }));
+    return card;
+  }
+  // Trace color — geniş kart: palet + değişiklik başına ücret.
+  function buildColorCardSquare(meta) {
+    const cur = upg.traceColor;
+    const card = document.createElement('div');
+    card.className = 'core-card wide';
+    card.innerHTML = `
+      <button class="core-info" type="button" aria-label="Info">i</button>
+      <div class="core-card-title">${meta.title}</div>
+      <div class="core-swatches">
+        ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
+      </div>
+      <div class="core-card-val">${iconHTML('coin', { size: 12 })}${TRACE_COLOR_PRICE} per change</div>`;
+    const info = card.querySelector('.core-info');
+    if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC.traceColor); } catch(_){} });
+    card.querySelectorAll('.upg-color-swatch').forEach(s => s.addEventListener('click', () => {
+      const c = s.dataset.c;
+      if (c === upg.traceColor) return;
+      confirmPurchase(meta.title, TRACE_COLOR_PRICE, () => {
+        if (!spendCoins(TRACE_COLOR_PRICE)) return; upg.traceColor = c; saveUpg(); renderUpgrades();
+      });
+    }));
+    return card;
+  }
+
   // Satın alma onay modalı: maliyet + bakiye göster, onaylanınca callback çağır.
   let _buyConfirmCb = null;
   function confirmPurchase(label, price, onConfirm) {
