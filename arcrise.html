@@ -8393,48 +8393,99 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderGearPane(document.getElementById('upg-tab-abilities'), ABILITIES_GROUPS, true);
     renderGearPane(document.getElementById('upg-tab-items'), ITEMS_GROUPS, false);
 
-    if (upgPassiveView === 'grid') {
-      const grid = document.createElement('div');
-      grid.className = 'upg-tile-grid';
-      for (const t of PASSIVE_TILES) {
-        const tile = document.createElement('button');
-        tile.className = 'upg-tile';
-        tile.innerHTML = `
-          <span class="upg-tile-icon">${iconHTML(t.icon, { size: 28 })}</span>
-          <span class="upg-tile-body">
-            <span class="upg-tile-title">${t.title}</span>
-            <span class="upg-tile-state">${upgStateLabel(t.key)}</span>
-          </span>
-        `;
-        tile.addEventListener('click', () => {
-          upgPassiveView = t.key;
-          renderUpgrades();
-        });
-        grid.appendChild(tile);
-      }
-      host.appendChild(grid);
-      return;
-    }
+    // CORE — doğrudan satın alınabilir kart grid (drill-down yok)
+    const grid = document.createElement('div');
+    grid.className = 'core-grid';
+    for (const t of PASSIVE_TILES) grid.appendChild(buildCoreCard(t));
+    host.appendChild(grid);
+  }
 
-    // Detail view — header with back button + the matching upgrade card body
-    const tileMeta = PASSIVE_TILES.find(t => t.key === upgPassiveView);
-    if (!tileMeta) { upgPassiveView = 'grid'; renderUpgrades(); return; }
-    const panel = document.createElement('div');
-    panel.className = 'upg-detail open';
-    panel.innerHTML = `
-      <div class="upg-detail-head">
-        <button class="upg-back-btn" id="upg-back"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 L7 12 L15 20"/></svg></button>
-        <span class="upg-detail-title">${iconHTML(tileMeta.icon, { size: 20 })} ${tileMeta.title}</span>
-        <span class="upg-detail-active">${upgStateLabel(tileMeta.key)}</span>
-      </div>
-      ${CORE_DESC[tileMeta.key] ? `<div class="upg-desc">${CORE_DESC[tileMeta.key]}</div>` : ''}
+  // CORE stat → fiyat fonksiyonu (forward-only stat'lar). radius/speed bidi.
+  const CORE_PRICE = {
+    profit:      profitPrice,
+    timer:       dirPrice,
+    wallSoft:    wallSoftPrice,
+    magnetRange: magRangePrice,
+  };
+  // Tek satın almanın oyuncuya kattığı efekt adımı (buton üzerinde gösterilir).
+  function coreStepLabel(key, dir) {
+    const s = dir === '-1' ? '−' : '+';
+    if (key === 'timer')    return s + '1s';
+    if (key === 'wallSoft') return s + '1px';
+    return s + '10%';   // profit / radius / speed / magnetRange
+  }
+  // CORE satın alma — onaylandıktan sonra çağrılır.
+  function coreBuy(key, dir) {
+    if (key === 'radius' || key === 'speed') {
+      if (dir === '+1') {
+        const pos = upg[key + 'Pos'] | 0; const p = dirPrice(pos + 1);
+        if (p == null || !spendCoins(p)) return;
+        upg[key + 'Pos'] = pos + 1; upg[key + 'Active'] = pos + 1;
+      } else {
+        const neg = upg[key + 'Neg'] | 0; const p = dirPrice(neg + 1);
+        if (p == null || !spendCoins(p)) return;
+        upg[key + 'Neg'] = neg + 1; upg[key + 'Active'] = -(neg + 1);
+      }
+    } else {
+      const cur = upg[key] | 0; const pf = CORE_PRICE[key]; const p = pf(cur + 1);
+      if (p == null || !spendCoins(p)) return;
+      upg[key] = cur + 1;
+    }
+    saveUpg();
+    applyUpgradeSideEffects();
+    renderUpgrades();
+  }
+  // Bir CORE kartı: ikon + başlık + güncel değer + satın alma butonu(ları).
+  function buildCoreCard(t) {
+    const key = t.key;
+    const card = document.createElement('div');
+    card.className = 'core-card';
+    let buysHTML = '';
+    const buyBtn = (dir, price, cls) => price == null
+      ? `<button class="core-buy maxed">MAX</button>`
+      : `<button class="${cls}" data-dir="${dir}" data-price="${price}" ${coins < price ? 'disabled' : ''}>`
+        + `<span>${coreStepLabel(key, dir)}</span>`
+        + `<span class="core-buy-price">${iconHTML('coin', { size: 11 })}${price}</span></button>`;
+    if (key === 'radius' || key === 'speed') {
+      const pos = upg[key + 'Pos'] | 0, neg = upg[key + 'Neg'] | 0;
+      buysHTML = buyBtn('-1', dirPrice(neg + 1), 'core-buy neg') + buyBtn('+1', dirPrice(pos + 1), 'core-buy pos');
+    } else {
+      const cur = upg[key] | 0;
+      buysHTML = buyBtn('+1', CORE_PRICE[key](cur + 1), 'core-buy pos');
+    }
+    card.innerHTML = `
+      <div class="core-card-icon">${iconHTML(t.icon, { size: 28 })}</div>
+      <div class="core-card-title">${t.title}</div>
+      <div class="core-card-val">${upgStateLabel(key)}</div>
+      <div class="core-card-buys">${buysHTML}</div>
     `;
-    panel.appendChild(buildDetailBody(tileMeta.key));
-    host.appendChild(panel);
-    panel.querySelector('#upg-back').addEventListener('click', () => {
-      upgPassiveView = 'grid';
-      renderUpgrades();
+    card.querySelectorAll('.core-buy[data-dir]').forEach(b => {
+      if (b.hasAttribute('disabled')) return;
+      b.addEventListener('click', () => {
+        const dir = b.dataset.dir;
+        const price = parseInt(b.dataset.price, 10);
+        confirmPurchase(t.title + ' ' + coreStepLabel(key, dir), price, () => coreBuy(key, dir));
+      });
     });
+    return card;
+  }
+
+  // Satın alma onay modalı: maliyet + bakiye göster, onaylanınca callback çağır.
+  let _buyConfirmCb = null;
+  function confirmPurchase(label, price, onConfirm) {
+    const modal = document.getElementById('buy-modal');
+    if (!modal) { onConfirm(); return; }
+    const coinIco = iconHTML('coin', { size: 13 });
+    document.getElementById('buy-modal-sub').innerHTML =
+      `Buy <b>${label}</b> for <b>${price}</b> ${coinIco}?`;
+    const balEl = document.getElementById('buy-modal-bal');
+    balEl.innerHTML = `You have <span class="upg-coin">${coinIco}${coins}</span>`;
+    const enough = coins >= price;
+    balEl.classList.toggle('short', !enough);
+    const okBtn = document.getElementById('buy-confirm-btn');
+    okBtn.disabled = !enough;
+    _buyConfirmCb = enough ? onConfirm : null;
+    modal.classList.add('open');
   }
 
   // GEAR tab: gruplu tile grid + LOADOUT item'larına detay açma. Locked
