@@ -4341,13 +4341,24 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }, { passive: false });
 
   // ── Canvas setup ──────────────────────────────────────────
-  const W = 600, H = 1066;
+  const W = 600;
+  const H_REF = 1066;   // mesafe/zorluk hesapları için SABİT referans (cihazdan bağımsız adalet)
+  let H = 1066;         // GÖRÜNÜM yüksekliği — ekran oranına göre değişir (uzun ekranı doldurur)
   const gc = document.getElementById('gc');
   const bg = document.getElementById('bg');
   const ctx = gc.getContext('2d');
   const bctx = bg.getContext('2d');
   gc.width = bg.width = W;
-  gc.height = bg.height = H;
+  // Canvas iç yüksekliğini ekran oranına eşitle → distorsiyon olmadan tüm ekranı doldurur.
+  // Uzun ekranlarda daha çok dikey dünya görünür; mesafe/zorluk H_REF'e bağlı olduğu için adil kalır.
+  function fitCanvas() {
+    const r = (window.innerHeight || 0) / (window.innerWidth || 1);
+    H = Math.max(800, Math.round(W * r)) || 1066;
+    gc.height = bg.height = H;
+  }
+  fitCanvas();
+  window.addEventListener('resize', fitCanvas);
+  window.addEventListener('orientationchange', fitCanvas);
 
   // ── SVG icon registry ──────────────────────────────────────
   // Replaces emoji glyphs (which corrupted to mojibake in file). Each entry
