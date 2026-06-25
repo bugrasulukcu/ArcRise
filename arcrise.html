@@ -1584,27 +1584,27 @@
       color: transparent;
       font-size: 15px; font-weight: 700; letter-spacing: 1px;
     }
-    /* Tab strip — eğimli (angled) sekmeler */
+    /* Tab strip — sade segmented control */
     #upg-tabs {
-      display: flex; width: 100%; gap: 6px;
+      display: flex; width: 100%; gap: 4px;
+      padding: 4px; border-radius: 13px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(170,120,255,.16);
     }
     .upg-tab {
-      flex: 1; padding: 12px 4px 11px;
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      flex: 1; padding: 10px 4px;
+      background: transparent;
       color: rgba(255,255,255,.5);
-      border: 1px solid rgba(170,120,255,.22);
-      border-bottom: none;
-      border-radius: 12px 12px 0 0;
+      border: none; border-radius: 9px;
       font-family: var(--font);
-      font-size: 10.5px; letter-spacing: 1.2px; white-space: nowrap;
+      font-size: 10.5px; letter-spacing: 1.5px; white-space: nowrap;
       cursor: pointer;
-      transition: background .15s, color .15s, border-color .15s;
+      transition: background .18s, color .18s, box-shadow .18s;
     }
     .upg-tab.active {
-      background: linear-gradient(180deg, rgba(140,90,230,.7), rgba(70,30,140,.75));
+      background: linear-gradient(180deg, #8c5ae6, #5f32b4);
       color: #fff;
-      border-color: rgba(190,140,255,.6);
-      text-shadow: 0 0 8px rgba(200,150,255,.7);
+      box-shadow: 0 2px 10px rgba(150,90,240,.35);
     }
     /* Tab altyazı (her sekme için kısa açıklama) */
     #upg-tab-caption {
