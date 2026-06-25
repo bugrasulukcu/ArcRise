@@ -1932,57 +1932,96 @@
     #buy-modal-actions button:hover { filter: brightness(1.1); }
     #buy-modal-actions button:active { transform: scale(0.97); }
 
-    /* CORE — doğrudan satın alınabilir kart grid (mockup düzeni) */
+    /* CORE — mockup düzeni: gauge görseli + info + değer kutusu + step butonları */
     .core-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%;
     }
     .core-card {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 14px 10px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
+      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 12px 14px;
+      background:
+        radial-gradient(130% 80% at 50% 0%, rgba(150,100,240,.16), transparent 62%),
+        linear-gradient(180deg, rgba(38,26,64,.62), rgba(22,14,40,.7));
+      border: 1px solid rgba(150,110,230,.28);
+      border-radius: 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
-    .core-card-icon {
-      width: 52px; height: 52px; border-radius: 50%;
+    /* info "i" düğmesi — sağ üst köşe */
+    .core-info {
+      position: absolute; top: 9px; right: 9px;
+      width: 18px; height: 18px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(170,120,255,.14);
-      border: 1px solid rgba(170,120,255,.30);
-      color: #cba6ff;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(190,160,255,.4);
+      color: rgba(205,180,255,.85);
+      font-size: 10px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
+      cursor: pointer; line-height: 1; padding: 0;
+      transition: background .15s, color .15s;
     }
-    .core-card-icon svg { width: 28px; height: 28px; }
-    .core-card-title { font-size: 12px; letter-spacing: 1.5px; color: #fff; text-align: center; }
+    .core-info:hover { background: rgba(170,120,255,.22); color: #fff; }
+    /* dairesel gauge görseli */
+    .core-gauge {
+      width: 92px; height: 92px; margin: 6px 0 10px;
+      color: rgba(225,215,255,.78);
+    }
+    .core-gauge svg { width: 100%; height: 100%; display: block; }
+    .core-card-title {
+      font-size: 14px; letter-spacing: 2px; color: #fff; text-align: center;
+      margin-bottom: 9px;
+    }
+    .core-card-buys {
+      display: flex; align-items: stretch; gap: 6px; width: 100%; justify-content: center;
+    }
     .core-card-val {
-      font-size: 12.5px; font-weight: 700; letter-spacing: .5px; color: #cba6ff;
-      min-height: 16px;
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 7px 6px; border-radius: 9px;
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(150,110,230,.3);
+      font-size: 12px; font-weight: 700; letter-spacing: .5px; color: #efe7ff;
+      white-space: nowrap;
     }
-    .core-card-buys { display: flex; gap: 6px; width: 100%; margin-top: 2px; }
     .core-buy {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;
-      padding: 7px 4px; border-radius: 9px;
-      font-family: var(--font); font-size: 12px; font-weight: 700; letter-spacing: .5px;
-      cursor: pointer; transition: filter .15s, transform .12s, border-color .15s;
+      position: relative; flex-shrink: 0;
+      min-width: 44px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px 9px; border-radius: 9px;
+      font-family: var(--font); font-size: 12px; font-weight: 700; letter-spacing: .3px;
+      cursor: pointer; transition: filter .15s, transform .12s;
     }
     .core-buy.pos {
-      background: linear-gradient(180deg, rgba(124,255,122,.22), rgba(40,120,60,.30));
-      border: 1px solid rgba(124,255,122,.55); color: #d8ffd8;
+      background: linear-gradient(180deg, #5cd06a, #2f9d43);
+      border: 1px solid rgba(160,255,170,.5); color: #062a0e;
+      box-shadow: 0 2px 8px rgba(60,200,90,.28);
     }
     .core-buy.neg {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.22); color: rgba(255,255,255,.8);
+      background: linear-gradient(180deg, #5cd06a, #2f9d43);
+      border: 1px solid rgba(160,255,170,.5); color: #062a0e;
+      box-shadow: 0 2px 8px rgba(60,200,90,.28);
     }
-    .core-buy:hover { filter: brightness(1.12); }
-    .core-buy:active { transform: scale(0.96); }
-    .core-buy[disabled] { opacity: .38; cursor: not-allowed; pointer-events: none; }
+    .core-buy:hover { filter: brightness(1.08); }
+    .core-buy:active { transform: scale(0.95); }
+    .core-buy[disabled] { opacity: .42; cursor: not-allowed; pointer-events: none; filter: grayscale(.4); }
     .core-buy.maxed {
-      flex: 1; background: linear-gradient(180deg, rgba(40,60,90,.5), rgba(20,30,50,.55));
-      border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.45);
-      cursor: default; pointer-events: none; padding: 7px 4px; border-radius: 9px;
-      font-family: var(--font); font-size: 11px; letter-spacing: 1.5px;
-      display: flex; align-items: center; justify-content: center;
+      flex: 1; min-width: 0;
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(150,110,230,.3); color: rgba(255,255,255,.5);
+      cursor: default; pointer-events: none;
+      font-size: 11px; letter-spacing: 1.5px;
     }
-    .core-buy-price { font-size: 9.5px; font-weight: 600; color: #ffd866; display: inline-flex; align-items: center; gap: 2px; opacity: .9; }
-    .core-buy.neg .core-buy-price { color: #ffd866; }
+    /* butonun üstünde yüzen küçük altın coin-fiyat rozeti */
+    .core-buy-price {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 1px 6px 1px 4px; border-radius: 999px;
+      background: linear-gradient(180deg, #4a3a10, #271c06);
+      border: 1px solid rgba(255,210,80,.55);
+      box-shadow: 0 0 6px rgba(255,170,0,.25);
+      font-size: 8.5px; font-weight: 700; letter-spacing: .3px;
+      color: #ffd866; white-space: nowrap;
+    }
+    .core-buy-price svg { width: 9px; height: 9px; }
 
     /* ══════════ EXTREME MODE POPUP ══════════ */
     /* ══════════ WIFE MODE CONFIRM ══════════ */
