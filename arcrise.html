@@ -1976,33 +1976,37 @@
       transition: background .15s, color .15s;
     }
     .core-info:hover { background: rgba(170,120,255,.22); color: #fff; }
-    /* dairesel gauge görseli */
-    .core-gauge {
-      width: 58px; height: 58px; flex-shrink: 0;
-      color: rgba(220,210,255,.72);
+    /* ikon alanı — şimdilik kare placeholder (ileride SVG ile değişecek) */
+    .core-icon {
+      width: 50px; height: 50px; flex-shrink: 0;
+      border-radius: 12px;
+      background:
+        repeating-linear-gradient(45deg, rgba(180,150,255,.05) 0 6px, transparent 6px 12px),
+        rgba(255,255,255,.03);
+      border: 1px dashed rgba(180,150,255,.3);
     }
-    .core-gauge svg { width: 100%; height: 100%; display: block; }
     .core-card-title {
-      font-size: 12px; letter-spacing: 1.6px; color: #fff; text-align: center;
+      font-size: 12px; letter-spacing: 1.4px; color: #fff; text-align: center;
       text-transform: uppercase;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
     }
-    .core-card-buys {
-      display: flex; align-items: stretch; gap: 5px; width: 100%; justify-content: center;
-    }
+    .core-card-foot { width: 100%; }
     .core-card-val {
-      flex: 1; min-width: 0;
+      width: 100%; margin-bottom: 10px;
       display: flex; align-items: center; justify-content: center;
-      padding: 7px 3px; border-radius: 8px;
+      padding: 6px 4px; border-radius: 8px;
       background: rgba(0,0,0,.3);
       border: 1px solid rgba(150,110,230,.28);
-      font-size: 12px; font-weight: 700; letter-spacing: .3px; color: #efe7ff;
+      font-size: 13px; font-weight: 700; letter-spacing: .5px; color: #efe7ff;
       white-space: nowrap; overflow: hidden;
     }
+    .core-card-buys {
+      display: flex; align-items: stretch; gap: 6px; width: 100%;
+    }
     .core-buy {
-      position: relative; flex: 0 0 auto;
+      position: relative; flex: 1; min-width: 0;
       display: flex; align-items: center; justify-content: center;
-      padding: 7px 7px; border-radius: 8px;
+      padding: 7px 6px; border-radius: 8px;
       font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: .2px;
       background: linear-gradient(180deg, #6fe07c, #34a548);
       border: 1px solid rgba(160,255,170,.45); color: #052a0e;
