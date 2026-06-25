@@ -349,6 +349,46 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v16 — Auth, sosyal sistem, combo ekonomisi, quest serisi, responsive (2026-06)
+
+**Firebase Anonymous Auth + uid sahipliği**
+- `ARC_DB` içine anonim oturum (Identity Toolkit REST): `ensureAuth()` refresh token'ı `arc_fb_rt`'de saklar → kalıcı uid. `fbFetch()` tüm Firestore isteklerine `Authorization: Bearer` ekler (14 çağrı).
+- `firestore.rules`: scores/players/friendreqs **auth zorunlu** + `owner == uid` (başkasının kaydı devralınamaz/spoof'lanamaz). Skor sınırı 1M → **1 milyar** (combo'lu skorlar için). **KURULUM:** Console'da Anonymous Enable + Rules publish şart.
+- **Bilinen kısıt:** coin bakiyesi tamamen client-side (localStorage), sunucu cüzdanı yok → coin miktarı korunamaz (kabul edildi). Karar: app wrapper konsolu kapatınca casual hile zaten biter.
+
+**Sosyal sistem (onaylı arkadaşlık)**
+- `friendreqs/{from__to}` koleksiyonu: istek → kabul/ret. Sahiplik `get(players/{id}).owner` ile doğrulanır. REST: `sendFriendRequest/getMySocial/acceptFriendRequest/removeFriendEdge`.
+- Arkadaş ekleme artık **anında değil → istek gönderir**. Friends modalında **Davetler** bölümü (✓/× glassy butonlar), Friends butonunda **bildirim rozeti** (60sn'de bir + açılışta poll).
+- Oyun-sonu leaderboard satırlarına **"Add"** butonu (scores'a `tag` eklendi → benzersiz kimlik; tag yoksa isimden çözer).
+- `publishPlayerProfile` artık **max-merge** (doc'u hep oluşturur, skoru asla düşürmez).
+- Referral: davet başına **5 coin** (eski 1), `REFERRAL_COIN` sabiti, verince toast.
+
+**Combo sistemi (cash-out pot modeli)**
+- Combo yalnızca **ışık yeşilken** (countdown ≥ `comboDisplayMax()−1`, timer satın alımıyla ölçeklenir) toplanırsa sayılır. Yeşil banttan çıkınca **kırılır → pot patlar** (altın parçacık + "+N") → skora eklenir → sıfırlanır. Ölümde de pot cash-out (kaybolmaz).
+- Pot **×1.5 katlanır** (10,15,23,34…), yuvarlı. Etiket topun ÜSTÜNDE sabit (`drawComboLabel`, "COMBO ×N", her kare çizilir, pop animasyonu).
+- Scoreboard `pad()` 6 hane.
+
+**Quest serisi (200 günlük kişisel)**
+- Performans temelli QUEST_DEFS (`base` + seri-günü çarpanı): score / distCm / **combo** / scoreTotal / distTotal / goodRuns. "Start'a bas" tipi yok.
+- **Deterministik** (seed = seri günü) → herkese aynı liste. **Kişisel seri günü** (`arc_series_day` 1→200, her yeni gün +1) → yeni oyuncu gün 1'den, kademeli zorluk (×1.0→×2.5). "DAY X/200" göstergesi kaldırıldı (bitiş algısı).
+- Ödül: quest +1 · hepsi +1 bonus · **günlük login +1** = 5/gün. Login quest listesinde "Daily login ✓" kartı. Açılışta stagger entrance animasyonu (`questIn`).
+
+**Profil istatistikleri genişledi**
+- GAMES / lifetime DISTANCE / COINS earned + mod tablosu (CHILL|EXTREME: skor/mesafe/oyun) + BEST COMBO + STREAK. Yeni stats: `distLifetimeCm, maxCombo, streak, lastPlayDate`.
+
+**Ekonomi & upgrade**
+- Insurance consumable **tamamen kaldırıldı**. Profit fiyatı 4/lvl. Ability ladder'ları **10 seviye**, yarım adım, temiz tam-sayı dur/cd (booster ölçeği 6-8s).
+- **Refund:** "Son alımı geri al" — `spendCoins`'te merkezi snapshot, upgrades modalında "UNDO LAST PURCHASE" butonu. Run başında / yeni alımda pencere kapanır (exploit guard).
+- 3 sekmeli upgrades (CORE/ABILITIES/ITEMS). Gear slotları satın alınabilir, PS renkleri, ayrı picker modal. Reset Data **onay modalı** (CANCEL/CONTINUE) + tüm in-game satın almaları temizler.
+
+**Görsel / UX**
+- Ölüm: yavaşlatma yerine **patlama efekti**. Reklamla dönüşte **top içinde 3→1 geri sayım**. Gameover popup arkası blur. Davet/back butonları SVG ikonlar.
+- **Responsive ekran:** uzun ekranda (oran ≥1.25) canvas iç yüksekliği ekran oranına eşitlenir → **distorsiyonsuz tam ekran** (daha çok dikey dünya); yatay/PC'de **letterbox** (`body.letterbox`). Mesafe/zorluk **sabit `H_REF=1066`**'ya bağlı (cihazdan bağımsız adalet). HUD'a `env(safe-area-inset)`.
+
+**Altyapı**
+- **Cache-busting:** `index.html` → `arcrise.html?v=Date.now()` (cache yüzünden eski sürüm/reset takılmasın). `ARC_RESET_VERSION = 'r-2026-06-19-2'` (uzaktan tek-seferlik yerel reset; DB silmeden ÖNCE cihazların yerelini sıfırlaması gerekir).
+- **Test otopilotu:** `?bot=1` veya `ARC_BOT.start()` — kısa-ufuk ileri-simülasyon ile oynar (yeşil-arayış + ability kullanımı + auto-restart), `MAX_TAP_HZ=5`.
+
 ### v15 — Profile yeniden düzenlendi, badges/coins/upgrades shell, distance leaderboard
 - Profile modalı: PROFILE title kaldırıldı, isim statik (düzenlenemez), avatar yanında 2 badge slot, yatay BEST/DIST/COINS satırı, UPGRADES + BACK/SAVE footer.
 - Avatar'a tıkla → grid (Upload tile + presets). Upload **center-cropped cover** (eski letterbox bitti).
