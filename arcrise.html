@@ -2269,14 +2269,20 @@
     #wife-confirm:active { transform: scale(0.97); }
     #wife-back {
       width: 100%; padding: 13px; border-radius: 13px;
-      border: 1.5px solid rgba(120,170,255,.45);
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(140,190,255,.18), transparent 60%),
-        linear-gradient(180deg, rgba(40,60,110,.55), rgba(10,20,40,.65));
-      color: #99bbff; font-family: var(--font);
+      border: 1.5px solid rgba(100,180,255,.55);
+      color: #fff; font-family: var(--font);
       font-size: 11.5px; letter-spacing: 2px; cursor: pointer;
       margin-top: 4px;
-      box-shadow: 0 0 14px rgba(80,140,255,.22), inset 0 1px 0 rgba(255,255,255,.12);
+      text-shadow: 0 0 6px rgba(180,230,255,.8), 0 0 2px rgba(255,255,255,.9);
+      background:
+        radial-gradient(circle 14px at 20% 30%, rgba(220,240,255,.45), transparent 60%),
+        radial-gradient(circle 10px at 70% 70%, rgba(180,220,255,.40), transparent 60%),
+        linear-gradient(135deg, #2255bb 0%, #4499ee 50%, #66ccff 100%);
+      box-shadow:
+        0 0 14px rgba(100,180,255,.45),
+        inset 0 -6px 12px rgba(255,255,255,.18),
+        inset 0 4px 8px rgba(20,60,140,.35);
+      animation: iceShimmer 2.2s ease-in-out infinite alternate;
       transition: transform .12s;
     }
     #wife-back:active { transform: scale(0.97); }
