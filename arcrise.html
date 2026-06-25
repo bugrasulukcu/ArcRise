@@ -4351,8 +4351,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Canvas iç yüksekliğini ekran oranına eşitle → distorsiyon olmadan tüm ekranı doldurur.
   // Uzun ekranlarda daha çok dikey dünya görünür; mesafe/zorluk H_REF'e bağlı olduğu için adil kalır.
   function fitCanvas() {
-    const r = (window.innerHeight || 0) / (window.innerWidth || 1);
-    H = Math.max(800, Math.round(W * r)) || 1066;
+    const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
+    const ratio = vh / vw;
+    if (ratio >= 1.25) {
+      // Dikey/uzun ekran (telefon): canvas oranını ekrana eşitle → distorsiyonsuz tam ekran.
+      H = Math.round(W * ratio);
+      document.body.classList.remove('letterbox');
+    } else {
+      // Yatay/geniş ekran (PC): sabit dikey canvas + letterbox (ortalı, yan barlar). Esnemez.
+      H = 1066;
+      document.body.classList.add('letterbox');
+    }
     gc.height = bg.height = H;
   }
   fitCanvas();
