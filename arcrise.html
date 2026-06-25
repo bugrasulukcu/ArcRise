@@ -5451,7 +5451,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
     }
-    const pxPerM = 100 * H / CM_PER_SCREEN;
+    const pxPerM = 100 * H_REF / CM_PER_SCREEN;
     const topW = S2W(-30), botW = S2W(H + 30);
     const kMin = Math.max(1, Math.ceil(((H - 200) - botW) / pxPerM));
     const kMax = Math.floor(((H - 200) - topW) / pxPerM);
