@@ -8565,25 +8565,27 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const card = document.createElement('div');
     card.className = 'core-card';
     // step butonu: küçük yüzen coin-fiyat rozeti + adım etiketi. MAX olunca pasif.
-    const buyBtn = (dir, price, cls) => price == null
+    const buyBtn = (dir, price) => price == null
       ? `<button class="core-buy maxed">MAX</button>`
-      : `<button class="${cls}" data-dir="${dir}" data-price="${price}" ${coins < price ? 'disabled' : ''}>`
+      : `<button class="core-buy" data-dir="${dir}" data-price="${price}" ${coins < price ? 'disabled' : ''}>`
         + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${price}</span>`
         + `<span>${coreStepLabel(key, dir)}</span></button>`;
-    const valBox = `<div class="core-card-val">${coreValueLabel(key)}</div>`;
-    let buysHTML;
+    let buttonsHTML;
     if (key === 'radius' || key === 'speed') {
       const pos = upg[key + 'Pos'] | 0, neg = upg[key + 'Neg'] | 0;
-      buysHTML = buyBtn('-1', dirPrice(neg + 1), 'core-buy neg') + valBox + buyBtn('+1', dirPrice(pos + 1), 'core-buy pos');
+      buttonsHTML = buyBtn('-1', dirPrice(neg + 1)) + buyBtn('+1', dirPrice(pos + 1));
     } else {
       const cur = upg[key] | 0;
-      buysHTML = valBox + buyBtn('+1', CORE_PRICE[key](cur + 1), 'core-buy pos');
+      buttonsHTML = buyBtn('+1', CORE_PRICE[key](cur + 1));
     }
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
-      <div class="core-gauge">${coreGauge(key)}</div>
+      <div class="core-icon"></div>
       <div class="core-card-title">${t.title}</div>
-      <div class="core-card-buys">${buysHTML}</div>
+      <div class="core-card-foot">
+        <div class="core-card-val">${coreValueLabel(key)}</div>
+        <div class="core-card-buys">${buttonsHTML}</div>
+      </div>
     `;
     const info = card.querySelector('.core-info');
     if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC[key] || t.title); } catch(_){} });
