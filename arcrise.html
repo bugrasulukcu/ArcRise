@@ -1900,73 +1900,92 @@
     #reset-modal-actions button:hover { filter: brightness(1.1); }
     #reset-modal-actions button:active { transform: scale(0.97); }
 
-    /* Satın alma onay modalı */
+    /* Satın alma onay modalı — oyunun mor cam estetiği */
     #buy-modal {
       position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      background: rgba(6,8,14,.55); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
     }
     #buy-modal.open { display: flex; }
     #buy-modal-box {
-      width: min(86vw, 320px);
-      background: linear-gradient(180deg, rgba(20,26,38,.97), rgba(10,13,20,.98));
-      border: 1px solid rgba(124,255,122,.45); border-radius: 18px; padding: 24px 20px;
-      display: flex; flex-direction: column; align-items: center; gap: 12px;
-      box-shadow: 0 0 40px rgba(124,255,122,.18);
+      width: min(84vw, 300px);
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.18), transparent 62%),
+        linear-gradient(180deg, rgba(24,16,42,.97), rgba(12,8,22,.98));
+      border: 1.5px solid rgba(170,120,255,.45); border-radius: 22px; padding: 24px 22px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 13px;
+      box-shadow: 0 0 36px rgba(150,90,240,.28), inset 0 1px 0 rgba(255,255,255,.08);
     }
-    #buy-modal-title { font-size: 18px; letter-spacing: 3px; color: var(--green); }
-    #buy-modal-sub { font-size: 12px; letter-spacing: .6px; color: rgba(255,255,255,.88); text-align: center; line-height: 1.6; }
-    #buy-modal-sub b { color: #ffd866; }
-    #buy-modal-bal { font-size: 11px; letter-spacing: .8px; color: rgba(255,255,255,.6); display: flex; align-items: center; gap: 4px; }
+    #buy-modal-title { font-size: 13px; letter-spacing: 3px; color: #b89bff; }
+    #buy-modal-sub { font-size: 13px; letter-spacing: .6px; color: rgba(255,255,255,.92); text-align: center; line-height: 1.5; }
+    #buy-modal-sub b { color: #fff; }
+    /* büyük altın fiyat chip'i */
+    #buy-modal-price {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 999px;
+      border: 1.5px solid rgba(255,210,80,.5);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
+        linear-gradient(180deg, rgba(60,40,8,.82), rgba(28,18,4,.88));
+      box-shadow: 0 0 14px rgba(255,170,0,.22), inset 0 1px 0 rgba(255,255,255,.16);
+      font-size: 19px; font-weight: 700; letter-spacing: 1px; color: #ffd866;
+    }
+    #buy-modal-price svg { width: 18px; height: 18px; }
+    #buy-modal-bal { font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,.55); display: inline-flex; align-items: center; gap: 5px; }
     #buy-modal-bal.short { color: #ff8a9a; }
-    #buy-modal-bal .upg-coin { color: #ffd866; display: inline-flex; align-items: center; }
-    #buy-modal-actions { display: flex; gap: 10px; width: 100%; margin-top: 2px; }
+    #buy-modal-bal .upg-coin { color: #ffd866; display: inline-flex; align-items: center; gap: 3px; }
+    #buy-modal-actions { display: flex; gap: 10px; width: 100%; margin-top: 4px; }
     #buy-modal-actions button {
-      flex: 1; padding: 12px 0; border-radius: 11px; font-size: 12px; letter-spacing: 1.5px;
+      flex: 1; padding: 13px 0; border-radius: 12px; font-size: 12px; letter-spacing: 1.5px; font-family: var(--font);
       cursor: pointer; border: 1px solid; transition: transform .12s, filter .2s;
     }
-    #buy-cancel { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.22); color: #fff; }
-    #buy-confirm-btn { background: rgba(124,255,122,.9); border-color: rgba(124,255,122,.6); color: #0a2a10; font-weight: 700; }
-    #buy-confirm-btn:disabled { opacity: .4; cursor: not-allowed; }
-    #buy-modal-actions button:hover { filter: brightness(1.1); }
+    #buy-cancel { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.85); }
+    #buy-confirm-btn {
+      background: linear-gradient(180deg, #6fe07c, #34a548);
+      border-color: rgba(160,255,170,.55); color: #052a0e; font-weight: 700;
+      box-shadow: 0 3px 12px rgba(60,200,90,.3);
+    }
+    #buy-confirm-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; filter: grayscale(.5); }
+    #buy-modal-actions button:hover { filter: brightness(1.08); }
     #buy-modal-actions button:active { transform: scale(0.97); }
 
-    /* CORE — mockup düzeni: gauge görseli + info + değer kutusu + step butonları */
+    /* CORE — kare kartlar: gauge görseli + info + değer + step butonları */
     .core-grid {
       display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%;
     }
     .core-card {
-      position: relative; min-width: 0;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 16px 10px 14px;
+      position: relative; min-width: 0; aspect-ratio: 1 / 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 13px 10px 11px;
       background:
-        radial-gradient(130% 80% at 50% 0%, rgba(150,100,240,.16), transparent 62%),
-        linear-gradient(180deg, rgba(38,26,64,.62), rgba(22,14,40,.7));
-      border: 1px solid rgba(150,110,230,.28);
-      border-radius: 18px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+        radial-gradient(120% 75% at 50% 0%, rgba(150,100,240,.14), transparent 60%),
+        linear-gradient(180deg, rgba(34,24,58,.7), rgba(20,13,36,.8));
+      border: 1px solid rgba(150,110,230,.26);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
     }
     /* info "i" düğmesi — sağ üst köşe */
     .core-info {
-      position: absolute; top: 9px; right: 9px;
-      width: 18px; height: 18px; border-radius: 50%;
+      position: absolute; top: 8px; right: 8px;
+      width: 17px; height: 17px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(190,160,255,.4);
-      color: rgba(205,180,255,.85);
-      font-size: 10px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(190,160,255,.35);
+      color: rgba(205,180,255,.8);
+      font-size: 9px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
       cursor: pointer; line-height: 1; padding: 0;
       transition: background .15s, color .15s;
     }
     .core-info:hover { background: rgba(170,120,255,.22); color: #fff; }
     /* dairesel gauge görseli */
     .core-gauge {
-      width: 92px; height: 92px; margin: 6px 0 10px;
-      color: rgba(225,215,255,.78);
+      width: 58px; height: 58px; flex-shrink: 0;
+      color: rgba(220,210,255,.72);
     }
     .core-gauge svg { width: 100%; height: 100%; display: block; }
     .core-card-title {
-      font-size: 14px; letter-spacing: 2px; color: #fff; text-align: center;
-      text-transform: uppercase; margin-bottom: 9px;
+      font-size: 12px; letter-spacing: 1.6px; color: #fff; text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
     }
     .core-card-buys {
       display: flex; align-items: stretch; gap: 5px; width: 100%; justify-content: center;
@@ -1974,51 +1993,44 @@
     .core-card-val {
       flex: 1; min-width: 0;
       display: flex; align-items: center; justify-content: center;
-      padding: 7px 3px; border-radius: 9px;
-      background: rgba(0,0,0,.32);
-      border: 1px solid rgba(150,110,230,.3);
+      padding: 7px 3px; border-radius: 8px;
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(150,110,230,.28);
       font-size: 12px; font-weight: 700; letter-spacing: .3px; color: #efe7ff;
       white-space: nowrap; overflow: hidden;
     }
     .core-buy {
       position: relative; flex: 0 0 auto;
       display: flex; align-items: center; justify-content: center;
-      padding: 7px 6px; border-radius: 9px;
+      padding: 7px 7px; border-radius: 8px;
       font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: .2px;
+      background: linear-gradient(180deg, #6fe07c, #34a548);
+      border: 1px solid rgba(160,255,170,.45); color: #052a0e;
+      box-shadow: 0 2px 7px rgba(60,200,90,.22);
       cursor: pointer; transition: filter .15s, transform .12s;
     }
-    .core-buy.pos {
-      background: linear-gradient(180deg, #5cd06a, #2f9d43);
-      border: 1px solid rgba(160,255,170,.5); color: #062a0e;
-      box-shadow: 0 2px 8px rgba(60,200,90,.28);
-    }
-    .core-buy.neg {
-      background: linear-gradient(180deg, #5cd06a, #2f9d43);
-      border: 1px solid rgba(160,255,170,.5); color: #062a0e;
-      box-shadow: 0 2px 8px rgba(60,200,90,.28);
-    }
     .core-buy:hover { filter: brightness(1.08); }
-    .core-buy:active { transform: scale(0.95); }
-    .core-buy[disabled] { opacity: .42; cursor: not-allowed; pointer-events: none; filter: grayscale(.4); }
+    .core-buy:active { transform: scale(0.94); }
+    .core-buy[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; filter: grayscale(.45); box-shadow: none; }
     .core-buy.maxed {
       flex: 1; min-width: 0;
-      background: rgba(0,0,0,.3);
-      border: 1px solid rgba(150,110,230,.3); color: rgba(255,255,255,.5);
+      background: rgba(0,0,0,.28); box-shadow: none;
+      border: 1px solid rgba(150,110,230,.28); color: rgba(255,255,255,.5);
       cursor: default; pointer-events: none;
       font-size: 11px; letter-spacing: 1.5px;
     }
     /* butonun üstünde yüzen küçük altın coin-fiyat rozeti */
     .core-buy-price {
-      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
       display: inline-flex; align-items: center; gap: 2px;
-      padding: 1px 6px 1px 4px; border-radius: 999px;
+      padding: 1px 5px 1px 3px; border-radius: 999px;
       background: linear-gradient(180deg, #4a3a10, #271c06);
-      border: 1px solid rgba(255,210,80,.55);
-      box-shadow: 0 0 6px rgba(255,170,0,.25);
-      font-size: 8.5px; font-weight: 700; letter-spacing: .3px;
+      border: 1px solid rgba(255,210,80,.5);
+      box-shadow: 0 0 5px rgba(255,170,0,.25);
+      font-size: 8px; font-weight: 700; letter-spacing: .2px;
       color: #ffd866; white-space: nowrap;
     }
-    .core-buy-price svg { width: 9px; height: 9px; }
+    .core-buy-price svg { width: 8px; height: 8px; }
 
     /* ══════════ EXTREME MODE POPUP ══════════ */
     /* ══════════ WIFE MODE CONFIRM ══════════ */
