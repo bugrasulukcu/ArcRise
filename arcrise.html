@@ -9124,10 +9124,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   function openUpgradesModal() {
     _gearPickerSlot = -1; // her açılışta gear seçici kapalı başlasın
+    // Açılışta her zaman CORE sekmesine dön (mockup giriş ekranı).
+    document.querySelectorAll('.upg-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'passive'));
+    document.querySelectorAll('.upg-tab-pane').forEach(p => p.classList.toggle('active', p.id === 'upg-tab-passive'));
+    setUpgCaption('passive');
     renderUpgrades();
     updateRefundBtn();
     upgradesModal.classList.add('open');
   }
+  // Üst bardaki geri oku da modalı kapatır (mockup'taki ← düğmesi).
+  document.getElementById('upg-back-arrow').addEventListener('click', () => upgradesModal.classList.remove('open'));
   document.getElementById('upg-refund').addEventListener('click', refundLast);
   // Re-route all entry points to the unified opener so the UI always reflects state.
   document.getElementById('prof-upgrade-btn').addEventListener('click', openUpgradesModal);
