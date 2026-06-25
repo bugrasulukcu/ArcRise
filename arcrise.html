@@ -1514,28 +1514,27 @@
     #upg-topbar {
       display: flex; align-items: center; gap: 10px; width: 100%;
     }
-    #upg-back-arrow {
-      flex-shrink: 0; width: 40px; height: 40px;
+    /* Tüm modal başlık satırlarında ortak çerçeveli geri-dön butonu */
+    .modal-back, #upg-back-arrow {
+      flex-shrink: 0; width: 38px; height: 38px;
       display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; color: #fff;
-      cursor: pointer; padding: 0; transition: transform .12s, color .15s;
+      background: rgba(255,255,255,.05);
+      border: 1.5px solid rgba(170,120,255,.4);
+      border-radius: 11px;
+      color: #fff; cursor: pointer; padding: 0;
+      transition: transform .12s, border-color .15s, background .15s;
     }
-    #upg-back-arrow:hover { color: #cfb5ff; }
-    #upg-back-arrow:active { transform: scale(0.9); }
-    /* Alt sayfa modallarında ortak geri-dön oku (Close butonu yerine) */
-    #gearpick-box, #coins-modal-box, #quests-modal-box, #friends-modal-box,
-    #friendslist-modal-box, #lb-modal-box, #badges-modal-box { position: relative; }
-    .modal-back {
-      position: absolute; top: 12px; left: 12px; z-index: 3;
-      width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; color: #fff;
-      cursor: pointer; padding: 0;
-      transition: transform .12s, color .15s;
+    .modal-back:hover, #upg-back-arrow:hover {
+      background: rgba(170,120,255,.18); border-color: rgba(190,140,255,.7);
     }
-    .modal-back:hover { color: #cfb5ff; }
-    .modal-back:active { transform: scale(0.9); }
-    .modal-back svg { width: 22px; height: 22px; }
+    .modal-back:active, #upg-back-arrow:active { transform: scale(0.92); }
+    .modal-back svg, #upg-back-arrow svg { width: 20px; height: 20px; }
+    /* Modal başlık satırı: [geri butonu] [başlık (ortalı)] [eş genişlik boşluk] */
+    .modal-head {
+      display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 4px;
+    }
+    .modal-head-title { flex: 1; min-width: 0; text-align: center; margin: 0; }
+    .modal-head-spacer { flex-shrink: 0; width: 38px; }
     #upgrades-modal-title {
       flex: 1; font-size: 24px; letter-spacing: 3px; color: #fff; text-align: center;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
