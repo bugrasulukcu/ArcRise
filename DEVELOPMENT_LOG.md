@@ -31,7 +31,7 @@ C:\Users\DELL\Desktop\BUGRA\ArcRise\
 
 ### Temel oynanış
 - Vanilla HTML5 canvas, mobile-first
-- Canvas internal: 600 × 1066 (≈ 9:16). `.stack` her iki ekseni de bu orana **simetrik kıstırıyor** (`width: min(100vw, 56.285vh); height: min(100vh, 177.667vw)`) — 19.5:9 / 20:9 Android telefonlarda dikey gerilme yok, gerekirse letterbox.
+- Canvas internal: genişlik sabit **600**, yükseklik (`H`) `fitCanvas()` ile değişken. Uzun ekran (oran ≥1.25) → `H = round(600·oran)`, `.stack` tam ekranı doldurur (distorsiyonsuz, daha çok dikey dünya). Yatay/PC → `body.letterbox` + 9:16 ortalı (esnemez). Mesafe/zorluk **sabit `H_REF=1066`**'ya bağlı (cihazdan bağımsız). `gc`/`bg` height resize'da güncellenir.
 - Top kavisli bir yörüngede hareket eder. Ekrana dokununca yön değişir (sol → tight arc, sağ → wide arc).
 - Yeşil top topla → enerji dolar (8 sn'lik geri sayım — eskiden 9)
 - Kırmızı engele çarp → öl
