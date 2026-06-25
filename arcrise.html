@@ -84,12 +84,11 @@
     }
     .stack {
       position: relative;
-      /* Canvas iç çözünürlük 600x1066 (≈9:16). Hem genişliği hem
-         yüksekliği bu orana göre kıs — yoksa 19.5:9 / 20:9 Android
-         ekranlarda canvas dikey eziliyor, daireler oval görünüyor.
-         56.285vh = (600/1066)*100 ; 177.667vw = (1066/600)*100 */
-      width:  min(100vw, 56.285vh);
-      height: min(100vh, 177.667vw);
+      /* Canvas iç yüksekliği JS'te ekran oranına eşitleniyor (fitCanvas) → burada
+         tüm ekranı doldur. Oranlar eşit olduğu için stretch distorsiyon yapmaz;
+         uzun ekranlarda alt/üst letterbox yerine daha çok dikey dünya görünür. */
+      width:  100vw;
+      height: 100vh;
     }
     canvas {
       position: absolute; inset: 0;
