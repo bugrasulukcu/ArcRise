@@ -9789,7 +9789,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const el = document.getElementById('friends-reward-stat');
     if (!el) return;
     if (clicks == null) { el.textContent = ''; return; }
-    el.textContent = `${clicks} friend${clicks === 1 ? '' : 's'} joined · ${clicks} coin${clicks === 1 ? '' : 's'} earned`;
+    const earned = clicks * REFERRAL_COIN;
+    el.textContent = `${clicks} friend${clicks === 1 ? '' : 's'} joined · ${earned} coin${earned === 1 ? '' : 's'} earned`;
   }
   async function claimReferralRewards() {
     try {
