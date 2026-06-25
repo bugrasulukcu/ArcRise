@@ -4676,7 +4676,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ×N multiplier'ı mesafeye göre somut tier'a çevir: erken ×2, orta ×3, geç ×4
   function resolveBoosterType(type) {
     if (type !== 'xmult') return type;
-    const distCm = (distancePx / H) * CM_PER_SCREEN;
+    const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
     return distCm < 1500 ? 'x2' : distCm < 4000 ? 'x3' : 'x4';
   }
 
@@ -5441,7 +5441,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // mesafe arttıkça sahneye çok hafif, sürekli kayan bir renk tonu biner.
   function drawMilestoneLines() {
     if (tutActive) return;
-    const m = Math.max(0, (distancePx / H) * CM_PER_SCREEN) / 100; // metre
+    const m = Math.max(0, (distancePx / H_REF) * CM_PER_SCREEN) / 100; // metre
     // Ton kayması: 1m sonrasında ~her 5m'de bir tam hue adımı (sürekli)
     if (m > 1) {
       const hue = ((m / 5) * 36) % 360;
@@ -6333,7 +6333,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       // Difficulty driver — linear in distance. Eşikler gerçek oynanan aralığa
       // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
       // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
-      const distCm = (distancePx / H) * CM_PER_SCREEN;
+      const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 500));
       const tMove = Math.max(0, (distCm - 100) / 400); // movement after ~1m
       const tMoveC = Math.max(0, Math.min(1, tMove));
@@ -6560,7 +6560,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
      // takes base to 2×). Booster overrides this.
     if (gameMode === 'extreme' && !boosterType) {
-      const distCm = (distancePx / H) * CM_PER_SCREEN;
+      const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
       const t = Math.max(0, Math.min(1, distCm / 7500));
       player.speed = getBaseSpeed() * (1 + t); // 1× → 2×
       GAME_SPEED = player.speed;
@@ -6937,7 +6937,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Distance-based coins: accumulate total cm, 1 coin per 100cm
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
-    const runDistCm = (distancePx / H) * CM_PER_SCREEN;
+    const runDistCm = (distancePx / H_REF) * CM_PER_SCREEN;
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
@@ -7271,7 +7271,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       _dbgAccTime += dt;
       if (_dbgAccTime > 0.15) {
         _dbgAccTime = 0;
-        const distCm = (distancePx / H) * CM_PER_SCREEN;
+        const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
         const rows = [
           ['FPS',       _fpsCur],
           ['scene',     scene],
@@ -7336,7 +7336,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       hScore.textContent = pad(Math.floor(score));
       hBest.textContent  = pad(best);
       // Distance: 1 screen height = 15cm. (Spawn-relative, cm 1 decimal)
-      const distCm = (distancePx / H) * CM_PER_SCREEN;
+      const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
       const dEl = document.getElementById('h-dist');
       if (dEl) dEl.textContent = fmtDist(distCm);
       const dBestEl = document.getElementById('h-dist-best');
@@ -9553,7 +9553,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     x.fillText('DISTANCE', 300, 470);
     x.fillStyle = '#9fd8ff';
     x.font = "700 56px 'Sarpanch', monospace";
-    x.fillText(fmtDist((distancePx / H) * CM_PER_SCREEN), 300, 545);
+    x.fillText(fmtDist((distancePx / H_REF) * CM_PER_SCREEN), 300, 545);
     x.fillStyle = 'rgba(255,255,255,.35)';
     x.font = "20px 'Sarpanch', monospace";
     x.fillText('CAN YOU BEAT ME?', 300, 660);
