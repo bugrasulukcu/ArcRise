@@ -334,7 +334,7 @@ const FIREBASE_CONFIG = {
 ## 🔁 Data Migration / One-shot Reset
 
 ```js
-const ARC_RESET_VERSION = 'r-2026-05-15-1';
+const ARC_RESET_VERSION = 'r-2026-06-19-2';
 ```
 
 App yüklenince:
