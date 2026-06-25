@@ -120,11 +120,11 @@
     /* Duvar iç kenarı: canvas 600px'de 20px sol/sağ → %3.33
        Güvenli bölge başlangıcı = calc(3.4% + 10px)                */
     .hud-tl {
-      position: absolute; top: 18px;
+      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px);
       left: calc(3.4% + 12px);
     }
     .hud-tr {
-      position: absolute; top: 18px;
+      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px);
       right: calc(3.4% + 12px);
       text-align: right;
     }
