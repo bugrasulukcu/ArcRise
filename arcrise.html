@@ -1550,54 +1550,71 @@
     #upg-refund[hidden] { display: none; }
     #upg-refund:hover { filter: brightness(1.12); }
     #upg-refund:active { transform: scale(0.98); }
+    /* Üst bar: geri oku · başlık · coin pill */
+    #upg-topbar {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+    }
+    #upg-back-arrow {
+      flex-shrink: 0; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none; color: #fff;
+      cursor: pointer; padding: 0; transition: transform .12s, color .15s;
+    }
+    #upg-back-arrow:hover { color: #cfb5ff; }
+    #upg-back-arrow:active { transform: scale(0.9); }
     #upgrades-modal-title {
-      font-size: 21px; letter-spacing: 2px; color: #cfb5ff; text-align: center;
+      flex: 1; font-size: 24px; letter-spacing: 3px; color: #fff; text-align: center;
+      text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
     #upgrades-modal-sub {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      align-self: center;
-      padding: 6px 14px; border-radius: 999px;
-      border: 1.5px solid rgba(255,210,80,.45);
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 7px 14px; border-radius: 999px;
+      border: 1.5px solid rgba(255,210,80,.5);
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
-        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
+        linear-gradient(180deg, rgba(60,40,8,.82), rgba(28,18,4,.88));
       box-shadow:
         0 0 12px rgba(255,170,0,.22),
         inset 0 1px 0 rgba(255,255,255,.16);
-      font-size: 13px; letter-spacing: 1.4px; font-weight: 700;
-      color: transparent;
-      background-clip: padding-box;
     }
     #upgrades-modal-sub .upg-bal-num {
       background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
       -webkit-background-clip: text; background-clip: text;
       color: transparent;
-      font-size: 15px;
+      font-size: 15px; font-weight: 700; letter-spacing: 1px;
     }
-    #upgrades-modal-sub .upg-bal-lbl {
-      color: rgba(255,230,170,.85);
-      font-size: 11px; letter-spacing: 2px;
-    }
-    /* Tab strip */
+    /* Tab strip — eğimli (angled) sekmeler */
     #upg-tabs {
-      display: flex; width: 100%; gap: 0;
-      border: 1.5px solid rgba(170,120,255,.30);
-      border-radius: 11px; overflow: hidden;
+      display: flex; width: 100%; gap: 6px;
     }
     .upg-tab {
-      flex: 1; padding: 10px 4px;
-      background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.50);
-      border: none; font-family: var(--font);
-      font-size: 9.5px; letter-spacing: .8px; white-space: nowrap;
+      flex: 1; padding: 12px 4px 11px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      color: rgba(255,255,255,.5);
+      border: 1px solid rgba(170,120,255,.22);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      font-family: var(--font);
+      font-size: 10.5px; letter-spacing: 1.2px; white-space: nowrap;
       cursor: pointer;
-      transition: background .15s, color .15s;
+      transform: skewX(-10deg);
+      transition: background .15s, color .15s, border-color .15s;
     }
-    .upg-tab + .upg-tab { border-left: 1px solid rgba(170,120,255,.25); }
+    .upg-tab > span { display: inline-block; transform: skewX(10deg); }
     .upg-tab.active {
-      background: linear-gradient(180deg, rgba(120,70,200,.55), rgba(50,20,100,.65));
+      background: linear-gradient(180deg, rgba(140,90,230,.7), rgba(70,30,140,.75));
       color: #fff;
-      text-shadow: 0 0 6px rgba(200,150,255,.65);
+      border-color: rgba(190,140,255,.6);
+      text-shadow: 0 0 8px rgba(200,150,255,.7);
+    }
+    /* Tab altyazı (her sekme için kısa açıklama) */
+    #upg-tab-caption {
+      width: 100%; text-align: center;
+      font-size: 10px; letter-spacing: 2px; font-weight: 700;
+      color: rgba(190,160,255,.7);
+      text-transform: uppercase;
+      margin: -4px 0 2px;
     }
     #upg-tab-content { width: 100%; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
     #upg-tab-content::-webkit-scrollbar { display: none; }
