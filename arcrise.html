@@ -8808,32 +8808,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const ABILITIES_GROUPS = [ GEAR_GROUPS.find(g => g.title === 'ABILITIES') ].filter(Boolean);
   const ITEMS_GROUPS     = [ GEAR_GROUPS.find(g => g.title === 'CONSUMABLES'),
                              GEAR_GROUPS.find(g => g.title === 'LOADOUT') ].filter(Boolean);
-  // Ortak gear pane render'ı: detay görünümü + (opsiyonel) slotlar + tile grid.
+  // Ortak gear pane render'ı: (opsiyonel) gear slotlar + CORE formatında kart grid.
   function renderGearPane(host, groups, includeSlots) {
     if (!host) return;
     host.innerHTML = '';
-    const groupKeys = groups.flatMap(g => g.items.map(it => it.key));
-    // Detay görünümü — sadece bu sekmeye ait bir item seçiliyse
-    if (upgGearView !== 'grid' && groupKeys.includes(upgGearView)) {
-      _gearPickerSlot = -1;
-      const meta = groups.flatMap(g => g.items).find(i => i.key === upgGearView);
-      if (!meta || meta.locked) { upgGearView = 'grid'; return renderGearPane(host, groups, includeSlots); }
-      const panel = document.createElement('div');
-      panel.className = 'upg-detail open';
-      const desc = CORE_DESC[meta.key] || ABILITY_DESC[meta.key] || (CONSUMABLE_CFG[meta.key] && CONSUMABLE_CFG[meta.key].desc) || '';
-      panel.innerHTML = `
-        <div class="upg-detail-head">
-          <button class="upg-back-btn" id="upg-back-g"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 L7 12 L15 20"/></svg></button>
-          <span class="upg-detail-title">${iconHTML(meta.icon, { size: 20 })} ${meta.title}</span>
-          <span class="upg-detail-active">${upgStateLabel(meta.key)}</span>
-        </div>
-        ${desc ? `<div class="upg-desc">${desc}</div>` : ''}
-      `;
-      panel.appendChild(buildDetailBody(meta.key));
-      host.appendChild(panel);
-      panel.querySelector('#upg-back-g').addEventListener('click', () => { upgGearView = 'grid'; renderUpgrades(); });
-      return;
-    }
     // ── Gear slots (sadece abilities sekmesi) ──
     if (includeSlots) {
       const slotsHead = document.createElement('div');
