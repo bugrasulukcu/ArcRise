@@ -1562,6 +1562,20 @@
     }
     #upg-back-arrow:hover { color: #cfb5ff; }
     #upg-back-arrow:active { transform: scale(0.9); }
+    /* Alt sayfa modallarında ortak geri-dön oku (Close butonu yerine) */
+    #gearpick-box, #coins-modal-box, #quests-modal-box, #friends-modal-box,
+    #friendslist-modal-box, #lb-modal-box, #badges-modal-box { position: relative; }
+    .modal-back {
+      position: absolute; top: 12px; left: 12px; z-index: 3;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none; color: #fff;
+      cursor: pointer; padding: 0;
+      transition: transform .12s, color .15s;
+    }
+    .modal-back:hover { color: #cfb5ff; }
+    .modal-back:active { transform: scale(0.9); }
+    .modal-back svg { width: 22px; height: 22px; }
     #upgrades-modal-title {
       flex: 1; font-size: 24px; letter-spacing: 3px; color: #fff; text-align: center;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
