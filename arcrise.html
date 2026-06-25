@@ -8545,30 +8545,34 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     applyUpgradeSideEffects();
     renderUpgrades();
   }
-  // Bir CORE kartı: ikon + başlık + güncel değer + satın alma butonu(ları).
+  // Bir CORE kartı: gauge görseli + info + değer kutusu + step butonu(ları).
   function buildCoreCard(t) {
     const key = t.key;
     const card = document.createElement('div');
     card.className = 'core-card';
-    let buysHTML = '';
+    // step butonu: küçük yüzen coin-fiyat rozeti + adım etiketi. MAX olunca pasif.
     const buyBtn = (dir, price, cls) => price == null
       ? `<button class="core-buy maxed">MAX</button>`
       : `<button class="${cls}" data-dir="${dir}" data-price="${price}" ${coins < price ? 'disabled' : ''}>`
-        + `<span>${coreStepLabel(key, dir)}</span>`
-        + `<span class="core-buy-price">${iconHTML('coin', { size: 11 })}${price}</span></button>`;
+        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${price}</span>`
+        + `<span>${coreStepLabel(key, dir)}</span></button>`;
+    const valBox = `<div class="core-card-val">${coreValueLabel(key)}</div>`;
+    let buysHTML;
     if (key === 'radius' || key === 'speed') {
       const pos = upg[key + 'Pos'] | 0, neg = upg[key + 'Neg'] | 0;
-      buysHTML = buyBtn('-1', dirPrice(neg + 1), 'core-buy neg') + buyBtn('+1', dirPrice(pos + 1), 'core-buy pos');
+      buysHTML = buyBtn('-1', dirPrice(neg + 1), 'core-buy neg') + valBox + buyBtn('+1', dirPrice(pos + 1), 'core-buy pos');
     } else {
       const cur = upg[key] | 0;
-      buysHTML = buyBtn('+1', CORE_PRICE[key](cur + 1), 'core-buy pos');
+      buysHTML = valBox + buyBtn('+1', CORE_PRICE[key](cur + 1), 'core-buy pos');
     }
     card.innerHTML = `
-      <div class="core-card-icon">${iconHTML(t.icon, { size: 28 })}</div>
+      <button class="core-info" type="button" aria-label="Info">i</button>
+      <div class="core-gauge">${coreGauge(key)}</div>
       <div class="core-card-title">${t.title}</div>
-      <div class="core-card-val">${upgStateLabel(key)}</div>
       <div class="core-card-buys">${buysHTML}</div>
     `;
+    const info = card.querySelector('.core-info');
+    if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC[key] || t.title); } catch(_){} });
     card.querySelectorAll('.core-buy[data-dir]').forEach(b => {
       if (b.hasAttribute('disabled')) return;
       b.addEventListener('click', () => {
