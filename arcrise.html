@@ -8599,11 +8599,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function confirmPurchase(label, price, onConfirm) {
     const modal = document.getElementById('buy-modal');
     if (!modal) { onConfirm(); return; }
-    const coinIco = iconHTML('coin', { size: 13 });
-    document.getElementById('buy-modal-sub').innerHTML =
-      `Buy <b>${label}</b> for <b>${price}</b> ${coinIco}?`;
+    document.getElementById('buy-modal-sub').innerHTML = `Unlock <b>${label}</b>`;
+    document.getElementById('buy-modal-price').innerHTML = `${iconHTML('coin', { size: 18 })}${price}`;
     const balEl = document.getElementById('buy-modal-bal');
-    balEl.innerHTML = `You have <span class="upg-coin">${coinIco}${coins}</span>`;
+    balEl.innerHTML = `Balance <span class="upg-coin">${iconHTML('coin', { size: 12 })}${coins}</span>`;
     const enough = coins >= price;
     balEl.classList.toggle('short', !enough);
     const okBtn = document.getElementById('buy-confirm-btn');
