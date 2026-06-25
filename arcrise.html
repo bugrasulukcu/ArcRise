@@ -8066,7 +8066,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   function openLbModal() {
-    lbCurrentMode = gameMode || 'normal'; // mevcut moddan başla
+    lbCurrentMode = 'normal'; // her zaman Chill seçili açılsın
     lbMetric = 'score';
     // NOT clearing lbCache on open — the ARC_DB layer has its own TTL (5 min)
     // and we rely on submitScore-triggered invalidation for freshness. This
