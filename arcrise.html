@@ -3480,11 +3480,15 @@
 <!-- ══ UPGRADES MODAL (CORE + GEAR katalogu)══ -->
 <div id="upgrades-modal">
   <div id="upgrades-modal-box">
-    <div id="upgrades-modal-title">UPGRADES</div>
-    <div id="upgrades-modal-sub">
-      <span class="upg-bal-icon ic-coin"></span>
-      <span class="upg-bal-num" id="upg-balance">0</span>
-      <span class="upg-bal-lbl">Coins</span>
+    <div id="upg-topbar">
+      <button id="upg-back-arrow" type="button" aria-label="Back">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg>
+      </button>
+      <div id="upgrades-modal-title">UPGRADES</div>
+      <div id="upgrades-modal-sub">
+        <span class="upg-bal-icon ic-coin"></span>
+        <span class="upg-bal-num" id="upg-balance">0</span>
+      </div>
     </div>
     <button id="upg-refund" type="button" hidden></button>
     <div id="upg-tabs">
@@ -3492,6 +3496,7 @@
       <button class="upg-tab" data-tab="abilities">ABILITIES</button>
       <button class="upg-tab" data-tab="items">ITEMS</button>
     </div>
+    <div id="upg-tab-caption"></div>
     <div id="upg-tab-content">
       <div id="upg-tab-passive" class="upg-tab-pane active"></div>
       <div id="upg-tab-abilities" class="upg-tab-pane"></div>
