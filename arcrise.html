@@ -673,30 +673,17 @@
       background: transparent; color: rgba(255,255,255,.45);
       transition: background .25s, color .25s, box-shadow .25s;
     }
-    /* ON state — green gradient + soft outer glow */
+    /* ON state — dolgu kayan göstergede; burada sadece metin rengi */
     .tog-btn.active-on {
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.40), transparent 65%),
-        linear-gradient(180deg, #7CFF7A 0%, #3ad055 100%);
+      background: none;
       color: #062a08;
-      border-radius: 10px;
-      box-shadow:
-        0 0 16px rgba(124,255,122,.55),
-        inset 0 1px 0 rgba(255,255,255,.35),
-        inset 0 -4px 8px rgba(0,80,30,.30);
     }
     /* OFF state next to active On stays dim */
     .tog-btn.active-off { color: rgba(255,255,255,.32); }
-    /* When the Off side itself is the selected (i.e. feature disabled), use red */
+    /* When the Off side itself is the selected (i.e. feature disabled), use red text */
     .tog-btn[id$="-off"].active-on {
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(255,150,150,.40), transparent 65%),
-        linear-gradient(180deg, #ff5566 0%, #c92135 100%);
+      background: none;
       color: #2a0408;
-      box-shadow:
-        0 0 16px rgba(255,80,90,.55),
-        inset 0 1px 0 rgba(255,255,255,.30),
-        inset 0 -4px 8px rgba(120,0,15,.35);
     }
 
     /* ══════════ GAME OVER ══════════ */
