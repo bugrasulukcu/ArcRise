@@ -9795,10 +9795,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const clicks = await ARC_DB.getReferralClicks(myFriendCode());
       let claimed = 0; try { claimed = parseInt(localStorage.getItem('arc_ref_claimed') || '0', 10) || 0; } catch(_){}
       if (clicks > claimed) {
-        const got = clicks - claimed;
-        grantCoins(got);
+        const coinsGot = (clicks - claimed) * REFERRAL_COIN;
+        grantCoins(coinsGot);
         try { localStorage.setItem('arc_ref_claimed', String(clicks)); } catch(_){}
-        try { showToast(`Referral reward · +${got} coin${got > 1 ? 's' : ''} (invite clicks)`); } catch(_){}
+        try { showToast(`Referral reward · +${coinsGot} coins (invite)`); } catch(_){}
       }
       updateReferralStat(clicks);
     } catch(_) { updateReferralStat(null); }
