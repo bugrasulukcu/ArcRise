@@ -8485,6 +8485,47 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (key === 'wallSoft') return s + '1px';
     return s + '10%';   // profit / radius / speed / magnetRange
   }
+  // Değer kutusunda gösterilen güncel mutlak değer (mockup'taki "100%/0s/0px").
+  function coreValueLabel(key) {
+    if (key === 'timer')    return (upg.timer | 0) + 's';
+    if (key === 'wallSoft') return (upg.wallSoft | 0) + 'px';
+    if (key === 'profit')   return (100 + (upg.profit | 0) * 10) + '%';
+    if (key === 'magnetRange') return (100 + (upg.magnetRange | 0) * 10) + '%';
+    if (key === 'speed')    return (100 + (upg.speedActive | 0) * 10) + '%';
+    if (key === 'radius')   return (100 + (upg.radiusActive | 0) * 10) + '%';
+    return upgStateLabel(key);
+  }
+  // Karttaki dairesel gauge görseli (mockup'a uygun, ince çizgili SVG'ler).
+  function coreGauge(key) {
+    const open = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">';
+    const dot  = '<circle cx="50" cy="50" r="3" fill="currentColor" stroke="none"/>';
+    switch (key) {
+      case 'speed': // hız göstergesi: tam daire + iğne
+        return open + '<circle cx="50" cy="50" r="37" opacity=".55"/>'
+          + '<line x1="50" y1="50" x2="71" y2="32"/>' + dot + '</svg>';
+      case 'radius': // yay + dış kesik halka
+        return open + '<path d="M22 64 A36 36 0 0 1 70 26" opacity=".85"/>'
+          + '<path d="M30 40 A24 24 0 0 1 60 28" stroke-dasharray="2.5 5" opacity=".6"/></svg>';
+      case 'profit': // sağdan açık "C" + merkez nokta + kısa ibre
+        return open + '<path d="M67 25 A34 34 0 1 0 67 75" opacity=".8"/>'
+          + '<line x1="50" y1="50" x2="50" y2="29"/>' + dot + '</svg>';
+      case 'timer': // saat: daire + üst çentik + ibre
+        return open + '<circle cx="50" cy="52" r="34" opacity=".7"/>'
+          + '<line x1="50" y1="9" x2="50" y2="16"/>'
+          + '<line x1="50" y1="52" x2="67" y2="39"/>'
+          + '<circle cx="50" cy="52" r="2.6" fill="currentColor" stroke="none"/></svg>';
+      case 'wallSoft': // daire + sağda dikey duvar çizgisi
+        return open + '<circle cx="45" cy="50" r="31" opacity=".7"/>'
+          + '<line x1="78" y1="20" x2="78" y2="80" opacity=".9"/></svg>';
+      case 'magnetRange': // at nalı mıknatıs + kesik alan halkası
+        return open + '<circle cx="50" cy="50" r="40" stroke-dasharray="2 6" opacity=".4"/>'
+          + '<path d="M35 70 L35 47 A15 15 0 0 1 65 47 L65 70" stroke-width="3.4"/>'
+          + '<line x1="35" y1="70" x2="35" y2="60" stroke-width="3.4"/>'
+          + '<line x1="65" y1="70" x2="65" y2="60" stroke-width="3.4"/></svg>';
+      default:
+        return open + '<circle cx="50" cy="50" r="34" opacity=".6"/>' + dot + '</svg>';
+    }
+  }
   // CORE satın alma — onaylandıktan sonra çağrılır.
   function coreBuy(key, dir) {
     if (key === 'radius' || key === 'speed') {
