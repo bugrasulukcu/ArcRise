@@ -7552,6 +7552,49 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   // ── Scene management ─────────────────────────────────────
+  // ── Segmented control kayan göstergesi (tablar + settings toggle/mode) ──
+  const SEG_ACTIVE = {
+    upg:      '.upg-tab.active',
+    lbmode:   '.lb-tab.active-normal, .lb-tab.active-extreme',
+    lbmetric: '.lb-metric-tab.active',
+    mode:     '.mode-btn.active-normal, .mode-btn.active-extreme',
+    tog:      '.tog-btn.active-on',
+  };
+  function _segTheme(kind, btn) {
+    if (kind === 'upg')      return 'th-purple';
+    if (kind === 'lbmetric') return 'th-white';
+    if (kind === 'lbmode')   return /extreme/.test(btn.className) ? 'th-flame' : 'th-ice';
+    if (kind === 'mode')     return /extreme/.test(btn.className) ? 'th-orange' : 'th-blue';
+    if (kind === 'tog')      return /-off$/.test(btn.id) ? 'th-red' : 'th-green';
+    return '';
+  }
+  function updateSeg(c) {
+    if (!c) return;
+    const kind = c.dataset.seg; if (!kind) return;
+    let ind = c.querySelector(':scope > .seg-ind');
+    if (!ind) { ind = document.createElement('span'); ind.className = 'seg-ind'; c.insertBefore(ind, c.firstChild); }
+    const active = c.querySelector(SEG_ACTIVE[kind]);
+    if (!active || !c.offsetParent) { ind.style.opacity = '0'; return; }
+    ind.style.opacity = '1';
+    ind.style.width = active.offsetWidth + 'px';
+    ind.style.transform = `translateX(${active.offsetLeft - c.clientLeft}px)`;
+    const cls = 'seg-ind ' + _segTheme(kind, active);
+    if (ind.className !== cls) ind.className = cls;
+  }
+  function updateAllSegs() {
+    requestAnimationFrame(() => document.querySelectorAll('[data-seg]').forEach(updateSeg));
+  }
+  (function initSegs() {
+    document.querySelectorAll('.tog').forEach(t => t.dataset.seg = 'tog');
+    [['#upg-tabs','upg'], ['#lb-tabs','lbmode'], ['#lb-metric-tabs','lbmetric'], ['#mode-sel','mode']]
+      .forEach(([sel, kind]) => { const e = document.querySelector(sel); if (e) e.dataset.seg = kind; });
+    document.querySelectorAll('[data-seg]').forEach(c => {
+      updateSeg(c);
+      new MutationObserver(() => updateSeg(c)).observe(c, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    window.addEventListener('resize', updateAllSegs);
+  })();
+
   function showScene(s) {
     scene = s;
     profileSetupEl.classList.toggle('active', s === 'profile-setup');
@@ -7561,6 +7604,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     hudEl.classList.toggle('active',          s === 'play');
     document.body.classList.toggle('over-blur', s === 'over');
     if (s === 'home') { applyProfile(); }
+    updateAllSegs();
   }
 
   // İlk açılışta profil oluşturma ekranını göster
