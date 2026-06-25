@@ -9100,6 +9100,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // player.speed is read each step from GAME_SPEED-derived state, no extra wiring.
   }
 
+  // Sekme altyazıları (mockup'taki "UPGRADES THAT EFFECTS ALL THE TIME").
+  const UPG_CAPTIONS = {
+    passive:   'Upgrades that affect you all the time',
+    abilities: 'Active skills — equip to your slots',
+    items:     'Consumables & cosmetics',
+  };
+  function setUpgCaption(target) {
+    const cap = document.getElementById('upg-tab-caption');
+    if (cap) cap.textContent = UPG_CAPTIONS[target] || '';
+  }
   // Tab switching
   document.querySelectorAll('.upg-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -9108,6 +9118,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       document.querySelectorAll('.upg-tab-pane').forEach(p => {
         p.classList.toggle('active', p.id === 'upg-tab-' + target);
       });
+      setUpgCaption(target);
     });
   });
 
