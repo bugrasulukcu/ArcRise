@@ -8859,29 +8859,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       slotsBox.appendChild(msg);
       host.appendChild(slotsBox);
     }
-    // Grid + grup başlıkları
+    // CORE formatında kart grid + grup başlıkları
     for (const grp of groups) {
       const h = document.createElement('div');
       h.className = 'upg-group-head';
       h.textContent = grp.title;
       host.appendChild(h);
       const grid = document.createElement('div');
-      grid.className = 'upg-tile-grid';
-      for (const t of grp.items) {
-        const tile = document.createElement('button');
-        tile.className = 'upg-tile' + (t.locked ? ' locked' : '');
-        tile.innerHTML = `
-          <span class="upg-tile-icon">${iconHTML(t.icon, { size: 28 })}</span>
-          <span class="upg-tile-body">
-            <span class="upg-tile-title">${t.title}</span>
-            <span class="upg-tile-state">${t.locked ? 'SOON' : upgStateLabel(t.key)}</span>
-          </span>
-        `;
-        if (!t.locked) {
-          tile.addEventListener('click', () => { upgGearView = t.key; renderUpgrades(); });
-        }
-        grid.appendChild(tile);
-      }
+      grid.className = 'core-grid';
+      for (const t of grp.items) grid.appendChild(buildGearCard(t));
       host.appendChild(grid);
     }
   }
