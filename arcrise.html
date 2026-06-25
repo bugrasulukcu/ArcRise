@@ -7518,6 +7518,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     resetModal.classList.remove('open');
     doReset();
   });
+  // Satın alma onay modalı — BUY ile callback'i çalıştır, CANCEL/backdrop kapatır.
+  const buyModal = document.getElementById('buy-modal');
+  const closeBuyModal = () => { buyModal.classList.remove('open'); _buyConfirmCb = null; };
+  document.getElementById('buy-cancel').addEventListener('click', closeBuyModal);
+  document.getElementById('buy-modal').addEventListener('click', e => { if (e.target.id === 'buy-modal') closeBuyModal(); });
+  document.getElementById('buy-confirm-btn').addEventListener('click', () => {
+    const cb = _buyConfirmCb;
+    closeBuyModal();
+    if (cb) cb();
+  });
 
   // ── Input ────────────────────────────────────────────────
   const haptic = (ms) => navigator.vibrate?.(ms); // sessizce desteklenmiyor ise atlar
