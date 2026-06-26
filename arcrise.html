@@ -1493,9 +1493,11 @@
     #upg-refund[hidden] { display: none; }
     #upg-refund:hover { filter: brightness(1.12); }
     #upg-refund:active { transform: scale(0.98); }
-    /* Üst bar: geri oku · başlık · coin pill */
+    /* Üst bar: geri oku (sol) · başlık (mutlak ortalı) · coin (sağ) */
     #upg-topbar {
-      display: flex; align-items: center; gap: 10px; width: 100%;
+      position: relative;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+      min-height: 38px;
     }
     /* Tüm modal başlık satırlarında ortak çerçeveli geri-dön butonu */
     .modal-back, #upg-back-arrow {
