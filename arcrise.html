@@ -8533,21 +8533,24 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   // TOMB — 0 = avatar (ücretsiz), 1.. = placeholder (ücretli, gerçek SVG'ler sonra).
   const TOMB_COUNT = 7;
+  // TOMB — sadece PROFİL RESMİ: 50 coin ile aç, sonra aç/kapa. Ölüm noktasında gösterilir.
   function renderTomb() {
     const g = document.getElementById('tomb-grid');
-    const cell = (i, inner) => {
-      const owned = i === 0 || _has('tombsOwned', i), active = (upg.tomb | 0) === i;
-      return `<button class="tomb-opt ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-t="${i}">${inner}${owned ? '' : _coinBadge(TOMB_PRICE)}</button>`;
-    };
-    let html = cell(0, `<img src="${avatarSrc()}" alt="">`);
-    for (let i = 1; i < TOMB_COUNT; i++) html += cell(i, `<span class="tomb-ph"></span>`);
-    g.innerHTML = html;
-    g.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => {
-      const i = parseInt(b.dataset.t, 10);
-      const sel = () => { upg.tomb = i; saveUpg(); renderTomb(); };
-      if (i === 0 || _has('tombsOwned', i)) sel();
-      else _buyOwn('tombsOwned', i, TOMB_PRICE, 'Tomb style', sel);
+    const owned = !!upg.tombOwned, on = !!upg.deathAvatar;
+    g.innerHTML = `
+      <div class="custom-card">
+        <img class="custom-prev" src="${avatarSrc()}" alt="">
+        <div class="custom-name">PROFILE PICTURE</div>
+        ${owned
+          ? `<button class="dt-opt ${on ? 'active' : ''}" id="tomb-toggle">${on ? 'ON' : 'OFF'}</button>`
+          : `<button class="dt-opt" id="tomb-buy">${iconHTML('coin', { size: 12 })} ${TOMB_PRICE}</button>`}
+      </div>`;
+    const buy = document.getElementById('tomb-buy');
+    if (buy) buy.addEventListener('click', () => confirmPurchase('Tomb · profile picture', TOMB_PRICE, () => {
+      if (!spendCoins(TOMB_PRICE)) return; upg.tombOwned = true; upg.deathAvatar = true; saveUpg(); renderTomb();
     }));
+    const tog = document.getElementById('tomb-toggle');
+    if (tog) tog.addEventListener('click', () => { upg.deathAvatar = !upg.deathAvatar; saveUpg(); renderTomb(); });
     renderProfButtons();
   }
   // Profil ana butonlarında seçili trace/tomb önizlemesi + çerçeve rengi.
