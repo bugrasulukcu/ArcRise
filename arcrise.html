@@ -8693,23 +8693,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         return open + '<circle cx="50" cy="50" r="34" opacity=".6"/>' + dot + '</svg>';
     }
   }
-  // Bir CORE kartı: üstte başlık · ortada oran · solda − (ücretsiz) · sağda + (ücretli).
+  // Bir CORE kartı: üstte başlık · ortada ×oran · solda − · sağda +.
+  // Yeni bölge açan butonda coin rozeti; ücretsiz hareket sade; tavanda MAX; tabanda − boş gri.
   function buildCoreCard(t) {
     const key = t.key;
-    const lvl = coreLevel(key), max = coreMaxLevel(key);
-    const plusPrice = lvl < max ? corePriceAt(key, lvl + 1) : null;
     const card = document.createElement('div');
     card.className = 'core-card';
-    // − : ücretsiz geri al. Tabanda (geri gidilemiyorken) gri & boş form; alındıkça yeşil.
-    const minusBtn = lvl > 0
-      ? `<button class="core-buy minus" data-act="minus">${coreStepLabel(key, '-1')}</button>`
-      : `<button class="core-buy minus empty" aria-hidden="true"></button>`;
-    // + : sonraki seviyeyi satın al (ücretli). Coin değeri butonun ÜSTÜNDE yüzen rozet. Tavanda MAX.
-    const plusBtn = plusPrice == null
-      ? `<button class="core-buy maxed">MAX</button>`
-      : `<button class="core-buy plus" data-act="plus" data-price="${plusPrice}" ${coins < plusPrice ? 'disabled' : ''}>`
-        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${plusPrice}</span>`
-        + `<span>${coreStepLabel(key, '+1')}</span></button>`;
+    const { plus, minus } = coreBtnInfo(key);
+    const mkBtn = (info, sign, cls) => {
+      if (info.mode === 'max')   return `<button class="core-buy maxed">MAX</button>`;
+      if (info.mode === 'empty') return `<button class="core-buy ${cls} empty" aria-hidden="true"></button>`;
+      if (info.mode === 'free')  return `<button class="core-buy ${cls}" data-act="${cls}-free">${sign}</button>`;
+      return `<button class="core-buy ${cls}" data-act="${cls}-buy" data-price="${info.price}" ${coins < info.price ? 'disabled' : ''}>`
+        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
+    };
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
       <div class="core-icon"></div>
@@ -8717,23 +8714,18 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         <div class="core-card-title">${t.title}</div>
         <div class="core-card-val box">${coreValueLabel(key)}</div>
         <div class="core-card-buys">
-          ${minusBtn}
-          ${plusBtn}
+          ${mkBtn(minus, '−', 'minus')}
+          ${mkBtn(plus,  '+', 'plus')}
         </div>
       </div>
     `;
     const info = card.querySelector('.core-info');
     if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC[key] || t.title); } catch(_){} });
-    const mb = card.querySelector('[data-act="minus"]');
-    if (mb && !mb.hasAttribute('disabled')) mb.addEventListener('click', () => coreSetLevel(key, coreLevel(key) - 1)); // ÜCRETSİZ
-    const pb = card.querySelector('[data-act="plus"]');
-    if (pb && !pb.hasAttribute('disabled')) pb.addEventListener('click', () => {
-      const price = parseInt(pb.dataset.price, 10);
-      confirmPurchase(t.title + ' ' + coreStepLabel(key, '+1'), price, () => {
-        if (!spendCoins(price)) return;
-        coreSetLevel(key, coreLevel(key) + 1);
-      });
-    });
+    const wire = (act, fn) => { const b = card.querySelector(`[data-act="${act}"]`); if (b && !b.hasAttribute('disabled')) b.addEventListener('click', fn); };
+    wire('plus-free',  () => coreInc(key));
+    wire('minus-free', () => coreDec(key));
+    wire('plus-buy',   () => coreBuyInc(key, plus.price));
+    wire('minus-buy',  () => coreBuyDec(key, minus.price));
     return card;
   }
 
