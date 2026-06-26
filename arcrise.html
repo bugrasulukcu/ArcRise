@@ -8842,7 +8842,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     gearWire(card, 'plus-buy', () => {
       const p = cfg.durPrices[inv.durLvl || 0];
       const nextDur = cfg.durBase + ((inv.durLvl || 0) + 1) * cfg.durStep;
-      confirmPurchase(meta.title + ' ' + _fmtS(nextDur) + 's', p, () => {
+      confirmPurchase(meta.title + ' ' + secStr(nextDur), p, () => {
         if (!spendCoins(p)) return; inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
       });
     });
