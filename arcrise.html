@@ -6474,6 +6474,53 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     ctx.restore();
   }
+  // Diğer oyuncuların ölüm işaretçileri — en uzak noktalarında avatar/ad (açtılarsa).
+  const _remoteAvImgs = {};
+  function remoteAvImg(idx) {
+    if (idx in _remoteAvImgs) return _remoteAvImgs[idx] && _remoteAvImgs[idx].loaded ? _remoteAvImgs[idx].img : null;
+    const src = AVATARS[idx];
+    if (!src) { _remoteAvImgs[idx] = null; return null; }
+    const o = { img: new Image(), loaded: false };
+    o.img.onload = () => { o.loaded = true; };
+    o.img.src = src; _remoteAvImgs[idx] = o; return null;
+  }
+  function drawRemoteDeathMarkers() {
+    if (!crossPlayerGhosts.length) return;
+    for (const g of crossPlayerGhosts) {
+      if ((!g.dName && !g.dAv) || !g.points || g.points.length < 2) continue;
+      // En uzak nokta = en küçük y (yukarı)
+      let fp = g.points[0];
+      for (const p of g.points) if (p.y < fp.y) fp = p;
+      const sy = W2S(fp.y);
+      if (sy < -50 || sy > H + 50) continue;
+      const mx = fp.x;
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      if (g.dAv) {
+        const r = 13, cy = sy - r - 12;
+        const img = remoteAvImg(g.avatar | 0);
+        if (img) {
+          ctx.save(); ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.clip();
+          ctx.drawImage(img, mx - r, cy - r, r * 2, r * 2); ctx.restore();
+          ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1.1;
+          ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.stroke();
+        } else {
+          ctx.fillStyle = AVATAR_COLORS[g.avatar | 0] || '#888';
+          ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#000'; ctx.font = 'bold 12px var(--font), monospace';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText((g.name || '?').slice(0, 1).toUpperCase(), mx, cy);
+        }
+      }
+      if (g.dName && g.name) {
+        ctx.font = '9px var(--font), monospace'; ctx.fillStyle = 'rgba(255,255,255,.82)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
+        ctx.fillText(g.name.toUpperCase(), mx, sy + 5); ctx.shadowBlur = 0;
+      }
+      ctx.restore();
+    }
+  }
 
   // ── Ghost Trails — render last N stored traces from prior games ───────
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
