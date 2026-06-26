@@ -6508,9 +6508,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const sy = W2S(fp.y);
       if (sy < -50 || sy > H + 50) continue;
       const mx = fp.x;
+      const showAv = g.dAv, showName = g.dName && !!g.name;
       ctx.save();
       ctx.globalAlpha = 0.85;
-      if (g.dAv) {
+      if (showAv) {
         const r = 13, cy = sy - r - 12;
         const img = remoteAvImg(g.avatar | 0);
         if (img) {
@@ -6525,8 +6526,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText((g.name || '?').slice(0, 1).toUpperCase(), mx, cy);
         }
-      }
-      if (g.dName && g.name) {
+        if (showName) drawArcText(g.name.toUpperCase(), mx, cy, r + 8, '8px var(--font), monospace', 'rgba(255,255,255,.92)');
+      } else if (showName) {
         ctx.font = '9px var(--font), monospace'; ctx.fillStyle = 'rgba(255,255,255,.82)';
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
