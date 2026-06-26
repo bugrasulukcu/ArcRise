@@ -8646,65 +8646,42 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         return open + '<circle cx="50" cy="50" r="34" opacity=".6"/>' + dot + '</svg>';
     }
   }
-  // CORE satın alma — onaylandıktan sonra çağrılır.
-  function coreBuy(key, dir) {
-    if (key === 'radius' || key === 'speed') {
-      if (dir === '+1') {
-        const pos = upg[key + 'Pos'] | 0; const p = dirPrice(pos + 1);
-        if (p == null || !spendCoins(p)) return;
-        upg[key + 'Pos'] = pos + 1; upg[key + 'Active'] = pos + 1;
-      } else {
-        const neg = upg[key + 'Neg'] | 0; const p = dirPrice(neg + 1);
-        if (p == null || !spendCoins(p)) return;
-        upg[key + 'Neg'] = neg + 1; upg[key + 'Active'] = -(neg + 1);
-      }
-    } else {
-      const cur = upg[key] | 0; const pf = CORE_PRICE[key]; const p = pf(cur + 1);
-      if (p == null || !spendCoins(p)) return;
-      upg[key] = cur + 1;
-    }
-    saveUpg();
-    applyUpgradeSideEffects();
-    renderUpgrades();
-  }
-  // Bir CORE kartı: gauge görseli + info + değer kutusu + step butonu(ları).
+  // Bir CORE kartı: üstte başlık · ortada oran · solda − (ücretsiz) · sağda + (ücretli).
   function buildCoreCard(t) {
     const key = t.key;
+    const lvl = coreLevel(key), max = coreMaxLevel(key);
+    const plusPrice = lvl < max ? corePriceAt(key, lvl + 1) : null;
     const card = document.createElement('div');
     card.className = 'core-card';
-    // step butonu: küçük yüzen coin-fiyat rozeti + adım etiketi. MAX olunca pasif.
-    const buyBtn = (dir, price) => price == null
+    // − : ücretsiz geri al, tabanda (0) pasif. Coin rozeti yok.
+    const minusBtn = `<button class="core-buy minus" data-act="minus" ${lvl <= 0 ? 'disabled' : ''}>−</button>`;
+    // + : sonraki seviyeyi satın al (ücretli, onaylı). Tavanda MAX.
+    const plusBtn = plusPrice == null
       ? `<button class="core-buy maxed">MAX</button>`
-      : `<button class="core-buy" data-dir="${dir}" data-price="${price}" ${coins < price ? 'disabled' : ''}>`
-        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${price}</span>`
-        + `<span>${coreStepLabel(key, dir)}</span></button>`;
-    let buttonsHTML;
-    if (key === 'radius' || key === 'speed') {
-      const pos = upg[key + 'Pos'] | 0, neg = upg[key + 'Neg'] | 0;
-      buttonsHTML = buyBtn('-1', dirPrice(neg + 1)) + buyBtn('+1', dirPrice(pos + 1));
-    } else {
-      const cur = upg[key] | 0;
-      buttonsHTML = buyBtn('+1', CORE_PRICE[key](cur + 1));
-    }
+      : `<button class="core-buy plus" data-act="plus" data-price="${plusPrice}" ${coins < plusPrice ? 'disabled' : ''}>`
+        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${plusPrice}</span>+</button>`;
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
       <div class="core-icon"></div>
       <div class="core-card-foot">
-        <div class="core-card-row">
-          <span class="core-card-name">${t.title}</span>
-          <span class="core-card-val">${coreValueLabel(key)}</span>
+        <div class="core-card-title">${t.title}</div>
+        <div class="core-card-buys mid">
+          ${minusBtn}
+          <div class="core-card-val">${coreValueLabel(key)}</div>
+          ${plusBtn}
         </div>
-        <div class="core-card-buys">${buttonsHTML}</div>
       </div>
     `;
     const info = card.querySelector('.core-info');
     if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC[key] || t.title); } catch(_){} });
-    card.querySelectorAll('.core-buy[data-dir]').forEach(b => {
-      if (b.hasAttribute('disabled')) return;
-      b.addEventListener('click', () => {
-        const dir = b.dataset.dir;
-        const price = parseInt(b.dataset.price, 10);
-        confirmPurchase(t.title + ' ' + coreStepLabel(key, dir), price, () => coreBuy(key, dir));
+    const mb = card.querySelector('[data-act="minus"]');
+    if (mb && !mb.hasAttribute('disabled')) mb.addEventListener('click', () => coreSetLevel(key, coreLevel(key) - 1)); // ÜCRETSİZ
+    const pb = card.querySelector('[data-act="plus"]');
+    if (pb && !pb.hasAttribute('disabled')) pb.addEventListener('click', () => {
+      const price = parseInt(pb.dataset.price, 10);
+      confirmPurchase(t.title + ' ' + coreStepLabel(key, '+1'), price, () => {
+        if (!spendCoins(price)) return;
+        coreSetLevel(key, coreLevel(key) + 1);
       });
     });
     return card;
