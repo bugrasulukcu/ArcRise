@@ -8676,11 +8676,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       <button class="core-info" type="button" aria-label="Info">i</button>
       ${opts.eq ? '<span class="core-eq">EQUIPPED</span>' : ''}
       <div class="core-icon"></div>
-      <div class="core-card-row">
-        <span class="core-card-name">${meta.title}</span>
-        <span class="core-card-val${opts.lockedVal ? ' core-val-locked' : ''}">${valHTML}</span>
-      </div>
-      ${buttonsHTML ? `<div class="core-card-buys">${buttonsHTML}</div>` : ''}`;
+      <div class="core-card-foot">
+        <div class="core-card-row">
+          <span class="core-card-name">${meta.title}</span>
+          <span class="core-card-val${opts.lockedVal ? ' core-val-locked' : ''}">${valHTML}</span>
+        </div>
+        ${buttonsHTML ? `<div class="core-card-buys">${buttonsHTML}</div>` : ''}
+      </div>`;
     const info = card.querySelector('.core-info');
     if (info) info.addEventListener('click', () => { if (opts.desc) try { showToast(opts.desc); } catch(_){} });
     return card;
