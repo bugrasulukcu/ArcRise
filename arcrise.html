@@ -8600,48 +8600,69 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     host.appendChild(grid);
   }
 
-  // CORE stat → fiyat fonksiyonu (forward-only stat'lar). radius/speed bidi.
-  // ── CORE: tüm statlar tek yönlü merdiven (0..max). + ücretli · − ÜCRETSİZ geri al ──
-  function coreMaxLevel(key) {
-    if (key === 'radius' || key === 'speed' || key === 'timer') return DIR_PRICES.length;
+  // ── CORE model ──────────────────────────────────────────────
+  // speed/radius: çift yönlü, işaretli seviye (−max..+max), taban 0 = ×1.0.
+  // profit/timer/wallSoft/magnetRange: 0..max.
+  // Kural: tabandan (×1.0) UZAKLAŞMAK ücretli; tabana GERİ gitmek ücretsiz.
+  const CORE_BIDI = k => (k === 'radius' || k === 'speed');
+  function coreSideMax(key) {
+    if (CORE_BIDI(key))        return DIR_PRICES.length;     // her yön ayrı
+    if (key === 'timer')       return TIMER_PRICES.length;
     if (key === 'profit')      return PROFIT_PRICES.length;
     if (key === 'wallSoft')    return WALLSOFT_PRICES.length;
     if (key === 'magnetRange') return MAGRANGE_PRICES.length;
     return 0;
   }
-  function corePriceAt(key, lvl) {   // lvl. seviyeye çıkmanın bedeli (1-index)
-    if (key === 'radius' || key === 'speed' || key === 'timer') return dirPrice(lvl);
-    if (key === 'profit')      return profitPrice(lvl);
-    if (key === 'wallSoft')    return wallSoftPrice(lvl);
-    if (key === 'magnetRange') return magRangePrice(lvl);
+  function coreSidePrice(key, n) {   // n. seviyeyi AÇMANIN bedeli (yön fark etmez)
+    if (CORE_BIDI(key))        return dirPrice(n);
+    if (key === 'timer')       return timerPrice(n);
+    if (key === 'profit')      return profitPrice(n);
+    if (key === 'wallSoft')    return wallSoftPrice(n);
+    if (key === 'magnetRange') return magRangePrice(n);
     return null;
   }
   function coreLevel(key) {
-    if (key === 'radius' || key === 'speed') return Math.max(0, upg[key + 'Active'] | 0);
-    return Math.max(0, upg[key] | 0);
+    return CORE_BIDI(key) ? (upg[key + 'Active'] | 0) : (upg[key] | 0);  // bidi: işaretli
   }
-  function coreSetLevel(key, lvl) {
-    lvl = Math.max(0, Math.min(coreMaxLevel(key), lvl));
-    if (key === 'radius' || key === 'speed') { upg[key + 'Active'] = lvl; upg[key + 'Pos'] = lvl; upg[key + 'Neg'] = 0; }
-    else upg[key] = lvl;
-    saveUpg(); applyUpgradeSideEffects(); renderUpgrades();
+  function coreApply() { saveUpg(); applyUpgradeSideEffects(); renderUpgrades(); }
+  // Ortak değer dili: ×çarpan (taban ×1.0, her seviye ±0.1).
+  function coreValueLabel(key) { return '×' + (1 + coreLevel(key) * 0.1).toFixed(1); }
+  function coreNextLabel(key, dir) {
+    const meta = PASSIVE_TILES.find(t => t.key === key);
+    return (meta ? meta.title : key) + ' ×' + (1 + (coreLevel(key) + dir) * 0.1).toFixed(1);
   }
-  // Tek adımın etiketi (onay metni için).
-  function coreStepLabel(key, dir) {
-    const s = dir === '-1' ? '−' : '+';
-    if (key === 'timer')    return s + '1s';
-    if (key === 'wallSoft') return s + '1px';
-    return s + '10%';   // profit / radius / speed / magnetRange
+  // Buton durumları: 'free' (ücretsiz hareket), 'buy' (yeni bölge — ücretli), 'max', 'empty'.
+  function coreBtnInfo(key) {
+    const lvl = coreLevel(key);
+    let plus, minus;
+    if (CORE_BIDI(key)) {
+      const pos = upg[key + 'Pos'] | 0, neg = upg[key + 'Neg'] | 0, max = coreSideMax(key);
+      plus  = (lvl < pos)  ? { mode: 'free' } : (pos < max ? { mode: 'buy', price: coreSidePrice(key, pos + 1) } : { mode: 'max' });
+      minus = (lvl > -neg) ? { mode: 'free' } : (neg < max ? { mode: 'buy', price: coreSidePrice(key, neg + 1) } : { mode: 'max' });
+    } else {
+      const max = coreSideMax(key);
+      plus  = (lvl < max) ? { mode: 'buy', price: coreSidePrice(key, lvl + 1) } : { mode: 'max' };
+      minus = (lvl > 0)   ? { mode: 'free' } : { mode: 'empty' };
+    }
+    return { plus, minus };
   }
-  // Değer kutusunda gösterilen güncel mutlak değer (mockup'taki "100%/0s/0px").
-  function coreValueLabel(key) {
-    if (key === 'timer')    return (upg.timer | 0) + 's';
-    if (key === 'wallSoft') return (upg.wallSoft | 0) + 'px';
-    if (key === 'profit')   return (100 + (upg.profit | 0) * 10) + '%';
-    if (key === 'magnetRange') return (100 + (upg.magnetRange | 0) * 10) + '%';
-    if (key === 'speed')    return (100 + (upg.speedActive | 0) * 10) + '%';
-    if (key === 'radius')   return (100 + (upg.radiusActive | 0) * 10) + '%';
-    return upgStateLabel(key);
+  // Eylemler
+  function coreInc(key)  { if (CORE_BIDI(key)) upg[key + 'Active'] = coreLevel(key) + 1; else upg[key] = coreLevel(key) + 1; coreApply(); }
+  function coreDec(key)  { if (CORE_BIDI(key)) upg[key + 'Active'] = coreLevel(key) - 1; else upg[key] = coreLevel(key) - 1; coreApply(); }
+  function coreBuyInc(key, price) {
+    confirmPurchase(coreNextLabel(key, +1), price, () => {
+      if (!spendCoins(price)) return;
+      if (CORE_BIDI(key)) { upg[key + 'Pos'] = (upg[key + 'Pos'] | 0) + 1; upg[key + 'Active'] = coreLevel(key) + 1; }
+      else upg[key] = coreLevel(key) + 1;
+      coreApply();
+    });
+  }
+  function coreBuyDec(key, price) {   // sadece speed/radius negatif yön
+    confirmPurchase(coreNextLabel(key, -1), price, () => {
+      if (!spendCoins(price)) return;
+      upg[key + 'Neg'] = (upg[key + 'Neg'] | 0) + 1; upg[key + 'Active'] = coreLevel(key) - 1;
+      coreApply();
+    });
   }
   // Karttaki dairesel gauge görseli (mockup'a uygun, ince çizgili SVG'ler).
   function coreGauge(key) {
