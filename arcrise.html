@@ -5020,6 +5020,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const raw = document.getElementById('ps-name-input').value
       .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
     if (!raw) { document.getElementById('ps-name-input').style.borderColor = '#ff3355'; return; }
+    if (hasBadWord(raw)) {   // küfür/nefret söylemi içeren kullanıcı adı engellenir
+      document.getElementById('ps-name-input').style.borderColor = '#ff3355';
+      try { showToast('Name not allowed'); } catch(_){}
+      return;
+    }
     playerName = raw;
     localStorage.setItem('arc_name', playerName);
     localStorage.setItem('arc_avatar', avatarIdx);
