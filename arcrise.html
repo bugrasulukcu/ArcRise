@@ -4266,6 +4266,8 @@ const ARC_DB = (() => {
         if (tracePts)       fields.tracePts       = { stringValue: tracePts };
         if (traceColor)     fields.traceColor     = { stringValue: traceColor };
         if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
+        fields.dName = { booleanValue: dName };
+        fields.dAv   = { booleanValue: dAv };
         if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
         if (uid)            fields.owner          = { stringValue: uid };
         if (tag)            fields.tag            = { stringValue: String(tag) }; // arkadaş ekleme için kimlik
