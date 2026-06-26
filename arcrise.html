@@ -8575,13 +8575,32 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   // CORE stat → fiyat fonksiyonu (forward-only stat'lar). radius/speed bidi.
-  const CORE_PRICE = {
-    profit:      profitPrice,
-    timer:       dirPrice,
-    wallSoft:    wallSoftPrice,
-    magnetRange: magRangePrice,
-  };
-  // Tek satın almanın oyuncuya kattığı efekt adımı (buton üzerinde gösterilir).
+  // ── CORE: tüm statlar tek yönlü merdiven (0..max). + ücretli · − ÜCRETSİZ geri al ──
+  function coreMaxLevel(key) {
+    if (key === 'radius' || key === 'speed' || key === 'timer') return DIR_PRICES.length;
+    if (key === 'profit')      return PROFIT_PRICES.length;
+    if (key === 'wallSoft')    return WALLSOFT_PRICES.length;
+    if (key === 'magnetRange') return MAGRANGE_PRICES.length;
+    return 0;
+  }
+  function corePriceAt(key, lvl) {   // lvl. seviyeye çıkmanın bedeli (1-index)
+    if (key === 'radius' || key === 'speed' || key === 'timer') return dirPrice(lvl);
+    if (key === 'profit')      return profitPrice(lvl);
+    if (key === 'wallSoft')    return wallSoftPrice(lvl);
+    if (key === 'magnetRange') return magRangePrice(lvl);
+    return null;
+  }
+  function coreLevel(key) {
+    if (key === 'radius' || key === 'speed') return Math.max(0, upg[key + 'Active'] | 0);
+    return Math.max(0, upg[key] | 0);
+  }
+  function coreSetLevel(key, lvl) {
+    lvl = Math.max(0, Math.min(coreMaxLevel(key), lvl));
+    if (key === 'radius' || key === 'speed') { upg[key + 'Active'] = lvl; upg[key + 'Pos'] = lvl; upg[key + 'Neg'] = 0; }
+    else upg[key] = lvl;
+    saveUpg(); applyUpgradeSideEffects(); renderUpgrades();
+  }
+  // Tek adımın etiketi (onay metni için).
   function coreStepLabel(key, dir) {
     const s = dir === '-1' ? '−' : '+';
     if (key === 'timer')    return s + '1s';
