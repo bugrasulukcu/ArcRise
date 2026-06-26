@@ -564,7 +564,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-06-10 (v16). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-06-26 (v17). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
 
 ---
 
