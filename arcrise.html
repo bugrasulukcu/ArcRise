@@ -4227,6 +4227,8 @@ const ARC_DB = (() => {
           distance: { doubleValue: finalDist },
         };
         const maskParts = ['score','avatar','ts','mode','distance'];
+        fields.dName = { booleanValue: dName }; maskParts.push('dName');
+        fields.dAv   = { booleanValue: dAv };   maskParts.push('dAv');
         if (uid) { fields.owner = { stringValue: uid }; maskParts.push('owner'); }
         if (tag) { fields.tag = { stringValue: String(tag) }; maskParts.push('tag'); } // arkadaş ekleme için kimlik
         if (writeTracePts) {
