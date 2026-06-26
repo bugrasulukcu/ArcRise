@@ -8673,8 +8673,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const plusPrice = lvl < max ? corePriceAt(key, lvl + 1) : null;
     const card = document.createElement('div');
     card.className = 'core-card';
-    // − : ücretsiz geri al (step etiketi, coin yok), tabanda (0) pasif.
-    const minusBtn = `<button class="core-buy minus" data-act="minus" ${lvl <= 0 ? 'disabled' : ''}>${coreStepLabel(key, '-1')}</button>`;
+    // − : ücretsiz geri al. Tabanda (geri gidilemiyorken) gri & boş form; alındıkça yeşil.
+    const minusBtn = lvl > 0
+      ? `<button class="core-buy minus" data-act="minus">${coreStepLabel(key, '-1')}</button>`
+      : `<button class="core-buy minus empty" aria-hidden="true"></button>`;
     // + : sonraki seviyeyi satın al (ücretli). Coin değeri butonun ÜSTÜNDE yüzen rozet. Tavanda MAX.
     const plusBtn = plusPrice == null
       ? `<button class="core-buy maxed">MAX</button>`
