@@ -1420,13 +1420,16 @@
       font-size: 15px; letter-spacing: 1.5px; color: #fff; min-height: 20px;
     }
     .dt-opt {
-      width: 100%; padding: 11px; border-radius: 11px; cursor: pointer;
-      font-family: var(--font); font-size: 11px; letter-spacing: 1.2px;
-      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.2); color: #fff;
+      width: 100%; padding: 14px; border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      font-family: var(--font); font-size: 13px; letter-spacing: 1.4px;
+      background: linear-gradient(180deg, #7b4fd6, #4f2a9c);
+      border: 1px solid rgba(200,160,255,.5); color: #fff;
+      box-shadow: 0 4px 16px rgba(120,70,220,.3);
       transition: filter .2s, transform .12s;
     }
-    .dt-opt.active { background: linear-gradient(180deg, #8c5ae6, #5f32b4); border-color: rgba(200,160,255,.7); }
-    .dt-opt:active { transform: scale(0.98); }
+    .dt-opt.active { background: linear-gradient(180deg, #9d6bff, #6b38d6); border-color: rgba(220,185,255,.8); box-shadow: 0 4px 20px rgba(150,90,255,.45); }
+    .dt-opt:active { transform: scale(0.98); filter: brightness(1.1); }
     #dt-custom-wrap { display: flex; gap: 8px; width: 100%; }
     #dt-input {
       flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px;
