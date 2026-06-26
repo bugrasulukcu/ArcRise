@@ -8585,19 +8585,27 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Eşleşen kelimenin sesli harfleri ★ ile maskelenir. Kapsamlı/katı tutulur.
   const BAD_WORDS = [
     // — Küfür (EN) —
-    'fuck','shit','bitch','asshole','cunt','dick','pussy','bastard','slut','whore','motherfucker','wanker','prick',
+    'fuck','fuk','fck','shit','sht','bitch','asshole','cunt','dick','pussy','bastard','slut','whore','hoe',
+    'motherfucker','wanker','prick','bollocks','bugger','twat','jerk','douche','retard','retarded','idiot',
+    // — Hakaret/slur (EN) —
+    'faggot','fagot','fag','tranny','dyke','queer','retard','spaz','cripple','midget',
     // — Küfür (TR) —
-    'sik','siktir','amk','amina','amına','orospu','piç','yarrak','yarak','göt','pezevenk',
-    'oç','sürtük','kahpe','gavat','ibne','pezevek',
+    'sik','sikik','siktir','sikeyim','sikim','amk','amq','aq','amina','amına','amcik','amcık','amınakoyim',
+    'orospu','orospucocugu','orospuçocuğu','piç','pic','yarrak','yarak','yarrağ','göt','gotveren','götveren',
+    'pezevenk','pezevek','sürtük','surtuk','kahpe','kaltak','gavat','kevase','kevaşe','ibne','iben','top',
+    'döl','dol','yavşak','yavsak','şerefsiz','serefsiz','anan','ananı','anani','anneni','sokarim','sokarım','sokayim',
+    'oç','oc','meme','mal','salak','aptal','gerizekali','gerizekalı','dangalak','puşt','pust',
     // — Irkçı hakaretler / slur'lar —
-    'nigger','nigga','n1gger','n1gga','negro','chink','kike','spic','gook','paki','wetback','beaner','coon',
-    'sandnigger','towelhead','raghead','zenci','gavur','aryan','nazi','hitler',
+    'nigger','nigga','nigg','n1gger','n1gga','n1gg','negro','niglet','jigaboo','chink','kike','spic','spick',
+    'gook','paki','wetback','beaner','coon','sandnigger','towelhead','raghead','redskin','jap','nip','kraut',
+    'zenci','gavur','aryan','nazi','hitler','soykirim','soykırım','genocide',
     // — Irk / etnisite —
-    'arab','arap','kurd','kürt','jew','jewish','yahudi','musevi','armenian','ermeni',
-    'greek','yunan','persian','african','asian','latino','hispanic','gypsy','cingene','çingene',
+    'arab','arap','kurd','kürt','kurdistan','kürdistan','jew','jewish','yahudi','musevi','armenian','ermeni',
+    'greek','yunan','persian','fars','african','asian','latino','hispanic','gypsy','cingene','çingene','roman',
     // — Din —
-    'muslim','müslüman','musluman','islam','islamic','christian','hristiyan','christianity','catholic','protestant',
-    'orthodox','judaism','buddhist','budist','hindu','atheist','ateist','sunni','sünni','shia','şii','alevi',
+    'muslim','müslüman','musluman','islam','islamic','islamiyet','christian','hristiyan','hıristiyan','christianity',
+    'catholic','protestant','orthodox','judaism','buddhist','budist','hindu','atheist','ateist',
+    'sunni','sünni','shia','şii','sii','alevi','alawite',
   ];
   // Yasaklı içerik var mı? (doğrudan + boşluk/işaret/leet atlatma). True → tamamen engelle.
   function hasBadWord(s) {
