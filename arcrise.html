@@ -8799,7 +8799,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     return gearCardShell(meta, '—', '');
   }
-  // Ability kartı — kilitliyse UNLOCK, açıksa DURATION (+) ve COOLDOWN (−) ladder'ı.
+  // CORE tarzı −/+ buton üreteci (free/buy/max/empty).
+  function coreMkBtn(info, sign, cls) {
+    if (info.mode === 'max')   return `<button class="core-buy maxed">MAX</button>`;
+    if (info.mode === 'empty') return `<button class="core-buy ${cls} empty" aria-hidden="true"></button>`;
+    if (info.mode === 'free')  return `<button class="core-buy ${cls}" data-act="${cls}-free">${sign}</button>`;
+    return `<button class="core-buy ${cls}" data-act="${cls}-buy" data-price="${info.price}" ${coins < info.price ? 'disabled' : ''}>`
+      + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
+  }
+  // Ability kartı — CORE formu: kilitliyse UNLOCK; açıksa sadece SÜRE (saniye) yükseltilir.
+  // Cooldown sabit 20sn (gösterilmez). − ücretsiz geri al · + ücretli uzat.
   function buildAbilityCard(meta) {
     const key = meta.key, cfg = ABILITY_CFG[key];
     const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
@@ -8815,22 +8824,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       });
       return card;
     }
-    const dur = abilityDuration(key), cd = abilityCooldown(key);
-    const durNext = (inv.durLvl || 0) + 1, cdNext = (inv.cdLvl || 0) + 1;
-    const durPrice = durNext <= cfg.durPrices.length ? cfg.durPrices[durNext - 1] : null;
-    const cdPrice  = cdNext  <= cfg.cdPrices.length  ? cfg.cdPrices[cdNext - 1]   : null;
     const eq = slotItems.findIndex(s => s && s.key === key) !== -1;
-    const val = cfg.noDur ? `CD ${_fmtS(cd)}s` : `${_fmtS(dur)}s · ${_fmtS(cd)}s`;
-    let buttons = '';
-    if (!cfg.noDur) buttons += gearBuyBtn('dur', durPrice, `+${cfg.durStep}s`);
-    buttons += gearBuyBtn('cd', cdPrice, `−${cfg.cdStep}s`);
+    // Anlık (süresiz) yetenekler: açıldıktan sonra yükseltilecek bir şey yok.
+    if (cfg.noDur || !cfg.durPrices.length) {
+      return gearCardShell(meta, '<span style="color:#9fffa0">✓</span>', '', { desc, eq });
+    }
+    // Süreli yetenekler: değer = saniye, − ücretsiz (tabana doğru) · + ücretli (uzat).
+    const durLvl = inv.durLvl || 0, max = cfg.durPrices.length;
+    const val = _fmtS(abilityDuration(key)) + 's';
+    const minus = durLvl > 0 ? { mode: 'free' } : { mode: 'empty' };
+    const plus  = durLvl < max ? { mode: 'buy', price: cfg.durPrices[durLvl] } : { mode: 'max' };
+    const buttons = coreMkBtn(minus, '−', 'minus') + coreMkBtn(plus, '+', 'plus');
     const card = gearCardShell(meta, val, buttons, { desc, eq });
-    gearWire(card, 'dur', () => durPrice != null && confirmPurchase(meta.title + ' +' + cfg.durStep + 's duration', durPrice, () => {
-      if (!spendCoins(durPrice)) return; inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
-    }));
-    gearWire(card, 'cd', () => cdPrice != null && confirmPurchase(meta.title + ' −' + cfg.cdStep + 's cooldown', cdPrice, () => {
-      if (!spendCoins(cdPrice)) return; inv.cdLvl = (inv.cdLvl || 0) + 1; saveUpg(); renderUpgrades();
-    }));
+    gearWire(card, 'minus-free', () => { inv.durLvl = Math.max(0, (inv.durLvl || 0) - 1); saveUpg(); renderUpgrades(); });
+    gearWire(card, 'plus-buy', () => {
+      const p = cfg.durPrices[inv.durLvl || 0];
+      const nextDur = cfg.durBase + ((inv.durLvl || 0) + 1) * cfg.durStep;
+      confirmPurchase(meta.title + ' ' + _fmtS(nextDur) + 's', p, () => {
+        if (!spendCoins(p)) return; inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
+      });
+    });
     return card;
   }
   // Consumable kartı — stok değeri + ARM toggle + BUY +1.
