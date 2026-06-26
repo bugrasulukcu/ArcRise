@@ -8477,17 +8477,22 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const th = Math.max(3, 3 + (upg.traceThickness | 0));
     const curCss = cur.charAt(0) === '#' ? cur : (RAINBOWS.find(r => r[0] === cur) || RAINBOWS[0])[1];
     if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};box-shadow:${upg.traceAnim === 'glow' ? '0 0 14px rgba(255,255,255,.6)' : 'none'}"></div>`;
-    // Kalınlık
+    // Kalınlık — SIRALI: bir öncekini almadan sonraki alınamaz.
     const tr = document.getElementById('trace-thick-row');
-    tr.innerHTML = TRACE_THICKS.map(([lbl, v]) => {
+    let thNext = TRACE_THICKS.findIndex(([, v]) => !_has('traceThicksOwned', v)); // sıradaki alınabilir index
+    tr.innerHTML = TRACE_THICKS.map(([lbl, v], idx) => {
       const owned = _has('traceThicksOwned', v), active = (upg.traceThickness | 0) === v;
-      return `<button class="trace-opt ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-th="${v}">${lbl}${owned ? '' : _coinBadge(TR_THICK_PRICE)}</button>`;
+      const buyable = !owned && idx === thNext;
+      const cls = active ? 'active' : (owned ? '' : (buyable ? 'locked' : 'locked dis'));
+      const badge = owned ? '' : (buyable ? _coinBadge(TR_THICK_PRICE) : '<span class="opt-price">🔒</span>');
+      return `<button class="trace-opt ${cls}" data-th="${v}" data-idx="${idx}">${lbl}${badge}</button>`;
     }).join('');
     tr.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => {
-      const v = parseInt(b.dataset.th, 10);
+      const v = parseInt(b.dataset.th, 10), idx = parseInt(b.dataset.idx, 10);
       const sel = () => { upg.traceThickness = v; saveUpg(); renderTrace(); };
       if (_has('traceThicksOwned', v)) sel();
-      else _buyOwn('traceThicksOwned', v, TR_THICK_PRICE, 'Trace width', sel);
+      else if (idx === thNext) _buyOwn('traceThicksOwned', v, TR_THICK_PRICE, 'Trace width', sel);
+      // aksi halde: önce öncekini al (kilitli-pasif)
     }));
     // Renk + rainbow (tek grid)
     const cg = document.getElementById('trace-color-grid');
