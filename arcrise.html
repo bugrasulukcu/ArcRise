@@ -7591,7 +7591,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Skoru + distance'ı Firestore'a gönder (config yoksa no-op).
     // Build optional trace data: only meaningful if we have enough sample points.
     // Downsample to ~150 points to keep Firestore payload small.
-    let traceData = null;
+    // Bayraklar (tomb/death-text) HER ZAMAN gönderilir ki açma/kapama yayılsın;
+    // trace noktaları sadece yeterli örnek varsa eklenir.
+    let traceData = {
+      color: upg.traceColor,               // null falls back to mode tint on render
+      thickness: upg.traceThickness | 0,   // 0..20
+      dName: !!upg.deathName,              // kullanıcı adı işaretçisi açık mı
+      dAv:   !!upg.deathAvatar,            // avatar (tomb) işaretçisi açık mı
+    };
     if (ghostSampled.length >= 4) {
       const src  = ghostSampled;
       const step = Math.max(1, Math.floor(src.length / 150));
@@ -7600,11 +7607,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       // Always include last point so the trace ends at the death spot
       const last = src[src.length - 1];
       if (out.length === 0 || out[out.length - 1][1] !== (last.y | 0)) out.push([last.x | 0, last.y | 0]);
-      traceData = {
-        pts: JSON.stringify(out),
-        color: upg.traceColor,             // null falls back to mode tint on render
-        thickness: upg.traceThickness | 0, // 0..20
-      };
+      traceData.pts = JSON.stringify(out);
     }
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (gameMode !== 'wife') {
