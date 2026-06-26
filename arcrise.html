@@ -9011,12 +9011,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       slotsBox.appendChild(msg);
       host.appendChild(slotsBox);
     }
-    // CORE formatında kart grid + grup başlıkları
+    // CORE formatında kart grid. Başlığı yalnız birden çok grup varsa göster
+    // (tek grupta sekme adı zaten yeterli — ör. ABILITIES).
     for (const grp of groups) {
-      const h = document.createElement('div');
-      h.className = 'upg-group-head';
-      h.textContent = grp.title;
-      host.appendChild(h);
+      if (groups.length > 1) {
+        const h = document.createElement('div');
+        h.className = 'upg-group-head';
+        h.textContent = grp.title;
+        host.appendChild(h);
+      }
       const grid = document.createElement('div');
       grid.className = 'core-grid';
       for (const t of grp.items) grid.appendChild(buildGearCard(t));
