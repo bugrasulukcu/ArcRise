@@ -5199,8 +5199,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     timer: 0,                                    // 0..4 (+sec on combo)
     traceColor: null,                            // hex or null (→ default)
     traceThickness: 0,                           // 0..20 (each +%10)
+    traceAnim: 'none',                           // none | pulse | rainbow | glow
     deathName: false,
     deathAvatar: false,
+    tomb: 0,                                     // 0 = avatar, 1.. = mezar stili
+    deathText: '',                               // özel ölüm metni ('' → username)
+    deathTextOwned: false,                       // özel metin satın alındı mı
     profit: 0,                                   // 0..10 (each +%10 coin gain)
     wallSoft: 0,                                 // 0..5 (each +1px collision tolerance toward walls)
     magnetRange: 0,                              // 0..8 (each +10% magnet pull radius)
