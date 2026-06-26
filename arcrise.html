@@ -8411,6 +8411,96 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     set('ps-streak',   (s.streak || 0) + 'd');
   }
 
+  // ── Profil alt-modalları: Analysis · Trace · Tomb · Death Text ──
+  function openSub(id) { const m = document.getElementById(id); if (m) m.classList.add('open'); }
+  function closeSub(id) { const m = document.getElementById(id); if (m) m.classList.remove('open'); }
+  [['analysis-modal','analysis-close'], ['trace-modal','trace-close'], ['tomb-modal','tomb-close'], ['deathtext-modal','deathtext-close']]
+    .forEach(([m, c]) => {
+      document.getElementById(c).addEventListener('click', () => closeSub(m));
+      document.getElementById(m).addEventListener('click', e => { if (e.target.id === m) closeSub(m); });
+    });
+  document.getElementById('prof-analysis-btn').addEventListener('click', () => { renderProfStats(); openSub('analysis-modal'); });
+  document.getElementById('prof-trace-btn').addEventListener('click', () => { renderTrace(); openSub('trace-modal'); });
+  document.getElementById('prof-tomb-btn').addEventListener('click', () => { renderTomb(); openSub('tomb-modal'); });
+  document.getElementById('prof-deathtext-btn').addEventListener('click', () => { renderDeathText(); openSub('deathtext-modal'); });
+
+  // TRACE — kalınlık (preset), renk (palet), animasyon. Kişiselleştirme (ücretsiz).
+  const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
+  const TRACE_ANIMS  = [['none', 'OFF'], ['pulse', 'PULSE'], ['rainbow', 'RAINBOW'], ['glow', 'GLOW']];
+  function renderTrace() {
+    const col = upg.traceColor || '#88bbff';
+    const th  = Math.max(2, 3 + (upg.traceThickness | 0));
+    const pv  = document.getElementById('trace-preview');
+    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${col};box-shadow:${upg.traceAnim === 'glow' ? `0 0 14px ${col}` : 'none'}"></div>`;
+    const tr = document.getElementById('trace-thick-row');
+    tr.innerHTML = TRACE_THICKS.map(([lbl, v]) => `<button class="trace-opt ${(upg.traceThickness | 0) === v ? 'active' : ''}" data-th="${v}">${lbl}</button>`).join('');
+    tr.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => { upg.traceThickness = parseInt(b.dataset.th, 10); saveUpg(); renderTrace(); }));
+    const cg = document.getElementById('trace-color-grid');
+    cg.innerHTML = TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === upg.traceColor ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('');
+    cg.querySelectorAll('[data-c]').forEach(s => s.addEventListener('click', () => { upg.traceColor = s.dataset.c; saveUpg(); renderTrace(); }));
+    const ar = document.getElementById('trace-anim-row');
+    ar.innerHTML = TRACE_ANIMS.map(([v, lbl]) => `<button class="trace-opt ${upg.traceAnim === v ? 'active' : ''}" data-anim="${v}">${lbl}</button>`).join('');
+    ar.querySelectorAll('[data-anim]').forEach(b => b.addEventListener('click', () => { upg.traceAnim = b.dataset.anim; saveUpg(); renderTrace(); }));
+  }
+
+  // TOMB — 0 = avatar, 1.. = placeholder (gerçek SVG'ler sonra gelecek). Ücretsiz seçim.
+  const TOMB_COUNT = 7;
+  function renderTomb() {
+    const g = document.getElementById('tomb-grid');
+    let html = `<button class="tomb-opt ${(upg.tomb | 0) === 0 ? 'active' : ''}" data-t="0"><img src="${avatarSrc()}" alt=""></button>`;
+    for (let i = 1; i < TOMB_COUNT; i++) html += `<button class="tomb-opt ${(upg.tomb | 0) === i ? 'active' : ''}" data-t="${i}"><span class="tomb-ph"></span></button>`;
+    g.innerHTML = html;
+    g.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { upg.tomb = parseInt(b.dataset.t, 10); saveUpg(); renderTomb(); }));
+  }
+
+  // DEATH TEXT — varsayılan username; 100 coin ile özel metin. Küfür → sesli harfler ★.
+  const DT_PRICE = 100;
+  const BAD_WORDS = ['fuck','shit','bitch','asshole','cunt','dick','sik','siktir','amk','amına','orospu','pic','piç','yarrak','yarak','göt','got','pezevenk','oç','oc','sürtük','kahpe'];
+  function maskProfanity(s) {
+    let out = s;
+    for (const w of BAD_WORDS) {
+      const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      out = out.replace(re, m => m.replace(/[aeıioöuüAEIİOÖUÜ]/g, '★'));
+    }
+    return out;
+  }
+  function dtFmt(t) {
+    t = (t || '').trim();
+    return t ? maskProfanity(t).toUpperCase() : (playerName || 'PLAYER').toUpperCase();
+  }
+  function renderDeathText() {
+    document.getElementById('dt-preview').textContent = dtFmt(upg.deathText);
+    const inp = document.getElementById('dt-input');
+    const buy = document.getElementById('dt-buy-btn');
+    const note = document.getElementById('dt-note');
+    if (!upg.deathTextOwned) {
+      inp.disabled = true; inp.value = '';
+      buy.innerHTML = `${iconHTML('coin', { size: 12 })} ${DT_PRICE}`;
+      buy.dataset.act = 'unlock';
+      note.textContent = 'Unlock to write your own death text.';
+    } else {
+      inp.disabled = false;
+      if (document.activeElement !== inp) inp.value = (upg.deathText || '');
+      buy.textContent = 'SAVE'; buy.dataset.act = 'save';
+      note.textContent = 'Profanity is auto-censored (★).';
+    }
+  }
+  document.getElementById('dt-default-btn').addEventListener('click', () => { upg.deathText = ''; saveUpg(); renderDeathText(); });
+  document.getElementById('dt-input').addEventListener('input', () => {
+    document.getElementById('dt-preview').textContent = dtFmt(document.getElementById('dt-input').value);
+  });
+  document.getElementById('dt-buy-btn').addEventListener('click', () => {
+    const act = document.getElementById('dt-buy-btn').dataset.act;
+    if (act === 'unlock') {
+      confirmPurchase('Custom Death Text', DT_PRICE, () => {
+        if (!spendCoins(DT_PRICE)) return; upg.deathTextOwned = true; saveUpg(); renderDeathText();
+      });
+    } else {
+      upg.deathText = document.getElementById('dt-input').value.trim(); saveUpg(); renderDeathText();
+      try { showToast('Death text saved'); } catch(_){}
+    }
+  });
+
   // Tap profile card → open profile edit (but coin pill has its own handler)
   document.getElementById('home-profile').addEventListener('click', e => {
     if (e.target.closest('#home-side')) return;
