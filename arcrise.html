@@ -1366,7 +1366,21 @@
       transition: background .15s, border-color .15s, color .15s;
     }
     .trace-opt.active { background: linear-gradient(180deg, #8c5ae6, #5f32b4); border-color: rgba(200,160,255,.7); color: #fff; }
+    .trace-opt.locked { opacity: .62; }
+    /* küçük coin fiyat rozeti (trace/tomb kilitli seçenekler) */
+    .opt-price { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; font-size: 8px; color: #ffd866; }
+    .opt-price svg { width: 8px; height: 8px; }
     #trace-color-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; width: 100%; }
+    /* trace renk/rainbow swatch'ları */
+    .tr-sw {
+      aspect-ratio: 1; border-radius: 8px; padding: 0; cursor: pointer; position: relative;
+      border: 1.5px solid rgba(255,255,255,.18); background-size: cover;
+      transition: transform .12s, border-color .15s, box-shadow .15s;
+    }
+    .tr-sw:hover { transform: scale(1.08); }
+    .tr-sw.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,.65); transform: scale(1.06); }
+    .tr-sw.locked { opacity: .55; }
+    .tr-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
     /* Tomb grid */
     #tomb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
     .tomb-opt {
