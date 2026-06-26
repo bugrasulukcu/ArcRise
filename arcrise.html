@@ -8585,27 +8585,19 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     'muslim','müslüman','musluman','islam','islamic','christian','hristiyan','christianity','catholic','protestant',
     'orthodox','judaism','buddhist','budist','hindu','atheist','ateist','sunni','sünni','shia','şii','alevi',
   ];
-  const _VOWELS = /[aeıioöuüAEIİOÖUÜ]/g;
-  function maskProfanity(s) {
-    let out = s;
-    // 1) Doğrudan eşleşme: kelimenin sesli harflerini ★ yap.
-    for (const w of BAD_WORDS) {
-      const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      out = out.replace(re, m => m.replace(_VOWELS, '★'));
-    }
-    // 2) Atlatma tespiti: boşluk/işaret/leet temizlenmiş kopyada ara (n.i.g.g.e.r, n1gg3r…).
-    const collapsed = s.toLowerCase()
+  // Yasaklı içerik var mı? (doğrudan + boşluk/işaret/leet atlatma). True → tamamen engelle.
+  function hasBadWord(s) {
+    const low = (s || '').toLowerCase();
+    for (const w of BAD_WORDS) { if (low.indexOf(w) !== -1) return true; }
+    const collapsed = low
       .replace(/0/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4@]/g, 'a')
       .replace(/[5$]/g, 's').replace(/7/g, 't')
       .replace(/[^a-zçğıöşü]/g, '');
-    if (collapsed && BAD_WORDS.some(w => collapsed.includes(w.replace(/[^a-zçğıöşü]/g, '')))) {
-      out = out.replace(_VOWELS, '★');   // bypass → tüm metni maskele
-    }
-    return out;
+    return collapsed ? BAD_WORDS.some(w => collapsed.includes(w.replace(/[^a-zçğıöşü]/g, ''))) : false;
   }
   function dtFmt(t) {
     t = (t || '').trim();
-    return t ? maskProfanity(t).toUpperCase() : (playerName || 'PLAYER').toUpperCase();
+    return t ? t.toUpperCase() : (playerName || 'PLAYER').toUpperCase();
   }
   function renderDeathText() {
     document.getElementById('dt-preview').textContent = dtFmt(upg.deathText);
@@ -8621,21 +8613,39 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       inp.disabled = false;
       if (document.activeElement !== inp) inp.value = (upg.deathText || '');
       buy.textContent = 'SAVE'; buy.dataset.act = 'save';
-      note.textContent = 'Profanity is auto-censored (★).';
+      note.textContent = 'Profanity & hate speech are blocked.';
     }
   }
   document.getElementById('dt-default-btn').addEventListener('click', () => { upg.deathText = ''; saveUpg(); renderDeathText(); });
   document.getElementById('dt-input').addEventListener('input', () => {
-    document.getElementById('dt-preview').textContent = dtFmt(document.getElementById('dt-input').value);
+    const v = document.getElementById('dt-input').value;
+    const bad = hasBadWord(v);
+    document.getElementById('dt-preview').textContent = dtFmt(v);
+    const note = document.getElementById('dt-note');
+    const buy = document.getElementById('dt-buy-btn');
+    note.textContent = bad ? '⛔ Not allowed — blocked' : 'Profanity & hate speech are blocked.';
+    note.style.color = bad ? '#ff6a7a' : '';
+    buy.disabled = bad;
   });
   document.getElementById('dt-buy-btn').addEventListener('click', () => {
-    const act = document.getElementById('dt-buy-btn').dataset.act;
+    const buy = document.getElementById('dt-buy-btn');
+    const act = buy.dataset.act;
     if (act === 'unlock') {
       confirmPurchase('Custom Death Text', DT_PRICE, () => {
         if (!spendCoins(DT_PRICE)) return; upg.deathTextOwned = true; saveUpg(); renderDeathText();
       });
     } else {
-      upg.deathText = document.getElementById('dt-input').value.trim(); saveUpg(); renderDeathText();
+      const v = document.getElementById('dt-input').value.trim();
+      if (hasBadWord(v)) {   // tamamen engelle — kaydetme
+        const note = document.getElementById('dt-note');
+        note.textContent = '⛔ Not allowed — blocked'; note.style.color = '#ff6a7a';
+        try { showToast('Blocked: not allowed'); } catch(_){}
+        return;
+      }
+      upg.deathText = v; saveUpg();
+      buy.disabled = false;
+      document.getElementById('dt-note').style.color = '';
+      renderDeathText();
       try { showToast('Death text saved'); } catch(_){}
     }
   });
