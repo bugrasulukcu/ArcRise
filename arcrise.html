@@ -9051,27 +9051,19 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     filter:    { price: 3, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
   };
   const ABILITY_CFG = {
-    // 10 seviye, yarım adımlar (booster ölçeğine uyumlu: aktif efektler 6-8s).
-    // Aralık aynı kaldı, kademe iki kat ince. Fiyat dizisi uzunluğu = maks seviye.
-    // dur (lvl 0→10): durBase + durLvl*durStep   |   cd (lvl 0→10): cdBase − cdLvl*cdStep
-    timeslow:   { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 20, cdStep: 1,   ladderLvl: 10,  // dur 2→7s,  cd 20→10s
-                  durPrices: [4,4,4,4,4,4,4,4,4,4], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    phaseburst: { unlock: 10, durBase: 1, durStep: 0.5, cdBase: 20, cdStep: 1,   ladderLvl: 10,  // dur 1→6s,  cd 20→10s
-                  durPrices: [4,4,4,4,4,4,4,4,4,4], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    coinpull:   { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, cdStep: 1,   ladderLvl: 10, noDur: true,  // cd 20→10s
-                  durPrices: [], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    brake:      { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 15, cdStep: 0.5, ladderLvl: 10,  // dur 2→7s,  cd 15→10s
-                  durPrices: [4,4,4,4,4,4,4,4,4,4], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    mirror:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 30, cdStep: 1.5, ladderLvl: 10, noDur: true,  // cd 30→15s
-                  durPrices: [], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    shock:      { unlock: 10, durBase: 0, durStep: 0,   cdBase: 24, cdStep: 1,   ladderLvl: 10, noDur: true,  // cd 24→14s
-                  durPrices: [], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
-    anchor:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 30, cdStep: 1.5, ladderLvl: 10, noDur: true,  // cd 30→15s
-                  durPrices: [], cdPrices: [4,4,4,4,4,4,4,4,4,4] },
+    // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
+    // Anlık (noDur) yetenekler: yükseltme yok, açıldı→hazır.
+    timeslow:   { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 2→7s
+    phaseburst: { unlock: 10, durBase: 1, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 1→6s
+    coinpull:   { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
+    brake:      { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 2→7s
+    mirror:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
+    shock:      { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
+    anchor:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
   };
   function abilityCooldown(key) {
-    const cfg = ABILITY_CFG[key]; if (!cfg) return 10;
-    return cfg.cdBase - (upg.inv[key]?.cdLvl || 0) * cfg.cdStep;
+    const cfg = ABILITY_CFG[key]; if (!cfg) return 20;
+    return cfg.cdBase;   // sabit 20sn
   }
   function abilityDuration(key) {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 1;
