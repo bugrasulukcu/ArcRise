@@ -6458,36 +6458,33 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const sy = W2S(worldY);
     if (sy < -40 || sy > H + 40) return;
     const mx = (walls.left + walls.right) / 2;
+    const showAv = upg.deathAvatar, showName = upg.deathName && !!playerName;
     ctx.save();
-    if (upg.deathAvatar) {
-      const r = 16;
+    if (showAv) {
+      const r = 16, cy = sy - r - 14;
       const img = ensureAvatarImg();
       if (img) {
         ctx.save();
-        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.clip();
-        ctx.drawImage(img, mx - r, sy - r * 2 - 14, r * 2, r * 2);
+        ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.clip();
+        ctx.drawImage(img, mx - r, cy - r, r * 2, r * 2);
         ctx.restore();
-        // Subtle ring
-        ctx.strokeStyle = 'rgba(255,255,255,.55)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.stroke();
       } else {
-        // Fallback: filled disc with first letter
         ctx.fillStyle = AVATAR_COLORS[avatarIdx] || '#aaa';
-        ctx.beginPath(); ctx.arc(mx, sy - r - 14, r, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#000'; ctx.font = 'bold 14px var(--font), monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText((playerName || '?').slice(0,1).toUpperCase(), mx, sy - r - 14);
+        ctx.fillText((playerName || '?').slice(0,1).toUpperCase(), mx, cy);
       }
-    }
-    if (upg.deathName && playerName) {
-      ctx.font = '10px var(--font), monospace';
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
+      // Hem avatar hem ad → ad avatarın çevresinde dairesel
+      if (showName) drawArcText(playerName.toUpperCase(), mx, cy, r + 9, '9px var(--font), monospace', '#fff');
+    } else if (showName) {
+      // Sadece ad → düz yaz
+      ctx.font = '10px var(--font), monospace'; ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
-      ctx.fillText(playerName.toUpperCase(), mx, sy + 6);
-      ctx.shadowBlur = 0;
+      ctx.fillText(playerName.toUpperCase(), mx, sy + 6); ctx.shadowBlur = 0;
     }
     ctx.restore();
   }
