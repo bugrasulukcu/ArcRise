@@ -8833,7 +8833,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     // Süreli yetenekler: değer = saniye, − ücretsiz (tabana doğru) · + ücretli (uzat).
     const durLvl = inv.durLvl || 0, max = cfg.durPrices.length;
-    const val = _fmtS(abilityDuration(key)) + 's';
+    const val = secStr(abilityDuration(key));
     const minus = durLvl > 0 ? { mode: 'free' } : { mode: 'empty' };
     const plus  = durLvl < max ? { mode: 'buy', price: cfg.durPrices[durLvl] } : { mode: 'max' };
     const buttons = coreMkBtn(minus, '−', 'minus') + coreMkBtn(plus, '+', 'plus');
