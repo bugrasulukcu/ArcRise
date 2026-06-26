@@ -1302,20 +1302,110 @@
 
     /* Horizontal stats row: XP / BEST / DIST / COINS */
     #prof-summary {
-      display: flex; align-items: stretch;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
       width: 100%;
-      gap: 0;
     }
     .prof-sum {
-      flex: 1;
       display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 6px 4px;
-      border-right: 1px solid rgba(255,255,255,.08);
+      padding: 10px 6px; border-radius: 12px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
     }
-    .prof-sum:last-child { border-right: none; }
     .prof-sum-lbl  { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.5);
                      text-align: center; line-height: 1.2; }
-    .prof-sum-val  { font-size: 14.5px; letter-spacing: 1px; text-align: center; }
+    .prof-sum-val  { font-size: 16px; letter-spacing: 1px; text-align: center; }
+    /* Kişiselleştirme butonları: Tomb · Trace · Death Text */
+    #prof-custom-row { display: flex; gap: 8px; width: 100%; }
+    .prof-custom-btn {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      padding: 10px 4px; border-radius: 12px; cursor: pointer;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(170,120,255,.28);
+      color: #cfb5ff; font-family: var(--font);
+      font-size: 9px; letter-spacing: 1px;
+      transition: background .15s, border-color .15s, transform .12s;
+    }
+    .prof-custom-btn:hover { background: rgba(170,120,255,.14); border-color: rgba(170,120,255,.5); }
+    .prof-custom-btn:active { transform: scale(0.96); }
+    .pcb-ic { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+    .pcb-ic svg { width: 22px; height: 22px; }
+    /* ANALYSIS butonu — nötr */
+    #prof-analysis-btn {
+      width: 100%; padding: 12px; border-radius: 12px; cursor: pointer;
+      font-family: var(--font); font-size: 11px; letter-spacing: 2px;
+      border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.05); color: #fff;
+      transition: transform .12s, filter .2s;
+    }
+    #prof-analysis-btn:active { transform: scale(0.97); }
+    /* Profil alt-modalları (analysis/trace/tomb/deathtext) — ortak kabuk */
+    #analysis-modal, #trace-modal, #tomb-modal, #deathtext-modal {
+      position: fixed; inset: 0; z-index: 62; display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,.55); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
+    }
+    #analysis-modal.open, #trace-modal.open, #tomb-modal.open, #deathtext-modal.open { display: flex; }
+    #analysis-modal-box, #trace-modal-box, #tomb-modal-box, #deathtext-modal-box {
+      position: relative; width: min(92vw, 360px); max-height: 88vh; overflow-y: auto; scrollbar-width: none;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.12), transparent 60%),
+        linear-gradient(180deg, rgba(18,12,30,.97), rgba(10,6,20,.98));
+      border: 1.5px solid rgba(170,120,255,.45); border-radius: 22px; padding: 22px 20px 20px;
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      box-shadow: 0 0 32px rgba(150,90,240,.25);
+    }
+    #analysis-modal-box::-webkit-scrollbar, #trace-modal-box::-webkit-scrollbar { display: none; }
+    .trace-sec-lbl { width: 100%; font-size: 9px; letter-spacing: 2px; color: rgba(190,160,255,.7); margin-top: 4px; }
+    /* Trace paneli */
+    #trace-preview {
+      width: 100%; height: 44px; border-radius: 10px; background: rgba(0,0,0,.3);
+      border: 1px solid rgba(150,110,230,.25);
+    }
+    #trace-thick-row, #trace-anim-row { display: flex; gap: 6px; width: 100%; }
+    .trace-opt {
+      flex: 1; min-width: 0; padding: 9px 4px; border-radius: 9px; cursor: pointer;
+      font-family: var(--font); font-size: 9.5px; letter-spacing: 1px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.7);
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .trace-opt.active { background: linear-gradient(180deg, #8c5ae6, #5f32b4); border-color: rgba(200,160,255,.7); color: #fff; }
+    #trace-color-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; width: 100%; }
+    /* Tomb grid */
+    #tomb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+    .tomb-opt {
+      aspect-ratio: 1; border-radius: 12px; cursor: pointer; padding: 6px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.04); border: 1.5px solid rgba(255,255,255,.14);
+      transition: border-color .15s, transform .12s;
+    }
+    .tomb-opt:active { transform: scale(0.95); }
+    .tomb-opt.active { border-color: #cba6ff; box-shadow: 0 0 10px rgba(170,120,255,.4); }
+    .tomb-opt img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
+    .tomb-opt svg { width: 60%; height: 60%; color: rgba(205,180,255,.85); }
+    .tomb-ph { width: 100%; height: 100%; border-radius: 8px; border: 1px dashed rgba(180,150,255,.3);
+      background: repeating-linear-gradient(45deg, rgba(180,150,255,.06) 0 6px, transparent 6px 12px); }
+    /* Death text paneli */
+    .dt-hint { width: 100%; font-size: 10px; letter-spacing: .5px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.5; }
+    #dt-preview {
+      width: 100%; text-align: center; padding: 12px; border-radius: 10px;
+      background: rgba(0,0,0,.3); border: 1px solid rgba(150,110,230,.25);
+      font-size: 15px; letter-spacing: 1.5px; color: #fff; min-height: 20px;
+    }
+    .dt-opt {
+      width: 100%; padding: 11px; border-radius: 11px; cursor: pointer;
+      font-family: var(--font); font-size: 11px; letter-spacing: 1.2px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.2); color: #fff;
+      transition: filter .2s, transform .12s;
+    }
+    .dt-opt.active { background: linear-gradient(180deg, #8c5ae6, #5f32b4); border-color: rgba(200,160,255,.7); }
+    .dt-opt:active { transform: scale(0.98); }
+    #dt-custom-wrap { display: flex; gap: 8px; width: 100%; }
+    #dt-input {
+      flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px;
+      background: rgba(0,0,0,.3); border: 1px solid rgba(150,110,230,.3); color: #fff;
+      font-family: var(--font); font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    }
+    #dt-input:focus { outline: none; border-color: #cba6ff; }
+    #dt-buy-btn { flex: 0 0 auto; width: auto; padding: 10px 14px;
+      background: linear-gradient(180deg, #6fe07c, #34a548); border-color: rgba(160,255,170,.5); color: #052a0e; font-weight: 700; }
+    .dt-note { width: 100%; font-size: 9px; letter-spacing: .5px; color: rgba(255,180,120,.8); text-align: center; min-height: 12px; }
 
     .ps-blue   { color: #66ccff; }
     .ps-flame  { color: #ff8866; }
