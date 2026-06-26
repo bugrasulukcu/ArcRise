@@ -4206,9 +4206,12 @@ const ARC_DB = (() => {
         const oldThickness = parseInt(match.document.fields.traceThickness?.integerValue ?? 0) || 0;
         const colorChanged     = traceColor !== null && traceColor !== oldColor;
         const thicknessChanged = traceThickness !== oldThickness;
+        const oldDName = !!match.document.fields.dName?.booleanValue;
+        const oldDAv   = !!match.document.fields.dAv?.booleanValue;
+        const flagChanged = (dName !== oldDName) || (dAv !== oldDAv);
         const writeTracePts    = distBetter && tracePts !== null;
         const writeTraceCosmetic = (traceColor !== null || traceData) && (colorChanged || thicknessChanged);
-        if (!scoreBetter && !distBetter && !writeTracePts && !writeTraceCosmetic) {
+        if (!scoreBetter && !distBetter && !writeTracePts && !writeTraceCosmetic && !flagChanged) {
           console.log('[ArcDB] nothing better, skip', { oldScore, oldDist, newScore: score, newDist: distNum });
           return;
         }
