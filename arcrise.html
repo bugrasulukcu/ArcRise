@@ -8574,10 +8574,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (box) { const m = traceMainColor(); box.style.borderColor = m.solid; box.style.boxShadow = `0 0 30px ${m.glow}`; }
   }
 
-  // DEATH TEXT — varsayılan username; 100 coin ile özel metin. Küfür → sesli harfler ★.
-  const DT_PRICE = 100;
   // Engellenen kelimeler — küfür + nefret söylemi (ırkçı hakaret, ırk/etnisite, din adları).
-  // Eşleşen kelimenin sesli harfleri ★ ile maskelenir. Kapsamlı/katı tutulur.
+  // Kullanıcı adı girişinde tamamen ENGELLENİR (yazılamaz).
   const BAD_WORDS = [
     // — Küfür (EN) —
     'fuck','fuk','fuck','fucking','shit','bitch','asshole','cunt','dick','pussy','bastard','slut','whore',
