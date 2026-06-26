@@ -8711,8 +8711,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       <button class="core-info" type="button" aria-label="Info">i</button>
       <div class="core-icon"></div>
       <div class="core-card-foot">
-        <div class="core-card-title">${t.title}</div>
-        <div class="core-card-val box">${coreValueLabel(key)}</div>
+        <div class="core-card-head">
+          <span class="core-card-title">${t.title}</span>
+          <span class="core-card-val">${coreValueLabel(key)}</span>
+        </div>
         <div class="core-card-buys">
           ${mkBtn(minus, '−', 'minus')}
           ${mkBtn(plus,  '+', 'plus')}
