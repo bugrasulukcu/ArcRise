@@ -6984,7 +6984,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+      if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
