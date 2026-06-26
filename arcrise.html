@@ -8585,27 +8585,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Eşleşen kelimenin sesli harfleri ★ ile maskelenir. Kapsamlı/katı tutulur.
   const BAD_WORDS = [
     // — Küfür (EN) —
-    'fuck','fuk','fck','shit','sht','bitch','asshole','cunt','dick','pussy','bastard','slut','whore','hoe',
-    'motherfucker','wanker','prick','bollocks','bugger','twat','jerk','douche','retard','retarded','idiot',
+    'fuck','fuk','fuck','fucking','shit','bitch','asshole','cunt','dick','pussy','bastard','slut','whore',
+    'motherfucker','wanker','prick','bollocks','douche','retard','retarded',
     // — Hakaret/slur (EN) —
-    'faggot','fagot','fag','tranny','dyke','queer','retard','spaz','cripple','midget',
+    'faggot','fagot','tranny','dyke','cripple','midget',
     // — Küfür (TR) —
-    'sik','sikik','siktir','sikeyim','sikim','amk','amq','aq','amina','amına','amcik','amcık','amınakoyim',
-    'orospu','orospucocugu','orospuçocuğu','piç','pic','yarrak','yarak','yarrağ','göt','gotveren','götveren',
-    'pezevenk','pezevek','sürtük','surtuk','kahpe','kaltak','gavat','kevase','kevaşe','ibne','iben','top',
-    'döl','dol','yavşak','yavsak','şerefsiz','serefsiz','anan','ananı','anani','anneni','sokarim','sokarım','sokayim',
-    'oç','oc','meme','mal','salak','aptal','gerizekali','gerizekalı','dangalak','puşt','pust',
+    'sik','sikik','siktir','sikeyim','sikim','sikiş','sikis','amcık','amcik','amınako','aminako','amınakoyim',
+    'orospu','orospucocugu','orospuçocuğu','piç','yarrak','yarak','yarrağ','götveren','gotveren',
+    'pezevenk','pezevek','sürtük','surtuk','kahpe','kaltak','gavat','kevaşe','kevase','ibne','ibne',
+    'yavşak','yavsak','şerefsiz','serefsiz','gerizekalı','gerizekali','dangalak','puşt','amınakoy',
     // — Irkçı hakaretler / slur'lar —
     'nigger','nigga','nigg','n1gger','n1gga','n1gg','negro','niglet','jigaboo','chink','kike','spic','spick',
-    'gook','paki','wetback','beaner','coon','sandnigger','towelhead','raghead','redskin','jap','nip','kraut',
+    'gook','paki','wetback','beaner','coon','sandnigger','towelhead','raghead','redskin','kraut',
     'zenci','gavur','aryan','nazi','hitler','soykirim','soykırım','genocide',
     // — Irk / etnisite —
-    'arab','arap','kurd','kürt','kurdistan','kürdistan','jew','jewish','yahudi','musevi','armenian','ermeni',
-    'greek','yunan','persian','fars','african','asian','latino','hispanic','gypsy','cingene','çingene','roman',
+    'arab','arap','kurd','kürt','kurdistan','kürdistan','jewish','yahudi','musevi','armenian','ermeni',
+    'greek','yunan','persian','african','asian','latino','hispanic','gypsy','cingene','çingene',
     // — Din —
     'muslim','müslüman','musluman','islam','islamic','islamiyet','christian','hristiyan','hıristiyan','christianity',
-    'catholic','protestant','orthodox','judaism','buddhist','budist','hindu','atheist','ateist',
-    'sunni','sünni','shia','şii','sii','alevi','alawite',
+    'catholic','protestant','orthodox','judaism','buddhist','budist','hinduism','atheist','ateist',
+    'sunni','sünni','shia','alevi','alawite',
   ];
   // Yasaklı içerik var mı? (doğrudan + boşluk/işaret/leet atlatma). True → tamamen engelle.
   function hasBadWord(s) {
