@@ -4544,21 +4544,23 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Uzun ekranlarda daha çok dikey dünya görünür; mesafe/zorluk H_REF'e bağlı olduğu için adil kalır.
   function fitCanvas() {
     const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
-    const ratio = vh / vw;
-    if (ratio >= 1.25) {
-      // Dikey/uzun ekran (telefon): canvas oranını ekrana eşitle → distorsiyonsuz tam ekran.
-      H = Math.round(W * ratio);
-      document.body.classList.remove('letterbox');
-    } else {
-      // Yatay/geniş ekran (PC): sabit dikey canvas + letterbox (ortalı, yan barlar). Esnemez.
-      H = 1066;
-      document.body.classList.add('letterbox');
-    }
+    // Geniş/yatay (PC) ekranlarda letterbox; dikey telefonlarda tam ekran.
+    document.body.classList.toggle('letterbox', (vh / vw) < 1.25);
+    // ÖNEMLİ: iç yüksekliği window.innerHeight'tan DEĞİL, canvas'ın GERÇEKTEN render
+    // edildiği kutudan hesapla. iOS'ta CSS 100vh ≠ innerHeight olduğundan bu fark
+    // dikey gerdirmeye (sünme) yol açıyordu. Gerçek kutuyu ölçünce iç en-boy oranı
+    // ekrandaki orana birebir eşit olur → hiçbir cihazda distorsiyon olmaz.
+    const rect = gc.getBoundingClientRect();
+    const cw = rect.width  || vw;
+    const ch = rect.height || vh;
+    H = Math.max(1, Math.round(W * (ch / cw)));
     gc.height = bg.height = H;
   }
   fitCanvas();
   window.addEventListener('resize', fitCanvas);
   window.addEventListener('orientationchange', fitCanvas);
+  // iOS: adres çubuğu açılıp kapanınca görünür yükseklik değişir → yeniden ölç.
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitCanvas);
 
   // ── SVG icon registry ──────────────────────────────────────
   // Replaces emoji glyphs (which corrupted to mojibake in file). Each entry
