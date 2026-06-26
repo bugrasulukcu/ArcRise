@@ -4509,6 +4509,7 @@ const ARC_DB = (() => {
         points: pts,
         color: r.traceColor || null,
         thickness: r.traceThickness || 0,
+        avatar: r.avatar | 0, dName: r.dName, dAv: r.dAv,
       });
       if (out.length >= limit) break;
     }
