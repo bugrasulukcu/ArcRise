@@ -4174,6 +4174,9 @@ const ARC_DB = (() => {
     const tracePts       = (traceData && typeof traceData.pts === 'string') ? traceData.pts : null;
     const traceColor     = (traceData && traceData.color) || null;
     const traceThickness = (traceData && Number.isFinite(traceData.thickness)) ? Number(traceData.thickness) : 0;
+    // Ölüm işaretçisi bayrakları — diğer oyuncular en uzak noktanda avatar/ad görsün.
+    const dName = !!(traceData && traceData.dName);
+    const dAv   = !!(traceData && traceData.dAv);
     console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum, hasTrace: !!tracePts });
     await ensureAuth(); const uid = getUid();
     try {
