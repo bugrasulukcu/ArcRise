@@ -6539,34 +6539,43 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ── Trail ────────────────────────────────────────────────
   function drawTrail(time) {
     if (trail.length < 2) return;
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    const userColor = (upg && upg.traceColor) || null;
-    // Combo arttıkça trace görünür şekilde kalınlaşır + parlar (+%60'a kadar)
+    ctx.save();
+    const userColor = (upg && upg.traceColor) || 'rainbow';
+    const isHex = userColor.charAt(0) === '#';
+    const rgb = isHex ? hexToRgb(userColor) : null;
+    const rb  = isHex ? null : (RB_HUE[userColor] || RB_HUE['rainbow']);
+    // Combo arttıkça trace görünür şekilde kalınlaşır (+%60'a kadar)
     const comboT = (scene === 'play') ? Math.max(0, Math.ceil(energy * comboDisplayMax())) / comboDisplayMax() : 0;
     const comboMulVis = 1 + comboT * 0.6;
     const thickMul  = (1 + ((upg && upg.traceThickness) || 0) * 0.10) * comboMulVis;
+    // Segment rengi (alpha verilir). Gökkuşağında gradient döner.
+    const strokeFor = (i, a, b, al) => {
+      if (isHex) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
+      const base = rb[0], span = rb[1];
+      const h1 = base + (((time * 80) + i * 3) % span);
+      const h2 = base + (((time * 80) + i * 3 + 35) % span);
+      const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
+      gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
+      gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
+      return gr;
+    };
+    ctx.lineCap = 'round';
+    // 1) IŞILTI — toplamsal (lighter), geniş & soluk: yalnız hafif hale, beyazlaştırmaz.
+    ctx.globalCompositeOperation = 'lighter';
     for (let i = 1; i < trail.length; i++) {
-      const a = trail[i-1], b = trail[i];
-      const t = i / (trail.length - 1);
-      const al = Math.pow(t, 1.4) * (0.75 + 0.25 * comboT);
+      const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
+      const al = Math.pow(t, 1.4) * (0.16 + 0.12 * comboT);
+      const w  = (1 + t * 3.8) * thickMul * 1.9;
+      ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
+    }
+    // 2) ÇEKİRDEK — normal harman (source-over): üst üste binince TOPLANMAZ → beyazlaşma yok.
+    ctx.globalCompositeOperation = 'source-over';
+    for (let i = 1; i < trail.length; i++) {
+      const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
+      const al = Math.pow(t, 1.4) * (0.85 + 0.15 * comboT);
       const w  = (1 + t * 3.8) * thickMul;
-      let stroke;
-      if (userColor && userColor.charAt(0) === '#') {
-        // Düz renk
-        const rgb = hexToRgb(userColor);
-        stroke = `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
-      } else {
-        // Gökkuşağı (tam ya da renk tonlu varyant): [base, span] hue aralığı
-        const rb = RB_HUE[userColor] || RB_HUE['rainbow'];
-        const base = rb[0], span = rb[1];
-        const h1 = base + (((time * 80) + i * 3) % span);
-        const h2 = base + (((time * 80) + i * 3 + 35) % span);
-        const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
-        gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
-        gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
-        stroke = gr;
-      }
-      ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineCap = 'round';
+      ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
       ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
     ctx.restore();
