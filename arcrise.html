@@ -9218,8 +9218,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Hangi grup hangi sekmede: ABILITIES → abilities sekmesi (slotlarla),
   // CONSUMABLES + LOADOUT → items sekmesi.
   const ABILITIES_GROUPS = [ GEAR_GROUPS.find(g => g.title === 'ABILITIES') ].filter(Boolean);
-  const ITEMS_GROUPS     = [ GEAR_GROUPS.find(g => g.title === 'CONSUMABLES'),
-                             GEAR_GROUPS.find(g => g.title === 'LOADOUT') ].filter(Boolean);
+  const ITEMS_GROUPS     = [ GEAR_GROUPS.find(g => g.title === 'SINGLE-USE') ].filter(Boolean);
   // Ortak gear pane render'ı: (opsiyonel) gear slotlar + CORE formatında kart grid.
   function renderGearPane(host, groups, includeSlots) {
     if (!host) return;
