@@ -5223,16 +5223,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     traceColor: 'rainbow',                       // 'rainbow' | 'rb:xxx' | hex
     traceThickness: 0,                           // preset: 0/6/12/20
     traceAnim: 'none',                           // none | pulse | rainbow | glow
-    deathName: false,
-    deathAvatar: false,
-    tomb: 0,                                     // 0 = avatar, 1.. = mezar stili
-    deathText: '',                               // özel ölüm metni ('' → username)
-    deathTextOwned: false,                       // özel metin satın alındı mı
-    // Satın alınan (sahip olunan) kişiselleştirme seçenekleri
+    // Ölüm noktası: profil resmi (tomb) + kullanıcı adı (name) — 50'şer coin, aç/kapa
+    deathAvatar: false,                          // tomb = profil resmi gösterimi (açık/kapalı)
+    deathName: false,                            // kullanıcı adı gösterimi (açık/kapalı)
+    tombOwned: false,                            // profil resmi satın alındı mı
+    nameOwned: false,                            // kullanıcı adı satın alındı mı
+    // Satın alınan (sahip olunan) trace seçenekleri
     traceColorsOwned: ['rainbow'],
     traceThicksOwned: [0],
     traceAnimsOwned: ['none'],
-    tombsOwned: [0],
     profit: 0,                                   // 0..10 (each +%10 coin gain)
     wallSoft: 0,                                 // 0..5 (each +1px collision tolerance toward walls)
     magnetRange: 0,                              // 0..8 (each +10% magnet pull radius)
