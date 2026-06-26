@@ -8749,8 +8749,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       ${opts.eq ? '<span class="core-eq">EQUIPPED</span>' : ''}
       <div class="core-icon"></div>
       <div class="core-card-foot">
-        <div class="core-card-row">
-          <span class="core-card-name">${meta.title}</span>
+        <div class="core-card-head">
+          <span class="core-card-title">${meta.title}</span>
           <span class="core-card-val${opts.lockedVal ? ' core-val-locked' : ''}">${valHTML}</span>
         </div>
         ${buttonsHTML ? `<div class="core-card-buys">${buttonsHTML}</div>` : ''}
