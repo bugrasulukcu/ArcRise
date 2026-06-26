@@ -8585,11 +8585,21 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     'muslim','müslüman','musluman','islam','islamic','christian','hristiyan','christianity','catholic','protestant',
     'orthodox','judaism','buddhist','budist','hindu','atheist','ateist','sunni','sünni','shia','şii','alevi',
   ];
+  const _VOWELS = /[aeıioöuüAEIİOÖUÜ]/g;
   function maskProfanity(s) {
     let out = s;
+    // 1) Doğrudan eşleşme: kelimenin sesli harflerini ★ yap.
     for (const w of BAD_WORDS) {
       const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      out = out.replace(re, m => m.replace(/[aeıioöuüAEIİOÖUÜ]/g, '★'));
+      out = out.replace(re, m => m.replace(_VOWELS, '★'));
+    }
+    // 2) Atlatma tespiti: boşluk/işaret/leet temizlenmiş kopyada ara (n.i.g.g.e.r, n1gg3r…).
+    const collapsed = s.toLowerCase()
+      .replace(/0/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4@]/g, 'a')
+      .replace(/[5$]/g, 's').replace(/7/g, 't')
+      .replace(/[^a-zçğıöşü]/g, '');
+    if (collapsed && BAD_WORDS.some(w => collapsed.includes(w.replace(/[^a-zçğıöşü]/g, '')))) {
+      out = out.replace(_VOWELS, '★');   // bypass → tüm metni maskele
     }
     return out;
   }
