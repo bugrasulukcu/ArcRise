@@ -8436,33 +8436,87 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('prof-tomb-btn').addEventListener('click', () => { renderTomb(); openSub('tomb-modal'); });
   document.getElementById('prof-deathtext-btn').addEventListener('click', () => { renderDeathText(); openSub('deathtext-modal'); });
 
-  // TRACE — kalınlık (preset), renk (palet), animasyon. Kişiselleştirme (ücretsiz).
+  // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
+  const TR_COLOR_PRICE = 4, TR_THICK_PRICE = 4, TR_ANIM_PRICE = 6, TOMB_PRICE = 5;
   const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
   const TRACE_ANIMS  = [['none', 'OFF'], ['pulse', 'PULSE'], ['rainbow', 'RAINBOW'], ['glow', 'GLOW']];
+  const RAINBOWS = [
+    ['rainbow', 'linear-gradient(90deg,#ff3b3b,#ffb13b,#ffe23b,#5bff7a,#3bd1ff,#3b7bff,#c45bff)'],
+    ['rb:warm', 'linear-gradient(90deg,#ff3b3b,#ff9a3b,#ffe23b)'],
+    ['rb:cool', 'linear-gradient(90deg,#3bd1ff,#3b7bff,#a23bff)'],
+    ['rb:candy','linear-gradient(90deg,#ff5bd1,#ff8bf0,#c45bff)'],
+    ['rb:aqua', 'linear-gradient(90deg,#3bffd1,#3bff8b,#8bffce)'],
+  ];
+  const _own = name => (upg[name] || (upg[name] = []));
+  const _has = (name, id) => _own(name).indexOf(id) !== -1;
+  function _buyOwn(name, id, price, label, after) {
+    confirmPurchase(label, price, () => { if (!spendCoins(price)) return; _own(name).push(id); saveUpg(); after(); });
+  }
+  const _coinBadge = p => `<span class="opt-price">${iconHTML('coin', { size: 9 })}${p}</span>`;
   function renderTrace() {
-    const col = upg.traceColor || '#88bbff';
-    const th  = Math.max(2, 3 + (upg.traceThickness | 0));
-    const pv  = document.getElementById('trace-preview');
-    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${col};box-shadow:${upg.traceAnim === 'glow' ? `0 0 14px ${col}` : 'none'}"></div>`;
+    const cur = upg.traceColor || 'rainbow';
+    // Önizleme
+    const pv = document.getElementById('trace-preview');
+    const th = Math.max(3, 3 + (upg.traceThickness | 0));
+    const curCss = cur.charAt(0) === '#' ? cur : (RAINBOWS.find(r => r[0] === cur) || RAINBOWS[0])[1];
+    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};box-shadow:${upg.traceAnim === 'glow' ? '0 0 14px rgba(255,255,255,.6)' : 'none'}"></div>`;
+    // Kalınlık
     const tr = document.getElementById('trace-thick-row');
-    tr.innerHTML = TRACE_THICKS.map(([lbl, v]) => `<button class="trace-opt ${(upg.traceThickness | 0) === v ? 'active' : ''}" data-th="${v}">${lbl}</button>`).join('');
-    tr.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => { upg.traceThickness = parseInt(b.dataset.th, 10); saveUpg(); renderTrace(); }));
+    tr.innerHTML = TRACE_THICKS.map(([lbl, v]) => {
+      const owned = _has('traceThicksOwned', v), active = (upg.traceThickness | 0) === v;
+      return `<button class="trace-opt ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-th="${v}">${lbl}${owned ? '' : _coinBadge(TR_THICK_PRICE)}</button>`;
+    }).join('');
+    tr.querySelectorAll('[data-th]').forEach(b => b.addEventListener('click', () => {
+      const v = parseInt(b.dataset.th, 10);
+      const sel = () => { upg.traceThickness = v; saveUpg(); renderTrace(); };
+      if (_has('traceThicksOwned', v)) sel();
+      else _buyOwn('traceThicksOwned', v, TR_THICK_PRICE, 'Trace width', sel);
+    }));
+    // Renk + rainbow (tek grid)
     const cg = document.getElementById('trace-color-grid');
-    cg.innerHTML = TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === upg.traceColor ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('');
-    cg.querySelectorAll('[data-c]').forEach(s => s.addEventListener('click', () => { upg.traceColor = s.dataset.c; saveUpg(); renderTrace(); }));
+    const swatch = (id, css, name) => {
+      const owned = _has('traceColorsOwned', id), active = cur === id;
+      return `<button class="tr-sw ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-col="${id}" style="background:${css}">${owned ? '' : '<span class="tr-lock">🔒</span>'}</button>`;
+    };
+    cg.innerHTML = RAINBOWS.map(([id, css]) => swatch(id, css)).join('')
+      + TRACE_COLORS.map(c => swatch(c, c)).join('');
+    cg.querySelectorAll('[data-col]').forEach(s => s.addEventListener('click', () => {
+      const id = s.dataset.col;
+      const sel = () => { upg.traceColor = id; saveUpg(); renderTrace(); };
+      if (_has('traceColorsOwned', id)) sel();
+      else _buyOwn('traceColorsOwned', id, TR_COLOR_PRICE, 'Trace colour', sel);
+    }));
+    // Animasyon
     const ar = document.getElementById('trace-anim-row');
-    ar.innerHTML = TRACE_ANIMS.map(([v, lbl]) => `<button class="trace-opt ${upg.traceAnim === v ? 'active' : ''}" data-anim="${v}">${lbl}</button>`).join('');
-    ar.querySelectorAll('[data-anim]').forEach(b => b.addEventListener('click', () => { upg.traceAnim = b.dataset.anim; saveUpg(); renderTrace(); }));
+    ar.innerHTML = TRACE_ANIMS.map(([v, lbl]) => {
+      const owned = _has('traceAnimsOwned', v), active = upg.traceAnim === v;
+      return `<button class="trace-opt ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-anim="${v}">${lbl}${owned ? '' : _coinBadge(TR_ANIM_PRICE)}</button>`;
+    }).join('');
+    ar.querySelectorAll('[data-anim]').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.anim;
+      const sel = () => { upg.traceAnim = v; saveUpg(); renderTrace(); };
+      if (_has('traceAnimsOwned', v)) sel();
+      else _buyOwn('traceAnimsOwned', v, TR_ANIM_PRICE, 'Trace animation', sel);
+    }));
   }
 
-  // TOMB — 0 = avatar, 1.. = placeholder (gerçek SVG'ler sonra gelecek). Ücretsiz seçim.
+  // TOMB — 0 = avatar (ücretsiz), 1.. = placeholder (ücretli, gerçek SVG'ler sonra).
   const TOMB_COUNT = 7;
   function renderTomb() {
     const g = document.getElementById('tomb-grid');
-    let html = `<button class="tomb-opt ${(upg.tomb | 0) === 0 ? 'active' : ''}" data-t="0"><img src="${avatarSrc()}" alt=""></button>`;
-    for (let i = 1; i < TOMB_COUNT; i++) html += `<button class="tomb-opt ${(upg.tomb | 0) === i ? 'active' : ''}" data-t="${i}"><span class="tomb-ph"></span></button>`;
+    const cell = (i, inner) => {
+      const owned = i === 0 || _has('tombsOwned', i), active = (upg.tomb | 0) === i;
+      return `<button class="tomb-opt ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-t="${i}">${inner}${owned ? '' : _coinBadge(TOMB_PRICE)}</button>`;
+    };
+    let html = cell(0, `<img src="${avatarSrc()}" alt="">`);
+    for (let i = 1; i < TOMB_COUNT; i++) html += cell(i, `<span class="tomb-ph"></span>`);
     g.innerHTML = html;
-    g.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { upg.tomb = parseInt(b.dataset.t, 10); saveUpg(); renderTomb(); }));
+    g.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => {
+      const i = parseInt(b.dataset.t, 10);
+      const sel = () => { upg.tomb = i; saveUpg(); renderTomb(); };
+      if (i === 0 || _has('tombsOwned', i)) sel();
+      else _buyOwn('tombsOwned', i, TOMB_PRICE, 'Tomb style', sel);
+    }));
   }
 
   // DEATH TEXT — varsayılan username; 100 coin ile özel metin. Küfür → sesli harfler ★.
