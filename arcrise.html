@@ -4298,6 +4298,8 @@ const ARC_DB = (() => {
           tracePts:       f.tracePts?.stringValue || null,
           traceColor:     f.traceColor?.stringValue || null,
           traceThickness: parseInt(f.traceThickness?.integerValue ?? 0) || 0,
+          dName:    !!f.dName?.booleanValue,
+          dAv:      !!f.dAv?.booleanValue,
           badges:   f.badges?.stringValue || '',
           tag:      f.tag?.stringValue || '',
           docId:    r.document.name.split('/').pop(),
