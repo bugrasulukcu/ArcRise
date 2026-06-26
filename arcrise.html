@@ -5110,8 +5110,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
   // Combo timer (base 9 sec, +1 per timer level). Displayed countdown range
   // is one less because the countdown texture starts at 8.
-  function comboTimerSec()   { return 9 + ((upg && upg.timer) || 0); }
-  function comboDisplayMax() { return 8 + ((upg && upg.timer) || 0); }
+  // Combo "yeşil pencere" = üstteki 2 kademe = comboTimerSec/4.
+  // Pencere = 2 + 0.5·timer sn  →  comboTimerSec = 8 + 2·timer ; gösterge sabit 8 kademe.
+  function comboTimerSec()   { return 8 + ((upg && upg.timer) || 0) * 2; }
+  function comboDisplayMax() { return 8; }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
