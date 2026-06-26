@@ -8704,7 +8704,6 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const owned = !!upg.nameOwned, on = !!upg.deathName;
     body.innerHTML = `
       <div class="custom-card">
-        <div class="custom-prev custom-prev-txt">${(playerName || 'PLAYER').toUpperCase()}</div>
         ${owned
           ? `<button class="dt-opt ${on ? 'active' : ''}" id="name-toggle">${on ? 'ON' : 'OFF'}</button>`
           : `<button class="dt-opt" id="name-buy">${iconHTML('coin', { size: 12 })} ${NAME_PRICE}</button>`}
