@@ -349,7 +349,42 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
-### v16 — Auth, sosyal sistem, combo ekonomisi, quest serisi, responsive (2026-06)
+### v17 — Upgrade/CORE yeniden tasarım, ×çarpan dili, profil kişiselleştirme, uzaktan ölüm işaretçileri (2026-06)
+
+**Upgrades — satın alma akışı + kart tasarımı**
+- **Onay popup'ı** (`#buy-modal`, `confirmPurchase`): mor cam estetiği, büyük altın fiyat chip'i + bakiye; yetmezse BUY pasif. Tüm coin harcamaları buradan.
+- **CORE kartları kare** (`aspect-ratio:1`): üstte ikon **placeholder** (gerçek SVG'ler sonra gelecek), başlık + **×değer** yan yana ortalı, altta **− / +** butonları. Başlık 12px/700.
+- **Tüm CORE statları çift/tek yönlü merdiven, ortak kural:** tabandan (×1.0) **uzaklaşmak ücretli**, tabana **geri dönmek ücretsiz**. Forward statlarda − tabanda **gri/boş** form.
+
+**Değer dili = ×çarpan (her şey)**
+- `coreValueLabel` → `×(1+lvl*0.1)`. Speed/Radius **çift yönlü** (negatif = ×0.9.. yavaş/küçük; ayrı satın alma). Profit = ×1.0 taban +%10/lvl (coin çarpanı).
+- **Timer** (eski "Combo Timer" → **Timer**): combo penceresi taban **2.0sn**, +0.5sn/lvl (`comboTimerSec = 8 + timer*2`, `comboDisplayMax = 8`); fiyat **6/8/10/12** (kıymetli).
+- **Magnet** yeniden yazıldı → **pasif toplama menzili** (`magGrab = magnetRange*22px`); yeşil/altın/mor'a **değmeden yaklaşınca** toplar (booster'dan bağımsız).
+
+**ABILITIES / ITEMS → CORE formu**
+- Cooldown yükseltmesi **kaldırıldı** (sabit 20sn, gösterilmez). Sadece **süre** yükseltilir (saniye, `2.5s` küçük `s`). Anlık yetenekler açılınca **✓** (yükseltme yok).
+- Kilitli yetenek → **🔒 ikon** (metin yerine). Consumables → **SINGLE-USE** (loadout buradan çıkarıldı, profile taşındı).
+
+**Profil yeniden yapılandı**
+- Sadece **4 stat** (HIGH SCORE · DISTANCE · GAMES · COINS). Detaylar yeni **ANALYSIS** modalında. Altında **TOMB · TRACE · DEATH TEXT** + ANALYSIS + UPGRADES.
+- **TRACE** (profil altı, ücretli own-once): kalınlık **sıralı** (S→M→L→XL, öncekini almadan sonraki kilitli), renk paleti + **rainbow varyantları** (full/warm/cool/candy/aqua — oyunda `RB_HUE` ile gerçek hue aralığı), animasyon (OFF/PULSE/RAINBOW/GLOW). Profil butonlarında **seçili olan** önizlenir; **trace rengi profil çerçevesini** boyar.
+- **TOMB** = profil resmi · **DEATH TEXT** = kullanıcı adı; her biri **50 coin**, sonra ON/OFF. Özel metin kaldırıldı.
+
+**Küfür/nefret filtresi (genişletildi)**
+- `BAD_WORDS` + `hasBadWord`: küfür + ırkçı slur + ırk/etnisite + din; **doğrudan + leet/boşluk atlatma** (`n1gg3r`, `n.i.g.g.e.r`) tespiti. **Kullanıcı adı girişinde tamamen engellenir** (yazılamaz). Yaygın çakışan kısa kelimeler (mal/top/oc/anan/hoe…) bilerek dışarıda.
+
+**Uzaktan ölüm işaretçileri (diğer oyuncular görür)**
+- Skor dokümanına `dName`/`dAv` bayrakları (her gönderimde; aç/kapa yayılır). `parseRows`/`getCrossPlayerGhosts` taşır. `drawRemoteDeathMarkers()`: her izin **en uzak noktasına** (en uzun mesafe) o oyuncunun avatar/adını çizer.
+- **Tomb+text birlikte → ad avatarın çevresinde dairesel** (`drawArcText`); yalnız text → düz. Uzaktan avatar **hazır index** ile (özel foto taşınmaz — kısıt).
+
+**Görsel düzeltmeler**
+- **Trace beyazlaşması** giderildi: tek `lighter` yerine **ışıltı (geniş/soluk additive) + çekirdek (`source-over`)** iki katman → kalın izde renk korunur.
+- **Sünme (oval) düzeltmesi:** `fitCanvas` artık iç yüksekliği `innerHeight` yerine **gerçek render kutusundan** (`getBoundingClientRect`) hesaplar; load/pageshow/rAF/startGame/visualViewport tetikleyicileri; `?debug=1` ölçüm overlay'i (`oval` oranı).
+- **Segmented tab kayan göstergesi** (upgrades/highscore/settings) — MutationObserver ile, tema renkli pil.
+- **Modal geri-oku** çerçeveli buton, her sayfanın **kendi stroke rengi**; alt-sayfalardan **Close kaldırıldı**. Başlıklar tek tip (21px/3px/700, Settings ile). High Score sekmeleri kutu içi + uppercase.
+- **Settings:** üstte geri oku, alttaki Back → **HOW TO PLAY** metin link; satır ikonları kaldırıldı; **seçili mod glow** verir.
+
+
 
 **Firebase Anonymous Auth + uid sahipliği**
 - `ARC_DB` içine anonim oturum (Identity Toolkit REST): `ensureAuth()` refresh token'ı `arc_fb_rt`'de saklar → kalıcı uid. `fbFetch()` tüm Firestore isteklerine `Authorization: Bearer` ekler (14 çağrı).
