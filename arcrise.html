@@ -6935,9 +6935,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       // Bu frame'de kazasız: son güvenli pozisyonu güncelle (revive için)
       _lastSafePos = { x: player.x, y: player.y };
     }
+    // MAGNET (pasif): her seviye toplama menzilini büyütür → değmeden, yaklaşınca toplar.
+    const magGrab = (upg.magnetRange || 0) * 22;
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r)**2) {
+      if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
         // Tutorial stage 3: yeşil toplandı → 4'e geç
         if (tutActive && tutStage === 3) {
           bonuses.splice(i, 1);
