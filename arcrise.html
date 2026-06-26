@@ -8666,19 +8666,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const plusPrice = lvl < max ? corePriceAt(key, lvl + 1) : null;
     const card = document.createElement('div');
     card.className = 'core-card';
-    // − : ücretsiz geri al, tabanda (0) pasif.
-    const minusBtn = `<button class="core-buy minus" data-act="minus" ${lvl <= 0 ? 'disabled' : ''}>−</button>`;
-    // + : sonraki seviyeyi satın al (ücretli, onaylı). Fiyat buton içinde. Tavanda MAX.
+    // − : ücretsiz geri al (step etiketi, coin yok), tabanda (0) pasif.
+    const minusBtn = `<button class="core-buy minus" data-act="minus" ${lvl <= 0 ? 'disabled' : ''}>${coreStepLabel(key, '-1')}</button>`;
+    // + : sonraki seviyeyi satın al (ücretli). Coin değeri butonun ÜSTÜNDE yüzen rozet. Tavanda MAX.
     const plusBtn = plusPrice == null
       ? `<button class="core-buy maxed">MAX</button>`
       : `<button class="core-buy plus" data-act="plus" data-price="${plusPrice}" ${coins < plusPrice ? 'disabled' : ''}>`
-        + `<span class="core-buy-amt">${iconHTML('coin', { size: 11 })}${plusPrice}</span>+</button>`;
+        + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${plusPrice}</span>`
+        + `<span>${coreStepLabel(key, '+1')}</span></button>`;
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
       <div class="core-icon"></div>
       <div class="core-card-foot">
         <div class="core-card-title">${t.title}</div>
-        <div class="core-card-val big">${coreValueLabel(key)}</div>
+        <div class="core-card-val box">${coreValueLabel(key)}</div>
         <div class="core-card-buys">
           ${minusBtn}
           ${plusBtn}
