@@ -8609,60 +8609,25 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       .replace(/[^a-zçğıöşü]/g, '');
     return collapsed ? BAD_WORDS.some(w => collapsed.includes(w.replace(/[^a-zçğıöşü]/g, ''))) : false;
   }
-  function dtFmt(t) {
-    t = (t || '').trim();
-    return t ? t.toUpperCase() : (playerName || 'PLAYER').toUpperCase();
-  }
+  // DEATH TEXT — sadece KULLANICI ADI: 50 coin ile aç, sonra aç/kapa. Ölüm noktasında gösterilir.
   function renderDeathText() {
-    document.getElementById('dt-preview').textContent = dtFmt(upg.deathText);
-    const inp = document.getElementById('dt-input');
-    const buy = document.getElementById('dt-buy-btn');
-    const note = document.getElementById('dt-note');
-    if (!upg.deathTextOwned) {
-      inp.disabled = true; inp.value = '';
-      buy.innerHTML = `${iconHTML('coin', { size: 12 })} ${DT_PRICE}`;
-      buy.dataset.act = 'unlock';
-      note.textContent = 'Unlock to write your own death text.';
-    } else {
-      inp.disabled = false;
-      if (document.activeElement !== inp) inp.value = (upg.deathText || '');
-      buy.textContent = 'SAVE'; buy.dataset.act = 'save';
-      note.textContent = 'Profanity & hate speech are blocked.';
-    }
+    const body = document.getElementById('deathtext-body');
+    const owned = !!upg.nameOwned, on = !!upg.deathName;
+    body.innerHTML = `
+      <div class="custom-card">
+        <div class="custom-prev custom-prev-txt">${(playerName || 'PLAYER').toUpperCase()}</div>
+        <div class="custom-name">USERNAME</div>
+        ${owned
+          ? `<button class="dt-opt ${on ? 'active' : ''}" id="name-toggle">${on ? 'ON' : 'OFF'}</button>`
+          : `<button class="dt-opt" id="name-buy">${iconHTML('coin', { size: 12 })} ${NAME_PRICE}</button>`}
+      </div>`;
+    const buy = document.getElementById('name-buy');
+    if (buy) buy.addEventListener('click', () => confirmPurchase('Death text · username', NAME_PRICE, () => {
+      if (!spendCoins(NAME_PRICE)) return; upg.nameOwned = true; upg.deathName = true; saveUpg(); renderDeathText();
+    }));
+    const tog = document.getElementById('name-toggle');
+    if (tog) tog.addEventListener('click', () => { upg.deathName = !upg.deathName; saveUpg(); renderDeathText(); });
   }
-  document.getElementById('dt-default-btn').addEventListener('click', () => { upg.deathText = ''; saveUpg(); renderDeathText(); });
-  document.getElementById('dt-input').addEventListener('input', () => {
-    const v = document.getElementById('dt-input').value;
-    const bad = hasBadWord(v);
-    document.getElementById('dt-preview').textContent = dtFmt(v);
-    const note = document.getElementById('dt-note');
-    const buy = document.getElementById('dt-buy-btn');
-    note.textContent = bad ? '⛔ Not allowed — blocked' : 'Profanity & hate speech are blocked.';
-    note.style.color = bad ? '#ff6a7a' : '';
-    buy.disabled = bad;
-  });
-  document.getElementById('dt-buy-btn').addEventListener('click', () => {
-    const buy = document.getElementById('dt-buy-btn');
-    const act = buy.dataset.act;
-    if (act === 'unlock') {
-      confirmPurchase('Custom Death Text', DT_PRICE, () => {
-        if (!spendCoins(DT_PRICE)) return; upg.deathTextOwned = true; saveUpg(); renderDeathText();
-      });
-    } else {
-      const v = document.getElementById('dt-input').value.trim();
-      if (hasBadWord(v)) {   // tamamen engelle — kaydetme
-        const note = document.getElementById('dt-note');
-        note.textContent = '⛔ Not allowed — blocked'; note.style.color = '#ff6a7a';
-        try { showToast('Blocked: not allowed'); } catch(_){}
-        return;
-      }
-      upg.deathText = v; saveUpg();
-      buy.disabled = false;
-      document.getElementById('dt-note').style.color = '';
-      renderDeathText();
-      try { showToast('Death text saved'); } catch(_){}
-    }
-  });
 
   // Tap profile card → open profile edit (but coin pill has its own handler)
   document.getElementById('home-profile').addEventListener('click', e => {
