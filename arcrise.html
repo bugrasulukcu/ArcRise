@@ -8805,7 +8805,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
     const desc = ABILITY_DESC[key] || '';
     if (!inv.owned) {
-      const card = gearCardShell(meta, 'LOCKED', gearBuyBtn('unlock', cfg.unlock, 'UNLOCK'), { desc, lockedVal: true });
+      const card = gearCardShell(meta, LOCK_SVG, gearBuyBtn('unlock', cfg.unlock, 'UNLOCK'), { desc, lockedVal: true });
       gearWire(card, 'unlock', () => {
         if (slotsOwned === 0) { try { showToast('You need to buy a gear slot first'); } catch(_){} return; }
         confirmPurchase(meta.title, cfg.unlock, () => {
