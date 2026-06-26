@@ -6431,6 +6431,23 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     return _avImgCache.loaded ? _avImgCache.img : null;
   }
+  // Dairesel yazı: metni (cx,cy) merkezli radius yarıçaplı dairenin üst yayına yazar.
+  function drawArcText(text, cx, cy, radius, font, fill) {
+    ctx.save();
+    ctx.font = font; ctx.fillStyle = fill;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 3;
+    const chars = [...text];
+    let total = 0; const widths = chars.map(c => { const w = ctx.measureText(c).width + 1.5; total += w; return w; });
+    ctx.translate(cx, cy);
+    let angle = -(total / radius) / 2;   // üstte ortala
+    for (let i = 0; i < chars.length; i++) {
+      angle += (widths[i] / 2) / radius;
+      ctx.save(); ctx.rotate(angle); ctx.translate(0, -radius); ctx.fillText(chars[i], 0, 0); ctx.restore();
+      angle += (widths[i] / 2) / radius;
+    }
+    ctx.restore();
+  }
   function drawDeathMarkers() {
     if (!upg.deathName && !upg.deathAvatar) return;
     const bd = (gameMode === 'extreme')
