@@ -8567,7 +8567,25 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   // DEATH TEXT — varsayılan username; 100 coin ile özel metin. Küfür → sesli harfler ★.
   const DT_PRICE = 100;
-  const BAD_WORDS = ['fuck','shit','bitch','asshole','cunt','dick','sik','siktir','amk','amına','orospu','pic','piç','yarrak','yarak','göt','got','pezevenk','oç','oc','sürtük','kahpe'];
+  // Engellenen kelimeler — küfür + nefret söylemi (ırkçı hakaret, ırk/etnisite, din adları).
+  // Eşleşen kelimenin sesli harfleri ★ ile maskelenir. Kapsamlı/katı tutulur.
+  const BAD_WORDS = [
+    // — Küfür (EN) —
+    'fuck','shit','bitch','asshole','cunt','dick','pussy','bastard','slut','whore','motherfucker','wanker','prick',
+    // — Küfür (TR) —
+    'sik','siktir','amk','amina','amına','aminako','orospu','pic','piç','yarrak','yarak','göt','got','pezevenk',
+    'oc','oç','surtuk','sürtük','kahpe','gavat','ibne','top','döl','dol','mal','gerizekali','gerizekalı',
+    // — Irkçı hakaretler / slur'lar —
+    'nigger','nigga','n1gger','n1gga','negro','chink','kike','spic','gook','paki','wetback','beaner','coon',
+    'sandnigger','towelhead','raghead','wog','zenci','arap dölü','gavur',
+    // — Irk / etnisite —
+    'arab','arap','kurd','kürt','kurt','turk','türk','jew','jewish','yahudi','musevi','armenian','ermeni',
+    'greek','rum','yunan','persian','fars','african','asian','latino','hispanic','slav','roma','gypsy','cingene','çingene',
+    'black','white','negro','aryan','nazi','hitler',
+    // — Din —
+    'muslim','müslüman','musluman','islam','islamic','christian','hristiyan','christianity','catholic','protestant',
+    'orthodox','judaism','buddhist','budist','buddhism','hindu','hinduism','atheist','ateist','sunni','sünni','shia','şii','sii','alevi','alawite',
+  ];
   function maskProfanity(s) {
     let out = s;
     for (const w of BAD_WORDS) {
