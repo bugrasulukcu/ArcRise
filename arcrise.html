@@ -1538,14 +1538,17 @@
     /* Tüm alt-sayfa başlıkları Settings (h2) ile aynı kalınlıkta */
     .modal-head-title, #upgrades-modal-title { flex: 1; min-width: 0; text-align: center; margin: 0; font-weight: 700; }
     .modal-head-spacer { flex-shrink: 0; width: 38px; }
+    /* Başlık: üst barın tam ortasında (mutlak), yan öğelerden bağımsız */
     #upgrades-modal-title {
-      flex: 1; font-size: 21px; letter-spacing: 3px; color: #fff; text-align: center;
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      font-size: 21px; letter-spacing: 3px; color: #fff; text-align: center; white-space: nowrap;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
+    /* Coin rozeti — geri okuyla aynı kare form + radius (sadece daha geniş) */
     #upgrades-modal-sub {
       flex-shrink: 0;
+      height: 38px; padding: 0 12px; border-radius: 11px;
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 7px 14px; border-radius: 999px;
       border: 1.5px solid rgba(255,210,80,.5);
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
