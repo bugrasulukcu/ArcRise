@@ -3809,43 +3809,46 @@
     <div id="prof-name-static" data-name>PLAYER</div>
     <div id="prof-name-divider"></div>
 
-    <!-- Lifetime totals -->
+    <!-- Özet: 4 ana stat (2x2) -->
     <div id="prof-summary">
       <div class="prof-sum">
-        <div class="prof-sum-lbl">GAMES</div>
-        <div class="prof-sum-val ps-blue" id="ps-games">0</div>
+        <div class="prof-sum-lbl">HIGH SCORE</div>
+        <div class="prof-sum-val ps-green" id="ps-score">0</div>
       </div>
       <div class="prof-sum">
         <div class="prof-sum-lbl">DISTANCE</div>
-        <div class="prof-sum-val ps-blue" id="ps-distlife">0m</div>
+        <div class="prof-sum-val ps-blue" id="ps-distbest">0m</div>
+      </div>
+      <div class="prof-sum">
+        <div class="prof-sum-lbl">GAMES</div>
+        <div class="prof-sum-val ps-blue" id="ps-games">0</div>
       </div>
       <div class="prof-sum">
         <div class="prof-sum-lbl">COINS</div>
         <div class="prof-sum-val ps-gold" id="ps-coins">0</div>
       </div>
     </div>
-    <!-- Per-mode bests (Chill / Extreme) -->
-    <div id="prof-modes">
-      <div class="pm-row pm-head"><span class="pm-lbl"></span><span class="pm-c-chill">CHILL</span><span class="pm-c-ext">EXTREME</span></div>
-      <div class="pm-row"><span class="pm-lbl">SCORE</span><span id="pm-score-n">0</span><span id="pm-score-e">0</span></div>
-      <div class="pm-row"><span class="pm-lbl">DIST.</span><span id="pm-dist-n">0m</span><span id="pm-dist-e">0m</span></div>
-      <div class="pm-row"><span class="pm-lbl">GAMES</span><span id="pm-games-n">0</span><span id="pm-games-e">0</span></div>
-    </div>
-    <!-- Extras: best multiplier + day streak -->
-    <div id="prof-extra">
-      <div class="prof-sum">
-        <div class="prof-sum-lbl">BEST COMBO</div>
-        <div class="prof-sum-val ps-flame" id="ps-mul">0</div>
-      </div>
-      <div class="prof-sum">
-        <div class="prof-sum-lbl">STREAK</div>
-        <div class="prof-sum-val ps-gold" id="ps-streak">0d</div>
-      </div>
+
+    <!-- Kişiselleştirme: Tomb · Trace · Death Text -->
+    <div id="prof-custom-row">
+      <button class="prof-custom-btn" id="prof-tomb-btn">
+        <span class="pcb-ic">${''}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V10a6 6 0 0 1 12 0v11"/><path d="M5 21h14"/></svg></span>
+        <span>TOMB</span>
+      </button>
+      <button class="prof-custom-btn" id="prof-trace-btn">
+        <span class="pcb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 14c4-7 7-7 9 0s5 7 9 0"/></svg></span>
+        <span>TRACE</span>
+      </button>
+      <button class="prof-custom-btn" id="prof-deathtext-btn">
+        <span class="pcb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7v12"/><path d="M15 7v12"/></svg></span>
+        <span>DEATH TEXT</span>
+      </button>
     </div>
 
     <input type="file" id="prof-av-file" accept="image/*" style="display:none">
 
-    <!-- UPGRADES — sits on its own line, above the BACK/SAVE pair -->
+    <!-- Analiz + Upgrades -->
+    <button id="prof-analysis-btn">ANALYSIS</button>
     <button id="prof-upgrade-btn">UPGRADES</button>
     <!-- Footer: Back + Save -->
     <div id="prof-actions">
