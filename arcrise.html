@@ -4544,6 +4544,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   gc.width = bg.width = W;
   // Canvas iç yüksekliğini ekran oranına eşitle → distorsiyon olmadan tüm ekranı doldurur.
   // Uzun ekranlarda daha çok dikey dünya görünür; mesafe/zorluk H_REF'e bağlı olduğu için adil kalır.
+  const _dbg = location.search.indexOf('debug') >= 0
+    ? (() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:9999;font:11px/1.4 monospace;color:#0f0;background:rgba(0,0,0,.7);padding:4px 6px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(d); return d; })()
+    : null;
   function fitCanvas() {
     const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
     // Geniş/yatay (PC) ekranlarda letterbox; dikey telefonlarda tam ekran.
@@ -4557,8 +4560,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const ch = rect.height || vh;
     H = Math.max(1, Math.round(W * (ch / cw)));
     gc.height = bg.height = H;
+    if (_dbg) {
+      const sx = cw / W, sy = ch / H;
+      _dbg.textContent =
+        `box ${cw.toFixed(1)}x${ch.toFixed(1)}\nH ${H}  win ${vw}x${vh}\n` +
+        `scaleX ${sx.toFixed(4)}\nscaleY ${sy.toFixed(4)}\n` +
+        `oval ${(sy / sx).toFixed(4)}  dpr ${window.devicePixelRatio}`;
+    }
   }
   fitCanvas();
+  // Sağlamlık: ilk çağrı layout oturmadan çalışmış olabilir → birkaç kez yenile.
+  requestAnimationFrame(fitCanvas);
+  window.addEventListener('load', fitCanvas);
+  window.addEventListener('pageshow', fitCanvas);
+  setTimeout(fitCanvas, 400);
   window.addEventListener('resize', fitCanvas);
   window.addEventListener('orientationchange', fitCanvas);
   // iOS: adres çubuğu açılıp kapanınca görünür yükseklik değişir → yeniden ölç.
