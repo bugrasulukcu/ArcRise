@@ -1988,18 +1988,18 @@
       white-space: nowrap; flex-shrink: 0;
     }
     .core-card-foot { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-    /* CORE başlığı — ortalı, biraz büyük & bold */
-    .core-card-title {
-      font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: #fff; text-transform: uppercase;
-      text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    /* CORE başlık satırı — başlık + ×değer yan yana, ortalı */
+    .core-card-head {
+      display: flex; align-items: baseline; justify-content: center; gap: 8px; width: 100%;
     }
-    /* CORE değer satırı — ortalı, dikeyde dar çukur pill, küçük punto */
-    .core-card-val.box {
-      width: 100%; text-align: center;
-      padding: 4px 4px; border-radius: 8px;
-      background: rgba(0,0,0,.3); border: 1px solid rgba(150,110,230,.28);
-      font-size: 12px; font-weight: 700; letter-spacing: .4px; color: #efe7ff;
-      white-space: nowrap; overflow: hidden;
+    .core-card-title {
+      flex: 0 1 auto; min-width: 0;
+      font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: #fff; text-transform: uppercase;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .core-card-head .core-card-val {
+      flex: 0 0 auto;
+      font-size: 14px; font-weight: 700; letter-spacing: .4px; color: #cba6ff;
     }
     .core-card-buys {
       display: flex; align-items: stretch; gap: 6px; width: 100%;
