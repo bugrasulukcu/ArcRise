@@ -6533,14 +6533,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const al = Math.pow(t, 1.4) * (0.75 + 0.25 * comboT);
       const w  = (1 + t * 3.8) * thickMul;
       let stroke;
-      if (userColor) {
-        // Use the chosen hex with age-based alpha — no rainbow
+      if (userColor && userColor.charAt(0) === '#') {
+        // Düz renk
         const rgb = hexToRgb(userColor);
         stroke = `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
       } else {
-        // Default rainbow gradient
-        const h1 = ((time * 80) + i * 3) % 360;
-        const h2 = (h1 + 35) % 360;
+        // Gökkuşağı (tam ya da renk tonlu varyant): [base, span] hue aralığı
+        const rb = RB_HUE[userColor] || RB_HUE['rainbow'];
+        const base = rb[0], span = rb[1];
+        const h1 = base + (((time * 80) + i * 3) % span);
+        const h2 = base + (((time * 80) + i * 3 + 35) % span);
         const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
         gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`);
         gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`);
