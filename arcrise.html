@@ -6862,7 +6862,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Magnet: yeşil (bonuses), sarı (goldBalls) ve mor (purpleBalls) topları
     // oyuncuya doğru hızla çek. Magnet Range upgrade ile yarıçap büyür.
     if (boosterType === 'magnet') {
-      const MAG_R   = H * 0.7 * (1 + (upg.magnetRange || 0) * 0.10);
+      const MAG_R   = H * 0.7;
       const MAG_PULL = 520; // px/s ivme yönü-vector boyunca
       const pullToward = (arr) => {
         for (const o of arr) {
