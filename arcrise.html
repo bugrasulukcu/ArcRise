@@ -6716,14 +6716,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const strokeFor = (i, a, b, al) => {
       if (isHex) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
       if (isCustom) {
-        // Custom palet: trail boyunca renkler arasında akan gradyen
+        // Custom palet: trail boyunca duraklar arasında akan gradyen (şeffaf = alpha 0)
+        const stopRGBA = (c, a2) => { if (c === 'transparent') return 'rgba(0,0,0,0)'; const k = hexToRgb(c); return `rgba(${k.r},${k.g},${k.b},${a2})`; };
         const n = customCols.length;
         const f = (((time * 0.1) + i * 0.03) % 1 + 1) % 1;
         const k = Math.floor(f * n) % n, k2 = (k + 1) % n;
-        const c1 = hexToRgb(customCols[k]), c2 = hexToRgb(customCols[k2]);
         const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
-        gr.addColorStop(0, `rgba(${c1.r},${c1.g},${c1.b},${al})`);
-        gr.addColorStop(1, `rgba(${c2.r},${c2.g},${c2.b},${al})`);
+        gr.addColorStop(0, stopRGBA(customCols[k], al));
+        gr.addColorStop(1, stopRGBA(customCols[k2], al));
         return gr;
       }
       const base = rb[0], span = rb[1];
