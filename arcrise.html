@@ -8865,8 +8865,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Profil kutusu padding-box temel zemini (gradyen border trick için).
   const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%) padding-box, linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%) padding-box';
   function renderProfButtons() {
-    const tc = upg.traceColor || 'rainbow';
-    const curCss = tc.charAt(0) === '#' ? tc : (RAINBOWS.find(r => r[0] === tc) || RAINBOWS[0])[1];
+    const tc = upg.traceColor || '#ffffff';
+    const curCss = traceColorCss(tc);
     const ti = document.querySelector('#prof-trace-btn .pcb-ic');
     if (ti) ti.innerHTML = `<div style="width:24px;height:5px;border-radius:99px;background:${curCss}"></div>`;
     const tb = document.querySelector('#prof-tomb-btn .pcb-ic');
