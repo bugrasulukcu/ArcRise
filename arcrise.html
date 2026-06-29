@@ -8759,18 +8759,30 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Çerçeve (stroke) + en yüksek skor/mesafe = trace (kuyruk) rengi.
     // Gökkuşağı seçiliyse gradyen border (padding/border-box trick — köşeler yuvarlak kalır).
     const m = traceMainColor();
+    const anim = upg.traceAnim || 'none';   // profil stroke efekti = trace animasyonu
     const box = document.getElementById('prof-modal-box');
     if (box) {
-      if (m.isGrad) {
+      box.style.setProperty('--prof-glow', m.glow);
+      const RB = '#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255';
+      if (anim === 'rainbow') {
+        // Renk döngüsü → dönen konik (merkez = profil resmi)
+        const conic = m.isGrad ? m.conic : `conic-gradient(from var(--a) at 50% 62px, ${RB})`;
         box.style.borderColor = 'transparent';
-        box.style.background = `${PROF_BOX_BG}, ${m.conic} border-box`;
-        box.style.animation = 'spinA 3s linear infinite';   // settings gibi dönen stroke
-        box.style.boxShadow = `0 0 30px rgba(170,120,255,.28)`;
-      } else {
-        box.style.animation = '';
-        box.style.background = '';   // CSS varsayılanına dön
-        box.style.borderColor = m.solid;
+        box.style.background = `${PROF_BOX_BG}, ${conic} border-box`;
+        box.style.animation = 'spinA 3s linear infinite';
         box.style.boxShadow = `0 0 30px ${m.glow}`;
+      } else {
+        // Statik stroke (gradyen ya da düz renk) + glow/pulse efekti
+        if (m.isGrad) {
+          box.style.borderColor = 'transparent';
+          box.style.background = `${PROF_BOX_BG}, ${m.conic} border-box`;
+        } else {
+          box.style.background = '';   // CSS varsayılanına dön
+          box.style.borderColor = m.solid;
+        }
+        if (anim === 'glow')       { box.style.animation = 'profStrokeGlow 2.4s ease-in-out infinite';  box.style.boxShadow = `0 0 26px ${m.glow}`; }
+        else if (anim === 'pulse') { box.style.animation = 'profStrokePulse 1.1s ease-in-out infinite'; box.style.boxShadow = `0 0 20px ${m.glow}`; }
+        else                       { box.style.animation = '';  box.style.boxShadow = `0 0 30px ${m.glow}`; }
       }
     }
     ['ps-score', 'ps-distbest'].forEach(id => {
