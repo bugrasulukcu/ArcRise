@@ -6702,7 +6702,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     ctx.save();
     const userColor = (upg && upg.traceColor) || '#ffffff';
     const isCustom = userColor === 'custom';
-    const customCols = isCustom ? ((upg.customGrad || '').match(/#[0-9a-fA-F]{6}/g) || ['#ffffff']) : null;
+    const customCols = isCustom
+      ? ((upg.customStops && upg.customStops.length) ? upg.customStops : ((upg.customGrad || '').match(/#[0-9a-fA-F]{6}|transparent/g) || ['#ffffff']))
+      : null;
     const isHex = !isCustom && userColor.charAt(0) === '#';
     const rgb = isHex ? hexToRgb(userColor) : null;
     const rb  = (isHex || isCustom) ? null : (RB_HUE[userColor] || RB_HUE['rainbow']);
