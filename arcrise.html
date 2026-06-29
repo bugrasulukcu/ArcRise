@@ -8718,22 +8718,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       .replace(/[^a-zçğıöşü]/g, '');
     return collapsed ? BAD_WORDS.some(w => collapsed.includes(w.replace(/[^a-zçğıöşü]/g, ''))) : false;
   }
-  // DEATH TEXT — sadece KULLANICI ADI: 50 coin ile aç, sonra aç/kapa. Ölüm noktasında gösterilir.
+  // DEATH TEXT — sadece KULLANICI ADI. Bu ekran yalnızca SAHİP DEĞİLKEN açılır (satın alma).
+  // Satın alındıktan sonra profil sayfasındaki butona dokununca aç/kapa olur.
   function renderDeathText() {
     const body = document.getElementById('deathtext-body');
-    const owned = !!upg.nameOwned, on = !!upg.deathName;
-    body.innerHTML = `
-      <div class="custom-card">
-        ${owned
-          ? `<button class="dt-opt ${on ? 'active' : ''}" id="name-toggle">${on ? 'ON' : 'OFF'}</button>`
-          : `<button class="dt-opt" id="name-buy">${iconHTML('coin', { size: 12 })} ${NAME_PRICE}</button>`}
-      </div>`;
+    body.innerHTML = `<div class="custom-card"><button class="dt-opt" id="name-buy">${iconHTML('coin', { size: 12 })} ${NAME_PRICE}</button></div>`;
     const buy = document.getElementById('name-buy');
     if (buy) buy.addEventListener('click', () => confirmPurchase('Death text · username', NAME_PRICE, () => {
-      if (!spendCoins(NAME_PRICE)) return; upg.nameOwned = true; upg.deathName = true; saveUpg(); renderDeathText();
+      if (!spendCoins(NAME_PRICE)) return; upg.nameOwned = true; upg.deathName = true; saveUpg();
+      closeSub('deathtext-modal'); renderProfButtons();
     }));
-    const tog = document.getElementById('name-toggle');
-    if (tog) tog.addEventListener('click', () => { upg.deathName = !upg.deathName; saveUpg(); renderDeathText(); });
   }
 
   // Tap profile card → open profile edit (but coin pill has its own handler)
