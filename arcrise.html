@@ -1268,9 +1268,17 @@
     }
     .prof-eq-slot:active { transform: scale(0.94); }
     .prof-eq-icon { font-size: 22px; line-height: 1; }
-    .prof-eq-empty { font-size: 20px; color: rgba(255,255,255,.30); }
+    /* boş slot = görsel placeholder (çizgili kare) */
+    .prof-eq-empty {
+      width: 26px; height: 26px; border-radius: 7px;
+      border: 1px dashed rgba(255,255,255,.28);
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 5px, transparent 5px 10px);
+    }
     .prof-eq-slot.filled .prof-eq-empty { display: none; }
     .prof-eq-slot:not(.filled) .prof-eq-icon { display: none; }
+    /* badge slot + etiket sütunu */
+    .prof-eq-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .prof-eq-lbl { font-size: 8px; letter-spacing: 1.2px; color: rgba(255,255,255,.5); }
 
     /* Avatar preview with rainbow ring (now a button — tap to open picker) */
     #prof-av-ring {
