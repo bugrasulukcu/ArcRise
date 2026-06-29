@@ -6707,6 +6707,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Segment rengi (alpha verilir). Gökkuşağında gradient döner.
     const strokeFor = (i, a, b, al) => {
       if (isHex) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
+      if (isCustom) {
+        // Custom palet: trail boyunca renkler arasında akan gradyen
+        const n = customCols.length;
+        const f = (((time * 0.1) + i * 0.03) % 1 + 1) % 1;
+        const k = Math.floor(f * n) % n, k2 = (k + 1) % n;
+        const c1 = hexToRgb(customCols[k]), c2 = hexToRgb(customCols[k2]);
+        const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
+        gr.addColorStop(0, `rgba(${c1.r},${c1.g},${c1.b},${al})`);
+        gr.addColorStop(1, `rgba(${c2.r},${c2.g},${c2.b},${al})`);
+        return gr;
+      }
       const base = rb[0], span = rb[1];
       const h1 = base + (((time * 80) + i * 3) % span);
       const h2 = base + (((time * 80) + i * 3 + 35) % span);
