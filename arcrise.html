@@ -1323,15 +1323,19 @@
     #prof-custom-row { display: flex; gap: 8px; width: 100%; }
     .prof-custom-btn {
       flex: 1; min-width: 0;
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      padding: 10px 4px; border-radius: 12px; cursor: pointer;
-      background: rgba(255,255,255,.04); border: 1px solid rgba(170,120,255,.28);
-      color: #cfb5ff; font-family: var(--font);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 13px 4px; border-radius: 14px; cursor: pointer;
+      border: 1.5px solid rgba(170,120,255,.45);
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(190,150,255,.22), transparent 62%),
+        linear-gradient(180deg, rgba(72,46,128,.55), rgba(28,16,54,.62));
+      color: #d8c4ff; font-family: var(--font);
       font-size: 9px; letter-spacing: 1px;
-      transition: background .15s, border-color .15s, transform .12s;
+      box-shadow: 0 3px 12px rgba(120,70,220,.22), inset 0 1px 0 rgba(255,255,255,.12);
+      transition: filter .15s, border-color .15s, transform .12s, box-shadow .2s;
     }
-    .prof-custom-btn:hover { background: rgba(170,120,255,.14); border-color: rgba(170,120,255,.5); }
-    .prof-custom-btn:active { transform: scale(0.96); }
+    .prof-custom-btn:hover { filter: brightness(1.12); border-color: rgba(190,150,255,.7); }
+    .prof-custom-btn:active { transform: scale(0.95); }
     /* AÇIK (ON) ise yeşil ışık */
     .prof-custom-btn.on {
       border-color: rgba(124,255,122,.7); color: #cdeccb;
