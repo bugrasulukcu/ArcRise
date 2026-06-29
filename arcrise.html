@@ -8784,6 +8784,45 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderProfButtons();
   }
 
+  // ── Custom gradyen düzenleyici ────────────────────────────
+  const _tceBuild = () => {
+    const c1 = document.getElementById('tce-c1').value;
+    const c2 = document.getElementById('tce-c2').value;
+    const c3 = document.getElementById('tce-c3').value;
+    return `linear-gradient(90deg,${c1},${c2},${c3})`;
+  };
+  const _tcePreview = () => {
+    const pv = document.getElementById('tce-preview');
+    if (pv) pv.style.background = _tceBuild();
+  };
+  function openCustomEditor() {
+    const ed = document.getElementById('trace-custom-editor');
+    if (!ed) return;
+    // Mevcut custom gradyenden renkleri çek (yoksa varsayılan)
+    const cols = (upg.customGrad || '').match(/#[0-9a-fA-F]{6}/g) || ['#ff3b3b', '#3bd1ff', '#c45bff'];
+    document.getElementById('tce-c1').value = cols[0] || '#ff3b3b';
+    document.getElementById('tce-c2').value = cols[1] || '#3bd1ff';
+    document.getElementById('tce-c3').value = cols[2] || '#c45bff';
+    _tcePreview();
+    ed.classList.add('open');
+    ed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  ['tce-c1', 'tce-c2', 'tce-c3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', _tcePreview);
+  });
+  document.getElementById('tce-cancel').addEventListener('click', () => {
+    document.getElementById('trace-custom-editor').classList.remove('open');
+  });
+  document.getElementById('tce-save').addEventListener('click', () => {
+    upg.customGrad = _tceBuild();
+    upg.traceColor = 'custom';
+    if (!_has('traceColorsOwned', 'custom')) _own('traceColorsOwned').push('custom');
+    saveUpg();
+    document.getElementById('trace-custom-editor').classList.remove('open');
+    renderTrace();
+  });
+
   // TOMB — sadece PROFİL RESMİ. Bu ekran yalnızca SAHİP DEĞİLKEN açılır (satın alma).
   // Satın alındıktan sonra profil sayfasındaki butona dokununca aç/kapa olur.
   function renderTomb() {
