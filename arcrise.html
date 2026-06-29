@@ -8749,9 +8749,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (tb) tb.innerHTML = (upg.tomb | 0) === 0
       ? `<img src="${avatarSrc()}" style="width:24px;height:24px;border-radius:6px;object-fit:cover">`
       : `<span style="display:block;width:22px;height:22px;border-radius:6px;border:1px dashed rgba(180,150,255,.4);background:repeating-linear-gradient(45deg,rgba(180,150,255,.14) 0 5px,transparent 5px 10px)"></span>`;
-    // Çerçeve rengi = trace rengi
+    // Çerçeve rengi + en yüksek skor/mesafe = trace (kuyruk) rengi
+    const m = traceMainColor();
     const box = document.getElementById('prof-modal-box');
-    if (box) { const m = traceMainColor(); box.style.borderColor = m.solid; box.style.boxShadow = `0 0 30px ${m.glow}`; }
+    if (box) { box.style.borderColor = m.solid; box.style.boxShadow = `0 0 30px ${m.glow}`; }
+    ['ps-score', 'ps-distbest'].forEach(id => { const e = document.getElementById(id); if (e) e.style.color = m.solid; });
     // AÇIK olanların çevresinde yeşil ışık
     const setOn = (id, on) => { const b = document.getElementById(id); if (b) b.classList.toggle('on', !!on); };
     setOn('prof-tomb-btn', upg.deathAvatar);
