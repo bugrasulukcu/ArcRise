@@ -8730,7 +8730,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
     if (rb) {
       const cols = rb[1].match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
-      const conic = `conic-gradient(from var(--a), ${cols.concat(cols[0]).join(',')})`;
+      // Dönme merkezi = profil resminin ortası (üst padding 24px + avatar yarıçapı 38px ≈ 62px).
+      const conic = `conic-gradient(from var(--a) at 50% 62px, ${cols.concat(cols[0]).join(',')})`;
       return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic, isGrad: true, glow: `hsla(${hh},85%,60%,.30)` };
     }
     return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false, glow: `hsla(${hh},85%,60%,.30)` };
