@@ -5266,9 +5266,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -3..+3 active
     speedPos: 0,  speedNeg: 0,  speedActive: 0,
     timer: 0,                                    // 0..4 (+sec on combo)
-    traceColor: 'rainbow',                       // 'rainbow' | 'rb:xxx' | hex
+    traceColor: '#ffffff',                       // varsayılan BEYAZ ('rainbow' | 'rb:xxx' | 'custom' | hex)
     traceThickness: 0,                           // preset: 0/6/12/20
-    traceAnim: 'none',                           // none | pulse | rainbow | glow
+    traceAnim: 'none',                           // none | wave | pulse | glow
+    customGrad: '',                              // kullanıcının oluşturduğu gradyen (css linear-gradient)
+    customOwned: false,                          // custom gradyen özelliği satın alındı mı (50 coin)
     traceShown: false,                           // izi diğer oyunculara göster (açık/kapalı)
     traceOwned: false,                           // "show to others" özelliği satın alındı mı (50 coin)
     // Ölüm noktası: profil resmi (tomb) + kullanıcı adı (name) — 50'şer coin, aç/kapa
