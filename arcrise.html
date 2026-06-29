@@ -7532,6 +7532,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         else stats.gamesNormal++;
         // Profil: ömür boyu mesafe + en uzun combo + günlük seri
         stats.distLifetimeCm = (stats.distLifetimeCm || 0) + runDistCm;
+        stats.scoreLifetime  = (stats.scoreLifetime || 0) + lastScore;   // ortalama skor için kümülatif
         if (_runMaxCombo > (stats.maxCombo || 0)) stats.maxCombo = _runMaxCombo;
         const todayStr = questTodayStr();
         if (stats.lastPlayDate !== todayStr) {
