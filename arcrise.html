@@ -7666,7 +7666,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       dName: !!upg.deathName,              // kullanıcı adı işaretçisi açık mı
       dAv:   !!upg.deathAvatar,            // avatar (tomb) işaretçisi açık mı
     };
-    if (ghostSampled.length >= 4) {
+    if (upg.traceShown && ghostSampled.length >= 4) {  // sadece "show to others" satın alınıp açıksa yayılır
       const src  = ghostSampled;
       const step = Math.max(1, Math.floor(src.length / 150));
       const out  = [];
