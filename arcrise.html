@@ -8806,37 +8806,46 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderProfButtons();
   }
 
-  // ── Custom gradyen düzenleyici ────────────────────────────
-  const _tceBuild = () => {
-    const c1 = document.getElementById('tce-c1').value;
-    const c2 = document.getElementById('tce-c2').value;
-    const c3 = document.getElementById('tce-c3').value;
-    return `linear-gradient(90deg,${c1},${c2},${c3})`;
-  };
-  const _tcePreview = () => {
+  // ── Custom gradyen düzenleyici (sabit palet: 16 ana renk + siyah/beyaz/gri + şeffaf) ──
+  const CUSTOM_PALETTE = [
+    '#ff3b3b', '#ff7a3b', '#ffab3b', '#ffe23b', '#b6ff3b', '#5bff7a', '#3bffb1', '#3bf0ff',
+    '#3bb1ff', '#3b7bff', '#5b3bff', '#9a3bff', '#c45bff', '#ff3bd1', '#ff3b8b', '#ff5b6b',
+    '#ffffff', '#bbbbbb', '#777777', '#000000', 'transparent',
+  ];
+  let _tceStops = ['#ff3b3b', '#3bd1ff', '#c45bff'];
+  let _tceSel = 0;
+  const _swCss = c => c === 'transparent' ? 'background:transparent' : `background:${c}`;
+  const _tceBuild = () => `linear-gradient(90deg,${_tceStops.join(',')})`;
+  function _tceRender() {
     const pv = document.getElementById('tce-preview');
-    if (pv) pv.style.background = _tceBuild();
-  };
+    if (pv) { pv.style.background = _tceBuild(); pv.classList.toggle('tce-checker', _tceStops.includes('transparent')); }
+    const stopsEl = document.getElementById('tce-stops');
+    if (stopsEl) {
+      stopsEl.innerHTML = _tceStops.map((c, i) =>
+        `<button class="tce-stop ${i === _tceSel ? 'active' : ''} ${c === 'transparent' ? 'tce-checker' : ''}" data-stop="${i}" style="${_swCss(c)}"></button>`).join('');
+      stopsEl.querySelectorAll('[data-stop]').forEach(b => b.addEventListener('click', () => { _tceSel = +b.dataset.stop; _tceRender(); }));
+    }
+    const pal = document.getElementById('tce-palette');
+    if (pal) {
+      pal.innerHTML = CUSTOM_PALETTE.map(c =>
+        `<button class="tce-sw ${c === _tceStops[_tceSel] ? 'sel' : ''} ${c === 'transparent' ? 'tce-checker' : ''}" data-c="${c}" style="${_swCss(c)}"></button>`).join('');
+      pal.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => { _tceStops[_tceSel] = b.dataset.c; _tceRender(); }));
+    }
+  }
   function openCustomEditor() {
     const ed = document.getElementById('trace-custom-editor');
     if (!ed) return;
-    // Mevcut custom gradyenden renkleri çek (yoksa varsayılan)
-    const cols = (upg.customGrad || '').match(/#[0-9a-fA-F]{6}/g) || ['#ff3b3b', '#3bd1ff', '#c45bff'];
-    document.getElementById('tce-c1').value = cols[0] || '#ff3b3b';
-    document.getElementById('tce-c2').value = cols[1] || '#3bd1ff';
-    document.getElementById('tce-c3').value = cols[2] || '#c45bff';
-    _tcePreview();
+    _tceStops = (upg.customStops && upg.customStops.length === 3) ? upg.customStops.slice() : ['#ff3b3b', '#3bd1ff', '#c45bff'];
+    _tceSel = 0;
+    _tceRender();
     ed.classList.add('open');
     ed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
-  ['tce-c1', 'tce-c2', 'tce-c3'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', _tcePreview);
-  });
   document.getElementById('tce-cancel').addEventListener('click', () => {
     document.getElementById('trace-custom-editor').classList.remove('open');
   });
   document.getElementById('tce-save').addEventListener('click', () => {
+    upg.customStops = _tceStops.slice();
     upg.customGrad = _tceBuild();
     upg.traceColor = 'custom';
     if (!_has('traceColorsOwned', 'custom')) _own('traceColorsOwned').push('custom');
