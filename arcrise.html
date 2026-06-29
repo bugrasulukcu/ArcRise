@@ -1231,6 +1231,7 @@
     }
     #prof-modal.open { display: flex; }
     #prof-modal-box {
+      position: relative;
       background:
         radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
         linear-gradient(180deg, rgba(12,16,26,0.72) 0%, rgba(8,10,18,0.78) 100%);
@@ -1243,6 +1244,7 @@
       max-height: 92vh; overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
+    #prof-back-arrow { position: absolute; top: 16px; left: 16px; z-index: 2; }
     #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
 
     /* Avatar row: badge slot ─ avatar ─ badge slot */
