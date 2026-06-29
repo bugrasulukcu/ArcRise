@@ -8836,19 +8836,31 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderProfButtons();
   }
   // Profil ana butonlarında seçili trace/tomb önizlemesi + çerçeve rengi.
+  // Konik gradyen kur — merkez = profil resmi (üst padding 24 + avatar yarıçapı 38 ≈ 62px).
+  const _conicFrom = cols => `conic-gradient(from var(--a) at 50% 62px, ${cols.concat(cols[0]).join(',')})`;
   function traceMainColor() {
-    const tc = upg.traceColor || 'rainbow';
-    if (tc.charAt(0) === '#') { const r = hexToRgb(tc); return { solid: tc, css: tc, isGrad: false, glow: `rgba(${r.r},${r.g},${r.b},.30)` }; }
+    const tc = upg.traceColor || '#ffffff';
+    // Custom kullanıcı gradyeni
+    if (tc === 'custom' && upg.customGrad) {
+      const cols = upg.customGrad.match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
+      const r = hexToRgb(cols[0]);
+      return { solid: cols[0], css: upg.customGrad, conic: _conicFrom(cols), isGrad: true,
+               glow: `rgba(${r.r},${r.g},${r.b},.32)`, glowStrong: `rgba(${r.r},${r.g},${r.b},.6)` };
+    }
+    if (tc.charAt(0) === '#') {
+      const r = hexToRgb(tc);
+      return { solid: tc, css: tc, isGrad: false, glow: `rgba(${r.r},${r.g},${r.b},.32)`, glowStrong: `rgba(${r.r},${r.g},${r.b},.6)` };
+    }
     // Gökkuşağı / rainbow varyantı → dönen konik gradyen (settings/avatar halkası gibi)
     const rb = RAINBOWS.find(r => r[0] === tc);
     const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
     if (rb) {
       const cols = rb[1].match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
-      // Dönme merkezi = profil resminin ortası (üst padding 24px + avatar yarıçapı 38px ≈ 62px).
-      const conic = `conic-gradient(from var(--a) at 50% 62px, ${cols.concat(cols[0]).join(',')})`;
-      return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic, isGrad: true, glow: `hsla(${hh},85%,60%,.30)` };
+      return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic: _conicFrom(cols), isGrad: true,
+               glow: `hsla(${hh},85%,60%,.30)`, glowStrong: `hsla(${hh},90%,62%,.6)` };
     }
-    return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false, glow: `hsla(${hh},85%,60%,.30)` };
+    return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false,
+             glow: `hsla(${hh},85%,60%,.30)`, glowStrong: `hsla(${hh},90%,62%,.6)` };
   }
   // Profil kutusu padding-box temel zemini (gradyen border trick için).
   const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%) padding-box, linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%) padding-box';
