@@ -8754,11 +8754,35 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (tb) tb.innerHTML = (upg.tomb | 0) === 0
       ? `<img src="${avatarSrc()}" style="width:24px;height:24px;border-radius:6px;object-fit:cover">`
       : `<span style="display:block;width:22px;height:22px;border-radius:6px;border:1px dashed rgba(180,150,255,.4);background:repeating-linear-gradient(45deg,rgba(180,150,255,.14) 0 5px,transparent 5px 10px)"></span>`;
-    // Çerçeve rengi + en yüksek skor/mesafe = trace (kuyruk) rengi
+    // Çerçeve (stroke) + en yüksek skor/mesafe = trace (kuyruk) rengi.
+    // Gökkuşağı seçiliyse gradyen border (padding/border-box trick — köşeler yuvarlak kalır).
     const m = traceMainColor();
     const box = document.getElementById('prof-modal-box');
-    if (box) { box.style.borderColor = m.solid; box.style.boxShadow = `0 0 30px ${m.glow}`; }
-    ['ps-score', 'ps-distbest'].forEach(id => { const e = document.getElementById(id); if (e) e.style.color = m.solid; });
+    if (box) {
+      if (m.isGrad) {
+        box.style.borderColor = 'transparent';
+        box.style.background = `${PROF_BOX_BG} padding-box, ${m.css} border-box`;
+        box.style.boxShadow = `0 0 30px rgba(170,120,255,.28)`;
+      } else {
+        box.style.background = '';   // CSS varsayılanına dön
+        box.style.borderColor = m.solid;
+        box.style.boxShadow = `0 0 30px ${m.glow}`;
+      }
+    }
+    ['ps-score', 'ps-distbest'].forEach(id => {
+      const e = document.getElementById(id); if (!e) return;
+      if (m.isGrad) {
+        e.style.color = 'transparent';
+        e.style.backgroundImage = m.css;
+        e.style.webkitBackgroundClip = 'text';
+        e.style.backgroundClip = 'text';
+      } else {
+        e.style.color = m.solid;
+        e.style.backgroundImage = '';
+        e.style.webkitBackgroundClip = '';
+        e.style.backgroundClip = '';
+      }
+    });
     // AÇIK olanların çevresinde yeşil ışık
     const setOn = (id, on) => { const b = document.getElementById(id); if (b) b.classList.toggle('on', !!on); };
     setOn('prof-tomb-btn', upg.deathAvatar);
