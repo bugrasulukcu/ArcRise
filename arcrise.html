@@ -254,14 +254,14 @@
       cursor: pointer;
     }
     @keyframes spinA { to { --a: 360deg; } }
-    /* Profil stroke efektleri — trace animasyonuna göre (glow/pulse) */
-    @keyframes profStrokeGlow {
-      0%, 100% { box-shadow: 0 0 14px var(--prof-glow, rgba(170,120,255,.3)); }
-      50%      { box-shadow: 0 0 42px var(--prof-glow, rgba(170,120,255,.3)); }
-    }
-    @keyframes profStrokePulse {
-      0%, 100% { box-shadow: 0 0 6px var(--prof-glow, rgba(170,120,255,.3)); }
-      50%      { box-shadow: 0 0 34px var(--prof-glow, rgba(170,120,255,.3)); }
+    /* Profil stroke — kalp atışı (lub-dub) efekti */
+    @keyframes profHeartBeat {
+      0%   { box-shadow: 0 0 6px var(--prof-glow, rgba(170,120,255,.3)); }
+      10%  { box-shadow: 0 0 32px var(--prof-glowS, rgba(170,120,255,.6)); }
+      20%  { box-shadow: 0 0 8px var(--prof-glow, rgba(170,120,255,.3)); }
+      32%  { box-shadow: 0 0 28px var(--prof-glowS, rgba(170,120,255,.6)); }
+      45%  { box-shadow: 0 0 6px var(--prof-glow, rgba(170,120,255,.3)); }
+      100% { box-shadow: 0 0 6px var(--prof-glow, rgba(170,120,255,.3)); }
     }
     .rb-inner {
       background: rgba(22,26,38,0.96);
