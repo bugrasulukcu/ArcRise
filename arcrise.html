@@ -8560,11 +8560,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
     const s = stats || {};
-    // 4 ana stat (profil)
+    // Üst: en yüksek skor / en uzun mesafe — Alt: toplam oyun / ortalama skor / ortalama mesafe
+    const games = s.gamesTotal || 0;
     set('ps-score',    pad(Math.max(s.bestNormal || 0, s.bestExtreme || 0)));        // en yüksek skor
     set('ps-distbest', fmtDist(Math.max(s.bestDistNormal || 0, s.bestDistExtreme || 0))); // en uzun mesafe
-    set('ps-games',    s.gamesTotal || 0);
-    set('ps-coins',    coinsEarnedFrom(distTotal));            // toplam kazanılan coin
+    set('ps-games',    games);
+    set('ps-avgscore', pad(games ? Math.round((s.scoreLifetime || 0) / games) : 0)); // ortalama skor
+    set('ps-avgdist',  fmtDist(games ? (s.distLifetimeCm || 0) / games : 0));         // ortalama mesafe
     // ANALYSIS (detaylı)
     set('pm-score-n',  pad(s.bestNormal  || 0));
     set('pm-score-e',  pad(s.bestExtreme || 0));
