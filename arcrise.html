@@ -8637,9 +8637,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
 
   // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
-  const TR_COLOR_PRICE = 4, TR_THICK_PRICE = 4, TR_ANIM_PRICE = 6, TRACE_SHOW_PRICE = 50, TOMB_PRICE = 50, NAME_PRICE = 50;
+  const TR_THICK_PRICE = 4, TR_ANIM_PRICE = 6, TRACE_SHOW_PRICE = 50, TOMB_PRICE = 50, NAME_PRICE = 50, CUSTOM_PRICE = 50;
   const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
-  const TRACE_ANIMS  = [['none', 'OFF'], ['pulse', 'PULSE'], ['rainbow', 'RAINBOW'], ['glow', 'GLOW']];
+  const TRACE_ANIMS  = [['none', 'OFF'], ['wave', 'WAVE'], ['pulse', 'PULSE'], ['glow', 'GLOW']];
+  // Renk fiyatları: beyaz bedava · düz renk 5 · gradyen 10 · gökkuşağı 30 · custom 50
+  const traceColorPrice = id =>
+    id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 30 : (id.indexOf('rb:') === 0 ? 10 : 5);
+  const traceColorOwned = id => id === '#ffffff' || _has('traceColorsOwned', id);
   const RAINBOWS = [
     ['rainbow', 'linear-gradient(90deg,#ff3b3b,#ffb13b,#ffe23b,#5bff7a,#3bd1ff,#3b7bff,#c45bff)'],
     ['rb:warm', 'linear-gradient(90deg,#ff3b3b,#ff9a3b,#ffe23b)'],
