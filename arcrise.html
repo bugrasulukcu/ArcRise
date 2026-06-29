@@ -8725,10 +8725,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function traceMainColor() {
     const tc = upg.traceColor || 'rainbow';
     if (tc.charAt(0) === '#') { const r = hexToRgb(tc); return { solid: tc, css: tc, isGrad: false, glow: `rgba(${r.r},${r.g},${r.b},.30)` }; }
-    // Gökkuşağı / rainbow varyantı → gerçek gradyen (avatar halkası gibi)
+    // Gökkuşağı / rainbow varyantı → dönen konik gradyen (settings/avatar halkası gibi)
     const rb = RAINBOWS.find(r => r[0] === tc);
     const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
-    if (rb) return { solid: `hsl(${hh},85%,64%)`, css: rb[1], isGrad: true, glow: `hsla(${hh},85%,60%,.30)` };
+    if (rb) {
+      const cols = rb[1].match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
+      const conic = `conic-gradient(from var(--a), ${cols.concat(cols[0]).join(',')})`;
+      return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic, isGrad: true, glow: `hsla(${hh},85%,60%,.30)` };
+    }
     return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false, glow: `hsla(${hh},85%,60%,.30)` };
   }
   // Profil kutusu padding-box temel zemini (gradyen border trick için).
