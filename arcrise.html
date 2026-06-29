@@ -8753,9 +8753,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (box) {
       if (m.isGrad) {
         box.style.borderColor = 'transparent';
-        box.style.background = `${PROF_BOX_BG}, ${m.css} border-box`;
+        box.style.background = `${PROF_BOX_BG}, ${m.conic} border-box`;
+        box.style.animation = 'spinA 3s linear infinite';   // settings gibi dönen stroke
         box.style.boxShadow = `0 0 30px rgba(170,120,255,.28)`;
       } else {
+        box.style.animation = '';
         box.style.background = '';   // CSS varsayılanına dön
         box.style.borderColor = m.solid;
         box.style.boxShadow = `0 0 30px ${m.glow}`;
