@@ -8872,9 +8872,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const _conicFrom = cols => `conic-gradient(from var(--a) at 50% 62px, ${cols.concat(cols[0]).join(',')})`;
   function traceMainColor() {
     const tc = upg.traceColor || '#ffffff';
-    // Custom kullanıcı gradyeni
+    // Custom kullanıcı gradyeni (durakları şeffaf olabilir → konik/glow için hex'leri süz)
     if (tc === 'custom' && upg.customGrad) {
-      const cols = upg.customGrad.match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
+      const stops = (upg.customStops && upg.customStops.length) ? upg.customStops : (upg.customGrad.match(/#[0-9a-fA-F]{3,8}|transparent/g) || ['#fff']);
+      const cols = stops.filter(s => s.charAt(0) === '#'); if (!cols.length) cols.push('#ffffff');
       const r = hexToRgb(cols[0]);
       return { solid: cols[0], css: upg.customGrad, conic: _conicFrom(cols), isGrad: true,
                glow: `rgba(${r.r},${r.g},${r.b},.32)`, glowStrong: `rgba(${r.r},${r.g},${r.b},.6)` };
