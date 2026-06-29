@@ -8645,22 +8645,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderProfButtons();
   }
 
-  // TOMB — sadece PROFİL RESMİ: 50 coin ile aç, sonra aç/kapa. Ölüm noktasında gösterilir.
+  // TOMB — sadece PROFİL RESMİ. Bu ekran yalnızca SAHİP DEĞİLKEN açılır (satın alma).
+  // Satın alındıktan sonra profil sayfasındaki butona dokununca aç/kapa olur.
   function renderTomb() {
     const g = document.getElementById('tomb-grid');
-    const owned = !!upg.tombOwned, on = !!upg.deathAvatar;
-    g.innerHTML = `
-      <div class="custom-card">
-        ${owned
-          ? `<button class="dt-opt ${on ? 'active' : ''}" id="tomb-toggle">${on ? 'ON' : 'OFF'}</button>`
-          : `<button class="dt-opt" id="tomb-buy">${iconHTML('coin', { size: 12 })} ${TOMB_PRICE}</button>`}
-      </div>`;
+    g.innerHTML = `<div class="custom-card"><button class="dt-opt" id="tomb-buy">${iconHTML('coin', { size: 12 })} ${TOMB_PRICE}</button></div>`;
     const buy = document.getElementById('tomb-buy');
     if (buy) buy.addEventListener('click', () => confirmPurchase('Tomb · profile picture', TOMB_PRICE, () => {
-      if (!spendCoins(TOMB_PRICE)) return; upg.tombOwned = true; upg.deathAvatar = true; saveUpg(); renderTomb();
+      if (!spendCoins(TOMB_PRICE)) return; upg.tombOwned = true; upg.deathAvatar = true; saveUpg();
+      closeSub('tomb-modal'); renderProfButtons();
     }));
-    const tog = document.getElementById('tomb-toggle');
-    if (tog) tog.addEventListener('click', () => { upg.deathAvatar = !upg.deathAvatar; saveUpg(); renderTomb(); });
     renderProfButtons();
   }
   // Profil ana butonlarında seçili trace/tomb önizlemesi + çerçeve rengi.
