@@ -8715,7 +8715,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return (RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
   }
   function renderTrace() {
-    if (upg.traceAnim === 'rainbow') { upg.traceAnim = 'wave'; saveUpg(); } // eski 'rainbow' anim → wave
+    // Eski 'rainbow' animasyonu → 'wave' (sahiplik + seçim göçü)
+    let _mig = false;
+    if (_has('traceAnimsOwned', 'rainbow') && !_has('traceAnimsOwned', 'wave')) { _own('traceAnimsOwned').push('wave'); _mig = true; }
+    if (upg.traceAnim === 'rainbow') { upg.traceAnim = 'wave'; _mig = true; }
+    if (_mig) saveUpg();
     const cur = upg.traceColor || '#ffffff';
     // Önizleme
     const pv = document.getElementById('trace-preview');
