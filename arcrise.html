@@ -1513,36 +1513,6 @@
     }
     #prof-upgrade-btn:active { transform: scale(0.97); }
 
-    /* Footer actions: BACK + SAVE side by side */
-    #prof-actions {
-      display: flex; gap: 10px; width: 100%;
-    }
-    #prof-modal-back, #prof-modal-save {
-      flex: 1; padding: 12px; border-radius: 12px;
-      font-family: var(--font);
-      font-size: 12px; letter-spacing: 2.2px; cursor: pointer;
-      transition: transform .12s, box-shadow .2s;
-    }
-    #prof-modal-back {
-      border: 1.5px solid rgba(255,255,255,.25);
-      background:
-        radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(180deg, rgba(40,46,60,.78), rgba(14,18,28,.85));
-      color: rgba(255,255,255,.75);
-    }
-    #prof-modal-save {
-      border: 1.5px solid rgba(124,255,122,.7);
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.30), transparent 60%),
-        linear-gradient(180deg, rgba(60,180,80,.45), rgba(20,80,30,.55));
-      color: #d4ffd0;
-      box-shadow:
-        0 0 18px rgba(124,255,122,.28),
-        inset 0 1px 0 rgba(255,255,255,.18),
-        inset 0 -5px 10px rgba(0,40,10,.25);
-    }
-    #prof-modal-back:active, #prof-modal-save:active { transform: scale(0.97); }
-
     /* Badges modal (opened from equip slots) */
     #badges-modal {
       position: fixed; inset: 0; z-index: 59;
