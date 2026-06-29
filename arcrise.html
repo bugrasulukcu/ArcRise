@@ -8744,7 +8744,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false, glow: `hsla(${hh},85%,60%,.30)` };
   }
   // Profil kutusu padding-box temel zemini (gradyen border trick için).
-  const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%), linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%)';
+  const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%) padding-box, linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%) padding-box';
   function renderProfButtons() {
     const tc = upg.traceColor || 'rainbow';
     const curCss = tc.charAt(0) === '#' ? tc : (RAINBOWS.find(r => r[0] === tc) || RAINBOWS[0])[1];
