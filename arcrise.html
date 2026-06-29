@@ -8736,10 +8736,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Profil ana butonlarında seçili trace/tomb önizlemesi + çerçeve rengi.
   function traceMainColor() {
     const tc = upg.traceColor || 'rainbow';
-    if (tc.charAt(0) === '#') { const r = hexToRgb(tc); return { solid: tc, glow: `rgba(${r.r},${r.g},${r.b},.30)` }; }
-    let h = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
-    return { solid: `hsl(${h},85%,64%)`, glow: `hsla(${h},85%,60%,.30)` };
+    if (tc.charAt(0) === '#') { const r = hexToRgb(tc); return { solid: tc, css: tc, isGrad: false, glow: `rgba(${r.r},${r.g},${r.b},.30)` }; }
+    // Gökkuşağı / rainbow varyantı → gerçek gradyen (avatar halkası gibi)
+    const rb = RAINBOWS.find(r => r[0] === tc);
+    const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
+    if (rb) return { solid: `hsl(${hh},85%,64%)`, css: rb[1], isGrad: true, glow: `hsla(${hh},85%,60%,.30)` };
+    return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false, glow: `hsla(${hh},85%,60%,.30)` };
   }
+  // Profil kutusu padding-box temel zemini (gradyen border trick için).
+  const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%), linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%)';
   function renderProfButtons() {
     const tc = upg.traceColor || 'rainbow';
     const curCss = tc.charAt(0) === '#' ? tc : (RAINBOWS.find(r => r[0] === tc) || RAINBOWS[0])[1];
