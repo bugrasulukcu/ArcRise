@@ -254,6 +254,15 @@
       cursor: pointer;
     }
     @keyframes spinA { to { --a: 360deg; } }
+    /* Profil stroke efektleri — trace animasyonuna göre (glow/pulse) */
+    @keyframes profStrokeGlow {
+      0%, 100% { box-shadow: 0 0 14px var(--prof-glow, rgba(170,120,255,.3)); }
+      50%      { box-shadow: 0 0 42px var(--prof-glow, rgba(170,120,255,.3)); }
+    }
+    @keyframes profStrokePulse {
+      0%, 100% { box-shadow: 0 0 6px var(--prof-glow, rgba(170,120,255,.3)); }
+      50%      { box-shadow: 0 0 34px var(--prof-glow, rgba(170,120,255,.3)); }
+    }
     .rb-inner {
       background: rgba(22,26,38,0.96);
       border-radius: 13px;
