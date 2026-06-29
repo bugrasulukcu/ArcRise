@@ -8657,13 +8657,21 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     confirmPurchase(label, price, () => { if (!spendCoins(price)) return; _own(name).push(id); saveUpg(); after(); });
   }
   const _coinBadge = p => `<span class="opt-price">${iconHTML('coin', { size: 9 })}${p}</span>`;
+  // traceColor → görünür CSS (hex / gradyen / custom / rainbow)
+  function traceColorCss(id) {
+    if (id === 'custom') return upg.customGrad || 'linear-gradient(90deg,#ff3b3b,#3bd1ff,#c45bff)';
+    if (id.charAt(0) === '#') return id;
+    return (RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
+  }
   function renderTrace() {
-    const cur = upg.traceColor || 'rainbow';
+    if (upg.traceAnim === 'rainbow') { upg.traceAnim = 'wave'; saveUpg(); } // eski 'rainbow' anim → wave
+    const cur = upg.traceColor || '#ffffff';
     // Önizleme
     const pv = document.getElementById('trace-preview');
     const th = Math.max(3, 3 + (upg.traceThickness | 0));
-    const curCss = cur.charAt(0) === '#' ? cur : (RAINBOWS.find(r => r[0] === cur) || RAINBOWS[0])[1];
-    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};box-shadow:${upg.traceAnim === 'glow' ? '0 0 14px rgba(255,255,255,.6)' : 'none'}"></div>`;
+    const curCss = traceColorCss(cur);
+    const pvGlow = (upg.traceAnim === 'glow' || upg.traceAnim === 'wave') ? '0 0 14px rgba(255,255,255,.6)' : 'none';
+    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};box-shadow:${pvGlow}"></div>`;
     // İzi diğer oyunculara göster — 50 coin ile aç, sonra aç/kapa
     const sr = document.getElementById('trace-show-row');
     if (sr) {
