@@ -8549,10 +8549,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       document.getElementById(c).addEventListener('click', () => closeSub(m));
       document.getElementById(m).addEventListener('click', e => { if (e.target.id === m) closeSub(m); });
     });
-  document.getElementById('prof-analysis-btn').addEventListener('click', () => { renderProfStats(); openSub('analysis-modal'); });
+  // Trace: ayar merkezi olduğu için her zaman modalı açar.
   document.getElementById('prof-trace-btn').addEventListener('click', () => { renderTrace(); openSub('trace-modal'); });
-  document.getElementById('prof-tomb-btn').addEventListener('click', () => { renderTomb(); openSub('tomb-modal'); });
-  document.getElementById('prof-deathtext-btn').addEventListener('click', () => { renderDeathText(); openSub('deathtext-modal'); });
+  // Tomb / Death Text: SAHİPSE doğrudan aç/kapa (uyarı yok), DEĞİLSE satın alma ekranı açılır.
+  document.getElementById('prof-tomb-btn').addEventListener('click', () => {
+    if (upg.tombOwned) { upg.deathAvatar = !upg.deathAvatar; saveUpg(); renderProfButtons(); }
+    else { renderTomb(); openSub('tomb-modal'); }
+  });
+  document.getElementById('prof-deathtext-btn').addEventListener('click', () => {
+    if (upg.nameOwned) { upg.deathName = !upg.deathName; saveUpg(); renderProfButtons(); }
+    else { renderDeathText(); openSub('deathtext-modal'); }
+  });
 
   // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
   const TR_COLOR_PRICE = 4, TR_THICK_PRICE = 4, TR_ANIM_PRICE = 6, TRACE_SHOW_PRICE = 50, TOMB_PRICE = 50, NAME_PRICE = 50;
