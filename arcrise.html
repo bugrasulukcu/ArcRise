@@ -8555,13 +8555,35 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
     const s = stats || {};
-    // Üst: en yüksek skor / en uzun mesafe — Alt: toplam oyun / ortalama skor / ortalama mesafe
-    const games = s.gamesTotal || 0;
+    // Üst: en yüksek skor / en uzun mesafe (kuyruk renginde) — Alt: toplam oyun (beyaz)
     set('ps-score',    pad(Math.max(s.bestNormal || 0, s.bestExtreme || 0)));        // en yüksek skor
     set('ps-distbest', fmtDist(Math.max(s.bestDistNormal || 0, s.bestDistExtreme || 0))); // en uzun mesafe
-    set('ps-games',    games);
-    set('ps-avgscore', pad(games ? Math.round((s.scoreLifetime || 0) / games) : 0)); // ortalama skor
-    set('ps-avgdist',  fmtDist(games ? (s.distLifetimeCm || 0) / games : 0));         // ortalama mesafe
+    set('ps-games',    s.gamesTotal || 0);
+    renderProfTrends(); // ortalamalar (artış/azalış renkli) + sıralama
+  }
+
+  // Bir değeri ok + renkle güncelle. dir: 1=yükseliş(yeşil ▲), -1=düşüş(kırmızı ▼), 0=nötr.
+  function _setTrend(id, text, dir, flatColor) {
+    const el = document.getElementById(id); if (!el) return;
+    el.classList.remove('tr-up', 'tr-down', 'tr-flat');
+    el.classList.add(dir > 0 ? 'tr-up' : dir < 0 ? 'tr-down' : (flatColor || 'tr-flat'));
+    const ar = dir > 0 ? '▲' : dir < 0 ? '▼' : '';
+    el.innerHTML = ar ? `<span class="tr-ar">${ar}</span>${text}` : text;
+  }
+
+  // Ortalama skor/mesafe — son görüntülemeye göre yükseliş/düşüş.
+  function renderProfTrends() {
+    const s = stats || {};
+    const games = s.gamesTotal || 0;
+    const avgScore = games ? Math.round((s.scoreLifetime || 0) / games) : 0;
+    const avgDist  = games ? (s.distLifetimeCm || 0) / games : 0;
+    const pS = parseFloat(localStorage.getItem('arc_view_avgscore'));
+    const pD = parseFloat(localStorage.getItem('arc_view_avgdist'));
+    _setTrend('ps-avgscore', pad(avgScore),    isFinite(pS) ? Math.sign(avgScore - pS) : 0);
+    _setTrend('ps-avgdist',  fmtDist(avgDist),  isFinite(pD) ? Math.sign(avgDist - pD) : 0);
+    localStorage.setItem('arc_view_avgscore', String(avgScore));
+    localStorage.setItem('arc_view_avgdist',  String(avgDist));
+    renderProfRank();
     // ANALYSIS (detaylı)
     set('pm-score-n',  pad(s.bestNormal  || 0));
     set('pm-score-e',  pad(s.bestExtreme || 0));
