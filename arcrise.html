@@ -596,20 +596,8 @@
       width: min(92vw, 360px);
       display: flex; flex-direction: column; gap: 20px;
     }
-    /* Rotating rainbow gradient stroke around Settings panel (same vibe as Start) */
-    #settings .panel::before {
-      content: ""; position: absolute; inset: -2.5px;
-      border-radius: 28px; padding: 2.5px;
-      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
-      animation: spinA 3s linear infinite;
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      pointer-events: none;
-      z-index: 0;
-    }
+    /* Settings paneli sade gri stroke (gökkuşağı halka kaldırıldı) */
+    #settings .panel::before { display: none; }
     #settings .panel > * { position: relative; z-index: 1; }
     #settings h2 { font-size: 21px; text-align: center; letter-spacing: 3px; margin-bottom: 2px; }
 
