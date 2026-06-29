@@ -8590,7 +8590,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (sr) {
       const owned = !!upg.traceOwned, on = !!upg.traceShown;
       sr.innerHTML = owned
-        ? `<button class="dt-opt ${on ? 'active' : ''}" id="trace-show-toggle">${on ? 'ON' : 'OFF'}</button>`
+        ? `<div class="aw-toggle-row"><span class="lbl">SHOW TO OTHERS</span><button class="aw-switch ${on ? 'on' : ''}" id="trace-show-toggle" role="switch" aria-checked="${on}"></button></div>`
         : `<button class="dt-opt" id="trace-show-buy">${iconHTML('coin', { size: 12 })} ${TRACE_SHOW_PRICE}</button>`;
       const sb = document.getElementById('trace-show-buy');
       if (sb) sb.addEventListener('click', () => confirmPurchase('Trace · show to others', TRACE_SHOW_PRICE, () => {
