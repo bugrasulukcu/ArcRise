@@ -8616,6 +8616,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const th = Math.max(3, 3 + (upg.traceThickness | 0));
     const curCss = cur.charAt(0) === '#' ? cur : (RAINBOWS.find(r => r[0] === cur) || RAINBOWS[0])[1];
     if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};box-shadow:${upg.traceAnim === 'glow' ? '0 0 14px rgba(255,255,255,.6)' : 'none'}"></div>`;
+    // İzi diğer oyunculara göster — 50 coin ile aç, sonra aç/kapa
+    const sr = document.getElementById('trace-show-row');
+    if (sr) {
+      const owned = !!upg.traceOwned, on = !!upg.traceShown;
+      sr.innerHTML = owned
+        ? `<button class="dt-opt ${on ? 'active' : ''}" id="trace-show-toggle">${on ? 'ON' : 'OFF'}</button>`
+        : `<button class="dt-opt" id="trace-show-buy">${iconHTML('coin', { size: 12 })} ${TRACE_SHOW_PRICE}</button>`;
+      const sb = document.getElementById('trace-show-buy');
+      if (sb) sb.addEventListener('click', () => confirmPurchase('Trace · show to others', TRACE_SHOW_PRICE, () => {
+        if (!spendCoins(TRACE_SHOW_PRICE)) return; upg.traceOwned = true; upg.traceShown = true; saveUpg(); renderTrace();
+      }));
+      const st = document.getElementById('trace-show-toggle');
+      if (st) st.addEventListener('click', () => { upg.traceShown = !upg.traceShown; saveUpg(); renderTrace(); });
+    }
     // Kalınlık — SIRALI: bir öncekini almadan sonraki alınamaz.
     const tr = document.getElementById('trace-thick-row');
     let thNext = TRACE_THICKS.findIndex(([, v]) => !_has('traceThicksOwned', v)); // sıradaki alınabilir index
