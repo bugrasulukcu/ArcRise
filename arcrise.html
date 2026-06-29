@@ -6694,10 +6694,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function drawTrail(time) {
     if (trail.length < 2) return;
     ctx.save();
-    const userColor = (upg && upg.traceColor) || 'rainbow';
-    const isHex = userColor.charAt(0) === '#';
+    const userColor = (upg && upg.traceColor) || '#ffffff';
+    const isCustom = userColor === 'custom';
+    const customCols = isCustom ? ((upg.customGrad || '').match(/#[0-9a-fA-F]{6}/g) || ['#ffffff']) : null;
+    const isHex = !isCustom && userColor.charAt(0) === '#';
     const rgb = isHex ? hexToRgb(userColor) : null;
-    const rb  = isHex ? null : (RB_HUE[userColor] || RB_HUE['rainbow']);
+    const rb  = (isHex || isCustom) ? null : (RB_HUE[userColor] || RB_HUE['rainbow']);
     // Combo arttıkça trace görünür şekilde kalınlaşır (+%60'a kadar)
     const comboT = (scene === 'play') ? Math.max(0, Math.ceil(energy * comboDisplayMax())) / comboDisplayMax() : 0;
     const comboMulVis = 1 + comboT * 0.6;
