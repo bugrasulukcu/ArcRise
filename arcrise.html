@@ -10188,14 +10188,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     el.addEventListener('click', openBadgesModal);
   });
 
-  // BACK + SAVE both close. Avatar / badges / upload are persisted the
-  // moment the player taps them, so there's no extra commit on SAVE —
-  // the button exists as a confirming primary action.
-  document.getElementById('prof-modal-back').addEventListener('click', () => {
-    profModal.classList.remove('open');
-  });
-  document.getElementById('prof-modal-save').addEventListener('click', () => {
-    applyProfile();
+  // Geri oku — avatar/badge/isim seçimleri dokununca zaten kaydedildiği için
+  // çıkışta sadece profili uygula + kapat.
+  document.getElementById('prof-back-arrow').addEventListener('click', () => {
+    try { applyProfile(); } catch(_){}
     profModal.classList.remove('open');
   });
 
