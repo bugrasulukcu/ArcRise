@@ -8703,19 +8703,33 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       else if (idx === thNext) _buyOwn('traceThicksOwned', v, TR_THICK_PRICE, 'Trace width', sel);
       // aksi halde: önce öncekini al (kilitli-pasif)
     }));
-    // Renk + rainbow (tek grid)
+    // Renk + rainbow + custom (tek grid). Beyaz bedava; diğerleri kademeli fiyatlı.
     const cg = document.getElementById('trace-color-grid');
-    const swatch = (id, css, name) => {
-      const owned = _has('traceColorsOwned', id), active = cur === id;
+    const swatch = (id, css) => {
+      const owned = traceColorOwned(id), active = cur === id;
       return `<button class="tr-sw ${active ? 'active' : ''} ${owned ? '' : 'locked'}" data-col="${id}" style="background:${css}">${owned ? '' : '<span class="tr-lock">🔒</span>'}</button>`;
     };
+    // Custom swatch: kilitliyse 🔒, sahipse kendi gradyeni (veya + ile düzenle)
+    const customCss = upg.customGrad || 'conic-gradient(#ff3b3b,#ffe23b,#5bff7a,#3bd1ff,#c45bff,#ff3b3b)';
+    const customInner = upg.customOwned
+      ? `<span class="tr-edit">${upg.customGrad ? '✎' : '+'}</span>`
+      : '<span class="tr-lock">🔒</span>';
+    const customSw = `<button class="tr-sw tr-custom ${cur === 'custom' ? 'active' : ''} ${upg.customOwned ? '' : 'locked'}" data-col="custom" style="background:${customCss}">${customInner}</button>`;
     cg.innerHTML = RAINBOWS.map(([id, css]) => swatch(id, css)).join('')
-      + TRACE_COLORS.map(c => swatch(c, c)).join('');
+      + TRACE_COLORS.map(c => swatch(c, c)).join('')
+      + customSw;
     cg.querySelectorAll('[data-col]').forEach(s => s.addEventListener('click', () => {
       const id = s.dataset.col;
+      if (id === 'custom') {
+        if (upg.customOwned) openCustomEditor();
+        else confirmPurchase('Custom gradient', CUSTOM_PRICE, () => {
+          if (!spendCoins(CUSTOM_PRICE)) return; upg.customOwned = true; saveUpg(); openCustomEditor();
+        });
+        return;
+      }
       const sel = () => { upg.traceColor = id; saveUpg(); renderTrace(); };
-      if (_has('traceColorsOwned', id)) sel();
-      else _buyOwn('traceColorsOwned', id, TR_COLOR_PRICE, 'Trace colour', sel);
+      if (traceColorOwned(id)) sel();
+      else _buyOwn('traceColorsOwned', id, traceColorPrice(id), 'Trace colour', sel);
     }));
     // Animasyon
     const ar = document.getElementById('trace-anim-row');
