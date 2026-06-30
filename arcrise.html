@@ -8968,6 +8968,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       }
       box.style.backgroundRepeat = 'no-repeat';   // gradyen uçlarında 1px kalıntı olmasın
     }
+    // Avatar halkası da trace ile eşlenik (gradyen → dönen konik; düz renk → sabit)
+    const ring = document.getElementById('prof-av-ring');
+    if (ring) {
+      if (m.isGrad) {
+        ring.style.background = m.conic.replace(' at 50% 62px', '');  // merkez = halka merkezi
+        ring.style.animation = 'spinA 3s linear infinite';
+      } else {
+        ring.style.background = m.solid;
+        ring.style.animation = 'none';
+      }
+    }
     ['ps-score', 'ps-distbest'].forEach(id => {
       const e = document.getElementById(id); if (!e) return;
       if (m.isGrad) {
