@@ -8927,10 +8927,17 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         else          { box.style.background = ''; box.style.borderColor = m.solid; }
       };
       if (anim === 'wave') {
-        // Dalga: renk sabit + dönen parlak bant (bazı kısımlar yüksek, bazı düşük glow)
-        const waveHi = 'conic-gradient(from var(--a) at 50% 62px, transparent 0deg, rgba(255,255,255,.55) 30deg, transparent 80deg, transparent 180deg, rgba(255,255,255,.4) 210deg, transparent 260deg, transparent 360deg)';
+        // Dalga: trace renginde DÖNEN konik — parlak/sönük bantlar (bazı kısımlar yüksek glow)
+        let waveBg;
+        if (m.isGrad) {
+          waveBg = m.conic;   // renkli konik döner
+        } else {
+          const r = hexToRgb(m.solid);
+          const dim = `rgba(${r.r},${r.g},${r.b},.25)`, br = `rgba(${r.r},${r.g},${r.b},1)`;
+          waveBg = `conic-gradient(from var(--a) at 50% 62px, ${dim} 0deg, ${br} 50deg, ${dim} 110deg, ${dim} 180deg, ${br} 230deg, ${dim} 290deg, ${dim} 360deg)`;
+        }
         box.style.borderColor = 'transparent';
-        box.style.background = `${PROF_BOX_BG}, ${colorLayer} border-box, ${waveHi} border-box`;
+        box.style.background = `${PROF_BOX_BG}, ${waveBg} border-box`;
         box.style.animation = 'spinA 3.2s linear infinite';
         box.style.boxShadow = `0 0 24px ${m.glow}`;
       } else if (anim === 'glow') {
