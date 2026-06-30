@@ -6718,20 +6718,29 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const comboT = (scene === 'play') ? Math.max(0, Math.ceil(energy * comboDisplayMax())) / comboDisplayMax() : 0;
     const comboMulVis = 1 + comboT * 0.6;
     const thickMul  = (1 + ((upg && upg.traceThickness) || 0) * 0.10) * comboMulVis;
-    // Segment rengi (alpha verilir). Gökkuşağında gradient döner.
+    // ── Trace animasyonu (oyun-içi): wave / pulse / glow ──
+    const animType0 = (upg && upg.traceAnim) || 'none';
+    const animType  = (animType0 === 'rainbow') ? 'wave' : animType0;
+    const _hb = x => { x = ((x % 1) + 1) % 1; return Math.exp(-((x - 0.08) ** 2) / 0.004) + 0.65 * Math.exp(-((x - 0.27) ** 2) / 0.004); }; // kalp atışı
+    let animBright = 1, glowBoost = 1;
+    if (animType === 'pulse') animBright = 0.5 + 0.8 * Math.min(1, _hb(time * 0.85));
+    else if (animType === 'glow') glowBoost = 1.9;
+    const waveAt = i => animType === 'wave' ? (0.32 + 0.68 * (0.5 + 0.5 * Math.sin(i * 0.5 - time * 5))) : 1; // ilerleyen parlaklık dalgası
+    // Segment rengi (alpha verilir). Custom → akan tek renk; gökkuşağı → gradient.
     const strokeFor = (i, a, b, al) => {
       if (isHex) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
       if (isCustom) {
-        // Custom palet: trail boyunca duraklar arasında akan gradyen (şeffaf = alpha 0)
-        const stopRGBA = (c, a2) => { if (c === 'transparent') return 'rgba(0,0,0,0)'; const k = hexToRgb(c); return `rgba(${k.r},${k.g},${k.b},${a2})`; };
+        // Custom palet: duraklar arası yumuşak geçiş, sürekli akar (yılan görünümü yok)
         const n = customCols.length;
-        // Sürekli akan, trail boyunca çok renkli (yavaş/yılan görünümü düzeltildi)
-        const p = time * 0.55 + i * 0.14;
-        const k = ((Math.floor(p) % n) + n) % n, k2 = (k + 1) % n;
-        const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
-        gr.addColorStop(0, stopRGBA(customCols[k], al));
-        gr.addColorStop(1, stopRGBA(customCols[k2], al));
-        return gr;
+        const p = time * 0.5 + i * 0.07;
+        const fp = (((p % n) + n) % n);
+        const k = Math.floor(fp), k2 = (k + 1) % n, frac = fp - k;
+        const A = customCols[k] === 'transparent' ? null : hexToRgb(customCols[k]);
+        const B = customCols[k2] === 'transparent' ? null : hexToRgb(customCols[k2]);
+        const aR = A || B || { r: 255, g: 255, b: 255 }, bR = B || A || { r: 255, g: 255, b: 255 };
+        const r = Math.round(aR.r + (bR.r - aR.r) * frac), g = Math.round(aR.g + (bR.g - aR.g) * frac), bb = Math.round(aR.b + (bR.b - aR.b) * frac);
+        const aMul = (A ? 1 : 0) + ((B ? 1 : 0) - (A ? 1 : 0)) * frac;
+        return `rgba(${r},${g},${bb},${al * aMul})`;
       }
       const base = rb[0], span = rb[1];
       const h1 = base + (((time * 80) + i * 3) % span);
