@@ -10438,6 +10438,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     } catch(_) { extNew = false; }   // EX_* / extremeUnlocked TDZ koruması
     _setDot('#btn-settings', extNew);                      // home: ayarlar butonu
     _setDot('#mode-fx-wrap', extNew);                      // settings: mod satırı
+    // Quests: toplanmamış ödül var mı
+    let questNew = false;
+    try { questNew = questClaimableCount() > 0; } catch(_) { questNew = false; }
+    _setDot('#btn-quests', questNew);
+    // Upgrades: son ziyaretten beri coin arttı mı (harcanacak yeni coin)
+    let upgNew = false;
+    try { upgNew = coins > seenUpgCoins; } catch(_) { upgNew = false; }
+    _setDot('#home-upgrade-btn', upgNew);
   }
   // Coin ödülü — triangular ledger üzerinden: coinsSpent azaltılır (negatif olabilir)
   function grantCoins(n) {
