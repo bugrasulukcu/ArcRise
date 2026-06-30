@@ -1289,6 +1289,8 @@
     }
     .notif-dot[hidden] { display: none; }
     @keyframes notifPulse { 0% { transform: scale(1); } 100% { transform: scale(1.25); } }
+    /* Bildirim noktası taşıyan kapsayıcılar relative olmalı */
+    #btn-quests, #home-upgrade-btn, .prof-custom-btn { position: relative; }
 
     /* Avatar preview with rainbow ring (now a button — tap to open picker) */
     #prof-av-ring {
