@@ -8913,6 +8913,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Profil ana butonlarında seçili trace/tomb önizlemesi + çerçeve rengi.
   // Konik gradyen kur — merkez = profil resmi (üst padding 24 + avatar yarıçapı 38 ≈ 62px).
   const _conicFrom = cols => `conic-gradient(from var(--a) at 50% 62px, ${cols.concat(cols[0]).join(',')})`;
+  // Glow = renklerin ortalaması (gradyende mor takılı kalmasın, gerçek renk yansısın)
+  const _avgGlow = cols => {
+    let R = 0, G = 0, B = 0; cols.forEach(c => { const k = hexToRgb(c); R += k.r; G += k.g; B += k.b; });
+    const n = cols.length || 1; R = Math.round(R / n); G = Math.round(G / n); B = Math.round(B / n);
+    return { glow: `rgba(${R},${G},${B},.34)`, glowStrong: `rgba(${R},${G},${B},.62)` };
+  };
   function traceMainColor() {
     const tc = upg.traceColor || '#ffffff';
     // Custom kullanıcı gradyeni (durakları şeffaf olabilir → konik/glow için hex'leri süz)
