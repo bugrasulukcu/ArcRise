@@ -49,7 +49,8 @@ service cloud.firestore {
         && request.resource.data.name == resource.data.name
         // Sadece sahibi (veya sahipsiz eski doc'u sahiplenen) günceller.
         && ownsOld() && ownsNew();
-      allow delete: if false;
+      // Hesap silme: yalnızca kayıt sahibi kendi skorunu silebilir.
+      allow delete: if isAuthed() && 'owner' in resource.data && resource.data.owner == request.auth.uid;
     }
 
     // Referral (davet) tıklama sayacı: her yazma clicks'i tam +1 artırabilir.
