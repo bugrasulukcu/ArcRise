@@ -1318,12 +1318,12 @@
     }
     /* Stats: üst satır (en yüksek) + alt satır (toplam/ortalama). Etiket kutudan ayrı. */
     #prof-summary { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-    /* Extreme modda üstte küçük turuncu etiket */
-    #prof-mode-tag {
-      align-self: center; font-size: 8.5px; letter-spacing: 2.5px; font-weight: 700;
-      color: #ff8a4d; text-shadow: 0 0 10px rgba(255,110,40,.5); margin-bottom: -4px;
+    /* Extreme modda skor/mesafe değerinin üstünde küçük turuncu etiket */
+    .prof-ext-tag {
+      font-size: 7.5px; letter-spacing: 2px; font-weight: 700;
+      color: #ff8a4d; text-shadow: 0 0 8px rgba(255,110,40,.5); line-height: 1;
     }
-    #prof-mode-tag[hidden] { display: none; }
+    .prof-ext-tag[hidden] { display: none; }
     .prof-sum-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .prof-sum-row-3 { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
     .prof-sum-div { width: 100%; height: 1px; background: rgba(255,255,255,.12); }
