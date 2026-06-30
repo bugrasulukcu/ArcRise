@@ -4831,7 +4831,54 @@ const ARC_DB = (() => {
     } catch (_) { return false; }
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge };
+  // ── Hesap silme (KVKK/GDPR + mağaza uyumu) ───────────────────
+  // Bu cihaza ait TÜM bulut verisini siler: arkadaş kenarları → profil → skorlar.
+  // Sıra önemli: friendreqs silme kuralı players/{id}.owner get() kontrolü yaptığı
+  // için profil silinmeden ÖNCE kenarlar silinmeli.
+  async function deleteMyData(name, tag) {
+    if (!projectId || projectId.startsWith('BURAYA')) return { ok: false };
+    await ensureAuth(); const uid = getUid();
+    let edges = 0, prof = 0, scores = 0;
+    const myId = (name && /^\d{4}$/.test(String(tag || ''))) ? `${_sanName(name)}#${tag}` : '';
+    // 1) Beni içeren arkadaşlık kenarları
+    if (myId) {
+      try {
+        const list = await getMySocial(myId);
+        for (const e of list) {
+          const del = await fbFetch(`${BASE}/friendreqs/${encodeURIComponent(e.id)}?key=${apiKey}`, { method: 'DELETE' });
+          if (del.ok) edges++;
+        }
+      } catch(_){}
+      // 2) Profil kaydı (players/{NAME#TAG})
+      try {
+        const del = await fbFetch(`${BASE}/players/${encodeURIComponent(myId)}?key=${apiKey}`, { method: 'DELETE' });
+        if (del.ok) prof++;
+      } catch(_){}
+    }
+    // 3) Bu uid'e ait skor kayıtları
+    if (uid) {
+      try {
+        const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ structuredQuery: {
+            from: [{ collectionId: 'scores' }],
+            where: { fieldFilter: { field: { fieldPath: 'owner' }, op: 'EQUAL', value: { stringValue: uid } } },
+            limit: 50,
+          }}),
+        });
+        const hits = (await res.json()).filter(r => r.document?.fields);
+        for (const h of hits) {
+          const docId = h.document.name.split('/').pop();
+          const del = await fbFetch(`${BASE}/scores/${docId}?key=${apiKey}`, { method: 'DELETE' });
+          if (del.ok) scores++;
+        }
+      } catch(_){}
+    }
+    console.log('[ArcDB] deleteMyData', { edges, prof, scores });
+    return { ok: true, edges, prof, scores };
+  }
+
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
