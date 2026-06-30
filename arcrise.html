@@ -2656,8 +2656,15 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.20);
       filter: none !important; animation: none !important; /* glow/flame kapalı — sade toggle */
     }
-    #settings #mode-sel.glow-normal,
-    #settings #mode-sel.glow-extreme { filter: none !important; animation: none !important; }
+    /* Seçili mod glow'u — Chill mavi / Extreme turuncu */
+    #settings #mode-sel.glow-normal {
+      border-color: rgba(110,170,255,.55);
+      box-shadow: 0 0 20px rgba(80,140,255,.55), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.20);
+    }
+    #settings #mode-sel.glow-extreme {
+      border-color: rgba(255,120,40,.6);
+      box-shadow: 0 0 20px rgba(255,120,40,.55), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.20);
+    }
     #settings .sctl-mode .mode-btn {
       flex: 1 1 0; min-width: 0; padding: 10px 0;
       font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
