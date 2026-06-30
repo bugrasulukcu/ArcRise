@@ -871,8 +871,15 @@
     }
     .btn-danger:active { transform: scale(0.97); }
 
-    /* HOW TO PLAY — panel altı metin link, biraz boşlukla */
-    #settings-howto { margin-top: 16px; }
+    /* HOW TO PLAY — panel altı link: daire içinde ? ikonu + biraz daha büyük */
+    #settings-howto {
+      margin-top: 16px;
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 11px; letter-spacing: 1.4px;
+      color: rgba(255,255,255,.55);
+    }
+    #settings-howto svg { width: 16px; height: 16px; flex: 0 0 auto; }
+    #settings-howto:hover { color: rgba(255,255,255,.85); }
     /* Reset — küçültülmüş */
     #btn-reset {
       padding: 8px 18px; font-size: 9px; letter-spacing: 1px;
