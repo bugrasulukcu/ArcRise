@@ -9037,6 +9037,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     setOn('prof-tomb-btn', upg.deathAvatar);
     setOn('prof-trace-btn', upg.traceShown);
     setOn('prof-deathtext-btn', upg.deathName);
+    // Sahip değilken ve parası yetiyorsa "şimdi açabilirsin" yeşil noktası
+    _setDot('#prof-tomb-btn', !upg.tombOwned && coins >= TOMB_PRICE);
+    _setDot('#prof-trace-btn', !upg.traceOwned && coins >= TRACE_SHOW_PRICE);
+    _setDot('#prof-deathtext-btn', !upg.nameOwned && coins >= NAME_PRICE);
   }
 
   // Engellenen kelimeler — küfür + nefret söylemi (ırkçı hakaret, ırk/etnisite, din adları).
