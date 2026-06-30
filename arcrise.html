@@ -1379,13 +1379,14 @@
     }
     #prof-analysis-btn:active { transform: scale(0.97); }
     /* Profil alt-modalları (analysis/trace/tomb/deathtext) — ortak kabuk */
-    #analysis-modal, #trace-modal, #tomb-modal, #deathtext-modal, #custom-modal {
+    #analysis-modal, #trace-modal, #tomb-modal, #deathtext-modal, #custom-modal, #privacy-modal {
       position: fixed; inset: 0; z-index: 62; display: none; align-items: center; justify-content: center;
       background: rgba(6,8,14,.55); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
     }
     #custom-modal { z-index: 64; }   /* trace modalının üstünde, pencere gibi */
-    #analysis-modal.open, #trace-modal.open, #tomb-modal.open, #deathtext-modal.open, #custom-modal.open { display: flex; }
-    #analysis-modal-box, #trace-modal-box, #tomb-modal-box, #deathtext-modal-box, #custom-modal-box {
+    #privacy-modal { z-index: 66; }
+    #analysis-modal.open, #trace-modal.open, #tomb-modal.open, #deathtext-modal.open, #custom-modal.open, #privacy-modal.open { display: flex; }
+    #analysis-modal-box, #trace-modal-box, #tomb-modal-box, #deathtext-modal-box, #custom-modal-box, #privacy-modal-box {
       position: relative; width: min(92vw, 360px); max-height: 88vh; overflow-y: auto; scrollbar-width: none;
       background:
         radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.12), transparent 60%),
