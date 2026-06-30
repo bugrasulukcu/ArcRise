@@ -1251,38 +1251,44 @@
     #prof-back-arrow { position: absolute; top: 16px; left: 16px; z-index: 2; }
     #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
 
-    /* Avatar row: badge slot ─ avatar ─ badge slot */
-    #prof-av-row {
-      display: flex; align-items: center; justify-content: center;
-      gap: 14px; width: 100%;
-    }
+    /* Avatar + rozet slotları (dairenin sol/sağ alt köşelerinde) */
+    #prof-av-row { display: flex; align-items: center; justify-content: center; width: 100%; }
+    #prof-av-stack { position: relative; width: 76px; height: 76px; }
     .prof-eq-slot {
-      width: 48px; height: 48px; border-radius: 12px;
+      position: absolute; z-index: 3; bottom: -6px;
+      width: 44px; height: 44px; border-radius: 12px;
       border: 2px solid rgba(255,255,255,.18);
       background:
         radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.08), transparent 60%),
-        linear-gradient(180deg, rgba(40,46,60,.55), rgba(14,18,28,.70));
+        linear-gradient(180deg, rgba(40,46,60,.85), rgba(14,18,28,.92));
       cursor: pointer; padding: 0;
       display: flex; align-items: center; justify-content: center;
       transition: transform .12s, border-color .2s, box-shadow .2s;
     }
+    .prof-eq-slot.eq-bl { left: -26px; }
+    .prof-eq-slot.eq-br { right: -26px; }
     .prof-eq-slot.filled {
       border-color: rgba(255,210,80,.55);
       box-shadow: 0 0 10px rgba(255,210,80,.25);
     }
     .prof-eq-slot:active { transform: scale(0.94); }
     .prof-eq-icon { font-size: 22px; line-height: 1; }
-    /* boş slot = görsel placeholder (çizgili kare) */
+    /* boş slot = içine yazılı etiket (BADGE 1 / BADGE 2) */
     .prof-eq-empty {
-      width: 26px; height: 26px; border-radius: 7px;
-      border: 1px dashed rgba(255,255,255,.28);
-      background: repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 5px, transparent 5px 10px);
+      font-size: 7px; letter-spacing: .4px; line-height: 1.2;
+      color: rgba(255,255,255,.5); text-align: center;
     }
     .prof-eq-slot.filled .prof-eq-empty { display: none; }
     .prof-eq-slot:not(.filled) .prof-eq-icon { display: none; }
-    /* badge slot + etiket sütunu */
-    .prof-eq-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .prof-eq-lbl { font-size: 8px; letter-spacing: 1.2px; color: rgba(255,255,255,.5); }
+    /* Yeşil bildirim noktası (yeni özellik / yeni badge) */
+    .notif-dot {
+      position: absolute; top: -4px; right: -4px; width: 11px; height: 11px;
+      border-radius: 50%; background: #33e06a; border: 2px solid #0c1018;
+      box-shadow: 0 0 8px rgba(60,255,120,.75); z-index: 5; pointer-events: none;
+      animation: notifPulse 1.3s ease-in-out infinite alternate;
+    }
+    .notif-dot[hidden] { display: none; }
+    @keyframes notifPulse { 0% { transform: scale(1); } 100% { transform: scale(1.25); } }
 
     /* Avatar preview with rainbow ring (now a button — tap to open picker) */
     #prof-av-ring {
