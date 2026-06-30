@@ -80,7 +80,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthed() && validPlayer(request.resource.data) && ownsNew();
       allow update: if isAuthed() && validPlayer(request.resource.data) && ownsOld() && ownsNew();
-      allow delete: if false;
+      // Hesap silme: yalnızca profilin sahibi.
+      allow delete: if isAuthed() && 'owner' in resource.data && resource.data.owner == request.auth.uid;
     }
 
     // Arkadaşlık istekleri / kenarları (friendreqs/{fromId__toId}).
