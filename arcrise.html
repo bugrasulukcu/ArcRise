@@ -8684,7 +8684,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ── Profil alt-modalları: Analysis · Trace · Tomb · Death Text ──
   function openSub(id) { const m = document.getElementById(id); if (m) m.classList.add('open'); }
   function closeSub(id) { const m = document.getElementById(id); if (m) m.classList.remove('open'); }
-  [['analysis-modal','analysis-close'], ['trace-modal','trace-close'], ['tomb-modal','tomb-close'], ['deathtext-modal','deathtext-close']]
+  [['analysis-modal','analysis-close'], ['trace-modal','trace-close'], ['tomb-modal','tomb-close'], ['deathtext-modal','deathtext-close'], ['custom-modal','custom-close']]
     .forEach(([m, c]) => {
       document.getElementById(c).addEventListener('click', () => closeSub(m));
       document.getElementById(m).addEventListener('click', e => { if (e.target.id === m) closeSub(m); });
