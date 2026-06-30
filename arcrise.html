@@ -8938,8 +8938,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
     if (rb) {
       const cols = rb[1].match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
-      return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic: _conicFrom(cols), isGrad: true,
-               glow: `hsla(${hh},85%,60%,.30)`, glowStrong: `hsla(${hh},90%,62%,.6)` };
+      const ag = _avgGlow(cols);   // glow = gradyenin gerçek renk ortalaması (mor değil)
+      return { solid: `hsl(${hh},85%,64%)`, css: rb[1], conic: _conicFrom(cols), isGrad: true, glow: ag.glow, glowStrong: ag.glowStrong };
     }
     return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false,
              glow: `hsla(${hh},85%,60%,.30)`, glowStrong: `hsla(${hh},90%,62%,.6)` };
