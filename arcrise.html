@@ -7201,16 +7201,22 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     player.y    = player.cy + Math.sin(player.ang) * player.radius;
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
-    energy = Math.max(0, energy - dt / comboTimerSec());
-    // Yeşil banttan (countdown ≥ max−1) çıkınca combo zinciri kırılır → pot patlar.
-    if (runCombo > 0 && Math.ceil(energy * comboDisplayMax()) < comboDisplayMax() - 1) comboBreak();
-    if (energy <= 0) {
-      // Grace window: countdown shows "0" for up to GRACE_S so the player
-      // has a forgiving moment to grab a green and recover before death.
-      graceTimer += dt;
-      if (graceTimer >= GRACE_S) { beginDeath(); return; }
-    } else {
+    if (gameMode === 'wife') {
+      // Wife mode: süre sınırı yok — enerji hep dolu, ölüm yok (∞)
+      energy = 1;
       graceTimer = 0;
+    } else {
+      energy = Math.max(0, energy - dt / comboTimerSec());
+      // Yeşil banttan (countdown ≥ max−1) çıkınca combo zinciri kırılır → pot patlar.
+      if (runCombo > 0 && Math.ceil(energy * comboDisplayMax()) < comboDisplayMax() - 1) comboBreak();
+      if (energy <= 0) {
+        // Grace window: countdown shows "0" for up to GRACE_S so the player
+        // has a forgiving moment to grab a green and recover before death.
+        graceTimer += dt;
+        if (graceTimer >= GRACE_S) { beginDeath(); return; }
+      } else {
+        graceTimer = 0;
+      }
     }
 
     const now = performance.now() / 1000;
