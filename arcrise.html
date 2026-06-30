@@ -8906,7 +8906,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const tc = upg.traceColor || '#ffffff';
     const curCss = traceColorCss(tc);
     const ti = document.querySelector('#prof-trace-btn .pcb-ic');
-    if (ti) ti.innerHTML = `<div style="width:24px;height:5px;border-radius:99px;background:${curCss}"></div>`;
+    if (ti) ti.innerHTML = `<div style="width:24px;height:5px;border-radius:99px;background:${curCss};background-repeat:no-repeat"></div>`;
     const tb = document.querySelector('#prof-tomb-btn .pcb-ic');
     if (tb) tb.innerHTML = (upg.tomb | 0) === 0
       ? `<img src="${avatarSrc()}" style="width:24px;height:24px;border-radius:6px;object-fit:cover">`
