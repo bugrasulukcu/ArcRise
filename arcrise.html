@@ -10412,6 +10412,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function markBadgesSeen() { let d = false; earnedBadges.forEach(id => { if (!seenBadges.has(id)) { seenBadges.add(id); d = true; } }); if (d) { saveSeenBadges(); refreshNotifs(); } }
   let seenExtreme = localStorage.getItem('arc_seen_extreme') === '1';
   function markExtremeSeen() { if (!seenExtreme) { seenExtreme = true; localStorage.setItem('arc_seen_extreme', '1'); refreshNotifs(); } }
+  // Upgrades: son ziyaretten beri coin arttıysa (harcanacak yeni coin var) nudge
+  let seenUpgCoins = parseInt(localStorage.getItem('arc_seen_upg_coins') || '0', 10) || 0;
+  function markUpgradesSeen() { try { seenUpgCoins = coins; localStorage.setItem('arc_seen_upg_coins', String(coins)); } catch(_){} refreshNotifs(); }
   // Bir elemanın içine yeşil nokta ekle/çıkar (gerekirse oluşturur)
   function _setDot(sel, on) {
     const el = (typeof sel === 'string') ? document.querySelector(sel) : sel;
