@@ -8842,24 +8842,19 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
   }
   function openCustomEditor() {
-    const ed = document.getElementById('trace-custom-editor');
-    if (!ed) return;
     _tceStops = (upg.customStops && upg.customStops.length === 3) ? upg.customStops.slice() : ['#ff3b3b', '#3bd1ff', '#c45bff'];
     _tceSel = 0;
     _tceRender();
-    ed.classList.add('open');
-    ed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    openSub('custom-modal');   // pencere gibi (trace modalının üstünde)
   }
-  document.getElementById('tce-cancel').addEventListener('click', () => {
-    document.getElementById('trace-custom-editor').classList.remove('open');
-  });
+  document.getElementById('tce-cancel').addEventListener('click', () => closeSub('custom-modal'));
   document.getElementById('tce-save').addEventListener('click', () => {
     upg.customStops = _tceStops.slice();
     upg.customGrad = _tceBuild();
     upg.traceColor = 'custom';
     if (!_has('traceColorsOwned', 'custom')) _own('traceColorsOwned').push('custom');
     saveUpg();
-    document.getElementById('trace-custom-editor').classList.remove('open');
+    closeSub('custom-modal');
     renderTrace();
   });
 
