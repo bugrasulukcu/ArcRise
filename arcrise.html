@@ -8655,6 +8655,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     renderProfStats();
     renderProfButtons();
     renderEquipSlots();
+    try { refreshNotifs(); } catch(_){}
     profModal.classList.add('open');
   }
 
