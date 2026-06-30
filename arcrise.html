@@ -6756,7 +6756,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
-      const mul = animBright * waveAt(i);
+      const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.16 + 0.12 * comboT) * mul * glowBoost;
       const w  = (1 + t * 3.8) * thickMul * 1.9 * (animType === 'glow' ? 1.2 : 1);
       ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
@@ -6766,7 +6766,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     ctx.globalCompositeOperation = 'source-over';
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
-      const mul = animBright * waveAt(i);
+      const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.85 + 0.15 * comboT) * mul;
       const w  = (1 + t * 3.8) * thickMul;
       ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
