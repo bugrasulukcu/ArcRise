@@ -11153,6 +11153,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const doneCount = questState.quests.filter(q => q.claimed).length;
     if (sub) sub.textContent = claimable > 0 ? `${claimable} reward${claimable>1?'s':''} ready!` : `${doneCount}/${questState.quests.length} done`;
     if (btn) btn.classList.toggle('has-reward', claimable > 0);
+    try { refreshNotifs(); } catch(_){}
   }
   function renderQuests(animate) {
     const list = document.getElementById('quests-list');
