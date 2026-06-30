@@ -8822,8 +8822,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       ? `<span class="tr-edit">${upg.customGrad ? '✎' : '+'}</span>`
       : '<span class="tr-lock">🔒</span>';
     const customSw = `<button class="tr-sw tr-custom ${cur === 'custom' ? 'active' : ''} ${upg.customOwned ? '' : 'locked'}" data-col="custom" style="background:${customCss}">${customInner}</button>`;
-    cg.innerHTML = RAINBOWS.map(([id, css]) => swatch(id, css)).join('')
-      + TRACE_COLORS.map(c => swatch(c, c)).join('')
+    // Sıra: beyaz (bedava) → düz renkler → gradyenler → custom
+    const solids = TRACE_COLORS.filter(c => c !== '#ffffff');
+    cg.innerHTML = swatch('#ffffff', '#ffffff')
+      + solids.map(c => swatch(c, c)).join('')
+      + RAINBOWS.map(([id, css]) => swatch(id, css)).join('')
       + customSw;
     cg.querySelectorAll('[data-col]').forEach(s => s.addEventListener('click', () => {
       const id = s.dataset.col;
