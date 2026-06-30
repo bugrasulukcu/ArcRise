@@ -10224,6 +10224,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
 
   function openUpgradesModal() {
+    try { markUpgradesSeen(); } catch(_){}   // açılınca yeşil nokta temizlenir
     _gearPickerSlot = -1; // her açılışta gear seçici kapalı başlasın
     // Açılışta her zaman CORE sekmesine dön (mockup giriş ekranı).
     document.querySelectorAll('.upg-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'passive'));
