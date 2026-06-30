@@ -10448,6 +10448,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       try { showToast(`BADGE UNLOCKED: ${b.name} +${b.reward}C`); } catch(_){}
     }
     if (dirty) saveEarned();
+    try { refreshNotifs(); } catch(_){}
     return dirty;
   }
 
