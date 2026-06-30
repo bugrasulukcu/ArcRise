@@ -8675,7 +8675,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const s = stats || {};
     // Extreme modda extreme'e özel skor/mesafe; diğerlerinde genel en yüksek
     const ext = gameMode === 'extreme';
-    const tag = document.getElementById('prof-mode-tag'); if (tag) tag.hidden = !ext;
+    document.querySelectorAll('.prof-ext-tag').forEach(t => { t.hidden = !ext; });
     set('ps-score',    pad(ext ? (s.bestExtreme || 0) : Math.max(s.bestNormal || 0, s.bestExtreme || 0)));
     set('ps-distbest', fmtDist(ext ? (s.bestDistExtreme || 0) : Math.max(s.bestDistNormal || 0, s.bestDistExtreme || 0)));
     set('ps-games',    s.gamesTotal || 0);
