@@ -7,7 +7,8 @@ rules_version = '2';
 // localStorage'da saklanır). Yazımlar bu uid'e bağlanır:
 //   - scores / players: doc'a "owner" = uid yazılır; sadece sahibi günceller
 //     → başkasının leaderboard kaydı veya NAME#TAG profili devralınamaz/spoof'lanamaz
-//   - DELETE her yerde yasak
+//   - DELETE: yalnızca SAHİBİ kendi scores/players kaydını silebilir (hesap silme/KVKK);
+//     friendreqs taraflarca silinir; referrals silinemez
 //   - tüm yazımlar auth gerektirir
 // Geriye dönük uyumluluk: "owner" alanı OLMAYAN eski doc'lar bir kez herhangi bir
 // authed kullanıcı tarafından sahiplenilebilir (owner'ı kendi uid'ine set ederek);
