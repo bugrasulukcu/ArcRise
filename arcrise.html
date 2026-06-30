@@ -5108,30 +5108,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     try { renderSlots(); } catch(_){} // home gear slotlarını tazele (satın alma/equip durumu)
     try { applyHomeProfileStroke(); } catch(_){} // kart çerçevesi = trace rengi
   }
-  // Ana sayfa profil kartının çerçevesi trace (kuyruk) rengiyle eşlenik.
-  // Extreme/Wife modunda kendi temalı çerçevesi olduğu için dokunmaz.
+  // Ana sayfa profil RESMİNİN çerçevesi (avatar halkası) trace rengiyle eşlenik.
   function applyHomeProfileStroke() {
-    const el = document.getElementById('home-profile');
-    if (!el) return;
-    if (gameMode === 'extreme' || gameMode === 'wife') {
-      el.style.background = ''; el.style.borderColor = ''; el.style.boxShadow = '';
-      return;
-    }
+    // Önceki kart-stroke denemesinden kalan inline stilleri temizle
+    const card = document.getElementById('home-profile');
+    if (card) { card.style.background = ''; card.style.borderColor = ''; card.style.boxShadow = ''; card.style.backgroundRepeat = ''; }
+    const wrap = document.getElementById('home-av-wrap');
+    if (!wrap) return;
     const m = traceMainColor();
-    if (m.isGrad) {
-      // Gradyen sadece KENARDA görünsün → iç katman opak (kart arka planına sızmaz)
-      const interior = 'linear-gradient(rgba(16,20,30,.92),rgba(10,14,22,.94)) padding-box';
-      el.style.borderColor = 'transparent';
-      el.style.background = `${interior}, ${m.css} border-box`;
-      el.style.backgroundRepeat = 'no-repeat';
-      el.style.boxShadow = `0 0 16px ${m.glow}`;
-    } else {
-      // Düz renk: orijinal cam arka plan korunur, sadece kenar rengi değişir
-      el.style.background = '';
-      el.style.backgroundRepeat = '';
-      el.style.borderColor = m.solid;
-      el.style.boxShadow = `0 0 16px ${m.glow}`;
-    }
+    wrap.style.setProperty('--home-ring', m.isGrad ? m.conic.replace(' at 50% 62px', '') : m.solid);
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
