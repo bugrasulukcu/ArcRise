@@ -10517,6 +10517,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   saveBadges();
   // Açılışta da kontrol — upgrade/streak koşulları oyun dışı sağlanmış olabilir
   checkBadgeUnlocks();
+  // Bildirim noktalarını ilk kez yerleştir (tüm const'lar tanımlandıktan sonra)
+  setTimeout(() => { try { refreshNotifs(); } catch(_){} }, 0);
 
   // Badges modal: opened by tapping any equip slot, closed by Close button.
   const badgesModal = document.getElementById('badges-modal');
