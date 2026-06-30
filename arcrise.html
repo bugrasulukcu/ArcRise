@@ -10689,6 +10689,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   function setGameMode(m) {
     gameMode = m;
+    if (m === 'extreme') { try { markExtremeSeen(); } catch(_){} }   // extreme'e geçince yeşil nokta temizlenir
     localStorage.setItem('arc_mode', m);
     GAME_SPEED = getBaseSpeed();
     document.getElementById('mode-btn-normal').className  = 'mode-btn' + (m === 'normal'  ? ' active-normal'  : '');
