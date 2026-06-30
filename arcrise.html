@@ -10423,8 +10423,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const badgeNew = hasUnseenBadges();
     document.querySelectorAll('.prof-eq-slot').forEach(el => { const d = el.querySelector('.notif-dot'); if (d) d.hidden = !badgeNew; });
     _setDot('#home-profile', badgeNew);                    // profile girişinde de
+    // Extreme: kilidi açma hakkı kazanıldıysa (eşik aşıldı) ve henüz açılmadıysa nudge
     let extNew = false;
-    try { extNew = !!extremeUnlocked && !seenExtreme; } catch(_) { extNew = false; } // extremeUnlocked TDZ koruması
+    try {
+      if (!extremeUnlocked && !seenExtreme) {
+        const bd = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
+        const bs = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
+        extNew = bd >= EX_DIST_REQ_CM && bs >= EX_SCORE_REQ;
+      }
+    } catch(_) { extNew = false; }   // EX_* / extremeUnlocked TDZ koruması
     _setDot('#btn-settings', extNew);                      // home: ayarlar butonu
     _setDot('#mode-fx-wrap', extNew);                      // settings: mod satırı
   }
