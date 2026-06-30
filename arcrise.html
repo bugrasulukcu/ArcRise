@@ -3981,26 +3981,24 @@
     <!-- Geri oku (diğer alt-sayfalardaki gibi) -->
     <button id="prof-back-arrow" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
 
-    <!-- Avatar + two equipped-badge slots (left / right) with labels -->
+    <!-- Avatar; rozet slotları dairenin sol/sağ alt köşelerinde -->
     <div id="prof-av-row">
-      <div class="prof-eq-col">
-        <button class="prof-eq-slot" id="prof-eq-slot-l" data-slot="0" aria-label="Badge slot 1">
-          <span class="prof-eq-icon"></span>
-          <span class="prof-eq-empty"></span>
+      <div id="prof-av-stack">
+        <button id="prof-av-ring" type="button" title="Tap to change avatar">
+          <div id="prof-av-ring-inner">
+            <img id="prof-modal-av-img" src="" alt="">
+          </div>
         </button>
-        <span class="prof-eq-lbl">BADGE 1</span>
-      </div>
-      <button id="prof-av-ring" type="button" title="Tap to change avatar">
-        <div id="prof-av-ring-inner">
-          <img id="prof-modal-av-img" src="" alt="">
-        </div>
-      </button>
-      <div class="prof-eq-col">
-        <button class="prof-eq-slot" id="prof-eq-slot-r" data-slot="1" aria-label="Badge slot 2">
+        <button class="prof-eq-slot eq-bl" id="prof-eq-slot-l" data-slot="0" aria-label="Badge slot 1">
           <span class="prof-eq-icon"></span>
-          <span class="prof-eq-empty"></span>
+          <span class="prof-eq-empty">BADGE 1</span>
+          <span class="notif-dot" hidden></span>
         </button>
-        <span class="prof-eq-lbl">BADGE 2</span>
+        <button class="prof-eq-slot eq-br" id="prof-eq-slot-r" data-slot="1" aria-label="Badge slot 2">
+          <span class="prof-eq-icon"></span>
+          <span class="prof-eq-empty">BADGE 2</span>
+          <span class="notif-dot" hidden></span>
+        </button>
       </div>
     </div>
 
