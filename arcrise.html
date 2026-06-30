@@ -10422,7 +10422,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const badgeNew = hasUnseenBadges();
     document.querySelectorAll('.prof-eq-slot').forEach(el => { const d = el.querySelector('.notif-dot'); if (d) d.hidden = !badgeNew; });
     _setDot('#home-profile', badgeNew);                    // profile girişinde de
-    const extNew = (typeof extremeUnlocked !== 'undefined') && extremeUnlocked && !seenExtreme;
+    let extNew = false;
+    try { extNew = !!extremeUnlocked && !seenExtreme; } catch(_) { extNew = false; } // extremeUnlocked TDZ koruması
     _setDot('#btn-settings', extNew);                      // home: ayarlar butonu
     _setDot('#mode-fx-wrap', extNew);                      // settings: mod satırı
   }
