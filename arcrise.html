@@ -11007,6 +11007,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('btn-credits').addEventListener('click', () => {
     alert('ArcRise\nv1.0 — 2025\nDesign & Code: Buğra Sulukcu');
   });
+  document.getElementById('btn-privacy').addEventListener('click', () => {
+    try { openSub('privacy-modal'); } catch(_){}
+  });
 
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
