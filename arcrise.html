@@ -10402,6 +10402,30 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function saveEarned() {
     try { localStorage.setItem('arc_badges_earned_v1', JSON.stringify([...earnedBadges])); } catch(_){}
   }
+
+  // ── Yeşil bildirim noktaları (yeni badge / yeni özellik) ──
+  let seenBadges = (() => { try { return new Set(JSON.parse(localStorage.getItem('arc_badges_seen_v1') || '[]')); } catch(_) { return new Set(); } })();
+  function saveSeenBadges() { try { localStorage.setItem('arc_badges_seen_v1', JSON.stringify([...seenBadges])); } catch(_){} }
+  function hasUnseenBadges() { for (const id of earnedBadges) if (!seenBadges.has(id)) return true; return false; }
+  function markBadgesSeen() { let d = false; earnedBadges.forEach(id => { if (!seenBadges.has(id)) { seenBadges.add(id); d = true; } }); if (d) { saveSeenBadges(); refreshNotifs(); } }
+  let seenExtreme = localStorage.getItem('arc_seen_extreme') === '1';
+  function markExtremeSeen() { if (!seenExtreme) { seenExtreme = true; localStorage.setItem('arc_seen_extreme', '1'); refreshNotifs(); } }
+  // Bir elemanın içine yeşil nokta ekle/çıkar (gerekirse oluşturur)
+  function _setDot(sel, on) {
+    const el = (typeof sel === 'string') ? document.querySelector(sel) : sel;
+    if (!el) return;
+    let d = el.querySelector(':scope > .notif-dot');
+    if (on) { if (!d) { d = document.createElement('span'); d.className = 'notif-dot'; el.appendChild(d); } d.hidden = false; }
+    else if (d) { d.hidden = true; }
+  }
+  function refreshNotifs() {
+    const badgeNew = hasUnseenBadges();
+    document.querySelectorAll('.prof-eq-slot').forEach(el => { const d = el.querySelector('.notif-dot'); if (d) d.hidden = !badgeNew; });
+    _setDot('#home-profile', badgeNew);                    // profile girişinde de
+    const extNew = (typeof extremeUnlocked !== 'undefined') && extremeUnlocked && !seenExtreme;
+    _setDot('#btn-settings', extNew);                      // home: ayarlar butonu
+    _setDot('#mode-fx-wrap', extNew);                      // settings: mod satırı
+  }
   // Coin ödülü — triangular ledger üzerinden: coinsSpent azaltılır (negatif olabilir)
   function grantCoins(n) {
     coinsSpent -= n;
