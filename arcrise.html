@@ -8672,9 +8672,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function renderProfStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
     const s = stats || {};
-    // Üst: en yüksek skor / en uzun mesafe (kuyruk renginde) — Alt: toplam oyun (beyaz)
-    set('ps-score',    pad(Math.max(s.bestNormal || 0, s.bestExtreme || 0)));        // en yüksek skor
-    set('ps-distbest', fmtDist(Math.max(s.bestDistNormal || 0, s.bestDistExtreme || 0))); // en uzun mesafe
+    // Extreme modda extreme'e özel skor/mesafe; diğerlerinde genel en yüksek
+    const ext = gameMode === 'extreme';
+    const tag = document.getElementById('prof-mode-tag'); if (tag) tag.hidden = !ext;
+    set('ps-score',    pad(ext ? (s.bestExtreme || 0) : Math.max(s.bestNormal || 0, s.bestExtreme || 0)));
+    set('ps-distbest', fmtDist(ext ? (s.bestDistExtreme || 0) : Math.max(s.bestDistNormal || 0, s.bestDistExtreme || 0)));
     set('ps-games',    s.gamesTotal || 0);
     renderProfTrends(); // ortalamalar (artış/azalış renkli) + sıralama
   }
