@@ -10515,6 +10515,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function openBadgesModal() {
     renderBadgeGrid();
     badgesModal.classList.add('open');
+    markBadgesSeen();   // görüldü → yeşil noktalar temizlenir
   }
   function closeBadgesModal() { badgesModal.classList.remove('open'); }
   document.getElementById('badges-modal-close').addEventListener('click', closeBadgesModal);
