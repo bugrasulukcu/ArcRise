@@ -8878,9 +8878,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (tc === 'custom' && upg.customGrad) {
       const stops = (upg.customStops && upg.customStops.length) ? upg.customStops : (upg.customGrad.match(/#[0-9a-fA-F]{3,8}|transparent/g) || ['#fff']);
       const cols = stops.filter(s => s.charAt(0) === '#'); if (!cols.length) cols.push('#ffffff');
-      const r = hexToRgb(cols[0]);
+      // Glow = durakların ORTALAMASI (ilk durak siyah olunca glow kaybolmasın diye)
+      let R = 0, G = 0, B = 0; cols.forEach(c => { const k = hexToRgb(c); R += k.r; G += k.g; B += k.b; });
+      R = Math.round(R / cols.length); G = Math.round(G / cols.length); B = Math.round(B / cols.length);
       return { solid: cols[0], css: upg.customGrad, conic: _conicFrom(cols), isGrad: true,
-               glow: `rgba(${r.r},${r.g},${r.b},.32)`, glowStrong: `rgba(${r.r},${r.g},${r.b},.6)` };
+               glow: `rgba(${R},${G},${B},.34)`, glowStrong: `rgba(${R},${G},${B},.62)` };
     }
     if (tc.charAt(0) === '#') {
       const r = hexToRgb(tc);
