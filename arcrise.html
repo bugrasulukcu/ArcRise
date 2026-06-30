@@ -8227,9 +8227,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('btn-reset').addEventListener('click', () => resetModal.classList.add('open'));
   document.getElementById('reset-cancel').addEventListener('click', () => resetModal.classList.remove('open'));
   document.getElementById('reset-modal').addEventListener('click', e => { if (e.target.id === 'reset-modal') resetModal.classList.remove('open'); });
-  document.getElementById('reset-confirm-btn').addEventListener('click', () => {
-    resetModal.classList.remove('open');
-    doReset();
+  document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('reset-confirm-btn');
+    btn.disabled = true; const _t = btn.textContent; btn.textContent = 'DELETING…';
+    try { await doReset(); } finally { btn.disabled = false; btn.textContent = _t; resetModal.classList.remove('open'); }
   });
   // Satın alma onay modalı — BUY ile callback'i çalıştır, CANCEL/backdrop kapatır.
   const buyModal = document.getElementById('buy-modal');
