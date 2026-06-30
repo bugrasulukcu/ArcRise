@@ -8718,7 +8718,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     };
     const s = stats || {};
     try {
-      const bestMode = (s.bestExtreme || 0) >= (s.bestNormal || 0) ? 'extreme' : 'normal';
+      const bestMode = (gameMode === 'extreme') ? 'extreme'
+                     : (gameMode === 'normal') ? 'normal'
+                     : ((s.bestExtreme || 0) >= (s.bestNormal || 0) ? 'extreme' : 'normal');
       const rows = await ARC_DB.getTopScores(100, bestMode) || [];
       const me = playerName || 'PLAYER';
       const byScore = [...rows].sort((a, b) => (b.score || 0) - (a.score || 0));
