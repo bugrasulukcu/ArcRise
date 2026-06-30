@@ -2634,6 +2634,17 @@
       flex: 0 0 auto; width: 36px; height: 36px;
     }
     #settings #mode-btn-wife:active { transform: scale(0.92); }
+    /* Seçili DEĞİLKEN sönük/disabled görünüm (kalıcı pembe glow kaldırıldı) */
+    #settings #mode-btn-wife:not(.active) {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+      box-shadow: none;
+      opacity: .45;
+      filter: grayscale(.55);
+      animation: none;
+    }
+    /* Seçiliyken pembe glow + nabız (taban .active kuralından gelir) */
+    #settings #mode-btn-wife.active { opacity: 1; filter: none; }
     /* Chill/Extreme — aşağıdaki On/Off toggle ile aynı format, eşit genişlik */
     #settings #mode-sel {
       width: 168px;
