@@ -5105,6 +5105,29 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const hCoinsEl = document.getElementById('home-pcoins');
     if (hCoinsEl) hCoinsEl.textContent = String(coins);
     try { renderSlots(); } catch(_){} // home gear slotlarını tazele (satın alma/equip durumu)
+    try { applyHomeProfileStroke(); } catch(_){} // kart çerçevesi = trace rengi
+  }
+  // Ana sayfa profil kartının çerçevesi trace (kuyruk) rengiyle eşlenik.
+  // Extreme/Wife modunda kendi temalı çerçevesi olduğu için dokunmaz.
+  function applyHomeProfileStroke() {
+    const el = document.getElementById('home-profile');
+    if (!el) return;
+    if (gameMode === 'extreme' || gameMode === 'wife') {
+      el.style.background = ''; el.style.borderColor = ''; el.style.boxShadow = '';
+      return;
+    }
+    const m = traceMainColor();
+    const interior = 'linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,.10)) padding-box';
+    if (m.isGrad) {
+      el.style.borderColor = 'transparent';
+      el.style.background = `${interior}, ${m.css} border-box`;
+      el.style.backgroundRepeat = 'no-repeat';
+      el.style.boxShadow = `0 0 16px ${m.glow}`;
+    } else {
+      el.style.background = '';
+      el.style.borderColor = m.solid;
+      el.style.boxShadow = `0 0 16px ${m.glow}`;
+    }
   }
 
   // Herhangi bir avatar grid'ini render et (id + CSS class adı verilir)
