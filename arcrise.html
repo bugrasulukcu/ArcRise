@@ -9078,6 +9078,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     _setDot('#prof-tomb-btn', !upg.tombOwned && coins >= TOMB_PRICE);
     _setDot('#prof-trace-btn', !upg.traceOwned && coins >= TRACE_SHOW_PRICE);
     _setDot('#prof-deathtext-btn', !upg.nameOwned && coins >= NAME_PRICE);
+    try { applyHomeProfileStroke(); } catch(_){}   // trace değişince ana sayfa kartı da güncellensin
   }
 
   // Engellenen kelimeler — küfür + nefret söylemi (ırkçı hakaret, ırk/etnisite, din adları).
