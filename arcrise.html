@@ -943,7 +943,8 @@
       content: '';
       position: absolute; inset: -3px;
       border-radius: 50%;
-      background: conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      /* trace rengi/gradyeni — JS --home-ring ile set eder, yoksa gökkuşağı */
+      background: var(--home-ring, conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255));
       animation: spinA 3s linear infinite;
       z-index: 0;
     }
