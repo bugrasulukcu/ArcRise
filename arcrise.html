@@ -4076,16 +4076,23 @@
     <div id="trace-color-grid"></div>
     <div class="trace-sec-lbl">ANIMATION</div>
     <div id="trace-anim-row"></div>
-    <!-- Custom gradyen düzenleyici (CUSTOM seçilince/satın alınca açılır) -->
-    <div id="trace-custom-editor">
-      <div class="trace-sec-lbl">CUSTOM GRADIENT</div>
-      <div id="tce-preview"></div>
-      <div id="tce-stops"></div>
-      <div id="tce-palette"></div>
-      <div id="tce-actions">
-        <button id="tce-cancel" class="tce-btn">CANCEL</button>
-        <button id="tce-save" class="tce-btn tce-save">SAVE</button>
-      </div>
+  </div>
+</div>
+
+<!-- CUSTOM GRADIENT (kendi gradyenini oluştur) — pencere gibi açılır -->
+<div id="custom-modal">
+  <div id="custom-modal-box">
+    <div class="modal-head">
+      <button id="custom-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <div class="fm-title modal-head-title">CUSTOM GRADIENT</div>
+      <span class="modal-head-spacer"></span>
+    </div>
+    <div id="tce-preview"></div>
+    <div id="tce-stops"></div>
+    <div id="tce-palette"></div>
+    <div id="tce-actions">
+      <button id="tce-cancel" class="tce-btn">CANCEL</button>
+      <button id="tce-save" class="tce-btn tce-save">SAVE</button>
     </div>
   </div>
 </div>
