@@ -8827,7 +8827,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const _tceBuild = () => `linear-gradient(90deg,${_tceStops.join(',')})`;
   function _tceRender() {
     const pv = document.getElementById('tce-preview');
-    if (pv) { pv.style.background = _tceBuild(); pv.classList.toggle('tce-checker', _tceStops.includes('transparent')); }
+    if (pv) { pv.style.background = _tceBuild(); pv.style.backgroundRepeat = 'no-repeat'; pv.classList.toggle('tce-checker', _tceStops.includes('transparent')); }
     const stopsEl = document.getElementById('tce-stops');
     if (stopsEl) {
       stopsEl.innerHTML = _tceStops.map((c, i) =>
