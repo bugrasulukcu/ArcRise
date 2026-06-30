@@ -6725,7 +6725,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     let animBright = 1, glowBoost = 1;
     if (animType === 'pulse') animBright = 0.5 + 0.8 * Math.min(1, _hb(time * 0.85));
     else if (animType === 'glow') glowBoost = 1.9;
-    const waveAt = i => animType === 'wave' ? (0.32 + 0.68 * (0.5 + 0.5 * Math.sin(i * 0.5 - time * 5))) : 1; // ilerleyen parlaklık dalgası
+    // Dalga ekran konumuna sabitli (trail içinden geçer) → topu takip ediyor gibi durmaz
+    const waveAt = sy => animType === 'wave' ? (0.32 + 0.68 * (0.5 + 0.5 * Math.sin(sy * 0.03 - time * 2.6))) : 1;
     // Segment rengi (alpha verilir). Custom → akan tek renk; gökkuşağı → gradient.
     const strokeFor = (i, a, b, al) => {
       if (isHex) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
