@@ -631,7 +631,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-06-26 (v17). Sonraki oturumda bu dosyayı oku, sonra çalışmaya devam et.
+**Son güncelleme**: 2026-06-30 (v18). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v18 changelog'unu oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Capacitor ile Android paketleme → Play internal testing → IAP/AdMob bağlama**.
 
 ---
 
