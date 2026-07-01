@@ -7814,10 +7814,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const bd = bestDistanceM || 0;
       goBestDistInline.textContent = fmtDist(bd);
     }
-    // Reklamla devam: run başına tek hak, wife mode'da ve güvenli nokta yoksa kapalı
+    // Reklamla devam: run başına tek hak, wife mode'da ve güvenli nokta yoksa kapalı.
+    // ADS_ENABLED false iken (v1) hiç gösterilmez — sahte reklam yok.
     const adBtn = document.getElementById('btn-continue-ad');
     if (adBtn) adBtn.style.display =
-      (!_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
+      (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
