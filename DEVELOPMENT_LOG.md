@@ -39,15 +39,14 @@ Yeni/cowork bir ajan buraya bakınca projeyi hızlıca kavrasın diye özet. **D
 
 ```
 C:\Users\DELL\Desktop\BUGRA\ArcRise\
-├── arcrise.html              ← oyunun tamamı (HTML + CSS + JS)
-├── LOGO.png                  ← ana sayfa logosu (ball+arc, profilin arkasından peek)
-├── AUDIO/
-│   ├── ArcRiseBGMusic.wav    ← background loop (~2MB)
-│   ├── ArcRiseTouch.wav      ← her tıklama sesi (~90KB)
-│   └── ArcRiseDead.wav       ← ölüm sesi (~170KB)
-├── PNG/                      ← Figma export PNG'leri (referans)
-├── RESOURCES/                ← gitignored (ham asset'ler)
-├── .claude/                  ← Claude Code config (settings, launch)
+├── arcrise.html              ← oyunun tamamı (HTML + CSS + JS, ~11.500 satır)
+├── index.html                ← cache-bust ile arcrise.html'e redirect (giriş)
+├── privacy.html              ← mağaza için gizlilik politikası sayfası (yeni)
+├── firestore.rules           ← Firebase güvenlik kuralları (Console'a deploy edilir)
+├── PNG/                      ← LOGO.png, GAME_ICON.png + Figma export'ları
+├── AUDIO/                    ← BGMusic(.mp3/.wav), Touch.wav, Dead.wav
+├── RESOURCES/                ← ham asset zip'leri (build'e dahil etme)
+├── .claude/                  ← Claude Code config (settings + auto-commit hook)
 ├── .gitignore
 └── DEVELOPMENT_LOG.md        ← bu dosya
 ```
