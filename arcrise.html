@@ -10393,14 +10393,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
   document.getElementById('coins-modal-close').addEventListener('click', () => coinsModal.classList.remove('open'));
   coinsModal.addEventListener('click', e => { if (e.target === coinsModal) coinsModal.classList.remove('open'); });
-  // Purchase tier buttons — IAP not wired yet, just acknowledges the tap.
-  document.querySelectorAll('.coins-buy').forEach(b => {
-    b.addEventListener('click', () => {
-      const amt = Number(b.dataset.amount) || 0;
-      console.log('[Coins] purchase placeholder', { amount: amt });
-      alert(`In-app purchase coming soon — ${amt} coins.`);
+  // Satın-alma tier'ları: IAP açıkken göster + bağla. v1'de kapalı (gizli).
+  (function initCoinIAP() {
+    const row = document.getElementById('coins-buy-row');
+    if (row) row.hidden = !IAP_ENABLED;
+    if (!IAP_ENABLED) return;   // kapalıysa dinleyici bağlama
+    document.querySelectorAll('.coins-buy').forEach(b => {
+      b.addEventListener('click', () => {
+        const amt = Number(b.dataset.amount) || 0;
+        // TODO: gerçek IAP — Capacitor billing / RevenueCat çağrısı → başarılıysa grantCoins(amt)
+        console.log('[Coins] purchase', { amount: amt });
+        alert(`In-app purchase — ${amt} coins.`);
+      });
     });
-  });
+  })();
   // Jump from Coins to Upgrades (closes coins, opens upgrades)
   document.getElementById('coins-to-upgrades').addEventListener('click', () => {
     coinsModal.classList.remove('open');
