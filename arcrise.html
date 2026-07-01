@@ -4965,6 +4965,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   // ── Canvas setup ──────────────────────────────────────────
   const W = 600;
+  // ── Yayın özellik bayrakları ──────────────────────────────
+  // v1 (web build): gerçek IAP/reklam SDK'sı yok → kapalı. Native (Capacitor) pakete
+  // billing/AdMob eklenip mağaza test kanalında doğrulandıktan sonra true yap.
+  const IAP_ENABLED = false;   // COINS ekranındaki fiyatlı satın-alma tier'ları
+  const ADS_ENABLED = false;   // ölünce "reklam izle · devam et" ödüllü reklam
   const H_REF = 1066;   // mesafe/zorluk hesapları için SABİT referans (cihazdan bağımsız adalet)
   let H = 1066;         // GÖRÜNÜM yüksekliği — ekran oranına göre değişir (uzun ekranı doldurur)
   const gc = document.getElementById('gc');
