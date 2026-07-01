@@ -23,7 +23,8 @@
       "Bash(cmdkey /list)",
       "Bash(grep -nE 'ctx\\\\.arc\\\\\\(|Math\\\\.cos|Math\\\\.sin|ORBIT|orbitRadius|ringRadius|\\\\.radius|player\\\\s*=\\\\s*\\\\{|cx,|, cy' arcrise.html)",
       "Bash(node -e 'const fs=require\\(\"fs\"\\);const h=fs.readFileSync\\(\"arcrise.html\",\"utf8\"\\);const re=/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g;let m,n=0,err=0;while\\(\\(m=re.exec\\(h\\)\\)\\){n++;try{new Function\\(m[1]\\)}catch\\(e\\){err++;console.log\\(\"HATA\",n,e.message\\)}}console.log\\(n+\" blok, \"+err+\" hata\"\\); *)",
-      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('arcrise.html','utf8'\\);const m=[...h.matchAll\\(/<script\\\\b[^>]*>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let e=0;m.forEach\\(\\(x,i\\)=>{try{new Function\\(x[1]\\)}catch\\(err\\){e++;console.log\\('blok',i,err.message\\)}}\\);console.log\\(m.length+' blok, '+e+' hata'\\)\")"
+      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('arcrise.html','utf8'\\);const m=[...h.matchAll\\(/<script\\\\b[^>]*>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];let e=0;m.forEach\\(\\(x,i\\)=>{try{new Function\\(x[1]\\)}catch\\(err\\){e++;console.log\\('blok',i,err.message\\)}}\\);console.log\\(m.length+' blok, '+e+' hata'\\)\")",
+      "Bash(grep -n \"## 📝\\\\|^## v1\\\\|^### v1\\\\|Son güncelleme\\\\|Son Yapılan\\\\|^## 🚀\\\\|^---$\" DEVELOPMENT_LOG.md)"
     ],
     "additionalDirectories": [
       "\\tmp"

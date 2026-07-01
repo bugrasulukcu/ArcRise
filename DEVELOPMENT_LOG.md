@@ -1,6 +1,37 @@
 # ArcRise — Development Log
 
-> Bu dosya, ArcRise'ın geliştirme sürecini ve mevcut durumunu özetler. Yeni bir oturum başlattığında öncelikle bu dosyayı oku — projenin nerede olduğunu hemen anlarsın. Tek dosyalı bir oyun (`arcrise.html` ~5000+ satır vanilla HTML5 canvas).
+> Bu dosya, ArcRise'ın geliştirme sürecini ve mevcut durumunu özetler. Yeni bir oturum başlattığında öncelikle bu dosyayı oku — projenin nerede olduğunu hemen anlarsın. Tek dosyalı bir oyun (`arcrise.html` ~11.500 satır vanilla HTML5 canvas).
+
+---
+
+## 🚀 COWORK HANDOFF — ÖNCE BUNU OKU (2026-06-30)
+
+Yeni/cowork bir ajan buraya bakınca projeyi hızlıca kavrasın diye özet. **Detaylı "Mevcut Durum" bölümlerinin bir kısmı v18 öncesi durumu anlatır; profil/trace/UI için asıl kaynak aşağıdaki v18 changelog'udur.**
+
+**Ne bu proje:** Tek dosyalık (`arcrise.html`) vanilla HTML5 canvas mobil arcade oyunu. Build step yok. `index.html` cache-bust ile `arcrise.html`'e yönlendirir. Firebase (Firestore + Anonymous Auth) ile leaderboard/profil/arkadaş/hayalet-iz.
+
+**Mimari — arcrise.html içinde nerede ne var:**
+- Tek büyük IIFE. Üstte `<head>` içinde FOUT guard, localStorage shim, global error handler.
+- **`ARC_DB` modülü** (ayrı scope, ~line 4200-4900): Firebase REST + anon auth; `submitScore`, `getTopScores`, `getCrossPlayerGhosts`, `registerPlayer`, `sendFriendRequest`/`acceptFriendRequest`/`removeFriendEdge`, **`deleteMyData`** (hesap silme). `api` objesiyle dışarı açılır.
+- **Oyun scope'u** (~line 4960+): `W=600` sabit, `H_REF=1066` (adalet), `H` değişken (`fitCanvas`). Feature flag'ler burada: `IAP_ENABLED`, `ADS_ENABLED` (v1'de `false`).
+- Render loop ~line 7900; `drawTrail` (iz) ~6700; `drawPlayer` ~6840; oyun update ~7100-7460 (enerji/combo/ölüm).
+- Profil modalı JS ~8530+ (`openProfModal`, `renderProfStats`, `renderProfButtons`, `renderProfRank`); trace/tomb/deathtext/custom modalları ~8640+; `traceMainColor()` trace rengini/gradyenini/glow'unu üretir (profil+home halkası+stroke bunu kullanır).
+- Badge/bildirim sistemi ~10400+ (`BADGES`, `checkBadgeUnlocks`, `refreshNotifs`, `_setDot`).
+- Quests ~11050+; sosyal/arkadaş UI ~11250+.
+
+**Doğrulama:** her düzenleme sonrası script bloklarını kontrol et:
+`node -e "const fs=require('fs');const h=fs.readFileSync('arcrise.html','utf8');const m=[...h.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)];let e=0;m.forEach((x,i)=>{try{new Function(x[1])}catch(err){e++;console.log('blok',i,err.message)}});console.log(m.length+' blok, '+e+' hata')"` → beklenen **"2 blok, 0 hata"**. (Runtime hatalarını yakalamaz; sadece syntax.)
+
+**Auto-commit:** `.claude/settings.json` PostToolUse hook her Write/Edit'te commit+push eder (`main`).
+
+**Yayın durumu (pazar hazırlığı):**
+- ✅ Gizlilik politikası: in-app modal + kök `privacy.html` (mağaza URL'si için — GitHub Pages'te yayınla).
+- ✅ Hesap/veri silme: Settings → **Delete Account & Data** artık bulutu da siler (`deleteMyData` + `firestore.rules`'ta owner-DELETE). **Kuralları deploy etmek gerekir.**
+- ✅ IAP tier'ları `IAP_ENABLED=false` ile gizli; sahte reklam `ADS_ENABLED=false` ile gizli.
+- ⏳ **Native paket yok** — Capacitor ile sarılacak. Toolchain (bu Windows makinesi): Node ✅, Git ✅, **JDK 17 kuruldu**, **Android Studio kuruldu**. iOS için Mac gerekir (Windows'ta yok → önce Android).
+- ⏳ Anti-cheat yok (skor client-side; rules sadece aralık kontrolü). App Check yok.
+
+**Yayın yol haritası (Android):** (1) Capacitor scaffold + `cap add android`, webDir=arcrise dosyaları. (2) Android Studio'da emülatörde çalıştır. (3) İkon/splash, ekran görüntüleri, `privacy.html` URL. (4) Upload keystore üret → imzalı **AAB**. (5) Play Console **internal testing** → burada IAP (RevenueCat/Play Billing) + AdMob rewarded bağla, `IAP_ENABLED`/`ADS_ENABLED=true` yap, sandbox'ta test. (6) Prod.
 
 ---
 
