@@ -11036,7 +11036,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('wrap-again').addEventListener('click', () => startGame());
 
   // ── Rewarded ad stub ──────────────────────────────────────
-  // TODO: gerçek SDK (AdMob / Unity Ads) entegre edilince showRewarded içini değiştir.
+  // v1'de ADS_ENABLED=false → "reklam izle · devam et" butonu hiç gösterilmez,
+  // bu sahte overlay çağrılmaz. Reklamı AÇARKEN: (1) aşağıdaki showRewarded gövdesini
+  // gerçek AdMob rewarded çağrısıyla değiştir, (2) ADS_ENABLED=true yap. Yalnız bayrağı
+  // açmak sahte "AD" ekranını gösterir — önce SDK'yı bağla.
   // Sözleşme: showRewarded(onDone) — reklam tamamlanırsa onDone(true), iptalde onDone(false).
   const AdProvider = {
     showRewarded(onDone) {
