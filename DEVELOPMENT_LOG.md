@@ -380,6 +380,42 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v18 — Profil/trace elden geçirme, bildirim noktaları, wife ∞, pazar hazırlığı (2026-06-30)
+
+**Profil ekranı yeniden düzenlendi**
+- **ANALYSIS ve SAVE/BACK kaldırıldı**; sol üstte diğer modallardaki gibi **geri oku**. Kullanıcı adı büyütüldü (22px bold).
+- Üst 2 stat: **HIGHEST SCORE / HIGHEST DISTANCE** (kutu arka planı yok, **trace renginde**); altlarında **liderlik sıran** (`#N`) — yükseldiyse yeşil ▲, düştüyse kırmızı ▼ (son görüntülemeye göre, `arc_view_rank*`).
+- Alt 3 stat: **TOTAL GAMES** (beyaz), **AVG SCORE / AVG DISTANCE** (artıyorsa yeşil ▲ / azalıyorsa kırmızı ▼; `scoreLifetime` istatistiği eklendi). İki satır arasında ince ayraç.
+- **Extreme modunda**: skor/mesafe extreme'e özel (`bestExtreme`/`bestDistExtreme`), değerlerin üstünde küçük turuncu **EXTREME** etiketi, sıra da extreme tablosundan.
+- **TOMB / TRACE / DEATH TEXT** artık **gri gradyenli buton**; sahip olunca profil butonuna basmak **doğrudan aç/kapa** (uyarı yalnız satın alma anında). Açıkken **yeşil glow**. TOMB/DEATH TEXT alt-modalları yalnızca sahip değilken (satın alma) açılır; trace her zaman ayar merkezi olarak açılır. Trace show-to-others = gerçek **toggle switch**.
+
+**Rozet slotları + yeşil bildirim noktası sistemi**
+- İki slot **avatarın sol/sağ alt köşesine** taşındı; boşken içinde **BADGE 1/BADGE 2** yazar.
+- Yeniden kullanılabilir `.notif-dot` + `_setDot()` + `refreshNotifs()`. Sinyaller: **yeni badge** (slotlar + profil kartı, `arc_badges_seen`), **extreme kilit hakkı** (home ayarlar butonu + settings mod satırı, `arc_seen_extreme`), **quests** (toplanmamış ödül), **upgrades** (son ziyaretten beri coin arttıysa, `arc_seen_upg_coins`), **profil TOMB/TRACE/TEXT** (sahip değil + parası yetiyorsa). Arkadaş istekleri mevcut sayaç rozetinde.
+
+**Trace sistemi büyük revizyon**
+- **Varsayılan renk BEYAZ** (bedava). Fiyatlar: düz renk **5**, gradyen **10**, gökkuşağı **30**, **custom 50**. Grid sırası: beyaz → düz → gradyen → custom.
+- **Custom gradyen editörü** ayrı **pencere** (`#custom-modal`): 3 durak + **11 dairesel palet** (8 ana renk + siyah/gri/beyaz), canlı önizleme, SAVE. `upg.customStops`/`customGrad`. Oyun-içi iz custom paleti boyunca **akan** renk.
+- **Animasyonlar yeniden tasarlandı** (rainbow anim kaldırıldı → artık sadece *renk*): **WAVE** (ekran konumuna sabit ilerleyen parlaklık dalgası), **PULSE** (kalp atışı `profHeartBeat`), **GLOW** (sabit full ışık), OFF. Hem profil çerçevesine hem **oyun-içi ize** uygulanır.
+- **Profil çerçevesi (stroke)** + **profil avatar halkası** + **ana sayfa avatar halkası** trace rengi/gradyeniyle eşlenik (gradyende dönen konik, merkez profil resmi). **Glow = renk ortalaması** (`_avgGlow` — gradyende mor takılı kalmıyor). Gradyen uçlarındaki 1px kalıntı `background-repeat:no-repeat` ile giderildi.
+- Not: ana sayfa **kart çerçevesi değil, sadece avatar halkası** boyanır (denenmiş kart-gradyeni geri alındı).
+
+**Settings + Home**
+- Seçili mod glow'u geri açıldı (**Chill mavi / Extreme turuncu**). **Wife butonu** seçili değilken **sönük/disabled**, sadece seçiliyken pembe glow+nabız.
+- **HOW TO PLAY** büyütüldü + başına **daire içinde ? ikonu**.
+- Ana sayfa **profil kartı genişliği** menüyle eşitlendi (`#home-logo-wrap` `min(80vw,300px)`).
+- Tüm alt-menü stroke'ları **2px**'e eşitlendi; High Scores'taki **çift-stroke bug** düzeltildi (Chill modunda taban border şeffaf).
+
+**Wife mode = sonsuz**
+- Enerji/geri-sayım tükenmez (hep dolu), **ölüm yok**; top üzerindeki sayı yerine **∞** gösterilir.
+
+**Pazar hazırlığı (madde 1 + 2)**
+- **Hesap + bulut veri silme:** `ARC_DB.deleteMyData(name,tag)` → arkadaş kenarları → profil → skorlar (owner==uid). `doReset` artık async: önce bulut siler, sonra tüm local (+ `arc_fb_rt` kimlik token'ı + seen anahtarları). Reset modalı "DELETE ACCOUNT & DATA" oldu. **`firestore.rules`**: scores/players için **owner-DELETE** izni.
+- **Gizlilik politikası:** ana sayfada **PRIVACY** linki + `#privacy-modal`; ayrıca mağaza URL'si için kök **`privacy.html`**.
+- **IAP/Reklam feature-flag:** `IAP_ENABLED`/`ADS_ENABLED` (v1 `false`). Coin satın-alma tier'ları gizli (`#coins-buy-row[hidden]{display:none}` ile CSS ezme düzeltildi); ölünce "reklam izle · devam" butonu gizli (sahte AD ekranı devrede değil). Açma yolu kod içi TODO'larda + handoff'ta.
+
+---
+
 ### v17 — Upgrade/CORE yeniden tasarım, ×çarpan dili, profil kişiselleştirme, uzaktan ölüm işaretçileri (2026-06)
 
 **Upgrades — satın alma akışı + kart tasarımı**
