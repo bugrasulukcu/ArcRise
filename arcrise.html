@@ -8935,7 +8935,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!str) return '';
     return String(str).split(',').slice(0, 2).map(id => {
       const b = findBadge(id.trim());
-      return b ? `<span style="display:inline-block;vertical-align:middle;margin-left:4px;opacity:.85">${iconHTML(b.icon, { size: 11 })}</span>` : '';
+      if (!b) return '';
+      // Kademeli rozetlerde ikon, kademe rengini taşır (bronz→elmas)
+      const col = (b.tier > 0 && typeof TIER_COLORS !== 'undefined') ? TIER_COLORS[b.tier - 1] : undefined;
+      return `<span style="display:inline-block;vertical-align:middle;margin-left:4px;opacity:.85">${iconHTML(b.icon, { size: 11, color: col })}</span>`;
     }).join('');
   }
 
@@ -10799,33 +10802,67 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // checkBadgeUnlocks() ile kontrol edilir; takılı badge'ler leaderboard'a gider.
   const bestAny = () => Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
   const bestDistAny = () => Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
-  const BADGES = [
-    { id: 'first-1k',   icon: 'medal',  name: 'FIRST 1K',  desc: 'Score 1,000+ in one run',
-      cond: () => bestAny() >= 1000 },
-    { id: 'combo-9',    icon: 'fire',   name: 'COMBO 9',   desc: 'Reach a 9 combo streak',
-      cond: () => (stats.maxCombo || 0) >= 9 },
-    { id: 'extreme-1',  icon: 'bolt',   name: 'EXTREME',   desc: 'Play an Extreme run',
-      cond: () => (stats.gamesExtreme || 0) >= 1 },
-    { id: 'gold-100',   icon: 'coin',   name: '100 GOLD',  desc: 'Collect 100 gold balls (total)',
-      cond: () => (stats.goldTotal || 0) >= 100 },
-    { id: 'streak-5',   icon: 'target', name: 'STREAK 5',  desc: 'Play 5 days in a row',
-      cond: () => (stats.dayStreak || 0) >= 5 },
-    { id: 'speedrun',   icon: 'runner', name: 'SPEEDRUN',  desc: '10.00m in under 60 seconds',
+  // ── Kademeli rozet sistemi (2026-07-02) ──────────────────
+  // 10 AİLE × 5 KADEME (I..V = bronz→gümüş→altın→platin→elmas) + 4 ÖZEL rozet.
+  // Kimlikler 'aile-N' (N=1..5). İkonlar ileride ICONS/badges/<aile>.svg'den
+  // bağlanacak; şimdilik yerleşik ikonlar kullanılıyor.
+  const TIER_NAMES  = ['I', 'II', 'III', 'IV', 'V'];
+  const TIER_COLORS = ['#cd7f32', '#c8ccd4', '#ffd700', '#7de3ff', '#c77dff'];
+  const _fmtN = n => n.toLocaleString('en-US');
+  const _fmtKm = cm => cm >= 100000 ? (cm / 100000) + 'km' : fmtDist(cm);
+  const BADGE_FAMILIES = [
+    { id: 'score',    name: 'SCORE',     icon: 'medal',
+      stat: () => bestAny(),                    tiers: [1000, 5000, 20000, 75000, 250000],
+      desc: t => `Score ${_fmtN(t)}+ in one run` },
+    { id: 'range',    name: 'DISTANCE',  icon: 'ruler',
+      stat: () => bestDistAny(),                tiers: [1000, 2500, 5000, 10000, 25000],
+      desc: t => `Reach ${fmtDist(t)} in one run` },
+    { id: 'odometer', name: 'TRAVELLER', icon: 'rocket',
+      stat: () => stats.distLifetimeCm || 0,    tiers: [10000, 50000, 250000, 1000000, 5000000],
+      desc: t => `Travel ${_fmtKm(t)} in total` },
+    { id: 'combo',    name: 'COMBO',     icon: 'fire',
+      stat: () => stats.maxCombo || 0,          tiers: [5, 9, 15, 25, 50],
+      desc: t => `Hit a ×${t} combo` },
+    { id: 'gold',     name: 'GOLD',      icon: 'coin',
+      stat: () => stats.goldTotal || 0,         tiers: [10, 50, 250, 1000, 5000],
+      desc: t => `Collect ${_fmtN(t)} gold balls (total)` },
+    { id: 'boost',    name: 'COLLECTOR', icon: 'gem',
+      stat: () => stats.purpleTotal || 0,       tiers: [10, 50, 250, 1000, 5000],
+      desc: t => `Collect ${_fmtN(t)} boosters (total)` },
+    { id: 'veteran',  name: 'VETERAN',   icon: 'target',
+      stat: () => stats.gamesTotal || 0,        tiers: [10, 50, 250, 1000, 5000],
+      desc: t => `Play ${_fmtN(t)} runs` },
+    { id: 'daily',    name: 'STREAK',    icon: 'runner',
+      stat: () => stats.dayStreak || 0,         tiers: [3, 7, 14, 30, 100],
+      desc: t => `Play ${t} days in a row` },
+    { id: 'extreme',  name: 'EXTREME',   icon: 'bolt',
+      stat: () => stats.gamesExtreme || 0,      tiers: [1, 10, 50, 250, 1000],
+      desc: t => `Play ${_fmtN(t)} Extreme run${t === 1 ? '' : 's'}` },
+    { id: 'social',   name: 'SOCIAL',    icon: 'hearts',
+      stat: () => { try { return acceptedFriends().length; } catch(_) { return 0; } },
+      tiers: [1, 3, 5, 10, 25],
+      desc: t => `Have ${t} friend${t === 1 ? '' : 's'}` },
+  ];
+  // Tek seferlik ÖZEL rozetler (kademesiz — beceri/an yakalama)
+  const BADGE_SPECIALS = [
+    { id: 'speedrun',  icon: 'hourglass', name: 'SPEEDRUN',  desc: '10.00m in under 60 seconds',
       cond: () => !!stats.speedrunDone },
-    { id: 'collector',  icon: 'gem',    name: 'COLLECTOR', desc: 'Collect 50 boosters (total)',
-      cond: () => (stats.purpleTotal || 0) >= 50 },
-    { id: 'night-owl',  icon: 'owl',    name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
+    { id: 'night-owl', icon: 'owl',       name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
       cond: () => !!stats.nightOwlDone },
-    { id: 'distance-25',  icon: 'ruler',  name: '25 M',    desc: 'Reach 25.00m in one run',
-      cond: () => bestDistAny() >= 2500 },
-    { id: 'distance-100', icon: 'rocket', name: '100 M',   desc: 'Reach 100.00m in one run',
-      cond: () => bestDistAny() >= 10000 },
-    { id: 'boss',       icon: 'crown',  name: 'BOSS',      desc: 'Own all 7 abilities',
+    { id: 'survivor',  icon: 'shield',    name: 'SURVIVOR',  desc: '10.00m without revive or continue',
+      cond: () => !!stats.survivorDone },
+    { id: 'boss',      icon: 'crown',     name: 'BOSS',      desc: 'Own all 7 abilities',
       cond: () => ['timeslow','phaseburst','coinpull','brake','mirror','shock','anchor']
                     .every(k => upg.inv[k]?.owned) },
-    { id: 'survivor',   icon: 'shield', name: 'SURVIVOR',  desc: '10.00m without revive or continue',
-      cond: () => !!stats.survivorDone },
   ];
+  // Düz BADGES listesi — mevcut altyapı (earnedBadges / equip / unlock) id bazlı çalışır.
+  const BADGES = [];
+  BADGE_FAMILIES.forEach(f => f.tiers.forEach((t, i) => BADGES.push({
+    id: `${f.id}-${i + 1}`, family: f.id, tier: i + 1,
+    icon: f.icon, name: `${f.name} ${TIER_NAMES[i]}`,
+    desc: f.desc(t), cond: () => f.stat() >= t,
+  })));
+  BADGE_SPECIALS.forEach(s => BADGES.push(Object.assign({ family: null, tier: 0 }, s)));
   let equippedBadges = (() => {
     try { return JSON.parse(localStorage.getItem('arc_badges_v1') || '[null,null]'); }
     catch(_) { return [null, null]; }
@@ -10896,6 +10933,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
   function checkBadgeUnlocks() {
     let dirty = false;
+    const newly = [];
     for (const b of BADGES) {
       if (earnedBadges.has(b.id)) continue;
       let ok = false;
@@ -10903,10 +10941,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       if (!ok) continue;
       earnedBadges.add(b.id);
       dirty = true;
-      // Rozetler koleksiyondur — coin ödülü YOK (2026-07-02'de kaldırıldı;
-      // coin kazanımı yalnızca mesafe + görev/giriş/davet ödülleridir).
-      try { showRewardToast({ icon: b.icon, title: 'BADGE UNLOCKED', sub: b.name }); } catch(_){}
+      newly.push(b);
     }
+    // Rozetler koleksiyondur — coin ödülü YOK (2026-07-02'de kaldırıldı).
+    // Aynı ailenin birden çok kademesi aynı anda açıldıysa yalnızca EN YÜKSEĞİ
+    // duyurulur; 3'ten çok duyuru birikirse tek özet kart gösterilir.
+    try {
+      const best = new Map(); // family|id → en yüksek kademeli rozet
+      newly.forEach(b => {
+        const k = b.family || b.id;
+        if (!best.has(k) || (b.tier || 0) > (best.get(k).tier || 0)) best.set(k, b);
+      });
+      const list = [...best.values()];
+      if (list.length > 3) {
+        showRewardToast({ icon: 'medal', title: 'BADGES UNLOCKED', sub: list.length + ' new badges' });
+      } else {
+        list.forEach(b => showRewardToast({
+          icon: b.icon, title: 'BADGE UNLOCKED', sub: b.name,
+        }));
+      }
+    } catch(_){}
     if (dirty) saveEarned();
     try { refreshNotifs(); } catch(_){}
     return dirty;
@@ -10931,41 +10985,75 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const b = id ? findBadge(id) : null;
       el.classList.toggle('filled', !!b);
       const iconEl = el.querySelector('.prof-eq-icon');
-      if (iconEl) iconEl.innerHTML = b ? iconHTML(b.icon, { size: 22 }) : '';
+      if (iconEl) iconEl.innerHTML = b ? iconHTML(b.icon, { size: 22, color: b.tier > 0 ? TIER_COLORS[b.tier - 1] : undefined }) : '';
     });
   }
   // Badges grid renderer — used by the standalone Badges modal.
+  // Ailenin kazanılmış en yüksek kademesi (0 = hiç)
+  function familyTopTier(fid) {
+    for (let i = 5; i >= 1; i--) if (earnedBadges.has(`${fid}-${i}`)) return i;
+    return 0;
+  }
   function renderBadgeGrid() {
     const grid = document.getElementById('badges-modal-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    BADGES.forEach(b => {
-      const locked = !earnedBadges.has(b.id);
+    // Ortak hücre: id = equip edilecek rozet, colored ikon + ad; locked ise gri.
+    const addCell = (id, icon, label, desc, locked, col, progressTxt) => {
       const el = document.createElement('button');
       el.type = 'button';
-      el.className = 'prof-badge' + (equippedBadges.includes(b.id) ? ' sel' : '');
+      el.className = 'prof-badge' + (equippedBadges.includes(id) ? ' sel' : '');
       if (locked) { el.style.opacity = '0.32'; el.style.filter = 'grayscale(1)'; }
-      el.title = b.desc + (locked ? '' : ' ✓');
-      el.innerHTML = `<span class="prof-badge-icon">${iconHTML(b.icon, { size: 26 })}</span><span class="prof-badge-name">${b.name}</span>`;
+      el.title = desc;
+      el.innerHTML = `<span class="prof-badge-icon">${iconHTML(icon, { size: 26, color: locked ? undefined : col })}</span><span class="prof-badge-name">${label}</span>`;
       el.addEventListener('click', () => {
-        if (locked) { try { showToast(b.desc.toUpperCase()); } catch(_){} return; }
-        const idx = equippedBadges.indexOf(b.id);
+        if (locked) { try { showToast((desc + (progressTxt ? ' · ' + progressTxt : '')).toUpperCase()); } catch(_){} return; }
+        const idx = equippedBadges.indexOf(id);
         if (idx !== -1) {
           equippedBadges[idx] = null;
         } else {
           const empty = equippedBadges.indexOf(null);
-          if (empty !== -1) equippedBadges[empty] = b.id;
-          else equippedBadges[1] = b.id;
+          if (empty !== -1) equippedBadges[empty] = id;
+          else equippedBadges[1] = id;
         }
         saveBadges();
         renderBadgeGrid();
         renderEquipSlots();
       });
       grid.appendChild(el);
+    };
+    // Aileler: her aile TEK hücre — kazanılmış en yüksek kademeyi gösterir.
+    BADGE_FAMILIES.forEach(f => {
+      const top = familyTopTier(f.id);
+      const locked = top === 0;
+      const id = `${f.id}-${Math.max(1, top)}`;
+      // Kilitliyse hedef = kademe I; açıksa gösterilen = mevcut kademe,
+      // toast/desc bir SONRAKİ hedefi anlatır (V'te tamamlandı der).
+      const nextIdx = Math.min(top, f.tiers.length - 1);
+      const desc = top >= 5
+        ? `${f.name} maxed — ${f.desc(f.tiers[4])}`
+        : f.desc(f.tiers[nextIdx]);
+      const progress = top >= 5 ? '' : `now ${Math.floor(f.stat())}/${f.tiers[nextIdx]}`;
+      addCell(id, f.icon, f.name + (top > 0 ? ' ' + TIER_NAMES[top - 1] : ''),
+        desc, locked, top > 0 ? TIER_COLORS[top - 1] : undefined, progress);
+    });
+    // Özel rozetler
+    BADGE_SPECIALS.forEach(s => {
+      addCell(s.id, s.icon, s.name, s.desc, !earnedBadges.has(s.id), undefined, '');
     });
   }
-  // Eski sürümden kalmış, henüz kazanılmamış equip'leri temizle
-  equippedBadges = equippedBadges.map(id => (id && earnedBadges.has(id)) ? id : null);
+  // Eski sürümden kalmış / artık var olmayan equip'leri temizle;
+  // aile rozetlerini kazanılmış EN YÜKSEK kademeye terfi ettir.
+  equippedBadges = equippedBadges.map(id => {
+    if (!id || !earnedBadges.has(id)) return null;
+    const b = findBadge(id);
+    if (!b) return null; // eski id (first-1k vb.) — yeni sistemde yok
+    if (b.family) {
+      const top = familyTopTier(b.family);
+      if (top > 0) return `${b.family}-${top}`;
+    }
+    return id;
+  });
   saveBadges();
   // Açılışta da kontrol — upgrade/streak koşulları oyun dışı sağlanmış olabilir
   checkBadgeUnlocks();
