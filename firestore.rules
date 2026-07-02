@@ -10,10 +10,6 @@ rules_version = '2';
 //   - DELETE: yalnızca SAHİBİ kendi scores/players kaydını silebilir (hesap silme/KVKK);
 //     friendreqs taraflarca silinir; referrals silinemez
 //   - tüm yazımlar auth gerektirir
-// Geriye dönük uyumluluk: "owner" alanı OLMAYAN eski doc'lar bir kez herhangi bir
-// authed kullanıcı tarafından sahiplenilebilir (owner'ı kendi uid'ine set ederek);
-// owner set edildikten sonra kilitlenir.
-//
 // NOT: Coin bakiyesi tamamen client-side (localStorage) tutulur — sunucu cüzdanı
 // yoktur, dolayısıyla coin miktarı bu kurallarla korunamaz (bilinen, kabul edilen
 // kısıt; gerçek koruma sunucu tarafı cüzdan gerektirir).
@@ -25,20 +21,26 @@ service cloud.firestore {
     function isAuthed() { return request.auth != null; }
     // Yeni doc'un owner alanı yazanın uid'ine eşit mi?
     function ownsNew()  { return request.resource.data.owner == request.auth.uid; }
-    // Mevcut doc ya sahipsiz (eski) ya da yazana ait mi?
-    function ownsOld()  { return !('owner' in resource.data) || resource.data.owner == request.auth.uid; }
+    // Mevcut doc yazana ait mi?
+    // (2026-07-02: "sahipsiz eski doc sahiplenilebilir" istisnası kaldırıldı —
+    //  canlıdaki tüm scores/players doc'ları owner'lı doğrulandı.)
+    function ownsOld()  { return resource.data.owner == request.auth.uid; }
 
     function validScore(d) {
-      return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
+      // name: charset ZORUNLU (A-Z0-9) — XSS/HTML injection'a karşı sunucu tarafı garanti.
+      // Client zaten bu formatta yazar; REST'ten gelen kötü niyetli isimler reddedilir.
+      return d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
         && d.score is int && d.score >= 0 && d.score <= 1000000000
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
         && d.ts is int
         && d.mode in ['normal', 'extreme']
         && d.distance is number && d.distance >= 0 && d.distance <= 100000
-        && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 200000))
-        && (!('traceColor' in d) || d.traceColor is string)
-        && (!('traceThickness' in d) || d.traceThickness is int)
-        && (!('badges' in d) || (d.badges is string && d.badges.size() <= 64))
+        // tracePts: 20KB yeter (client ~150 nokta ≈ 2KB yazar); 200KB maliyet istismarına açıktı.
+        && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 20000))
+        && (!('traceColor' in d) || (d.traceColor is string && d.traceColor.size() <= 64))
+        && (!('traceThickness' in d) || (d.traceThickness is int && d.traceThickness >= 0 && d.traceThickness <= 20))
+        && (!('badges' in d) || (d.badges is string && d.badges.matches('^[A-Za-z0-9_,-]{0,64}$')))
+        && (!('tag' in d) || (d.tag is string && d.tag.matches('^[0-9]{4}$')))
         && (!('owner' in d) || d.owner is string);
     }
 
@@ -62,15 +64,18 @@ service cloud.firestore {
       allow create: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
         && request.resource.data.clicks == 1;
       allow update: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
-        && request.resource.data.clicks == resource.data.clicks + 1;
+        && request.resource.data.clicks == resource.data.clicks + 1
+        // Üst sınır: sayaç spam'ini ve doc'un anlamsız büyümesini engeller.
+        && resource.data.clicks < 100000;
       allow delete: if false;
     }
 
     // Oyuncu kayıt defteri (players/{NAME#TAG}): isim#tag kimliği + en iyi skor/mesafe.
     // owner = uid → NAME#TAG'i ilk alan uid sahibidir; başkası spoof edemez (race fix).
     function validPlayer(d) {
-      return d.name is string && d.name.size() >= 1 && d.name.size() <= 16
-        && d.tag is string && d.tag.size() == 4
+      // name/tag: charset ZORUNLU — XSS/HTML injection'a karşı sunucu tarafı garanti.
+      return d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
+        && d.tag is string && d.tag.matches('^[0-9]{4}$')
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
         && d.score is int && d.score >= 0 && d.score <= 1000000000
         && d.dist is number && d.dist >= 0 && d.dist <= 100000
@@ -93,25 +98,27 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/players/$(pid)).data.owner == request.auth.uid;
     }
     match /friendreqs/{id} {
-      allow read: if request.auth != null;
+      // Sadece taraflar okur (fromUid/toUid) → sosyal graf dışarıdan enumerate edilemez.
+      // Client sorguları where fromUid==uid / where toUid==uid şeklinde olmalı.
+      // NOT: toUid alanı olmayan ESKİ doc'lar artık okunamaz (kabul edilen migration kısıtı).
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
       // Oluşturma: gönderen 'from' oyuncusunun sahibi olmalı; status pending.
+      // Sıkılaştırma: alan listesi sabit (keys().hasOnly), doc id == from__to,
+      // from/to/fromName/fromTag charset'e bağlı (XSS + çöp veri engeli).
       allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['parties', 'from', 'to', 'fromUid', 'toUid', 'fromName', 'fromTag', 'fromAvatar', 'status', 'ts'])
         && request.resource.data.status == 'pending'
+        && request.resource.data.from is string && request.resource.data.from.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')
+        && request.resource.data.to is string && request.resource.data.to.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')
+        && request.resource.data.from != request.resource.data.to
+        && id == request.resource.data.from + '__' + request.resource.data.to
         && request.resource.data.parties == [request.resource.data.from, request.resource.data.to]
         && request.resource.data.fromUid == request.auth.uid
-        && ownsPlayer(request.resource.data.from);
-      // Kabul: yalnızca alıcı (to'nun sahibi) pending → accepted yapabilir.
-      allow update: if request.auth != null
-        && resource.data.status == 'pending'
-        && request.resource.data.status == 'accepted'
-        && request.resource.data.parties == resource.data.parties
-        && ownsPlayer(resource.data.to);
-      // Silme (ret / arkadaşlıktan çıkarma): iki taraftan biri.
-      allow delete: if ownsPlayer(resource.data.from) || ownsPlayer(resource.data.to);
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
+        // toUid alıcının GERÇEK uid'i olmalı (players/{to}.owner) — spoof edilemez.
+        && request.resource.data.toUid == get(/databases/$(database)/documents/players/$(request.resource.data.to)).data.owner
+        && (!('fromName' in request.resource.data) || (request.resource.data.fromName is string && request.resource.data.fromName.matches('^[A-Z0-9]{0,16}$')))
+        && (!('fromTag' in request.resource.data) || (request.resource.data.fromTag is string && request.resource.data.fromTag.matches('^([0-9]{4})?$')))
+        && (!('fromAvatar' in request.resource.data) || (request.resource.data.fromAvatar is int && request.resource.data.fromAvatar >= 0 && request.resource.data.fromAvatar <= 100))
+        && (!('ts' in request.resource.data) || request.resource.data.ts is int)
+    

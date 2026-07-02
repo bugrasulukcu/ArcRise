@@ -4,7 +4,19 @@
 
 ---
 
-## 🚀 COWORK HANDOFF — ÖNCE BUNU OKU (2026-06-30)
+## 🚀 COWORK HANDOFF — ÖNCE BUNU OKU (2026-07-01, güncel)
+
+**Capacitor/Android scaffold artık hazır** (bkz. v19 changelog aşağıda). `applicationId` = `com.bugrasulukcu.arcrise`. VS Code/Android Studio tarafında sırada:
+1. `android/` klasörünü Android Studio'da aç (ilk Gradle sync internet + SDK indirmesi ister).
+2. Emülatör/cihazda çalıştır, mağaza için ekran görüntüsü al (Chill + Extreme + profil + high scores popup).
+3. `Build → Generate Signed Bundle / APK` → **Android App Bundle** → imzalama `android/keystore.properties`'ten otomatik okunur.
+4. Play Console → yeni uygulama → `store_listing.md`'deki metin/checklist ile **internal testing**'e yükle.
+
+**Şifreler/anahtar**: `keystore/arcrise-upload-keystore.jks` + `keystore/keystore_credentials.txt` — **asla kaybetme/paylaşma**, `.gitignore`'da hariç (repoya girmez). Ayrıca bir şifre yöneticisine yedekle.
+
+---
+
+## 🚀 COWORK HANDOFF — ÖNCEKİ (2026-06-30)
 
 Yeni/cowork bir ajan buraya bakınca projeyi hızlıca kavrasın diye özet. **Detaylı "Mevcut Durum" bölümlerinin bir kısmı v18 öncesi durumu anlatır; profil/trace/UI için asıl kaynak aşağıdaki v18 changelog'udur.**
 
@@ -379,6 +391,40 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v19 — Capacitor/Android scaffold, ikon/splash, keystore, store listing (2026-07-01, Cowork)
+
+**Node + Capacitor kurulumu**
+- `package.json`, `@capacitor/core`, `@capacitor/cli`, `@capacitor/android` kuruldu.
+- `capacitor.config.json`: `appId com.bugrasulukcu.arcrise`, `appName ArcRise`, `webDir www`.
+- `www/` klasörü eklendi: `index.html`, `arcrise.html`, `PNG/`, `AUDIO/` içeriyor (native app'in bundle edeceği statik dosyalar; kaynak dosyalar kökte değişmeden duruyor, `www/` sadece build'e giden kopya).
+
+**Android platformu**
+- `npx cap add android` ile `android/` klasörü oluşturuldu, `applicationId`/`namespace` = **`com.bugrasulukcu.arcrise`** olacak şekilde ayarlandı (build.gradle, strings.xml).
+- Web assetleri `android/app/src/main/assets/public`'e sync edildi.
+
+**İkon + Splash**
+- `PNG/GAME_ICON.png` kaynak alınarak tüm mipmap yoğunlukları (mdpi→xxxhdpi) için `ic_launcher`, `ic_launcher_round` (dairesel maskeli) ve adaptive icon `ic_launcher_foreground` (güvenli alan için %66 ölçekli, saydam kenarlı) üretildi. Adaptive icon arka plan rengi ikonun kendi koyu tonuna (`#0A080C`) çekildi (`values/ic_launcher_background.xml`).
+- `PNG/LOGO.png` kaynak alınarak tüm splash screen yoğunlukları (portrait + landscape, 11 dosya) koyu arkaplan (`#080a0e`, oyunun kendi bg rengi) üzerine ortalanmış logo ile üretildi.
+- Play Store hi-res ikon: `PNG/play_store_icon_512.png` (512×512).
+- Feature graphic: `PNG/feature_graphic.png` (1024×500, logo + koyu bg).
+
+**Upload keystore + imzalama**
+- `keystore/arcrise-upload-keystore.jks` üretildi (RSA 2048, 10000 gün geçerlilik, alias `arcrise`). Şifreler `keystore/keystore_credentials.txt`'te.
+- `android/keystore.properties` (git'e girmez) ile `android/app/build.gradle`'a release `signingConfig` bağlandı — dosya varsa Android Studio'da `Generate Signed Bundle` otomatik bu anahtarı kullanır.
+- `.gitignore`'a eklendi: `keystore/`, `*.jks`, `*.keystore`, `android/keystore.properties`, `android/app/build/`, `*.aab`, `*.apk` — **imzalama anahtarı asla repoya girmez**.
+
+**Store listing hazırlığı**
+- `store_listing.md`: kısa/uzun açıklama (İngilizce, oyunun kendi UI diliyle tutarlı), kategori önerisi (Arcade), data-safety/content-rating anket notları, görsel checklist, internal testing adım listesi.
+- `privacy.html` GitHub Pages'te canlı olduğu doğrulandı (`https://bugrasulukcu.github.io/ArcRise/privacy.html`).
+
+**Sırada (VS Code/Android Studio tarafında, kullanıcı):**
+- Gradle sync + emülatörde çalıştırma, ekran görüntüsü alma.
+- `Generate Signed Bundle` → imzalı AAB.
+- Play Console'da uygulama oluşturma, `store_listing.md` ile internal testing'e yükleme.
+- Daha sonra IAP (RevenueCat/Play Billing) + AdMob rewarded entegrasyonu, `IAP_ENABLED`/`ADS_ENABLED=true`.
+
+---
+
 ### v18 — Profil/trace elden geçirme, bildirim noktaları, wife ∞, pazar hazırlığı (2026-06-30)
 
 **Profil ekranı yeniden düzenlendi**
@@ -630,7 +676,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-06-30 (v18). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v18 changelog'unu oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Capacitor ile Android paketleme → Play internal testing → IAP/AdMob bağlama**.
+**Son güncelleme**: 2026-07-01 (v19). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v19 changelog'unu oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
 
 ---
 

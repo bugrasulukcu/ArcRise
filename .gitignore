@@ -29,3 +29,20 @@ arcie.html
 
 # WAV master (mp3 kullanılıyor)
 AUDIO/ArcRiseBGMusic.wav
+
+# İmzalama anahtarı — ASLA commit'lenmez (Play Store upload key + şifreler)
+keystore/
+*.jks
+*.keystore
+keystore_credentials.txt
+android/keystore.properties
+
+# Android build çıktıları
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/app/release/
+*.aab
+*.apk

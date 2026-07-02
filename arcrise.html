@@ -46,6 +46,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>ArcRise</title>
+  <!-- CSP: XSS'e ikinci savunma hattı — enjekte kod dış script yükleyemez /
+       veri sızdıramaz. Yeni bir dış servis eklersen buraya da eklemen gerekir!
+       (gstatic/google.com script+frame: ileride App Check reCAPTCHA için hazır.) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com; frame-src https://www.google.com https://recaptcha.google.com; object-src 'none'; base-uri 'self'">
   <link rel="icon" type="image/png" href="PNG/GAME_ICON.png">
   <link rel="apple-touch-icon" href="PNG/GAME_ICON.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -885,6 +889,18 @@
       padding: 8px 18px; font-size: 9px; letter-spacing: 1px;
       min-width: 0; border-radius: 10px;
     }
+    /* Hesap yedeği — reset'in hemen üstünde */
+    #backup-outer {
+      position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; justify-content: center; gap: 18px;
+      flex-wrap: wrap; width: min(92vw, 420px);
+    }
+    #backup-msg {
+      display: none; width: 100%; text-align: center; font-size: 9px;
+      color: rgba(255,255,255,.55); letter-spacing: .5px; line-height: 1.5;
+      word-break: break-all; user-select: text;
+    }
+    #backup-msg.show { display: block; }
     /* Reset outer — ekranın en altına */
     #reset-outer {
       position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -3618,6 +3634,12 @@
   </div>
   <!-- How to play — panel altında, boş alanda metin link -->
   <button class="home-link" id="settings-howto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg>HOW TO PLAY</button>
+  <!-- Hesap yedeği: anonim oturum cihazla kaybolmasın diye kurtarma kodu -->
+  <div id="backup-outer">
+    <button class="home-link" id="btn-backup">BACKUP CODE</button>
+    <button class="home-link" id="btn-restore">RESTORE</button>
+    <div id="backup-msg"></div>
+  </div>
   <!-- Reset button outside panel -->
   <div id="reset-outer">
     <button class="btn-danger" id="btn-reset">Reset Data</button>
@@ -4230,7 +4252,23 @@
 const FIREBASE_CONFIG = {
   apiKey:    'AIzaSyB7x2es8UgEkQ91K4hruM7OaJKhpXkzvW4',
   projectId: 'arcrise-e1504',
+  // ── App Check (skor sahteciliğine karşı) — doldurunca otomatik devreye girer ──
+  // KURULUM (sıra önemli):
+  //   1. console.firebase.google.com > Project Settings > General > Web app yoksa ekle → appId'yi buraya yaz
+  //   2. Console > App Check > Apps > web app'i "reCAPTCHA v3" ile kaydet → site key'i buraya yaz
+  //   3. Console > App Check > APIs > Cloud Firestore: önce "Monitor" modda bırak,
+  //      metrics'te istekler "verified" görünmeye başlayınca "Enforce" et.
+  //      (Enforce edilmeden sahte istekler ENGELLENMEZ; edilince token'sız REST tamamen kapanır.)
+  //   4. Android (Capacitor) için daha güçlü koruma: Play Integrity provider
+  //      → @capacitor-firebase/app-check plugin'i gerekir (reCAPTCHA WebView'de de çalışır ama zayıftır).
+  appId:           '',   // ör: '1:1234567890:web:abc123'
+  appCheckSiteKey: '',   // reCAPTCHA v3 site key
 };
+
+// ── HTML escape — Firestore'dan gelen HER string innerHTML'e bununla girer ──
+// (isimler sunucu kuralında A-Z0-9'a kısıtlı ama defense-in-depth: eski/bozuk
+// doc'lar veya ileride gevşetilen kurallar XSS'e dönüşmesin.)
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
@@ -4285,10 +4323,87 @@ const ARC_DB = (() => {
   }
   function getUid() { return _uid; }
   // Tüm Firestore isteklerine geçerli idToken'ı Authorization başlığı olarak ekler.
+  // ── Hesap yedeği: kurtarma kodu = base64url(refresh token) ──────────────
+  // Anonim oturum cihaza bağlıdır; cihaz/veri silinirse hesap kaybolur.
+  // Kod, hesabın TAM anahtarıdır — kullanıcıya "güvenli sakla" uyarısı gösterilir.
+  function getRecoveryCode() {
+    let rt = null; try { rt = localStorage.getItem(AUTH_RT_KEY); } catch(_){}
+    if (!rt) return null;
+    try { return 'ARC1.' + btoa(rt).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+    catch(_) { return null; }
+  }
+  async function restoreFromCode(code) {
+    code = String(code || '').trim();
+    if (code.startsWith('ARC1.')) code = code.slice(5);
+    let rt = null;
+    try { rt = atob(code.replace(/-/g, '+').replace(/_/g, '/')); } catch(_){}
+    if (!rt) return { ok: false };
+    try { await _refreshTok(rt); } // geçerliyse _setTokens rt'yi kalıcılaştırır, uid değişir
+    catch(_) { return { ok: false }; }
+    // Bu uid'in en güncel profili (players.owner == uid) → isim/tag/avatar geri gelsin
+    let profile = null;
+    try {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'players' }],
+          where: { fieldFilter: { field: { fieldPath: 'owner' }, op: 'EQUAL', value: { stringValue: getUid() } } },
+          limit: 50,
+        }}),
+      });
+      const rows = await res.json();
+      const ps = (Array.isArray(rows) ? rows : []).filter(r => r.document?.fields).map(r => {
+        const f = r.document.fields;
+        return {
+          name:   f.name?.stringValue || '',
+          tag:    f.tag?.stringValue || '',
+          avatar: parseInt(f.avatar?.integerValue || '0', 10),
+          ts:     parseInt(f.ts?.integerValue || '0', 10),
+        };
+      });
+      ps.sort((a, b) => b.ts - a.ts);
+      profile = ps[0] || null;
+    } catch(_){}
+    return { ok: true, profile };
+  }
+
+  // ── App Check token (opsiyonel) ─────────────────────────────
+  // FIREBASE_CONFIG'te appId + appCheckSiteKey doluysa SDK'yı CDN'den lazy yükler,
+  // her Firestore isteğine X-Firebase-AppCheck header'ı ekler. Boşsa no-op.
+  let _acInit = null;
+  function _appCheckInit() {
+    const { appId, appCheckSiteKey } = FIREBASE_CONFIG;
+    if (!appId || !appCheckSiteKey) return null;
+    if (_acInit) return _acInit;
+    const load = src => new Promise((ok, err) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = ok; s.onerror = err;
+      document.head.appendChild(s);
+    });
+    _acInit = (async () => {
+      await load('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await load('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js');
+      firebase.initializeApp(FIREBASE_CONFIG);
+      firebase.appCheck().activate(appCheckSiteKey, /* autoRefresh */ true);
+      return true;
+    })().catch(e => { console.warn('[ArcDB] AppCheck init failed:', e); return false; });
+    return _acInit;
+  }
+  async function _appCheckToken() {
+    try {
+      const init = _appCheckInit();
+      if (!init || !(await init)) return null;
+      const t = await firebase.appCheck().getToken(false);
+      return (t && t.token) || null;
+    } catch (_) { return null; }
+  }
+
   async function fbFetch(url, opts = {}) {
     let tok = null; try { tok = await ensureAuth(); } catch(_){}
     const headers = Object.assign({}, opts.headers || {});
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    const ac = await _appCheckToken();
+    if (ac) headers['X-Firebase-AppCheck'] = ac;
     return fetch(url, Object.assign({}, opts, { headers }));
   }
 
@@ -4759,6 +4874,7 @@ const ARC_DB = (() => {
         avatar: parseInt(f.avatar?.integerValue || '0', 10),
         score:  parseInt(f.score?.integerValue || '0', 10),
         dist:   Number(f.dist?.doubleValue ?? f.dist?.integerValue ?? 0),
+        owner:  f.owner?.stringValue || null, // friendreq toUid için gerekli
       };
     } catch (_) { return null; }
   }
@@ -4788,6 +4904,11 @@ const ARC_DB = (() => {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     await ensureAuth(); const uid = getUid();
     if (!uid || !fromId || !toId || fromId === toId) return false;
+    // Alıcının gerçek uid'i (players/{to}.owner): doc'a toUid yazılır — rules'taki
+    // "sadece taraflar okur" kısıtı ve alıcının istek sorgusu bunun üzerinden çalışır.
+    const hi = toId.lastIndexOf('#');
+    const toP = hi > 0 ? await getPlayer(toId.slice(0, hi), toId.slice(hi + 1)) : null;
+    if (!toP || !toP.owner) return false; // profil yok/sahipsiz → istek gönderilemez
     const key = encodeURIComponent(_reqId(fromId, toId));
     try {
       const res = await fbFetch(`${BASE}/friendreqs/${key}?key=${apiKey}`, {
@@ -4797,6 +4918,7 @@ const ARC_DB = (() => {
           from:       { stringValue: fromId },
           to:         { stringValue: toId },
           fromUid:    { stringValue: uid },
+          toUid:      { stringValue: toP.owner },
           fromName:   { stringValue: String(fromName || '') },
           fromTag:    { stringValue: String(fromTag || '') },
           fromAvatar: { integerValue: String(Number(fromAvatar) || 0) },
@@ -4808,19 +4930,33 @@ const ARC_DB = (() => {
     } catch (_) { return false; }
   }
   // Beni içeren tüm kenarları getir (gelen/giden istek + arkadaşlar).
+  // Rules gereği sorgular uid üzerinden yapılır (fromUid==uid / toUid==uid);
+  // parties sorgusu artık rules tarafından okunamaz (sosyal graf gizliliği).
   async function getMySocial(myId) {
     if (!projectId || projectId.startsWith('BURAYA') || !myId) return [];
-    try {
+    await ensureAuth(); const uid = getUid();
+    if (!uid) return [];
+    const qBy = async field => {
       const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ structuredQuery: {
           from: [{ collectionId: 'friendreqs' }],
-          where: { fieldFilter: { field: { fieldPath: 'parties' }, op: 'ARRAY_CONTAINS', value: { stringValue: myId } } },
+          where: { fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: { stringValue: uid } } },
           limit: 200,
         }}),
       });
       const rows = await res.json();
-      return (Array.isArray(rows) ? rows : []).filter(r => r.document?.fields).map(r => {
+      return Array.isArray(rows) ? rows : [];
+    };
+    try {
+      const [sent, received] = await Promise.all([qBy('fromUid'), qBy('toUid')]);
+      const seen = new Set();
+      const rows = [...sent, ...received].filter(r => {
+        const n = r.document?.name;
+        if (!r.document?.fields || !n || seen.has(n)) return false;
+        seen.add(n); return true;
+      });
+      return rows.map(r => {
         const f = r.document.fields;
         return {
           id:     r.document.name.split('/').pop(),
@@ -4832,7 +4968,8 @@ const ARC_DB = (() => {
           fromAvatar: parseInt(f.fromAvatar?.integerValue || '0', 10),
           ts:     parseInt(f.ts?.integerValue || '0', 10),
         };
-      });
+        // Aynı uid'in BAŞKA profillerine (NAME#TAG) ait kenarları ele.
+      }).filter(e => e.from === myId || e.to === myId);
     } catch (_) { return []; }
   }
   // İsteği kabul et (pending → accepted). docId = from__to (kodlanmamış).
@@ -4906,7 +5043,7 @@ const ARC_DB = (() => {
     return { ok: true, edges, prof, scores };
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData };
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -5153,7 +5290,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const AVATARS = _avSVGs.map(s => 'data:image/svg+xml,' + encodeURIComponent(s));
 
   // ── Profil ───────────────────────────────────────────────
-  let playerName = (localStorage.getItem('arc_name') || '').toUpperCase().slice(0, 8);
+  let playerName = (localStorage.getItem('arc_name') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
   let avatarIdx  = Number(localStorage.getItem('arc_avatar') ?? 0);
   const nameIsLocked = !!localStorage.getItem('arc_name');
 
@@ -7065,8 +7202,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const slice = rows.slice(start, start + 13);
     lbEl.innerHTML = slice.map(r =>
       r.you
-        ? `<div class="lb-row you" style="color:${avc}">▶ ${r.n}</div>`
-        : `<div class="lb-row">${r.n}</div>`
+        ? `<div class="lb-row you" style="color:${avc}">▶ ${esc(r.n)}</div>`
+        : `<div class="lb-row">${esc(r.n)}</div>`
     ).join('');
   }
 
@@ -7917,6 +8054,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const last = src[src.length - 1];
       if (out.length === 0 || out[out.length - 1][1] !== (last.y | 0)) out.push([last.x | 0, last.y | 0]);
       traceData.pts = JSON.stringify(out);
+      // firestore.rules limiti 20KB — normalde ~2KB üretilir; taşarsa trace'siz gönder.
+      if (traceData.pts.length > 19000) delete traceData.pts;
     }
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (gameMode !== 'wife') {
@@ -7983,11 +8122,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       const canAdd = !r.isYou && !lbFallback;
-      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${r.name}" data-t="${r.tag || ''}" aria-label="Add friend">Add</button>` : '';
+      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${esc(r.name)}" data-t="${esc(r.tag || '')}" aria-label="Add friend">Add</button>` : '';
       html += `<tr class="${r.isYou ? 'you' : ''}" ${r.isYou ? `style="color:${avc}"` : ''}>
         <td style="white-space:nowrap">${rankStr}</td>
         <td style="padding:0 8px">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${r.name}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${esc(r.name)}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}
         </td>
         <td style="text-align:right">${pad(r.score)}</td>
         <td style="text-align:right;padding-left:8px">${addBtn}</td>
@@ -8256,6 +8395,41 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       showScene('profile-setup');
     }, 2000);
   }
+  // ── Hesap yedeği: kurtarma kodu kopyala / geri yükle (Settings) ──
+  (() => {
+    const msgEl = document.getElementById('backup-msg');
+    const show = t => { if (msgEl) { msgEl.textContent = t; msgEl.classList.add('show'); } };
+    const bb = document.getElementById('btn-backup');
+    const rb = document.getElementById('btn-restore');
+    if (bb) bb.addEventListener('click', async () => {
+      const code = ARC_DB.getRecoveryCode();
+      if (!code) { show('No online account yet — play one run first.'); return; }
+      try {
+        await navigator.clipboard.writeText(code);
+        show('Code copied! Save it somewhere safe (notes/password manager). Anyone with this code can access your account.');
+      } catch(_) {
+        show('Copy failed — write this down: ' + code);
+      }
+    });
+    if (rb) rb.addEventListener('click', async () => {
+      const code = prompt('Paste your recovery code (ARC1.…):');
+      if (!code) return;
+      if (ARC_DB.getRecoveryCode() && !confirm('This replaces the account on THIS device. Continue?')) return;
+      show('Restoring…');
+      const r = await ARC_DB.restoreFromCode(code);
+      if (!r.ok) { show('Invalid or expired code.'); return; }
+      if (r.profile && r.profile.name) {
+        try {
+          localStorage.setItem('arc_name', r.profile.name);
+          localStorage.setItem('arc_tag', r.profile.tag || '');
+          localStorage.setItem('arc_avatar', String(r.profile.avatar | 0));
+        } catch(_){}
+      }
+      show('Account restored — reloading…');
+      setTimeout(() => location.reload(), 900);
+    });
+  })();
+
   // Reset Data → önce onay modalı; CONTINUE ile sil, CANCEL ile vazgeç.
   const resetModal = document.getElementById('reset-modal');
   document.getElementById('btn-reset').addEventListener('click', () => resetModal.classList.add('open'));
@@ -8668,7 +8842,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       if (r._youPlaceholder) {
         return `<div class="lb-list-row you-placeholder">
           <span class="lb-row-rank">—</span>
-          <span>${playerName || 'YOU'}  ·  not ranked yet</span>
+          <span>${esc(playerName || 'YOU')}  ·  not ranked yet</span>
           <span>—</span>
         </div>`;
       }
@@ -8680,7 +8854,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       return `<div class="${cls}">
         <span class="lb-row-rank">${rankStr}</span>
-        <span><span class="lb-row-dot" style="background:${col}"></span>${r.name}${badgeIconsHTML(isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
+        <span><span class="lb-row-dot" style="background:${col}"></span>${esc(r.name)}${badgeIconsHTML(isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
         <span>${fmtMetric(r.score)}</span>
       </div>`;
     }).join('');
@@ -11474,7 +11648,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     host.innerHTML = `<div class="fl-inv-hdr">INVITES · ${inv.length}</div>` + inv.map(e => {
       const nm = e.fromName || parseId(e.from).name, tg = e.fromTag || parseId(e.from).tag;
       return `<div class="fl-inv-row">
-        <span class="fl-inv-name">${nm}<span class="fl-tag">#${tg}</span></span>
+        <span class="fl-inv-name">${esc(nm)}<span class="fl-tag">#${esc(tg)}</span></span>
         <button class="fl-inv-acc" data-acc="${e.id}" aria-label="Accept"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
         <button class="fl-inv-rej" data-rej="${e.id}" aria-label="Reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>`;
@@ -11512,7 +11686,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       return `<div class="fl-row">
         <span class="fl-rank">${i+1}</span>
         <span class="fl-info">
-          <span class="fl-name">${f.name}<span class="fl-tag">#${f.tag}</span></span>
+          <span class="fl-name">${esc(f.name)}<span class="fl-tag">#${esc(f.tag)}</span></span>
           <span class="fl-stats"><span class="fl-s-score">${known?pad(f.score||0):'—'}</span> PTS · <span class="fl-s-dist">${known?flFmtDist(f.dist):'—'}</span></span>
         </span>
         ${metric}
@@ -11520,7 +11694,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       </div>`;
     }).join('') + pend.map(f => `<div class="fl-row" style="opacity:.55">
         <span class="fl-rank">·</span>
-        <span class="fl-info"><span class="fl-name">${f.name}<span class="fl-tag">#${f.tag}</span></span>
+        <span class="fl-info"><span class="fl-name">${esc(f.name)}<span class="fl-tag">#${esc(f.tag)}</span></span>
         <span class="fl-stats">Request sent — pending</span></span>
         <button class="fl-remove" data-id="${f.id}" aria-label="Cancel">&times;</button>
       </div>`).join('');
@@ -11677,3 +11851,4 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 </script>
 </body>
 </html>
+<!-- security-pass: 2026-07-02 -->

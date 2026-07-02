@@ -1,0 +1,9 @@
+{
+  "appId": "com.bugrasulukcu.arcrise",
+  "appName": "ArcRise",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

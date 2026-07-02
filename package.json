@@ -1,0 +1,23 @@
+{
+  "name": "arcrise",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sync": "node sync-www.js && npx cap sync android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bugrasulukcu/ArcRise.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bugrasulukcu/ArcRise/issues"
+  },
+  "homepage": "https://github.com/bugrasulukcu/ArcRise#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacito
