@@ -27,8 +27,8 @@ RESOURCES/
 # Eski prototip
 arcie.html
 
-# WAV master (mp3 kullanılıyor)
-AUDIO/ArcRiseBGMusic.wav
+# (WAV master RESOURCES/ArcRiseBGMusic_master.wav'a taşındı — RESOURCES/ zaten ignore'da.
+#  AUDIO/ artık yalnızca oyunun kullandığı dosyaları içerir ve olduğu gibi paketlenir.)
 
 # İmzalama anahtarı — ASLA commit'lenmez (Play Store upload key + şifreler)
 keystore/
@@ -36,6 +36,9 @@ keystore/
 *.keystore
 keystore_credentials.txt
 android/keystore.properties
+
+# www/ üretilmiş kopyadır (kaynak = root dosyalar; "npm run sync" ile üretilir)
+www/
 
 # Android build çıktıları
 android/app/build/
