@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ArcRise</string>
+    <string name="title_activity_main">ArcRise</string>
+    <string name="package_name">com.bugrasulukcu.arcrise</string>
+    <string name="custom_url_scheme">com.bugrasulukcu.arcrise</string>
+</resources>
