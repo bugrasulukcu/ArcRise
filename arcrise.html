@@ -9794,14 +9794,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (key === 'radius' || key === 'speed') {
       return (v > 0 ? '+' : '') + v + ' (' + (v * 10) + '%)';
     }
-    if (key === 'timer')          return upg.timer > 0 ? '+' + upg.timer + 's' : 'base';
+    // Combo penceresi seviyede +0.5s büyür (önceki '+Ns' etiketi yanlıştı)
+    if (key === 'timer')          return upg.timer > 0 ? '+' + (upg.timer * 0.5).toFixed(1) + 's' : 'base';
     if (key === 'traceThickness') return '+' + (upg.traceThickness * 10) + '%';
     if (key === 'traceColor')     return upg.traceColor ? iconHTML('dot', { size: 12 }) : 'default';
     if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
     if (key === 'deathAvatar')    return upg.deathAvatar ? 'enabled' : 'locked';
     if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     if (key === 'wallSoft')       return upg.wallSoft > 0 ? '+' + upg.wallSoft + 'px' : 'base';
-    if (key === 'magnetRange')    return '+' + (upg.magnetRange * 10) + '%';
+    // Mıknatıs %'sel değil, seviye başına +22px menzil ekler (0 = kapalı)
+    if (key === 'magnetRange')    return upg.magnetRange > 0 ? '+' + (upg.magnetRange * 22) + 'px' : 'off';
     // Consumables: stock + ARMED durumu
     if (CONSUMABLE_CFG && CONSUMABLE_CFG[key]) {
       const inv = upg.inv?.[key] || {};
@@ -9828,7 +9830,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     radius:       'Changes the size of your circle. Bigger covers more ground — smaller slips through tight gaps more easily.',
     speed:        'How fast you fly. Faster means more distance but harder control. Slower is easier to steer.',
     timer:        'More time to keep your combo alive. Starts at 2 seconds, each level adds +0.5s.',
-    wallSoft:     'Walls become more forgiving — light touches won\'t end your run as easily.',
+    wallSoft:     'Walls become more forgiving — each level adds 1px of touch tolerance, so light brushes won\'t end your run.',
     magnetRange:  'Automatically pulls nearby greens, golds and purples to you. The pull range grows each level.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
     traceThickness: 'Makes your trail thicker and easier to see. Each level adds +10% width.',
@@ -9907,11 +9909,24 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return CORE_BIDI(key) ? (upg[key + 'Active'] | 0) : (upg[key] | 0);  // bidi: işaretli
   }
   function coreApply() { saveUpg(); applyUpgradeSideEffects(); renderUpgrades(); }
-  // Ortak değer dili: ×çarpan (taban ×1.0, her seviye ±0.1).
-  function coreValueLabel(key) { return '×' + (1 + coreLevel(key) * 0.1).toFixed(1); }
+  // Her stat KENDİ gerçek birimiyle konuşur — genel ×çarpan yalnızca gerçekten
+  // çarpan olanlarda kullanılır (önceden hepsi ×1.0 gösteriyordu; Walls/Magnet
+  // gibi 0'dan başlayan statlar için yanıltıcıydı):
+  //   profit        → ×1.0 + 0.1/sv (coin çarpanı — endGame'de böyle uygulanır)
+  //   radius/speed  → ×1.0 ± 0.1/sv (gerçek çarpan)
+  //   timer         → combo penceresi saniyesi: 2.0s + 0.5s/sv
+  //   wallSoft      → duvar toleransı: 0px + 1px/sv
+  //   magnetRange   → ekstra toplama menzili: OFF, +22px/sv
+  function coreValueText(key, lvl) {
+    if (key === 'timer')       return (2 + lvl * 0.5).toFixed(1) + 's';
+    if (key === 'wallSoft')    return lvl > 0 ? '+' + lvl + 'px' : '0px';
+    if (key === 'magnetRange') return lvl > 0 ? '+' + (lvl * 22) + 'px' : 'OFF';
+    return '×' + (1 + lvl * 0.1).toFixed(1);
+  }
+  function coreValueLabel(key) { return coreValueText(key, coreLevel(key)); }
   function coreNextLabel(key, dir) {
     const meta = PASSIVE_TILES.find(t => t.key === key);
-    return (meta ? meta.title : key) + ' ×' + (1 + (coreLevel(key) + dir) * 0.1).toFixed(1);
+    return (meta ? meta.title : key) + ' ' + coreValueText(key, coreLevel(key) + dir);
   }
   // Buton durumları: 'free' (ücretsiz hareket), 'buy' (yeni bölge — ücretli), 'max', 'empty'.
   function coreBtnInfo(key) {
