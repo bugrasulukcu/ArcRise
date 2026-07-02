@@ -7906,6 +7906,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       if (!_statsCounted) {
         _statsCounted = true;
         stats.gamesTotal++;
+        // İlk oyun bonusu: ilk GERÇEK run (wife hariç — bu blok zaten wife'ta çalışmaz)
+        // tamamlanınca tek seferlik +1 coin. Reset sonrası taze profilde tekrar verilir.
+        if (stats.gamesTotal === 1) {
+          try { grantCoins(1); showToast('First game · +1 coin'); } catch(_){}
+        }
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
         // Profil: ömür boyu mesafe + en uzun combo + günlük seri
