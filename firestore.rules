@@ -121,4 +121,19 @@ service cloud.firestore {
         && (!('fromTag' in request.resource.data) || (request.resource.data.fromTag is string && request.resource.data.fromTag.matches('^([0-9]{4})?$')))
         && (!('fromAvatar' in request.resource.data) || (request.resource.data.fromAvatar is int && request.resource.data.fromAvatar >= 0 && request.resource.data.fromAvatar <= 100))
         && (!('ts' in request.resource.data) || request.resource.data.ts is int)
-    
+        && ownsPlayer(request.resource.data.from);
+      // Kabul: yalnızca alıcı (to'nun sahibi) pending → accepted yapabilir.
+      allow update: if request.auth != null
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.parties == resource.data.parties
+        && ownsPlayer(resource.data.to);
+      // Silme (ret / arkadaşlıktan çıkarma): iki taraftan biri.
+      allow delete: if ownsPlayer(resource.data.from) || ownsPlayer(resource.data.to);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
