@@ -892,8 +892,20 @@
     /* Hesap yedeği — reset'in hemen üstünde */
     #backup-outer {
       position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; justify-content: center; gap: 18px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
       flex-wrap: wrap; width: min(92vw, 420px);
+    }
+    /* Silik metin yerine gerçek buton görünümü */
+    #backup-outer .home-link {
+      font-size: 9px; letter-spacing: 1.2px;
+      color: rgba(255,255,255,.62);
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 10px; padding: 8px 16px;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    #backup-outer .home-link:hover {
+      color: #fff; border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.08);
     }
     #backup-msg {
       display: none; width: 100%; text-align: center; font-size: 9px;
@@ -2167,13 +2179,13 @@
     }
     /* info "i" düğmesi — sağ üst köşe */
     .core-info {
-      position: absolute; top: 8px; right: 8px;
-      width: 17px; height: 17px; border-radius: 50%;
+      position: absolute; top: 6px; right: 6px;
+      width: 24px; height: 24px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(190,160,255,.35);
       color: rgba(205,180,255,.8);
-      font-size: 9px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
+      font-size: 12px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
       cursor: pointer; line-height: 1; padding: 0;
       transition: background .15s, color .15s;
     }
@@ -2182,6 +2194,13 @@
     .core-icon {
       width: 44px; height: 44px; flex-shrink: 0;
       border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #c3a8ff;
+      background: radial-gradient(circle at 32% 28%, rgba(180,150,255,.16), rgba(180,150,255,.04));
+      border: 1px solid rgba(180,150,255,.28);
+    }
+    /* İkonu olmayan kart: eski kesikli placeholder görünümü */
+    .core-icon:empty {
       background:
         repeating-linear-gradient(45deg, rgba(180,150,255,.05) 0 6px, transparent 6px 12px),
         rgba(255,255,255,.03);
@@ -2310,6 +2329,7 @@
       color: var(--green);
       font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
       padding: 12px 18px; border-radius: 11px;
+      max-width: min(86vw, 460px); text-align: center; line-height: 1.55;
       box-shadow: 0 0 24px rgba(124,255,122,.20);
       opacity: 0; pointer-events: none;
       transition: opacity .22s, transform .22s;
@@ -2325,6 +2345,7 @@
     #reward-toast.show { display: block; }
     .rt-card {
       position: relative; overflow: hidden;
+      max-width: min(92vw, 440px);
       display: flex; align-items: center; gap: 14px;
       background: rgba(16,22,34,.94);
       border: 1.5px solid rgba(255,206,90,.6);
@@ -9817,7 +9838,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     { key: 'radius',      title: 'Radius',        icon: 'ring' },
     { key: 'speed',       title: 'Speed',         icon: 'bolt' },
     { key: 'timer',       title: 'Timer',         icon: 'timer' },
-    { key: 'wallSoft',    title: 'Wall Forgive',  icon: 'wall' },
+    { key: 'wallSoft',    title: 'Walls',         icon: 'wall' },
     { key: 'magnetRange', title: 'Magnet',         icon: 'magnet' },
   ];
   // GEAR — tek kullanımlık (SINGLE-USE) + abilities. (Loadout/cosmetic artık profil altında.)
@@ -9967,7 +9988,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     };
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
-      <div class="core-icon"></div>
+      <div class="core-icon">${t.icon ? iconHTML(t.icon, { size: 26 }) : ''}</div>
       <div class="core-card-foot">
         <div class="core-card-head">
           <span class="core-card-title">${t.title}</span>
@@ -10003,7 +10024,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     card.innerHTML = `
       <button class="core-info" type="button" aria-label="Info">i</button>
       ${opts.eq ? '<span class="core-eq">EQUIPPED</span>' : ''}
-      <div class="core-icon"></div>
+      <div class="core-icon">${meta.icon ? iconHTML(meta.icon, { size: 26 }) : ''}</div>
       <div class="core-card-foot">
         <div class="core-card-head">
           <span class="core-card-title">${meta.title}</span>
