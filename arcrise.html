@@ -10673,36 +10673,37 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
 
   // ── Badges = Achievements ─────────────────────────────────
-  // Her badge'in earn koşulu (cond) ve coin ödülü var. Kazanılmamış badge
+  // Her badge'in earn koşulu (cond) var; coin ödülü YOKTUR (koleksiyon amaçlı).
+  // Kazanılmamış badge
   // grid'de kilitli görünür ve equip edilemez. Kazanım endGame sonrası
   // checkBadgeUnlocks() ile kontrol edilir; takılı badge'ler leaderboard'a gider.
   const bestAny = () => Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
   const bestDistAny = () => Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
   const BADGES = [
-    { id: 'first-1k',   icon: 'medal',  name: 'FIRST 1K',  reward: 10, desc: 'Score 1,000+ in one run',
+    { id: 'first-1k',   icon: 'medal',  name: 'FIRST 1K',  desc: 'Score 1,000+ in one run',
       cond: () => bestAny() >= 1000 },
-    { id: 'combo-9',    icon: 'fire',   name: 'COMBO 9',   reward: 15, desc: 'Reach a 9 combo streak',
+    { id: 'combo-9',    icon: 'fire',   name: 'COMBO 9',   desc: 'Reach a 9 combo streak',
       cond: () => (stats.maxCombo || 0) >= 9 },
-    { id: 'extreme-1',  icon: 'bolt',   name: 'EXTREME',   reward: 10, desc: 'Play an Extreme run',
+    { id: 'extreme-1',  icon: 'bolt',   name: 'EXTREME',   desc: 'Play an Extreme run',
       cond: () => (stats.gamesExtreme || 0) >= 1 },
-    { id: 'gold-100',   icon: 'coin',   name: '100 GOLD',  reward: 20, desc: 'Collect 100 gold balls (total)',
+    { id: 'gold-100',   icon: 'coin',   name: '100 GOLD',  desc: 'Collect 100 gold balls (total)',
       cond: () => (stats.goldTotal || 0) >= 100 },
-    { id: 'streak-5',   icon: 'target', name: 'STREAK 5',  reward: 15, desc: 'Play 5 days in a row',
+    { id: 'streak-5',   icon: 'target', name: 'STREAK 5',  desc: 'Play 5 days in a row',
       cond: () => (stats.dayStreak || 0) >= 5 },
-    { id: 'speedrun',   icon: 'runner', name: 'SPEEDRUN',  reward: 20, desc: '10.00m in under 60 seconds',
+    { id: 'speedrun',   icon: 'runner', name: 'SPEEDRUN',  desc: '10.00m in under 60 seconds',
       cond: () => !!stats.speedrunDone },
-    { id: 'collector',  icon: 'gem',    name: 'COLLECTOR', reward: 15, desc: 'Collect 50 boosters (total)',
+    { id: 'collector',  icon: 'gem',    name: 'COLLECTOR', desc: 'Collect 50 boosters (total)',
       cond: () => (stats.purpleTotal || 0) >= 50 },
-    { id: 'night-owl',  icon: 'owl',    name: 'NIGHT OWL', reward: 10, desc: 'Finish a run between 00:00-04:00',
+    { id: 'night-owl',  icon: 'owl',    name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
       cond: () => !!stats.nightOwlDone },
-    { id: 'distance-25',  icon: 'ruler',  name: '25 M',    reward: 20, desc: 'Reach 25.00m in one run',
+    { id: 'distance-25',  icon: 'ruler',  name: '25 M',    desc: 'Reach 25.00m in one run',
       cond: () => bestDistAny() >= 2500 },
-    { id: 'distance-100', icon: 'rocket', name: '100 M',   reward: 50, desc: 'Reach 100.00m in one run',
+    { id: 'distance-100', icon: 'rocket', name: '100 M',   desc: 'Reach 100.00m in one run',
       cond: () => bestDistAny() >= 10000 },
-    { id: 'boss',       icon: 'crown',  name: 'BOSS',      reward: 30, desc: 'Own all 7 abilities',
+    { id: 'boss',       icon: 'crown',  name: 'BOSS',      desc: 'Own all 7 abilities',
       cond: () => ['timeslow','phaseburst','coinpull','brake','mirror','shock','anchor']
                     .every(k => upg.inv[k]?.owned) },
-    { id: 'survivor',   icon: 'shield', name: 'SURVIVOR',  reward: 25, desc: '10.00m without revive or continue',
+    { id: 'survivor',   icon: 'shield', name: 'SURVIVOR',  desc: '10.00m without revive or continue',
       cond: () => !!stats.survivorDone },
   ];
   let equippedBadges = (() => {
@@ -10782,8 +10783,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       if (!ok) continue;
       earnedBadges.add(b.id);
       dirty = true;
-      grantCoins(b.reward || 0);
-      try { showToast(`BADGE UNLOCKED: ${b.name} +${b.reward}C`); } catch(_){}
+      // Rozetler koleksiyondur — coin ödülü YOK (2026-07-02'de kaldırıldı;
+      // coin kazanımı yalnızca mesafe + görev/giriş/davet ödülleridir).
+      try { showToast(`BADGE UNLOCKED: ${b.name}`); } catch(_){}
     }
     if (dirty) saveEarned();
     try { refreshNotifs(); } catch(_){}
