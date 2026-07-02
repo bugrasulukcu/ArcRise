@@ -8081,12 +8081,24 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
 
     // Rank ata, oyuncuyu işaretle (aynı isim + aynı skor → ilk eşleşme)
+    // "Ben" tespiti KİMLİKLE yapılır (isim + #tag) — skor eşitliğiyle değil.
+    // Eski hata: sunucudaki best bu elin skorundan farklıysa satır "ben" sayılmıyor,
+    // oyuncu listede iki kez görünüyor ve kendi satırında ADD butonu çıkıyordu.
     let markedYou = false;
     const ann = topRows.map((r, i) => {
-      const isYou = !markedYou && r.name === playerName && r.score === sc;
+      const isYou = !markedYou && isMyRow(r);
       if (isYou) markedYou = true;
       return { ...r, rank: i, isYou };
     });
+    // Sunucu satırı bayat olabilir (bu elin skoru listeye henüz yansımamış) → yükselt + yeniden sırala
+    if (markedYou) {
+      const meRow = ann.find(r => r.isYou);
+      if (sc > meRow.score) {
+        meRow.score = sc;
+        ann.sort((a, b) => b.score - a.score);
+        ann.forEach((r, i) => { r.rank = i; });
+      }
+    }
 
     // Oyuncu top-50 dışındaysa doğru pozisyona ekle
     if (!markedYou) {
@@ -8743,7 +8755,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         ? (stats?.bestDistExtreme || 0)
         : (stats?.bestDistNormal  || 0);
       if (statsPB > 0 && playerName) {
-        const mine = rows.find(r => r.name === playerName);
+        const mine = rows.find(isMyRow);
         if (!mine) {
           rows.push({
             name:     playerName,
@@ -8819,7 +8831,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     //  - Eğer oyuncu 2. ise: 1. + kendi + altındaki 2 kişi
     //  - Diğer: 1. + üst + kendi + alt
     //  - Oyuncu listede yok: ilk 4 satır
-    const youIdx = rows.findIndex(r => r.name === playerName);
+    const youIdx = rows.findIndex(isMyRow);
     let pickIdx = [];
     if (youIdx === -1) {
       pickIdx = [0, 1, 2, 3].filter(i => i < rows.length);
@@ -8846,7 +8858,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           <span>—</span>
         </div>`;
       }
-      const isYou = r.name === playerName;
+      const isYou = isMyRow(r);
       // #1 always wears the gold frame — even when it's the player themself.
       // (CSS rule order makes .top visually win over .you so the gold reads.)
       const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop ? ' top' : ''}`;
@@ -11584,6 +11596,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ══════════ HESAP (NAME#TAG) + ARKADAŞ LİSTESİ ══════════
   const ACCOUNT_TAG_KEY = 'arc_tag', FRIENDS2_KEY = 'arc_friends_v2';
   function myTag() { try { return localStorage.getItem(ACCOUNT_TAG_KEY) || ''; } catch(_) { return ''; } }
+  // Leaderboard satırı benim mi? İsim + #tag kimliğiyle eşleşir (aynı isimli
+  // başka oyuncular "ben" sanılmasın); tag'i olmayan eski satırlar isimle eşleşir.
+  function isMyRow(r) { const t = myTag(); return !!r && r.name === playerName && (!r.tag || !t || r.tag === t); }
   function myIdentity() { return playerName ? (playerName + (/^\d{4}$/.test(myTag()) ? '#' + myTag() : '')) : ''; }
   function pickFreeTag(used) {
     const set = new Set(used || []);
