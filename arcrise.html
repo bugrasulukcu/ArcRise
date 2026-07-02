@@ -2316,6 +2316,55 @@
       z-index: 90;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* ── Ödül kartı (rozet / coin kazanımı) — animasyonlu bildirim ── */
+    #reward-toast {
+      position: fixed; left: 50%; top: 13%;
+      transform: translateX(-50%);
+      z-index: 120; pointer-events: none; display: none;
+    }
+    #reward-toast.show { display: block; }
+    .rt-card {
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(16,22,34,.94);
+      border: 1.5px solid rgba(255,206,90,.6);
+      border-radius: 16px; padding: 14px 24px 14px 16px;
+      font-family: var(--font);
+      animation: rtPop .55s cubic-bezier(.18,1.35,.4,1) both,
+                 rtGlow 1.5s ease-in-out .5s infinite alternate;
+    }
+    .rt-card::after {
+      content: ''; position: absolute; top: -60%; left: -45%;
+      width: 38%; height: 220%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,.20), transparent);
+      transform: rotate(8deg);
+      animation: rtShine 1.8s ease-out .25s 2;
+    }
+    .rt-ic {
+      flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at 32% 30%, rgba(255,220,120,.35), rgba(255,206,90,.08));
+      border: 1.5px solid rgba(255,206,90,.5); color: #ffce5a;
+      animation: rtIcon .7s cubic-bezier(.2,1.6,.35,1) .12s both;
+    }
+    .rt-txt { display: flex; flex-direction: column; gap: 3px; }
+    .rt-title { font-size: 9px; letter-spacing: 2.5px; color: rgba(255,255,255,.6); }
+    .rt-sub { font-size: 15px; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
+    .rt-coin {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 2px;
+      font-size: 12px; color: #ffce5a; letter-spacing: 1px;
+      animation: rtCoin .5s cubic-bezier(.2,1.6,.35,1) .3s both;
+    }
+    #reward-toast.hide .rt-card { animation: rtOut .28s ease-in both; }
+    @keyframes rtPop  { 0% { opacity: 0; transform: translateY(-26px) scale(.6); }
+                        60% { opacity: 1; transform: translateY(4px) scale(1.06); }
+                        100% { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes rtGlow { from { box-shadow: 0 0 20px rgba(255,206,90,.16), 0 6px 30px rgba(0,0,0,.5); }
+                        to   { box-shadow: 0 0 42px rgba(255,206,90,.38), 0 6px 30px rgba(0,0,0,.5); } }
+    @keyframes rtShine { from { left: -45%; } to { left: 115%; } }
+    @keyframes rtIcon { 0% { transform: scale(0) rotate(-30deg); } 100% { transform: scale(1) rotate(0deg); } }
+    @keyframes rtCoin { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 100% { opacity: 1; transform: none; } }
+    @keyframes rtOut  { to { opacity: 0; transform: translateY(-18px) scale(.92); } }
     /* Avatar picker popup — bağımsız modal, profil kutusunu hareket ettirmez */
     #avpick-modal {
       position: fixed; inset: 0; z-index: 62;
@@ -3391,6 +3440,7 @@
 </head>
 <body>
 <div id="toast"></div>
+<div id="reward-toast"></div>
 
 <!-- ── Canvas + HUD (aynı stack içinde, duvar sınırlarına göre konumlanır) ── -->
 <!-- Debug overlay: FPS + live game state. Toggled by T×2 or RTL swipe. -->
@@ -5402,13 +5452,57 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
   // Generic toast (auto-hide after 1.6s)
   let _toastTimer = null;
+  // Bilgi toast'ı — 5sn görünür; herhangi bir yere dokununca kapanır.
   function showToast(msg) {
     const el = document.getElementById('toast');
     if (!el) return;
     el.textContent = msg;
     el.classList.add('show');
     if (_toastTimer) clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+    const hide = () => {
+      el.classList.remove('show');
+      document.removeEventListener('pointerdown', hide, true);
+    };
+    _toastTimer = setTimeout(hide, 5000);
+    // Toast'u tetikleyen dokunuş anında kapatmasın diye kısa gecikmeyle bağla
+    setTimeout(() => document.addEventListener('pointerdown', hide, true), 150);
+  }
+
+  // ── Ödül kartı: rozet / coin kazanımları için animasyonlu bildirim ──
+  // Kuyruklu çalışır (arka arkaya kazanımlar sırayla gösterilir);
+  // 5sn kalır, herhangi bir yere dokununca kapanır.
+  const _rtQueue = [];
+  let _rtBusy = false, _rtTimer = null;
+  function showRewardToast(opts) {
+    _rtQueue.push(opts || {});
+    if (!_rtBusy) _rtNext();
+  }
+  function _rtNext() {
+    const host = document.getElementById('reward-toast');
+    if (!host) { _rtBusy = false; return; }
+    const o = _rtQueue.shift();
+    if (!o) { _rtBusy = false; return; }
+    _rtBusy = true;
+    const n = Number(o.coins) || 0;
+    host.classList.remove('hide');
+    host.innerHTML = `<div class="rt-card">
+      <span class="rt-ic">${iconHTML(o.icon || 'coin', { size: 26 })}</span>
+      <span class="rt-txt">
+        <span class="rt-title">${esc(o.title || 'REWARD')}</span>
+        <span class="rt-sub">${esc(o.sub || '')}</span>
+        ${n ? `<span class="rt-coin">${iconHTML('coin', { size: 13 })} +${n} COIN${n === 1 ? '' : 'S'}</span>` : ''}
+      </span>
+    </div>`;
+    host.classList.add('show');
+    try { haptic(20); } catch(_){}
+    const hide = () => {
+      if (_rtTimer) { clearTimeout(_rtTimer); _rtTimer = null; }
+      document.removeEventListener('pointerdown', hide, true);
+      host.classList.add('hide');
+      setTimeout(() => { host.classList.remove('show', 'hide'); _rtNext(); }, 300);
+    };
+    _rtTimer = setTimeout(hide, 5000);
+    setTimeout(() => document.addEventListener('pointerdown', hide, true), 150);
   }
   // Profile setup upload — picks file then crops to 256×256 cover, sets customAvatarSrc
   document.getElementById('ps-upload-btn').addEventListener('click', () => {
@@ -7909,7 +8003,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         // İlk oyun bonusu: ilk GERÇEK run (wife hariç — bu blok zaten wife'ta çalışmaz)
         // tamamlanınca tek seferlik +1 coin. Reset sonrası taze profilde tekrar verilir.
         if (stats.gamesTotal === 1) {
-          try { grantCoins(1); showToast('First game · +1 coin'); } catch(_){}
+          try { grantCoins(1); showRewardToast({ icon: 'coin', title: 'FIRST GAME', sub: 'Welcome bonus', coins: 1 }); } catch(_){}
         }
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
@@ -9706,16 +9800,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   // CORE upgrade açıklamaları — detay sayfasında üst kısımda gösterilir
   const CORE_DESC = {
-    profit:       'Coins earned per metre. ×1.0 base; each level +10% coin gain.',
-    radius:       'Arc radius. + = bigger arc (more ground), − = tighter (squeeze through gaps).',
-    speed:        'Travel speed. + = faster & harder but more distance; − = slower & easier.',
-    timer:        'Combo window — how long your combo stays alive. Base 2s; each level +0.5s.',
-    wallSoft:     'Forgiveness near walls. Each level adds collision tolerance.',
-    magnetRange: 'Passive magnet — collect greens, gold & purples without touching them; range grows each level.',
-    traceColor:   'Pick a custom colour for your trail. Each change costs coins.',
-    traceThickness: 'Thicken your trail. Each level adds +10% width.',
-    deathName:    'When you die at a new PB distance, your name appears on the map for other players.',
-    deathAvatar:  'Same as Death Name but with your avatar shown at the death spot.',
+    profit:       'Earn more coins from every metre you travel. Each level gives +10% more coins.',
+    radius:       'Changes the size of your circle. Bigger covers more ground — smaller slips through tight gaps more easily.',
+    speed:        'How fast you fly. Faster means more distance but harder control. Slower is easier to steer.',
+    timer:        'More time to keep your combo alive. Starts at 2 seconds, each level adds +0.5s.',
+    wallSoft:     'Walls become more forgiving — light touches won\'t end your run as easily.',
+    magnetRange:  'Automatically pulls nearby greens, golds and purples to you. The pull range grows each level.',
+    traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
+    traceThickness: 'Makes your trail thicker and easier to see. Each level adds +10% width.',
+    deathName:    'Set a new distance record and your name is planted at that spot — every player can see it.',
+    deathAvatar:  'Same as Death Name, but your avatar appears at the spot where you fell.',
   };
   // CORE — kalıcı sayısal buff'lar
   const PASSIVE_TILES = [
@@ -10202,12 +10296,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ── Gear configs ─────────────────────────────────────────────────
   // Consumable: her stok düz 3 coin. Ability: unlock düz 10, ladder her seviye düz 4.
   const CONSUMABLE_CFG = {
-    revive:    { price: 3, max: 5, autoArm: true,  desc: 'On death, automatically continue from your last safe spot.' },
-    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Next armed run: all coin gain ×2.' },
-    headstart: { price: 3, max: 5, autoArm: false, desc: 'Next armed run: first 5 seconds at half speed.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Armed: gold ball spawn rate ×2 for the run.' },
-    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Armed: start the run with a random booster active.' },
-    filter:    { price: 3, max: 3, autoArm: false, desc: 'Armed: only Ghost & Speed boosters spawn this run.' },
+    revive:    { price: 3, max: 5, autoArm: true,  desc: 'If you die, you automatically continue from your last safe spot. Works on its own.' },
+    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: you earn double coins for that entire run.' },
+    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: the first 5 seconds play at half speed — a calm, easy start.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: twice as many gold balls appear during that run.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: you start with a random booster already active.' },
+    filter:    { price: 3, max: 3, autoArm: false, desc: 'Arm it before a run: only Ghost and Speed boosters will appear that run.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
@@ -10338,13 +10432,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return card;
   }
   const ABILITY_DESC = {
-    timeslow:   'Slow the world by 50% briefly. Tap an equipped slot to activate.',
-    phaseburst: 'Brief invincibility — pass through walls and obstacles.',
-    coinpull:   'Instantly pull all on-screen coins, gold and purple balls to you.',
-    brake:      'Halve your speed briefly — buy yourself reaction time.',
-    mirror:     'Snap to the mirrored x position — flip across the screen.',
-    shock:      'Destroy obstacles within a radius around you.',
-    anchor:     'First tap: drop an anchor. Second tap: teleport back to it.',
+    timeslow:   'Slows the whole world down for a few seconds. Tap its slot during a run to use it.',
+    phaseburst: 'A short moment of invincibility — fly straight through walls and obstacles.',
+    coinpull:   'Instantly sucks in every coin, gold and purple ball on the screen.',
+    brake:      'Cuts your speed in half for a moment — handy in tricky sections.',
+    mirror:     'Instantly jumps your ball to the mirrored spot on the other side of the screen.',
+    shock:      'Blasts away all obstacles around you in one hit.',
+    anchor:     'Tap once to drop a marker. Tap again to teleport back to that exact spot.',
   };
 
 
@@ -10790,7 +10884,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       dirty = true;
       // Rozetler koleksiyondur — coin ödülü YOK (2026-07-02'de kaldırıldı;
       // coin kazanımı yalnızca mesafe + görev/giriş/davet ödülleridir).
-      try { showToast(`BADGE UNLOCKED: ${b.name}`); } catch(_){}
+      try { showRewardToast({ icon: b.icon, title: 'BADGE UNLOCKED', sub: b.name }); } catch(_){}
     }
     if (dirty) saveEarned();
     try { refreshNotifs(); } catch(_){}
@@ -11447,7 +11541,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         const d = (parseInt(localStorage.getItem('arc_series_day')||'0',10) || 0) + 1;
         localStorage.setItem('arc_series_day', String(Math.min(SERIES_LEN, d)));
         grantCoins(1);
-        try { showToast('Daily login · +1 coin'); } catch(_){}
+        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Day ' + Math.min(SERIES_LEN, d), coins: 1 }); } catch(_){}
       }
     } catch(_){}
   }
@@ -11529,7 +11623,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!questState.allBonusClaimed && questState.quests.every(x => x.claimed)) {
       questState.allBonusClaimed = true;
       grantCoins(1);
-      try { showToast('All daily quests done · +1 bonus coin'); } catch(_){}
+      try { showRewardToast({ icon: 'target', title: 'ALL QUESTS DONE', sub: 'Daily bonus', coins: 1 }); } catch(_){}
     }
     saveQuests();
     haptic(40);
@@ -11580,7 +11674,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         const coinsGot = (clicks - claimed) * REFERRAL_COIN;
         grantCoins(coinsGot);
         try { localStorage.setItem('arc_ref_claimed', String(clicks)); } catch(_){}
-        try { showToast(`Referral reward · +${coinsGot} coins (invite)`); } catch(_){}
+        try { showRewardToast({ icon: 'hearts', title: 'FRIEND JOINED', sub: 'Invite reward', coins: coinsGot }); } catch(_){}
       }
       updateReferralStat(clicks);
     } catch(_) { updateReferralStat(null); }
