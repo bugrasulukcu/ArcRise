@@ -3594,7 +3594,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           QUESTS
         </span>
-        <span class="bsh-sub" id="btn-quests-sub">Daily challenges</span>
+        <span class="bsh-sub" id="btn-quests-sub">Daily quests</span>
       </button>
       <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3693,7 +3693,7 @@
           <path d="M5 7v2M5 12v2M19 7v2M19 12v2"/>
         </svg>
       </span>
-      <span class="slbl">Feedback</span>
+      <span class="slbl">Vibration</span>
       <div class="sctl">
         <div class="tog">
           <button class="tog-btn active-on"  id="fb-on">On</button>
@@ -3713,8 +3713,8 @@
   </div>
   <!-- Reset button outside panel -->
   <div id="reset-outer">
-    <button class="btn-danger" id="btn-reset">Reset Data</button>
-    <div id="reset-confirm">Reset complete</div>
+    <button class="btn-danger" id="btn-reset">Delete Account &amp; Data</button>
+    <div id="reset-confirm">Account deleted</div>
   </div>
 </div>
 
@@ -3845,11 +3845,11 @@
       <div class="ex-path-head" id="ex-path-direct-head">DIRECT</div>
       <div class="ex-req-row met" id="ex-req-direct">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">Pay 50 coin</span>
+        <span class="ex-req-label">Pay 50 coins</span>
         <span class="ex-req-val" id="ex-req-direct-val"></span>
       </div>
       <div class="ex-path-or">— OR —</div>
-      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 5 coin if both met</div>
+      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 5 coins if both are met</div>
       <div class="ex-req-row unmet" id="ex-req-dist">
         <span class="ex-req-check"></span>
         <span class="ex-req-label">5.00m distance</span>
@@ -3857,12 +3857,12 @@
       </div>
       <div class="ex-req-row unmet" id="ex-req-score">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">5000 points</span>
+        <span class="ex-req-label">5,000 score</span>
         <span class="ex-req-val" id="ex-req-score-val"></span>
       </div>
       <div class="ex-req-row" id="ex-req-coin" style="display:none">
         <span class="ex-coin-icon dim" id="ex-coin-icon"></span>
-        <span class="ex-req-label">5 coin</span>
+        <span class="ex-req-label">5 coins</span>
         <span id="ex-coin-deficit"></span>
         <span class="ex-req-val" id="ex-req-coin-val"></span>
       </div>
@@ -5457,7 +5457,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (!raw) { document.getElementById('ps-name-input').style.borderColor = '#ff3355'; return; }
     if (hasBadWord(raw)) {   // küfür/nefret söylemi içeren kullanıcı adı engellenir
       document.getElementById('ps-name-input').style.borderColor = '#ff3355';
-      try { showToast('Name not allowed'); } catch(_){}
+      try { showToast("That name can't be used — try another"); } catch(_){}
       return;
     }
     playerName = raw;
@@ -8275,7 +8275,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       if (!/^\d{4}$/.test(tag)) {
         let tags = []; try { tags = await ARC_DB.findTagsForName(name) || []; } catch(_){}
         if (tags.length === 1) tag = tags[0];
-        else { try { showToast(tags.length ? 'Multiple players — open Friends to add by ID' : 'Player not found'); } catch(_){} b.disabled = false; return; }
+        else { try { showToast(tags.length ? 'Multiple players share this name — add by full ID (NAME#0000) in Friends' : 'Player not found'); } catch(_){} b.disabled = false; return; }
       }
       let ok = false;
       try { ok = await sendRequestTo(name, tag, null); } catch(_){}
@@ -11945,7 +11945,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       return { id: e.id, name: p.name, tag: p.tag, score: pr.score, dist: pr.dist };
     });
     const pend = outgoingPending().map(e => { const p = parseId(e.to); return { id: e.id, name: p.name, tag: p.tag }; });
-    if (!friends.length && !pend.length) { list.innerHTML = `<div class="fm-empty">No friends yet — add by ID, they accept your request</div>`; return; }
+    if (!friends.length && !pend.length) { list.innerHTML = `<div class="fm-empty">No friends yet — add someone by ID and they'll get a request to accept</div>`; return; }
     friends.sort((a, b) => _flSort === 'dist' ? (b.dist||0) - (a.dist||0) : (b.score||0) - (a.score||0));
     list.innerHTML = friends.map((f, i) => {
       const known = (f.score != null) || (f.dist != null);
@@ -11997,7 +11997,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     await ensureAccount(); // kendi profilim sunucuda olmalı (kurallar gerektiriyor)
     let ok = false; try { ok = await ARC_DB.sendFriendRequest(me, toId, _sanId(playerName), myTag(), avatarIdx); } catch(_){}
     if (!ok) { if (msgEl) msgEl.textContent = 'Could not send (try again)'; return false; }
-    if (msgEl) msgEl.textContent = 'Request sent ✓ — waiting for accept';
+    if (msgEl) msgEl.textContent = 'Request sent ✓ — waiting for them to accept';
     socialEdges.push({ id: me + '__' + toId, from: me, to: toId, status: 'pending', fromName: _sanId(playerName), fromTag: myTag(), fromAvatar: avatarIdx, ts: Date.now() });
     saveSocial(); renderFriendsList();
     return true;
