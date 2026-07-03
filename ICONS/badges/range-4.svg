@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#7de3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- PLACEHOLDER: range kademe IV platin — kendi cizimini bu dosyanin uzerine kaydet -->
+  <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" opacity=".6"/>
+  <text x="12" y="16" text-anchor="middle" font-size="9" fill="#7de3ff" stroke="none">4</text>
+</svg>

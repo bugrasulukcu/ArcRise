@@ -47,23 +47,34 @@ yerleşik ikonları görünmeye devam edecek.
 # ICONS/badges — Rozet ikonları
 
 Rozet sistemi kademelidir: 10 ailenin her birinin 5 kademesi vardır
-(I bronz → II gümüş → III altın → IV platin → V elmas). **Aile başına TEK
-ikon çizilir** — kademe rengi (bronz/gümüş/altın/platin/elmas) kod tarafından
-`currentColor` üzerinden otomatik uygulanır. Bu yüzden rozet ikonlarında
-MUTLAKA `currentColor` kullan, sabit renk kullanma.
+(I bronz → II gümüş → III altın → IV platin → V elmas). **Her kademe AYRI
+dosyadır**: `score-1.svg` … `score-5.svg` gibi — dosya adları koddaki rozet
+kimlikleriyle (`score-1`) birebir aynıdır, bağlama işi bu sayede otomatik olacak.
 
-| Dosya | Rozet ailesi | Kademe hedefleri (I→V) |
+Placeholder'lara her kademenin önerilen rengi gömülüdür; kendi çizimlerinde
+bu paleti veya istediğin varyasyonu kullanabilirsin — SABİT renk serbest
+(kod tarafı yeniden boyamayacak, çizim neyse o görünecek):
+
+| Kademe | Renk | Hex |
 |---|---|---|
-| score.svg | SCORE — tek elde skor | 1.000 / 5.000 / 20.000 / 75.000 / 250.000 |
-| range.svg | DISTANCE — tek elde mesafe | 10m / 25m / 50m / 100m / 250m |
-| odometer.svg | TRAVELLER — toplam mesafe | 100m / 500m / 2.5km / 10km / 50km |
-| combo.svg | COMBO — en yüksek kombo | 5 / 9 / 15 / 25 / 50 |
-| gold.svg | GOLD — toplam altın top | 10 / 50 / 250 / 1.000 / 5.000 |
-| boost.svg | COLLECTOR — toplam booster | 10 / 50 / 250 / 1.000 / 5.000 |
-| veteran.svg | VETERAN — oynanan el | 10 / 50 / 250 / 1.000 / 5.000 |
-| daily.svg | STREAK — üst üste gün | 3 / 7 / 14 / 30 / 100 |
-| extreme.svg | EXTREME — extreme el | 1 / 10 / 50 / 250 / 1.000 |
-| social.svg | SOCIAL — arkadaş sayısı | 1 / 3 / 5 / 10 / 25 |
+| 1 | Bronz | `#cd7f32` |
+| 2 | Gümüş | `#c8ccd4` |
+| 3 | Altın | `#ffd700` |
+| 4 | Platin | `#7de3ff` |
+| 5 | Elmas | `#c77dff` |
+
+| Dosyalar (her biri -1 … -5) | Rozet ailesi | Kademe hedefleri (I→V) |
+|---|---|---|
+| score-N.svg | SCORE — tek elde skor | 1.000 / 5.000 / 20.000 / 75.000 / 250.000 |
+| range-N.svg | DISTANCE — tek elde mesafe | 10m / 25m / 50m / 100m / 250m |
+| odometer-N.svg | TRAVELLER — toplam mesafe | 100m / 500m / 2.5km / 10km / 50km |
+| combo-N.svg | COMBO — en yüksek kombo | 5 / 9 / 15 / 25 / 50 |
+| gold-N.svg | GOLD — toplam altın top | 10 / 50 / 250 / 1.000 / 5.000 |
+| boost-N.svg | COLLECTOR — toplam booster | 10 / 50 / 250 / 1.000 / 5.000 |
+| veteran-N.svg | VETERAN — oynanan el | 10 / 50 / 250 / 1.000 / 5.000 |
+| daily-N.svg | STREAK — üst üste gün | 3 / 7 / 14 / 30 / 100 |
+| extreme-N.svg | EXTREME — extreme el | 1 / 10 / 50 / 250 / 1.000 |
+| social-N.svg | SOCIAL — arkadaş sayısı | 1 / 3 / 5 / 10 / 25 |
 
 Özel rozetler (kademesiz, tek ikon):
 

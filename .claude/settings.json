@@ -28,7 +28,10 @@
       "Bash(cat .gitignore)",
       "Bash(ls -d node_modules www)",
       "Bash(git add *)",
-      "Bash(grep -iE 'keystore|\\\\.jks|\\\\.keystore|local\\\\.properties|credential|node_modules|\\(^|/\\)www/|\\\\.aab$|\\\\.apk$')"
+      "Bash(grep -iE 'keystore|\\\\.jks|\\\\.keystore|local\\\\.properties|credential|node_modules|\\(^|/\\)www/|\\\\.aab$|\\\\.apk$')",
+      "Bash(git ls-tree *)",
+      "Bash(git commit -m 'chore: firestore.rules guvenlik sikilastirma + Capacitor deps + config/ICONS *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "\\tmp"
