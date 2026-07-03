@@ -10317,16 +10317,19 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   // Returns the full body element for a single upgrade (ladder + buys / color grid / toggle)
+  // NOT: ÖLÜ KOD — grid drill-down kaldırıldı, buildDetailBody hiçbir yerden
+  // çağrılmıyor. Etiketler yine de canlı ekranla senkron tutuluyor ki ileride
+  // yeniden kullanılırsa eski/yanlış birimler geri gelmesin.
   function buildDetailBody(key) {
     if (key === 'radius' || key === 'speed') return bidiCard(key, '', '');
-    if (key === 'timer')          return fwdCard('timer', '', '', 4, dirPrice, v => v > 0 ? `+${v}s` : 'base');
+    if (key === 'timer')          return fwdCard('timer', '', '', 4, dirPrice, v => v > 0 ? `+${(v * 0.5).toFixed(1)}s` : 'base');
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'profit')         return fwdCard('profit', '', '', 10, profitPrice, v => v > 0 ? `+${v * 10}% coin` : 'base');
-    if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : 'base');
-    if (key === 'magnetRange')    return fwdCard('magnetRange', '', '', 8, magRangePrice, v => `+${v*10}%`);
+    if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : '0px');
+    if (key === 'magnetRange')    return fwdCard('magnetRange', '', '', 8, magRangePrice, v => v > 0 ? `+${v * 22}px` : 'OFF');
     if (key === 'traceColor')     return colorCard();
-    if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, 'Your name appears on the map at your best-run death spot — visible to other players.');
-    if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, 'Your avatar appears on the map at your best-run death spot.');
+    if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, CORE_DESC.deathName);
+    if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, CORE_DESC.deathAvatar);
     if (CONSUMABLE_CFG[key])      return consumableCard(key);
     if (ABILITY_CFG[key])         return abilityCard(key);
     const x = document.createElement('div'); x.textContent = '?'; return x;
@@ -11034,6 +11037,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         saveBadges();
         renderBadgeGrid();
         renderEquipSlots();
+        // Dokununca altta geçici bilgi: takıldı/çıkarıldı + koşul + ilerleme
+        try {
+          const state = equippedBadges.includes(id) ? 'EQUIPPED' : 'REMOVED';
+          showToast(`${label} ${state} · ${desc}${progressTxt ? ' · ' + progressTxt : ''}`.toUpperCase());
+        } catch(_){}
       });
       grid.appendChild(el);
     };
