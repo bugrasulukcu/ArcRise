@@ -10338,12 +10338,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // ── Gear configs ─────────────────────────────────────────────────
   // Consumable: her stok düz 3 coin. Ability: unlock düz 10, ladder her seviye düz 4.
   const CONSUMABLE_CFG = {
-    revive:    { price: 3, max: 5, autoArm: true,  desc: 'If you die, you automatically continue from your last safe spot. Works on its own.' },
-    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: you earn double coins for that entire run.' },
-    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: the first 5 seconds play at half speed — a calm, easy start.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: twice as many gold balls appear during that run.' },
-    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: you start with a random booster already active.' },
-    filter:    { price: 3, max: 3, autoArm: false, desc: 'Arm it before a run: only Ghost and Speed boosters will appear that run.' },
+    revive:    { price: 3, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
+    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
+    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls that run.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
+    filter:    { price: 3, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
