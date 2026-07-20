@@ -9912,7 +9912,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Her stat KENDİ gerçek birimiyle konuşur — genel ×çarpan yalnızca gerçekten
   // çarpan olanlarda kullanılır (önceden hepsi ×1.0 gösteriyordu; Walls/Magnet
   // gibi 0'dan başlayan statlar için yanıltıcıydı):
-  //   profit        → ×1.0 + 0.1/sv (coin çarpanı — endGame'de böyle uygulanır)
+  //   profit        → ×1.0 + 0.1/sv (SKOR çarpanı — frame-loop'ta score hesabına uygulanır)
   //   radius/speed  → ×1.0 ± 0.1/sv (gerçek çarpan)
   //   timer         → combo penceresi saniyesi: 2.0s + 0.5s/sv
   //   wallSoft      → duvar toleransı: 0px + 1px/sv
