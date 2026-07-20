@@ -7618,10 +7618,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     // Score: base altitude + scoreBonus (combo points from greens)
     const scoreMulBoost = boosterType === 'x4' ? 4 : boosterType === 'x3' ? 3 : boosterType === 'x2' ? 2 : 1;
+    const profitMul = 1 + (upg.profit || 0) * 0.10;   // CORE upgrade — artık SKOR çarpanı (coin değil)
     // Score now tracks distancePx (spawn-relative). Previously used maxAscend
     // which only goes above 0 once player.y < 0 (~866 px climb). Short
     // Extreme runs that died early ended with score=0 and skipped Firestore.
-    score = Math.floor(distancePx / 200 * getScoreMul() * scoreMulBoost) + scoreBonus;
+    score = Math.floor((distancePx / 200 * getScoreMul() * scoreMulBoost + scoreBonus) * profitMul);
     // Combo HUD: show current multiplier
     const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
     const comboMul = countdown / 2;
