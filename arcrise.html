@@ -7994,12 +7994,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
-      const profitMul   = 1 + (upg.profit || 0) * 0.10;       // CORE upgrade
       const doublerMul  = runDoublerActive ? 2 : 1;            // Consumable (tek coin çarpanı)
       // Ad-continue sonrası ikinci ölümde sadece YENİ mesafe coin'e dönüşür
       const deltaCm     = Math.max(0, runDistCm - _runCmBanked);
       _runCmBanked      = runDistCm;
-      const earnedCm    = deltaCm * profitMul * doublerMul;
+      const earnedCm    = deltaCm * doublerMul;
       distTotal += earnedCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
       coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
