@@ -31,7 +31,10 @@
       "Bash(grep -iE 'keystore|\\\\.jks|\\\\.keystore|local\\\\.properties|credential|node_modules|\\(^|/\\)www/|\\\\.aab$|\\\\.apk$')",
       "Bash(git ls-tree *)",
       "Bash(git commit -m 'chore: firestore.rules guvenlik sikilastirma + Capacitor deps + config/ICONS *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git restore *)",
+      "Bash(grep -v \"upg\\\\.trace\\\\|upg\\\\.death\\\\|CORE_DESC\\\\|//.*trace\\\\|//.*death\")"
     ],
     "additionalDirectories": [
       "\\tmp"
