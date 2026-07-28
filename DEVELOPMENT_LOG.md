@@ -727,7 +727,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-07-01 (v19). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v19 changelog'unu oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
+**Son güncelleme**: 2026-07-20 (v21). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v21/v20 changelog'larını oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
 
 ---
 
