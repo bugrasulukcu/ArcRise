@@ -391,6 +391,57 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v21 — Profit CORE'u "Score Boost"a dönüştürüldü, upgrade/gear metin sadeleştirme (2026-07-20)
+
+**CORE: Profit → Score Boost**
+- `upg.profit` artık **coin çarpanı değil, skor çarpanı**: `score = floor((distancePx/200 * mul + scoreBonus) * profitMul)`. Coin kazanımı (`earnedCm`) artık `profitMul` içermiyor — sadece mesafe + doubler.
+- Kart başlığı **Profit → Score Boost**, ikon `coinUp → medal`; `CORE_DESC.profit` ve kod içi yorumlar ("gelir çarpanı" → "skor çarpanı") güncellendi.
+
+**Metin sadeleştirme**
+- CORE açıklamaları (`radius`, `speed`, `timer`, `wallSoft`, `magnetRange`) daha kısa/aksiyon odaklı ifadelerle yeniden yazıldı.
+- Gear (consumable) açıklamaları (`revive`, `doubler`, `headstart`, `coinrain`, `preboost`, `filter`) ve ability açıklamaları (`phaseburst`, `coinpull`, `brake`, `mirror`, `shock`, `anchor`) kısaltıldı, tekrar eden "arm it before a run" kalıpları sadeleştirildi.
+
+**Config**
+- `.claude/settings.json` izin listesine `git fetch`, `git restore` ve bir `grep` deseni eklendi (auto-commit hook akışını destekliyor).
+
+---
+
+### v20 — Güvenlik sertleştirme, kademeli rozet sistemi, eksen bazlı görevler, CORE birim düzeltmesi (2026-07-02 → 2026-07-03)
+
+**Güvenlik**
+- XSS koruması: `esc()` ile kullanıcı girdisi kaçışı + `firestore.rules`'ta regex doğrulama.
+- `friendreqs` koleksiyonunda `toUid` alanı gizlendi (başkasının istek listesini görememe).
+- CSP eklendi, hesap kurtarma kodu akışı, App Check altyapısı (henüz aktif değil), `tracePts` 20KB sınırı, `sync-www` scripti (kaynak → `www/` build kopyası).
+- `firestore.rules` genel olarak sıkılaştırıldı; Capacitor bağımlılıkları + `config/ICONS` düzenlendi.
+
+**Android/paketleme**
+- Android projesi, store görselleri ve `store_listing.md` repoya alındı; üretilmiş `www/` kopyası `.gitignore`'a eklendi.
+- Kullanılmayan WAV master dosyaları `RESOURCES/`'a taşındı — www/APK paketi **3.9MB → 1.9MB**.
+
+**Bug fix'ler**
+- Oyun sonu listesinde oyuncunun **çift görünmesi** giderildi: "ben" tespiti artık skor eşitliğiyle değil isim+tag kimliğiyle (`isMyRow`) yapılıyor; bayat sunucu skoru güncellenip yeniden sıralanıyor.
+- **CORE değerleri gerçek birimleriyle** gösteriliyor: Walls artık `0px / +Npx` (eskiden yanıltıcı `×1.0`), Magnet `OFF / +22px`, Timer `2.0s + 0.5s/sv`; `upgStateLabel` timer/magnet için düzeltildi.
+
+**Kademeli rozet sistemi**
+- 10 aile × 5 kademe (bronz → elmas) + 4 özel rozet. Grid artık aile bazlı, kademe renkleri var, toplu açılışta özet kart gösteriliyor. `ICONS/badges` placeholder'ları eklendi.
+- Rozet coin ödülleri kaldırıldı — rozetler artık salt koleksiyon amaçlı; coin yalnızca mesafe + görev/giriş/davet ödüllerinden geliyor.
+
+**Görevler (quests)**
+- Günlük görevler artık **eksen bazlı** (skill + grind + spice) — aynı ekseni ölçen çift görev çakışması bitti.
+- 3 yeni görev türü: coin, el sayısı, extreme.
+- Seri (streak) eşiği **200 → 365 gün**; `goodRuns` eşiği de buna göre ölçekleniyor.
+- Rozet placeholder'ları artık kademe başına ayrı dosya.
+
+**Diğer**
+- İlk oyun bonusu: ilk gerçek run tamamlanınca **+1 coin** (tek seferlik, wife modu hariç).
+- Animasyonlu ödül kartı (rozet/coin kazanımları); toast 5sn + tıkla-kapat.
+- Upgrades kart ikonları artık görünüyor (boş placeholder fix), info butonu büyütüldü, Walls başlığı, Settings backup butonları belirginleştirildi.
+- Metin tutarlılığı: Feedback→Vibration, Reset Data→Delete Account & Data (privacy ile uyum), Daily challenges→quests, coin çoğulları, "5000 points"→score, arkadaş mesajları düzeltildi.
+- Rozet dokununca altta bilgi mesajı (takıldı/çıkarıldı + koşul + ilerleme); ölü drill-down kodundaki eski birim etiketleri canlıyla senkronlandı ve **ÖLÜ KOD** olarak işaretlendi.
+- ICONS/upgrades placeholder SVG'leri — 23 upgrade anahtarıyla aynı isimde, üzerine çizilecek.
+
+---
+
 ### v19 — Capacitor/Android scaffold, ikon/splash, keystore, store listing (2026-07-01, Cowork)
 
 **Node + Capacitor kurulumu**
