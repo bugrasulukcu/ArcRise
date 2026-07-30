@@ -5698,7 +5698,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const UPG_DEFAULTS = {
     radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -3..+3 active
     speedPos: 0,  speedNeg: 0,  speedActive: 0,
-    timer: 0,                                    // 0..4 (+sec on combo)
+    timer: 0,                                    // 0..4 — topun üzerindeki geri sayım rakamı (8 → 12)
+    comboWin: 0,                                 // 0..4 — combo penceresi (yeşil bant): 2.0s + 0.5s/sv
+    comboSplitV22: false,                        // eski tek 'timer' upgrade'inin bölünme migrasyonu
     traceColor: '#ffffff',                       // varsayılan BEYAZ ('rainbow' | 'rb:xxx' | 'custom' | hex)
     traceThickness: 0,                           // preset: 0/6/12/20
     traceAnim: 'none',                           // none | wave | pulse | glow
@@ -5744,11 +5746,21 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const merged = Object.assign({}, UPG_DEFAULTS, raw);
       // Deep-merge inv so newly added items don't lose defaults
       merged.inv = Object.assign({}, UPG_DEFAULTS.inv, raw.inv || {});
+      // v22 migrasyonu: 'timer' eskiden combo penceresini uzatıyordu, artık geri
+      // sayım rakamını yükseltiyor. Eskiden satın alınan seviyeler oyuncunun
+      // gerçekte aldığı şeye — yeni 'comboWin' anahtarına — taşınır.
+      if (!merged.comboSplitV22) {
+        if (raw.timer) { merged.comboWin = raw.timer | 0; merged.timer = 0; }
+        merged.comboSplitV22 = true;
+      }
       return merged;
     } catch(_) { return JSON.parse(JSON.stringify(UPG_DEFAULTS)); }
   }
   function saveUpg() { try { localStorage.setItem(UPG_KEY, JSON.stringify(upg)); } catch(_){} }
   let upg = loadUpg();
+  // v22 timer/comboWin ayrımı satın alma beklemeden kalıcı olsun (migrasyon idempotent
+  // ama depoyu hemen yazmak eski 'timer' değerinin ortalıkta kalmasını önler).
+  saveUpg();
 
   function loadGhostTraces() {
     try {
@@ -5797,12 +5809,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const mult = 1 + ((upg && upg.speedActive) || 0) * 0.10;
     return base * mult;
   }
-  // Combo timer (base 9 sec, +1 per timer level). Displayed countdown range
-  // is one less because the countdown texture starts at 8.
-  // Combo "yeşil pencere" = üstteki 2 kademe = comboTimerSec/4.
-  // Pencere = 2 + 0.5·timer sn  →  comboTimerSec = 8 + 2·timer ; gösterge sabit 8 kademe.
-  function comboTimerSec()   { return 8 + ((upg && upg.timer) || 0) * 2; }
-  function comboDisplayMax() { return 8; }
+  // İki ayrı CORE upgrade'i geri sayımı yönetir:
+  //   timer    → topun üzerindeki geri sayım RAKAMI: 8 taban, +1/sv (0..4 → 8..12).
+  //              Bir kademe daima ~1 sn (comboWin tabanında) → daha çok hayatta
+  //              kalma süresi + altın toplarda daha büyük çarpan (countdown/2).
+  //   comboWin → yeşil combo PENCERESİ (üstteki 2 kademe): 2.0s taban, +0.5s/sv.
+  //              Kademe süresini ölçekler, rakamı değiştirmez.
+  function comboDisplayMax() { return 8 + ((upg && upg.timer) || 0); }
+  function comboWindowSec()  { return 2 + ((upg && upg.comboWin) || 0) * 0.5; }
+  // Toplam enerji süresi = kademe sayısı × kademe süresi (= pencere / 2 kademe).
+  function comboTimerSec()   { return comboDisplayMax() * (comboWindowSec() / 2); }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
@@ -7176,13 +7192,16 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     ctx.save();
     const px = player.x, py = W2S(player.y), r = player.r;
 
-    // Countdown 8 → 0. Bands: 7-8 green, 5-6 yellow, 3-4 orange, 0-2 red.
-    const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
+    // Countdown max → 0. Bantlar tavana GÖRE: üst 2 yeşil (combo penceresi),
+    // sonraki 2 sarı, sonraki 2 turuncu, kalanı kırmızı. Timer upgrade'i tavanı
+    // yükseltince bantlar da birlikte kayar (sabit 7/5/3 eşikleri yanlış olurdu).
+    const cdMax = comboDisplayMax();
+    const countdown = Math.max(0, Math.ceil(energy * cdMax));
     let glowR, glowG, glowB;
-    if (countdown >= 7)      { glowR = 124; glowG = 255; glowB = 122; }       // green
-    else if (countdown >= 5) { glowR = 255; glowG = 220; glowB = 60;  }       // yellow
-    else if (countdown >= 3) { glowR = 255; glowG = 140; glowB = 60;  }       // orange
-    else                     { glowR = 255; glowG = 60;  glowB = 60;  }       // red
+    if (countdown >= cdMax - 1)      { glowR = 124; glowG = 255; glowB = 122; }   // green
+    else if (countdown >= cdMax - 3) { glowR = 255; glowG = 220; glowB = 60;  }   // yellow
+    else if (countdown >= cdMax - 5) { glowR = 255; glowG = 140; glowB = 60;  }   // orange
+    else                             { glowR = 255; glowG = 60;  glowB = 60;  }   // red
 
     // Ghost efekti — mor renk, yarı saydam
     if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
@@ -7212,13 +7231,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
     ctx.globalAlpha = isGhost ? 0.65 : 1;
-    // -20% from the doubled size to leave headroom for future
-    // upgrades that push the countdown into double digits.
-    const fontPx = (r < 20 ? 18 : 22);
+    // -20% from the doubled size; Timer upgrade'i rakamı çift haneye çıkarınca
+    // (10..12) topun içine sığması için ayrıca daraltılır.
+    const cdText = (gameMode === 'wife') ? '∞' : String(countdown);
+    const fontPx = (r < 20 ? 18 : 22) * (cdText.length > 1 ? 0.74 : 1);
     // Canvas ctx.font doesn't resolve CSS vars — use the literal family name.
     ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(gameMode === 'wife' ? '∞' : String(countdown), px, py);
+    ctx.fillText(cdText, px, py);
     ctx.restore();
   }
 
@@ -7564,8 +7584,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
     }
 
-    // Yüksek comboda (≥7) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
-    if (!tutActive && Math.ceil(energy * comboDisplayMax()) >= 7 && Math.random() < dt * 16) {
+    // Yeşil bantta (üst 2 kademe) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
+    if (!tutActive && Math.ceil(energy * comboDisplayMax()) >= comboDisplayMax() - 1 && Math.random() < dt * 16) {
       const ang = Math.random() * Math.PI * 2;
       const spd = 150 + Math.random() * 250;
       particles.push({
@@ -9710,11 +9730,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const PROFIT_PRICES   = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4];                     // 10 lvl (skor çarpanı — biraz daha pahalı)
   const WALLSOFT_PRICES = [2, 2, 2, 2, 2];                                    // 5 lvl
   const MAGRANGE_PRICES = [2, 2, 2, 2, 2, 2, 2, 2];                           // 8 lvl
-  const TIMER_PRICES    = [6, 8, 10, 12];                                     // 4 lvl — combo penceresi çok kıymetli, pahalı
+  // Geri sayım rakamı hem hayatta kalma süresini hem altın çarpanını (countdown/2)
+  // birlikte büyütüyor — CORE'un en pahalı kalemi (4 seviye toplam 72 coin).
+  const TIMER_PRICES    = [12, 16, 20, 24];                                   // 4 lvl — geri sayım rakamı +1/sv
+  const COMBOWIN_PRICES = [6, 8, 10, 12];                                     // 4 lvl — combo penceresi +0.5s/sv
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
   function timerPrice(n)    { return (n < 1 || n > TIMER_PRICES.length)    ? null : TIMER_PRICES[n - 1]; }
+  function comboWinPrice(n) { return (n < 1 || n > COMBOWIN_PRICES.length) ? null : COMBOWIN_PRICES[n - 1]; }
   const TRACE_COLOR_PRICE = 3;        // rebuyable cosmetic
   const DEATH_NAME_PRICE  = 10;       // one-time unlock
   const DEATH_AV_PRICE    = 10;       // one-time unlock
@@ -9794,8 +9818,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (key === 'radius' || key === 'speed') {
       return (v > 0 ? '+' : '') + v + ' (' + (v * 10) + '%)';
     }
-    // Combo penceresi seviyede +0.5s büyür (önceki '+Ns' etiketi yanlıştı)
-    if (key === 'timer')          return upg.timer > 0 ? '+' + (upg.timer * 0.5).toFixed(1) + 's' : 'base';
+    // Timer geri sayım rakamını, comboWin yeşil pencereyi büyütür — ayrı diller
+    if (key === 'timer')          return upg.timer > 0 ? String(8 + upg.timer) : 'base';
+    if (key === 'comboWin')       return upg.comboWin > 0 ? '+' + (upg.comboWin * 0.5).toFixed(1) + 's' : 'base';
     if (key === 'traceThickness') return '+' + (upg.traceThickness * 10) + '%';
     if (key === 'traceColor')     return upg.traceColor ? iconHTML('dot', { size: 12 }) : 'default';
     if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
@@ -9829,7 +9854,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     profit:       'Boosts your score. Each level = +10% more score.',
     radius:       'Widens or tightens your turning arc. Wide = more ground per turn. Tight = easier through narrow gaps.',
     speed:        'Controls how fast you fly. Faster = more distance, harder control. Slower = easier to steer.',
-    timer:        'Extends your combo window. Starts at 2s, each level = +0.5s.',
+    timer:        'Raises the countdown on your ball. Starts at 8, each level = +1 — more time to live and a bigger gold multiplier.',
+    comboWin:     'Extends the green combo window. Starts at 2s, each level = +0.5s.',
     wallSoft:     'Softens the side walls. Each level = +1px of brush-past room before you die.',
     magnetRange:  'Grows your pickup radius for greens, golds and purples. No touching needed — just get close.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
@@ -9843,6 +9869,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     { key: 'radius',      title: 'Radius',        icon: 'ring' },
     { key: 'speed',       title: 'Speed',         icon: 'bolt' },
     { key: 'timer',       title: 'Timer',         icon: 'timer' },
+    { key: 'comboWin',    title: 'Combo Timer',   icon: 'hourglass' },
     { key: 'wallSoft',    title: 'Walls',         icon: 'wall' },
     { key: 'magnetRange', title: 'Magnet',         icon: 'magnet' },
   ];
@@ -9892,6 +9919,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function coreSideMax(key) {
     if (CORE_BIDI(key))        return DIR_PRICES.length;     // her yön ayrı
     if (key === 'timer')       return TIMER_PRICES.length;
+    if (key === 'comboWin')    return COMBOWIN_PRICES.length;
     if (key === 'profit')      return PROFIT_PRICES.length;
     if (key === 'wallSoft')    return WALLSOFT_PRICES.length;
     if (key === 'magnetRange') return MAGRANGE_PRICES.length;
@@ -9900,6 +9928,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function coreSidePrice(key, n) {   // n. seviyeyi AÇMANIN bedeli (yön fark etmez)
     if (CORE_BIDI(key))        return dirPrice(n);
     if (key === 'timer')       return timerPrice(n);
+    if (key === 'comboWin')    return comboWinPrice(n);
     if (key === 'profit')      return profitPrice(n);
     if (key === 'wallSoft')    return wallSoftPrice(n);
     if (key === 'magnetRange') return magRangePrice(n);
@@ -9914,11 +9943,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // gibi 0'dan başlayan statlar için yanıltıcıydı):
   //   profit        → ×1.0 + 0.1/sv (SKOR çarpanı — frame-loop'ta score hesabına uygulanır)
   //   radius/speed  → ×1.0 ± 0.1/sv (gerçek çarpan)
-  //   timer         → combo penceresi saniyesi: 2.0s + 0.5s/sv
+  //   timer         → geri sayım rakamı: 8 + 1/sv (çarpan değil, ham sayı)
+  //   comboWin      → combo penceresi saniyesi: 2.0s + 0.5s/sv
   //   wallSoft      → duvar toleransı: 0px + 1px/sv
   //   magnetRange   → ekstra toplama menzili: OFF, +22px/sv
   function coreValueText(key, lvl) {
-    if (key === 'timer')       return (2 + lvl * 0.5).toFixed(1) + 's';
+    if (key === 'timer')       return String(8 + lvl);
+    if (key === 'comboWin')    return (2 + lvl * 0.5).toFixed(1) + 's';
     if (key === 'wallSoft')    return lvl > 0 ? '+' + lvl + 'px' : '0px';
     if (key === 'magnetRange') return lvl > 0 ? '+' + (lvl * 22) + 'px' : 'OFF';
     return '×' + (1 + lvl * 0.1).toFixed(1);
@@ -9980,6 +10011,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           + '<line x1="50" y1="9" x2="50" y2="16"/>'
           + '<line x1="50" y1="52" x2="67" y2="39"/>'
           + '<circle cx="50" cy="52" r="2.6" fill="currentColor" stroke="none"/></svg>';
+      case 'comboWin': // kum saati: iki üçgen + üst/alt kapak
+        return open + '<line x1="30" y1="16" x2="70" y2="16"/>'
+          + '<line x1="30" y1="84" x2="70" y2="84"/>'
+          + '<path d="M34 16 L34 40 L50 50 L66 40 L66 16" opacity=".85"/>'
+          + '<path d="M34 84 L34 60 L50 50 L66 60 L66 84" opacity=".85"/></svg>';
       case 'wallSoft': // daire + sağda dikey duvar çizgisi
         return open + '<circle cx="45" cy="50" r="31" opacity=".7"/>'
           + '<line x1="78" y1="20" x2="78" y2="80" opacity=".9"/></svg>';
@@ -10322,7 +10358,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // yeniden kullanılırsa eski/yanlış birimler geri gelmesin.
   function buildDetailBody(key) {
     if (key === 'radius' || key === 'speed') return bidiCard(key, '', '');
-    if (key === 'timer')          return fwdCard('timer', '', '', 4, dirPrice, v => v > 0 ? `+${(v * 0.5).toFixed(1)}s` : 'base');
+    if (key === 'timer')          return fwdCard('timer', '', '', TIMER_PRICES.length, timerPrice, v => String(8 + v));
+    if (key === 'comboWin')       return fwdCard('comboWin', '', '', COMBOWIN_PRICES.length, comboWinPrice, v => v > 0 ? `+${(v * 0.5).toFixed(1)}s` : 'base');
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'profit')         return fwdCard('profit', '', '', 10, profitPrice, v => v > 0 ? `+${v * 10}% coin` : 'base');
     if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : '0px');

@@ -391,6 +391,42 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v22 — Timer ikiye bölündü: geri sayım rakamı vs. combo penceresi (2026-07-30)
+
+Eskiden tek bir **Timer** CORE upgrade'i vardı ve adı yanıltıcıydı: gerçekte *combo penceresini* uzatıyordu, geri sayım rakamı sabit 8'de kalıyordu. Artık iki ayrı kart:
+
+**`timer` — Timer (geri sayım rakamı)**
+- Topun üzerindeki geri sayım tavanını yükseltir: **8 → 12** (seviye başına +1, **maks 4 seviye**).
+- `comboDisplayMax()` artık `8 + upg.timer` (eskiden sabit 8).
+- Bir kademe combo penceresi tabanında ~1 sn kaldığı için tavanı yükseltmek **hem hayatta kalma süresini** (8s → 12s) **hem altın top çarpanını** (`countdown/2` → maks ×4 yerine **×6**) büyütür.
+- **En pahalı CORE kalemi**: `TIMER_PRICES = [12, 16, 20, 24]` — tam yükseltme **72 coin** (eski Timer 36 idi).
+
+**`comboWin` — Combo Timer (yeşil pencere) → ayrı kart**
+- Eski Timer davranışının birebir devamı: yeşil combo bandı **2.0s taban + 0.5s/sv**, maks 4 seviye.
+- `COMBOWIN_PRICES = [6, 8, 10, 12]` (eski Timer fiyatları korundu).
+- Kum saati ikonu (`hourglass`) + kendi `coreGauge` SVG'si.
+
+**Formüller**
+```js
+comboDisplayMax() = 8 + upg.timer                          // 8..12
+comboWindowSec()  = 2 + upg.comboWin * 0.5                 // 2.0..4.0 sn
+comboTimerSec()   = comboDisplayMax() * (comboWindowSec()/2)
+```
+Taban (0/0) → 8 kademe · 8 sn · 1 sn/kademe · 2 sn yeşil pencere — **v21 ile birebir aynı**. `comboWin=4` → 16 sn toplam, eski `timer=4` ile birebir aynı. Yani mevcut denge bozulmadı, yalnızca yeni bir eksen açıldı.
+
+**Bağlı düzeltmeler**
+- **Renk bantları tavana göre kaydı**: `drawPlayer`'daki sabit `≥7 yeşil / ≥5 sarı / ≥3 turuncu` eşikleri `cdMax-1 / cdMax-3 / cdMax-5` oldu. Tavan 12'ye çıktığında "7" artık yeşil değil (aksi halde yeşil bant combo kuralıyla uyuşmazdı).
+- **Kıvılcım efekti** eşiği de `>= 7` → `>= comboDisplayMax()-1`.
+- **Çift haneli rakam**: countdown 10-12 topa sığsın diye font `×0.74` daraltılıyor.
+- **Migrasyon** (`comboSplitV22`): eski `upg.timer` seviyeleri **`comboWin`'e taşınır**, `timer` 0'lanır — oyuncu satın aldığı şeyi (combo penceresi) aynen korur, bedava geri sayım rakamı almaz. `loadUpg()` sonrası hemen `saveUpg()` ile kalıcılaşır.
+- `CORE_DESC`, `upgStateLabel`, `coreValueText`, `coreSideMax/SidePrice`, `PASSIVE_TILES` ve senkron tutulan ölü `buildDetailBody` hepsi güncellendi.
+
+**Not**: CORE grid 2 sütun olduğu için tile sayısı 6 → 7 oldu; son satırda `magnetRange` tek başına kalıyor (kozmetik, sorun değil).
+
+**Doğrulama**: `node` bu Mac'te kurulu değil — syntax check macOS JXA (`osascript -l JavaScript`) ile yapıldı, iki script bloğu da temiz parse etti. Runtime testi (emülatör/tarayıcı) yapılmadı.
+
+---
+
 ### v21 — Profit CORE'u "Score Boost"a dönüştürüldü, upgrade/gear metin sadeleştirme (2026-07-20)
 
 **CORE: Profit → Score Boost**
@@ -727,7 +763,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-07-20 (v21). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v21/v20 changelog'larını oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
+**Son güncelleme**: 2026-07-30 (v22). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v22/v21 changelog'larını oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
 
 ---
 
