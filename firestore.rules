@@ -10,9 +10,14 @@ rules_version = '2';
 //   - DELETE: yalnızca SAHİBİ kendi scores/players kaydını silebilir (hesap silme/KVKK);
 //     friendreqs taraflarca silinir; referrals silinemez
 //   - tüm yazımlar auth gerektirir
-// NOT: Coin bakiyesi tamamen client-side (localStorage) tutulur — sunucu cüzdanı
-// yoktur, dolayısıyla coin miktarı bu kurallarla korunamaz (bilinen, kabul edilen
-// kısıt; gerçek koruma sunucu tarafı cüzdan gerektirir).
+// CÜZDAN (wallets/{uid}) — İKİ AYRI GÜVEN SEVİYESİ:
+//   purchased            → PARAYLA alınan coin. Client'a yazma KAPALI; yalnızca
+//                          Admin SDK (RevenueCat webhook) yazar → forge edilemez.
+//   earnedSync/spentSync → oyunla kazanılan/harcanan defterler. Client yazar.
+//                          Amaç CİHAZ DEĞİŞİMİNDE GERİ YÜKLEME, hile koruması
+//                          DEĞİL (o kısım hâlâ client-side; bilinen kısıt).
+// Bu ayrım bilinçli: ücretsiz ilerlemeyi korumak için backend maliyeti yok,
+// ödenmiş bakiye ise sunucu-otoriter.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -130,6 +135,41 @@ service cloud.firestore {
         && ownsPlayer(resource.data.to);
       // Silme (ret / arkadaşlıktan çıkarma): iki taraftan biri.
       allow delete: if ownsPlayer(resource.data.from) || ownsPlayer(resource.data.to);
+    }
+
+    // ── Cüzdan: wallets/{uid} ────────────────────────────────────────
+    // Doc id = uid → sahiplik için ayrı "owner" alanına gerek yok.
+    // purchased alanı client tarafından NE yazılabilir NE değiştirilebilir;
+    // Admin SDK rules'ı baypas ettiği için webhook serbestçe yazar.
+    function validLedger(d) {
+      return d.earnedSync is int && d.earnedSync >= 0 && d.earnedSync <= 100000000
+        && d.spentSync  is int && d.spentSync  >= 0 && d.spentSync  <= 100000000
+        && d.ts is int;
+    }
+    match /wallets/{uid} {
+      // Cüzdan gizli: yalnızca sahibi okur (skor/profil aksine public değil).
+      allow read: if isAuthed() && request.auth.uid == uid;
+
+      allow create: if isAuthed() && request.auth.uid == uid
+        // purchased ile doc YARATILAMAZ — o alan yalnızca sunucudan gelir.
+        && request.resource.data.keys().hasOnly(['earnedSync', 'spentSync', 'ts'])
+        && validLedger(request.resource.data);
+
+      allow update: if isAuthed() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['earnedSync', 'spentSync', 'ts', 'purchased'])
+        && validLedger(request.resource.data)
+        // purchased DEĞİŞTİRİLEMEZ: yoksa yok kalmalı, varsa aynen korunmalı.
+        && (('purchased' in request.resource.data)
+              ? ('purchased' in resource.data && request.resource.data.purchased == resource.data.purchased)
+              : !('purchased' in resource.data))
+        // Monotonluk: defterler geri sarılamaz. Eski/bayat bir cihaz açılıp
+        // küçük yerel değerlerini buluta yazamaz (restore'u ezme guard'ı).
+        && request.resource.data.earnedSync >= resource.data.earnedSync
+        && request.resource.data.spentSync  >= resource.data.spentSync;
+
+      // Hesap silme (KVKK): sahibi kendi cüzdanını siler. Satın alma kaydının
+      // saklanması gerekiyorsa o, wallets değil sunucu tarafı ledger'da tutulur.
+      allow delete: if isAuthed() && request.auth.uid == uid;
     }
 
     match /{document=**} {

@@ -5117,11 +5117,54 @@ const ARC_DB = (() => {
         }
       } catch(_){}
     }
+    // 4) Cüzdan (wallets/{uid})
+    if (uid) {
+      try { await fbFetch(`${BASE}/wallets/${uid}?key=${apiKey}`, { method: 'DELETE' }); } catch(_){}
+    }
     console.log('[ArcDB] deleteMyData', { edges, prof, scores });
     return { ok: true, edges, prof, scores };
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode };
+  // ── Cüzdan (wallets/{uid}) ───────────────────────────────────────
+  // İki güven seviyesi (bkz. firestore.rules):
+  //   purchased            → sunucu yazar (RevenueCat webhook), client okur.
+  //   earnedSync/spentSync → client yazar; amacı CİHAZ DEĞİŞİMİNDE GERİ YÜKLEME.
+  // Rules monotonluk dayattığı için bayat bir cihaz buluttaki ilerlemeyi ezemez.
+  async function fetchWallet() {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    await ensureAuth(); const uid = getUid();
+    if (!uid) return null;
+    try {
+      const res = await fbFetch(`${BASE}/wallets/${uid}?key=${apiKey}`);
+      if (res.status === 404) return { earnedSync: 0, spentSync: 0, purchased: 0, isNew: true };
+      if (!res.ok) return null;
+      const f = (await res.json()).fields || {};
+      const num = k => Number(f[k]?.integerValue ?? f[k]?.doubleValue ?? 0) || 0;
+      return { earnedSync: num('earnedSync'), spentSync: num('spentSync'), purchased: num('purchased'), isNew: false };
+    } catch(_) { return null; }
+  }
+  // Yerel defterleri buluta yaz. purchased ALANI GÖNDERİLMEZ — rules zaten
+  // client'ın ona dokunmasını reddeder; göndermemek update'i basit tutar.
+  async function syncWallet(earned, spent) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    await ensureAuth(); const uid = getUid();
+    if (!uid) return false;
+    const body = { fields: {
+      earnedSync: { integerValue: String(Math.max(0, Math.floor(earned) || 0)) },
+      spentSync:  { integerValue: String(Math.max(0, Math.floor(spent)  || 0)) },
+      ts:         { integerValue: String(Date.now()) },
+    }};
+    // updateMask ile sadece bu üç alan yazılır → varsa purchased'a dokunulmaz.
+    const mask = 'updateMask.fieldPaths=earnedSync&updateMask.fieldPaths=spentSync&updateMask.fieldPaths=ts';
+    try {
+      const res = await fbFetch(`${BASE}/wallets/${uid}?key=${apiKey}&${mask}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      return res.ok;
+    } catch(_) { return false; }
+  }
+
+  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -5902,17 +5945,45 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       localStorage.setItem('arc_denom_v23', '1');
     } catch(_){}
   }
-  let coins = Math.max(0, coinsEarned - coinsSpent);
-  // Bakiyeyi defterlerden yeniden türet + üç anahtarı birlikte yaz.
+  // Parayla alınan coin — sunucu-otoriter (wallets/{uid}.purchased). Client bunu
+  // yalnızca OKUR; yerel kopya sadece çevrimdışı gösterim için tutulur.
+  let walletPurchased = Number(localStorage.getItem('arc_wallet_purchased') || 0) || 0;
+  let coins = Math.max(0, coinsEarned + walletPurchased - coinsSpent);
+  // Bakiyeyi defterlerden yeniden türet + yerel anahtarları yaz.
   const syncCoins = () => {
-    coins = Math.max(0, coinsEarned - coinsSpent);
+    coins = Math.max(0, coinsEarned + walletPurchased - coinsSpent);
     try {
-      localStorage.setItem('arc_coins_earned', String(coinsEarned));
-      localStorage.setItem('arc_coins_spent',  String(coinsSpent));
-      localStorage.setItem('arc_coins',        String(coins));
+      localStorage.setItem('arc_coins_earned',    String(coinsEarned));
+      localStorage.setItem('arc_coins_spent',     String(coinsSpent));
+      localStorage.setItem('arc_wallet_purchased', String(walletPurchased));
+      localStorage.setItem('arc_coins',           String(coins));
     } catch(_){}
+    pushWallet();
     return coins;
   };
+  // ── Bulut cüzdanı senkronu ────────────────────────────────────────
+  // Yazma debounce'lu: her satın almada/run sonunda ayrı istek atmasın.
+  let _walletPushT = null;
+  function pushWallet() {
+    if (_walletPushT) clearTimeout(_walletPushT);
+    _walletPushT = setTimeout(() => {
+      _walletPushT = null;
+      try { ARC_DB.syncWallet(coinsEarned, coinsSpent); } catch(_){}
+    }, 2500);
+  }
+  // Açılışta GERİ YÜKLEME: bulut defteri yereldekinden ileriyse onu benimse.
+  // max() alıyoruz — çevrimdışı oynanan run'lar da kaybolmasın.
+  async function restoreWallet() {
+    let w = null;
+    try { w = await ARC_DB.fetchWallet(); } catch(_){}
+    if (!w) return;
+    const newEarned = Math.max(coinsEarned, w.earnedSync);
+    const newSpent  = Math.max(coinsSpent,  w.spentSync);
+    const changed = (newEarned !== coinsEarned) || (newSpent !== coinsSpent) || (w.purchased !== walletPurchased);
+    coinsEarned = newEarned; coinsSpent = newSpent; walletPurchased = w.purchased;
+    if (changed) { syncCoins(); try { applyProfile(); } catch(_){} }
+    else pushWallet();   // bulutta yoksa/geride ise yerel durumu yükle
+  }
 
   // Günlük yumuşak tavan defteri (tarih değişince sıfırlanır).
   const coinDayStr = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
@@ -8609,7 +8680,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     try { await ARC_DB.deleteMyData(playerName, myTag()); } catch(_){}
     // 2) Local tüm anahtarlar (kimlik token'ı dahil → taze anonim kimlik).
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt',
+     'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt','arc_wallet_purchased',
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
@@ -8619,6 +8690,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
+    walletPurchased = 0;   // bulut cüzdanı deleteMyData ile zaten silindi
     bestDistanceM = 0;
     stats = loadStats();
     allGhosts = [];
@@ -12262,6 +12334,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   resetGame();
   applyProfile();
+  // Bulut cüzdanını arka planda çek — yeniden kurulumda coin geri gelsin.
+  // Bloklamıyoruz: bulut ulaşılamazsa oyun yerel bakiyeyle normal çalışır.
+  setTimeout(() => { try { restoreWallet(); } catch(_){} }, 1200);
   // showScene is called by the profile-setup check above (or after ps-confirm)
   requestAnimationFrame(loop);
 })();

@@ -856,11 +856,52 @@ Coin bakiyesi şu an **salt localStorage** (`arc_coins_earned` / `arc_coins_spen
 
 **Kritik teknik gerçek:** Play Billing **tüketilen (consumable) ürünleri geri yüklemez**. `queryPurchases()` sadece tüketilmemişleri döner. Coin paketleri tanımı gereği consumable → **mağaza tek başına bakiyeyi kurtaramaz.** Dayanıklı kimlik şart.
 
-**Yapılacaklar**
-1. **Google Sign-In / Sign in with Apple + Firebase account linking** (anonim → kalıcı hesap yükseltme). Mevcut anonim uid'in ilerlemesi korunur.
+### ✅ Adım 1 tamamlandı (2026-07-31): `wallets/{uid}` + geri yükleme
+
+Backend'e dokunmadan, IAP kapalıyken **cihaz değişiminde bakiye geri gelmesi** sağlandı.
+
+**Şema — iki güven seviyesi**
+```
+wallets/{uid}
+  purchased  : int   ← SADECE sunucu yazar (rules'ta client'a kapalı)
+  earnedSync : int   ← client yazar (geri yükleme amaçlı)
+  spentSync  : int   ← client yazar
+  ts         : int
+```
+**Bakiye = `earnedSync + purchased − spentSync`**
+
+- `firestore.rules`: `wallets/{uid}` bloğu. Doc id = uid (ayrı `owner` alanı gereksiz). Cüzdan **gizli** — skor/profil aksine `read` yalnız sahibine. `purchased` client tarafından ne yaratılabilir ne değiştirilebilir; Admin SDK rules'ı baypas ettiği için webhook serbest yazar. Defterlerde **monotonluk** zorunlu → bayat bir cihaz buluttaki ilerlemeyi ezemez. `delete` sahibine açık (KVKK).
+- `ARC_DB.fetchWallet()` / `ARC_DB.syncWallet(earned, spent)`. Yazma `updateMask` ile sadece 3 alana → `purchased`'a hiç dokunulmuyor.
+- `syncCoins()` artık `pushWallet()` çağırıyor (2.5sn debounce — her alım/run ayrı istek atmasın).
+- Açılışta `restoreWallet()` (1.2sn gecikmeli, bloklamaz): bulut defteri yereldekinden ileriyse benimsenir. **`max()` alınıyor** — çevrimdışı oynanan run'lar da kaybolmasın.
+- `deleteMyData` artık cüzdanı da siliyor.
+
+**⚠️ Deploy gerekiyor**: yeni `firestore.rules` Console'a yapıştırılıp Publish edilmeli, yoksa cüzdan yazımları sessizce reddedilir (oyun yerel bakiyeyle çalışmaya devam eder, veri kaybı olmaz).
+
+**Bu adımın KAPSAMADIĞI**: kazanılan coin hâlâ client-side, yani hile riski aynen duruyor (kabul edilen kısıt). Korunan tek şey **ödenmiş** kısım olacak — o da adım 3'te.
+
+---
+
+**Kalan adımlar**
+1. ~~`wallets/{uid}` + rules + client senkronu~~ ✅
+2. **Google Sign-In / Sign in with Apple + Firebase account linking** (anonim → kalıcı hesap yükseltme). Mevcut anonim uid'in ilerlemesi korunur.
 2. **Login'i ilk satın almaya kadar zorunlu tutma** — checkout anında iste, ücretsiz oyuncuya sürtünme binmesin.
 3. Mevcut kurtarma kodu (`getRecoveryCode`, refresh token base64'ü) **yedek** olarak kalsın — ama tek başına yeterli değil: kod hesabın tam anahtarı, kaybolursa/sızarsa telafisi yok.
-4. Coin bakiyesi + işlem defteri Firestore'a; satın alma **sunucu tarafında receipt doğrulamalı** yazılsın.
+4. **RevenueCat** (seçildi — Cloud Functions yerine; Blaze planı/kart gerektirmiyor): receipt doğrulama + webhook → `wallets/{uid}.purchased` artırımı.
+
+**Google Sign-In için SHA-1 parmak izleri** — Firebase Console → Project Settings → Your apps → Android → *Add fingerprint*. **Üçü de** eklenmeli:
+
+| Sertifika | Nereden |
+|---|---|
+| Debug | `~/.android/debug.keystore` (şifre `android`) — ilk Android Studio build'inde oluşur |
+| Upload | `keytool -list -v -keystore keystore/arcrise-upload-keystore.jks -alias arcrise` |
+| **Play App Signing** | Play Console → Release → Setup → App signing (ilk AAB yüklendikten SONRA görünür) |
+
+⚠️ Üçüncüsü kritik: Google, yüklediğin AAB'yi **kendi anahtarıyla yeniden imzalayıp** dağıtıyor. Onu eklemezsen Sign-In emülatörde çalışır, **mağazadan inen sürümde sessizce çalışmaz**.
+
+⚠️ Bu Mac'te **JDK kurulu değil** (`/usr/bin/java` sadece macOS stub'ı) — `brew install --cask temurin@17`. Android Studio için zaten gerekiyor.
+
+⚠️ iOS: Sign in with Apple, Apple Developer Program üyeliği ($99/yıl) istiyor. App Store kuralı **4.8** gereği iOS'ta Google ile giriş sunuyorsan Apple ile girişi de sunmak **zorundasın**. Capacitor WebView'da web popup akışı çalışmaz → `@capacitor-firebase/authentication` gibi native plugin gerekir.
 
 **KVKK/GDPR — login gelince değişenler**
 
