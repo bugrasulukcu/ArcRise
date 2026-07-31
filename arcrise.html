@@ -3845,11 +3845,11 @@
       <div class="ex-path-head" id="ex-path-direct-head">DIRECT</div>
       <div class="ex-req-row met" id="ex-req-direct">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">Pay 50 coins</span>
+        <span class="ex-req-label">Pay 400 coins</span>
         <span class="ex-req-val" id="ex-req-direct-val"></span>
       </div>
       <div class="ex-path-or">— OR —</div>
-      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 5 coins if both are met</div>
+      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 50 coins if both are met</div>
       <div class="ex-req-row unmet" id="ex-req-dist">
         <span class="ex-req-check"></span>
         <span class="ex-req-label">5.00m distance</span>
@@ -3967,7 +3967,7 @@
     <div id="coins-modal-progress">
       <div id="coins-progress-top">
         <span id="coins-progress-label">NEXT COIN</span>
-        <span id="coins-progress-val">0 / 1000</span>
+        <span id="coins-progress-val">0 / 150</span>
       </div>
       <div id="coins-progress-bar-wrap">
         <div id="coins-progress-bar"></div>
@@ -3975,18 +3975,25 @@
     </div>
 
     <!-- Purchase tier buttons — v1'de IAP kapalı (IAP_ENABLED ile açılır) -->
+    <!-- Tier'lar v23 ölçeğine göre: giriş ~3 casual gün, üst tier kataloğun
+         ~%75'i. Coin/$ oranı 505 → 770 (1.5× yayılım) — orta tier "akıllı
+         seçim" gibi dursun, üst tier zorunlu gibi durmasın. -->
     <div id="coins-buy-row" hidden>
-      <button class="coins-buy" data-amount="50">
-        <span class="coins-buy-amount">+50</span>
+      <button class="coins-buy" data-amount="500">
+        <span class="coins-buy-amount">+500</span>
         <span class="coins-buy-price">$0.99</span>
       </button>
-      <button class="coins-buy" data-amount="100">
-        <span class="coins-buy-amount">+100</span>
-        <span class="coins-buy-price">$1.79</span>
-      </button>
-      <button class="coins-buy" data-amount="200">
-        <span class="coins-buy-amount">+200</span>
+      <button class="coins-buy" data-amount="1800">
+        <span class="coins-buy-amount">+1800</span>
         <span class="coins-buy-price">$2.99</span>
+      </button>
+      <button class="coins-buy" data-amount="4000">
+        <span class="coins-buy-amount">+4000</span>
+        <span class="coins-buy-price">$5.99</span>
+      </button>
+      <button class="coins-buy" data-amount="10000">
+        <span class="coins-buy-amount">+10000</span>
+        <span class="coins-buy-price">$12.99</span>
       </button>
     </div>
 
@@ -5845,9 +5852,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const CM_PER_SCREEN = 15;
   const fmtDist = (cm) => (cm / 100).toFixed(2) + 'm';
 
-  // Distance-based triangular coin system: coin N earned after cumulative
-  // 1+2+...+N = N(N+1)/2 metres. distTotal (cm) is the lifetime ledger;
-  // spent coins tracked separately so spending doesn't rewind distance.
+  // distTotal (cm) = ömür-boyu mesafe odometresi. v23'ten itibaren coin'i
+  // BESLEMİYOR (bkz. aşağıdaki run-başı musluk); yalnız istatistik/migrasyon.
   // Unit: cm (1 screen = 15 cm). Migration from old meter store: ×7.5.
   let distTotal = Number(localStorage.getItem('arc_dist_total') || 0);
   if (localStorage.getItem('arc_dist_unit') !== 'cm') {
@@ -5855,12 +5861,87 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     localStorage.setItem('arc_dist_total', String(distTotal));
     localStorage.setItem('arc_dist_unit', 'cm');
   }
-  // Triangular: N'inci coin için N metre EK mesafe gerekir.
-  // 1. coin 1m'de, 2. coin 3m'de (1+2), 3. coin 6m'de (1+2+3) — Nth = N(N+1)/2 m.
+  // ESKİ (v22'ye kadar) üçgensel eğri — SADECE migrasyon için tutuluyor.
+  // N'inci coin için kümülatif N(N+1)/2 m gerekiyordu; marjinal gelir 1/√(2m)
+  // ile sönümlendiği için ~10. günden sonra oynamak para kazandırmaz olmuştu.
   const coinsEarnedFrom = (cm) => Math.floor((-1 + Math.sqrt(1 + 8 * Math.max(0, cm) / 100)) / 2);
   const distCmForCoin   = (n)  => n * (n + 1) / 2 * 100;
-  let coinsSpent = Number(localStorage.getItem('arc_coins_spent') || 0);
-  let coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
+
+  // ── v23 coin musluğu: run başına sabit oran (sönümsüz) ─────────
+  // Beceri hep ödüllenir; aşırı grind'i lifetime decay yerine GÜNLÜK YUMUŞAK
+  // TAVAN dengeler (tavandan sonra oran düşer, hiçbir zaman sıfırlanmaz).
+  const COIN_PER_M     = 2;     // her metre başına coin
+  const COIN_PER_GOLD  = 1;     // toplanan her altın top başına coin
+  const COIN_DAY_SOFT  = 150;   // bu günlük eşikten sonra oran düşer
+  const COIN_SOFT_RATE = 0.4;   // eşik sonrası oran
+
+  // v23 yeniden değerleme: eski 2-3-4'lük fiyatların dokusu yoktu (her tek alım
+  // bedava gibi, toplam ulaşılmaz). Tüm katalog ×12 ölçeğine taşındı; mevcut
+  // oyuncunun BAKİYESİ de aynı katsayıyla ölçeklenir ki alım gücü korunsun.
+  // (Sahip olunan yükseltmeler zaten `upg` içinde, onlar aynen kalır.)
+  const DENOM_V23 = 12;
+  let coinsSpent  = Number(localStorage.getItem('arc_coins_spent') || 0);
+  // Açık ömür-boyu kazanç defteri. Eskiden distTotal'dan türetiliyordu; artık
+  // doğrudan tutuluyor (mesafe defteri sadece istatistik odometresi kaldı).
+  let coinsEarned = (() => {
+    const raw = localStorage.getItem('arc_coins_earned');
+    if (raw !== null) return Number(raw) || 0;
+    // Migrasyon: eski üçgensel defterden bakiyeyi türet.
+    const migrated = coinsEarnedFrom(distTotal);
+    try { localStorage.setItem('arc_coins_earned', String(migrated)); } catch(_){}
+    return migrated;
+  })();
+  // Tek seferlik yeniden değerleme — kazanç ve harcama defterlerinin ikisi de
+  // ölçeklenir, böylece bakiye (earned − spent) ×DENOM olur.
+  if (localStorage.getItem('arc_denom_v23') !== '1') {
+    coinsEarned *= DENOM_V23;
+    coinsSpent  *= DENOM_V23;
+    try {
+      localStorage.setItem('arc_coins_earned', String(coinsEarned));
+      localStorage.setItem('arc_coins_spent',  String(coinsSpent));
+      localStorage.setItem('arc_denom_v23', '1');
+    } catch(_){}
+  }
+  let coins = Math.max(0, coinsEarned - coinsSpent);
+  // Bakiyeyi defterlerden yeniden türet + üç anahtarı birlikte yaz.
+  const syncCoins = () => {
+    coins = Math.max(0, coinsEarned - coinsSpent);
+    try {
+      localStorage.setItem('arc_coins_earned', String(coinsEarned));
+      localStorage.setItem('arc_coins_spent',  String(coinsSpent));
+      localStorage.setItem('arc_coins',        String(coins));
+    } catch(_){}
+    return coins;
+  };
+
+  // Günlük yumuşak tavan defteri (tarih değişince sıfırlanır).
+  const coinDayStr = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+  function coinsEarnedToday() {
+    try {
+      if (localStorage.getItem('arc_coin_day') !== coinDayStr()) return 0;
+      return Number(localStorage.getItem('arc_coin_day_amt') || 0) || 0;
+    } catch(_) { return 0; }
+  }
+  function addCoinsEarnedToday(n) {
+    try {
+      const today = coinDayStr();
+      const cur = (localStorage.getItem('arc_coin_day') === today)
+        ? (Number(localStorage.getItem('arc_coin_day_amt') || 0) || 0) : 0;
+      localStorage.setItem('arc_coin_day', today);
+      localStorage.setItem('arc_coin_day_amt', String(cur + n));
+    } catch(_){}
+  }
+  // Ham kazancı günlük tavana göre yumuşat: eşiğe kadar tam oran, sonrası kısmi.
+  function applySoftCap(raw) {
+    const already = coinsEarnedToday();
+    if (already >= COIN_DAY_SOFT) return Math.floor(raw * COIN_SOFT_RATE);
+    const full = Math.min(raw, COIN_DAY_SOFT - already);
+    return full + Math.floor((raw - full) * COIN_SOFT_RATE);
+  }
+  // Bir run'ın ham coin kazancı — mesafe + toplanan altın toplar.
+  function runCoinsRaw(distCm, golds) {
+    return Math.floor((Math.max(0, distCm) / 100) * COIN_PER_M) + (golds | 0) * COIN_PER_GOLD;
+  }
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
   // ── Profile stats (persisted) ─────────────────────────────
@@ -7376,6 +7457,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboPopT = 0; _comboPot = 0;
+    _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
     flameParticles.length = 0; flyScores.length = 0;
@@ -7801,6 +7883,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);
         goldBalls.splice(i, 1);
         stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
+        _runGolds++;                                  // coin kazancı (run sonunda ödenir)
       }
     }
     // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
@@ -7957,6 +8040,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
+  let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
+  let _runGoldBanked  = 0;        // bunlardan coin'e çevrilmiş olanlar
+  let _runCoinsRaw    = 0;        // son run'ın tavan ÖNCESİ ham coin kazancı
+  let _runCoinsCapped = 0;        // günlük yumuşak tavanla kesilen miktar
   let runCombo        = 0;        // timer canlıyken art arda toplanan kazanım zinciri
   let _runMaxCombo    = 0;        // bu run'da ulaşılan en uzun combo zinciri
   let _comboPopT      = 0;        // combo etiketi pop animasyonu (sn)
@@ -8008,7 +8095,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       allGhosts = loadGhostTraces();
     }
     running = false; started = false;
-    // Distance-based coins: accumulate total cm, 1 coin per 100cm
+    // Run coin kazancı: mesafe × COIN_PER_M + toplanan altın × COIN_PER_GOLD,
+    // günlük yumuşak tavandan geçirilir. Sönümlü lifetime eğrisi kaldırıldı.
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
     const runDistCm = (distancePx / H_REF) * CM_PER_SCREEN;
@@ -8016,14 +8104,20 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
       const doublerMul  = runDoublerActive ? 2 : 1;            // Consumable (tek coin çarpanı)
-      // Ad-continue sonrası ikinci ölümde sadece YENİ mesafe coin'e dönüşür
-      const deltaCm     = Math.max(0, runDistCm - _runCmBanked);
-      _runCmBanked      = runDistCm;
-      const earnedCm    = deltaCm * doublerMul;
-      distTotal += earnedCm;
+      // Ad-continue sonrası ikinci ölümde sadece YENİ mesafe/altın coin'e dönüşür.
+      const deltaCm    = Math.max(0, runDistCm - _runCmBanked);
+      const deltaGold  = Math.max(0, _runGolds - _runGoldBanked);
+      _runCmBanked     = runDistCm;
+      _runGoldBanked   = _runGolds;
+      // Mesafe odometresi artık coin'i BESLEMİYOR — sadece istatistik olarak sürüyor.
+      distTotal += deltaCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
-      coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
-      localStorage.setItem('arc_coins', String(coins));
+      const rawCoins = runCoinsRaw(deltaCm, deltaGold) * doublerMul;
+      const gained   = applySoftCap(rawCoins);
+      if (gained > 0) { coinsEarned += gained; addCoinsEarnedToday(gained); }
+      _runCoinsRaw    = rawCoins;    // game-over ekranı kırılımı gösterebilsin
+      _runCoinsCapped = rawCoins - gained;
+      syncCoins();
     }
     const earned = coins - prevCoins;
     // Wife Mode: skor/mesafe kaydı yok — sadece coin'lerle birlikte tamamen
@@ -8044,7 +8138,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         // İlk oyun bonusu: ilk GERÇEK run (wife hariç — bu blok zaten wife'ta çalışmaz)
         // tamamlanınca tek seferlik +1 coin. Reset sonrası taze profilde tekrar verilir.
         if (stats.gamesTotal === 1) {
-          try { grantCoins(1); showRewardToast({ icon: 'coin', title: 'FIRST GAME', sub: 'Welcome bonus', coins: 1 }); } catch(_){}
+          try { grantCoins(25); showRewardToast({ icon: 'coin', title: 'FIRST GAME', sub: 'Welcome bonus', coins: 25 }); } catch(_){}
         }
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
@@ -8120,21 +8214,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     }
     requestAnimationFrame(animScore);
 
-    // ── Coin progress bar (animated fill + +N pop on threshold) ──
+    // ── Coin kazancı: "+N" sayım animasyonu + kırılım satırı ──
+    // Eskiden bar, maliyeti her coin'de büyüyen bir mesafe eşiğine doluyordu —
+    // oyuncu ilerledikçe barın yavaşlamasını görüyordu. Artık kazanç sabit
+    // oranlı olduğu için bar sadece sayımın ilerleyişini gösteriyor ve alt
+    // satır parayı NEREDEN kazandığını söylüyor (mesafe + altın).
     const earnedEl = document.getElementById('go-coin-earned');
     const progEl   = document.getElementById('go-coin-progress');
     const barEl    = document.getElementById('go-coin-bar');
-    const distStart = (gameMode === 'wife') ? distTotal : Math.max(0, distTotal - runDistCm);
-    const distEnd   = distTotal;
-    const baseEarned = coinsEarnedFrom(distStart);
-    // Initialise UI to start state (no coins earned yet, bar at run-start position)
-    const startPrev = distCmForCoin(baseEarned);
-    const startSpan = Math.max(1, distCmForCoin(baseEarned + 1) - startPrev);
-    const startInto = Math.max(0, distStart - startPrev);
+    const gained   = Math.max(0, earned);
+    const fromDist = Math.floor((runDistCm / 100) * COIN_PER_M);
+    const fromGold = _runGolds * COIN_PER_GOLD;
     barEl.style.transition = 'none';
-    barEl.style.width = ((startInto / startSpan) * 100) + '%';
-    progEl.textContent = `${fmtDist(startInto)} / ${fmtDist(startSpan)}`;
+    barEl.style.width = '0%';
     earnedEl.textContent = '+0';
+    const breakdown = (gameMode === 'wife')
+      ? 'Wife Mode · no coins'
+      : `${fmtDist(runDistCm)} → ${fromDist}` + (fromGold ? ` · ${_runGolds} gold → ${fromGold}` : '')
+        + (runDoublerActive ? ' · ×2' : '')
+        + (_runCoinsCapped > 0 ? ` · daily cap −${_runCoinsCapped}` : '');
+    progEl.textContent = breakdown;
     let lastEarnedShown = 0;
     const popEarned = (n) => {
       earnedEl.textContent = '+' + n;
@@ -8147,27 +8246,21 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         earnedEl.style.color = '#ffcc44';
       });
     };
-    const coinAnimDur = Math.min(2400, Math.max(800, (distEnd - distStart) * 3));
+    const coinAnimDur = Math.min(2000, Math.max(700, gained * 40));
     let coinAnimStart = 0;
     function animCoin(ts) {
       if (!coinAnimStart) coinAnimStart = ts;
       const t = Math.min(1, (ts - coinAnimStart) / coinAnimDur);
       const eased = 1 - Math.pow(1 - t, 2.4);
-      const cur = distStart + (distEnd - distStart) * eased;
-      const earnedSoFar = Math.max(0, coinsEarnedFrom(cur) - baseEarned);
-      const curEarned   = coinsEarnedFrom(cur);
-      const prevT = distCmForCoin(curEarned);
-      const nextT = distCmForCoin(curEarned + 1);
-      const span  = Math.max(1, nextT - prevT);
-      const into  = Math.max(0, cur - prevT);
-      barEl.style.width = ((into / span) * 100) + '%';
-      progEl.textContent = `${fmtDist(into)} / ${fmtDist(span)}`;
-      if (earnedSoFar !== lastEarnedShown) {
-        lastEarnedShown = earnedSoFar;
-        popEarned(earnedSoFar);
+      barEl.style.width = (eased * 100) + '%';
+      const shown = Math.floor(gained * eased);
+      if (shown !== lastEarnedShown) {
+        lastEarnedShown = shown;
+        popEarned(shown);
         haptic(8);
       }
       if (t < 1) requestAnimationFrame(animCoin);
+      else if (lastEarnedShown !== gained) popEarned(gained);
     }
     setTimeout(() => requestAnimationFrame(animCoin), 350);
 
@@ -8516,7 +8609,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     try { await ARC_DB.deleteMyData(playerName, myTag()); } catch(_){}
     // 2) Local tüm anahtarlar (kimlik token'ı dahil → taze anonim kimlik).
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_coins_spent','arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
+     'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt',
+     'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
      'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day',
@@ -8524,7 +8618,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
-    best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0;
+    best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
     bestDistanceM = 0;
     stats = loadStats();
     allGhosts = [];
@@ -8764,12 +8858,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   let lastTPress = 0;
   let lastRPress = 0;
   function devCheatBoost() {
-    // +900 coin (triangular ekosistemde distTotal'ı yeterli eşiğe taşı)
-    const targetCoins = coins + 900;
-    distTotal = Math.max(distTotal, distCmForCoin(coinsSpent + targetCoins));
-    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
-    localStorage.setItem('arc_dist_total', String(distTotal));
-    localStorage.setItem('arc_coins', String(coins));
+    // +900 coin. Artık distTotal'a dokunmuyor — eski yöntem mesafe odometresini
+    // ileri iterek test cihazını gerçek oyuncudan farklı bir ekonomiye sokuyordu.
+    coinsEarned += 900;
+    syncCoins();
     // Minimum 2000 score & 1500cm mesafe — her iki mode için yüksek olanı tut
     stats.bestNormal     = Math.max(stats.bestNormal || 0, 2000);
     stats.bestExtreme    = Math.max(stats.bestExtreme || 0, 2000);
@@ -9195,12 +9287,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   });
 
   // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
-  const TR_THICK_PRICE = 4, TR_ANIM_PRICE = 6, TRACE_SHOW_PRICE = 50, TOMB_PRICE = 50, NAME_PRICE = 50, CUSTOM_PRICE = 50;
+  const TR_THICK_PRICE = 20, TR_ANIM_PRICE = 40, TRACE_SHOW_PRICE = 400, TOMB_PRICE = 500, NAME_PRICE = 500, CUSTOM_PRICE = 600;
   const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
   const TRACE_ANIMS  = [['none', 'OFF'], ['wave', 'WAVE'], ['pulse', 'PULSE'], ['glow', 'GLOW']];
-  // Renk fiyatları: beyaz bedava · düz renk 5 · gradyen 10 · gökkuşağı 30 · custom 50
+  // Renk fiyatları: beyaz bedava · düz renk 30 · gradyen 90 · gökkuşağı 250 · custom 600
   const traceColorPrice = id =>
-    id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 30 : (id.indexOf('rb:') === 0 ? 10 : 5);
+    id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 250 : (id.indexOf('rb:') === 0 ? 90 : 30);
   const traceColorOwned = id => id === '#ffffff' || _has('traceColorsOwned', id);
   const RAINBOWS = [
     ['rainbow', 'linear-gradient(90deg,#ff3b3b,#ffb13b,#ffe23b,#5bff7a,#3bd1ff,#3b7bff,#c45bff)'],
@@ -9554,7 +9646,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // 4 gear slotu; coin ile sırayla satın alınır (2/4/8/16). Sadece satın alınanlar
   // görünür (home + oyun-içi); kilitliler oyun-içinde gizli, home'da fiyatla.
   const SLOT_COUNT  = 4;
-  const SLOT_PRICES = [2, 4, 8, 16];
+  const SLOT_PRICES = [50, 150, 400, 900];   // 4. slot bilinçli olarak "flex" fiyatı
   let slotItems = (() => {
     let a; try { a = JSON.parse(localStorage.getItem('arc_slots_v1') || 'null'); } catch(_) { a = null; }
     if (!Array.isArray(a)) a = [];
@@ -9722,26 +9814,26 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // Coin eğrisi üçgensel (n coin ≈ 0.5·n·(n+1) m), bu yüzden her seviye için
   // SABİT fiyat alıyoruz: geç seviyeler "coin kazanmak zorlaştığı için" otomatik
   // pahalılaşıyor. CORE: her seviye 2 coin. Dizi uzunlukları = max seviye (korunur).
-  const DIR_PRICES = [2, 2, 2, 2];                   // 4 seviye, her biri 2
+  const DIR_PRICES = [25, 40, 60, 85];                                        // 4 seviye/yön — artan
   const THICKNESS_PRICES = [
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,                     // 20 seviye, her biri 2
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20,                                   // 20 seviye, her biri 20
   ];
-  const PROFIT_PRICES   = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4];                     // 10 lvl (skor çarpanı — biraz daha pahalı)
-  const WALLSOFT_PRICES = [2, 2, 2, 2, 2];                                    // 5 lvl
-  const MAGRANGE_PRICES = [2, 2, 2, 2, 2, 2, 2, 2];                           // 8 lvl
+  const PROFIT_PRICES   = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70];           // 10 lvl (skor çarpanı)
+  const WALLSOFT_PRICES = [30, 45, 60, 80, 100];                              // 5 lvl
+  const MAGRANGE_PRICES = [25, 30, 40, 50, 60, 70, 85, 100];                  // 8 lvl
   // Geri sayım rakamı hem hayatta kalma süresini hem altın çarpanını (countdown/2)
   // birlikte büyütüyor — CORE'un en pahalı kalemi (4 seviye toplam 72 coin).
-  const TIMER_PRICES    = [12, 16, 20, 24];                                   // 4 lvl — geri sayım rakamı +1/sv
-  const COMBOWIN_PRICES = [6, 8, 10, 12];                                     // 4 lvl — combo penceresi +0.5s/sv
+  const TIMER_PRICES    = [120, 180, 260, 360];                               // 4 lvl — geri sayım rakamı +1/sv
+  const COMBOWIN_PRICES = [70, 100, 140, 190];                                // 4 lvl — combo penceresi +0.5s/sv
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
   function timerPrice(n)    { return (n < 1 || n > TIMER_PRICES.length)    ? null : TIMER_PRICES[n - 1]; }
   function comboWinPrice(n) { return (n < 1 || n > COMBOWIN_PRICES.length) ? null : COMBOWIN_PRICES[n - 1]; }
-  const TRACE_COLOR_PRICE = 3;        // rebuyable cosmetic
-  const DEATH_NAME_PRICE  = 10;       // one-time unlock
-  const DEATH_AV_PRICE    = 10;       // one-time unlock
+  const TRACE_COLOR_PRICE = 30;       // rebuyable cosmetic
+  const DEATH_NAME_PRICE  = 500;      // one-time unlock (canlı fiyat: NAME_PRICE)
+  const DEATH_AV_PRICE    = 500;      // one-time unlock (canlı fiyat: TOMB_PRICE)
   const TRACE_COLORS = [
     '#88bbff', '#ff5566', '#ffaa44', '#ffee55', '#66ff88',
     '#66eeff', '#aa66ff', '#ff77cc', '#ffffff', '#aaaaaa',
@@ -9756,8 +9848,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     return THICKNESS_PRICES[nextLevel - 1];
   }
 
-  // Deduct coins via the distance-total ledger that derives them.
-  // Triangular: spend by incrementing coinsSpent; distTotal stays intact.
+  // Harcama: coinsSpent artırılır, kazanç defteri (coinsEarned) dokunulmaz.
   // Son satın alma snapshot'ı (undo için). Run başında veya yeni alımda yenilenir.
   let lastPurchase = null;
   function spendCoins(n) {
@@ -9773,9 +9864,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       slotItems: JSON.parse(JSON.stringify(slotItems)),
     };
     coinsSpent += n;
-    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
-    localStorage.setItem('arc_coins_spent', String(coinsSpent));
-    localStorage.setItem('arc_coins', String(coins));
+    syncCoins();
     try { applyProfile(); } catch(_){}
     try { updateRefundBtn(); } catch(_){}
     return true;
@@ -9788,13 +9877,9 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     coinsSpent = lp.coinsSpent;
     slotsOwned = lp.slotsOwned;
     extremeUnlocked = lp.extremeUnlocked;
-    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
+    syncCoins();
     try { saveUpg(); saveSlots(); saveSlotsOwned(); } catch(_){}
-    try {
-      localStorage.setItem('arc_coins_spent', String(coinsSpent));
-      localStorage.setItem('arc_coins', String(coins));
-      localStorage.setItem('arc_extreme_unlocked', extremeUnlocked ? '1' : '0');
-    } catch(_){}
+    try { localStorage.setItem('arc_extreme_unlocked', extremeUnlocked ? '1' : '0'); } catch(_){}
     const amt = lp.price;
     lastPurchase = null;
     try { applyProfile(); } catch(_){}
@@ -10373,26 +10458,40 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   // ── Gear configs ─────────────────────────────────────────────────
-  // Consumable: her stok düz 3 coin. Ability: unlock düz 10, ladder her seviye düz 4.
+  // Consumable fiyatları iyi bir run'ın getirisinin ~%20-50'si olacak şekilde
+  // ayarlandı (ortalama run ≈ 11-30 coin). KURAL: gelir çarpan eşyası (doubler,
+  // coinrain) ortalama getirisinden UCUZ olmalı — aksi halde tuzak olur.
   const CONSUMABLE_CFG = {
-    revive:    { price: 3, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
-    doubler:   { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
-    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls that run.' },
-    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
-    filter:    { price: 3, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
+    revive:    { price: 60, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
+    doubler:   { price: 12, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
+    headstart: { price: 30, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
+    coinrain:  { price: 25, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls — and every gold ball pays a coin.' },
+    preboost:  { price: 25, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
+    filter:    { price: 45, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
     // Anlık (noDur) yetenekler: yükseltme yok, açıldı→hazır.
-    timeslow:   { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 2→7s
-    phaseburst: { unlock: 10, durBase: 1, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 1→6s
-    coinpull:   { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
-    brake:      { unlock: 10, durBase: 2, durStep: 0.5, cdBase: 20, durPrices: [4,4,4,4,4,4,4,4,4,4] },  // 2→7s
-    mirror:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
-    shock:      { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
-    anchor:     { unlock: 10, durBase: 0, durStep: 0,   cdBase: 20, noDur: true, durPrices: [] },
+    // Süre merdiveni 10 → 4 SEVİYE: 30 adet +0.5s'lik adım okunmuyordu ve
+    // kataloğun %35'ini tek başına yutuyordu. Adım büyütüldü (+1.0s/sv).
+    timeslow:   { unlock: 250, durBase: 2, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 2→6s
+    phaseburst: { unlock: 250, durBase: 1, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 1→5s
+    coinpull:   { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    brake:      { unlock: 250, durBase: 2, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 2→6s
+    mirror:     { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    shock:      { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    anchor:     { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
   };
+  // Merdiven 10→4'e indiği için eski kayıtlardaki durLvl tavanı aşabilir.
+  // Süre kaybı yaşamasınlar diye kırpma yukarı doğru değil, sadece tavana.
+  (function clampAbilityLadders() {
+    for (const k in ABILITY_CFG) {
+      const inv = upg.inv && upg.inv[k]; if (!inv) continue;
+      const max = ABILITY_CFG[k].durPrices.length;
+      if ((inv.durLvl || 0) > max) { inv.durLvl = max; }
+    }
+    try { saveUpg(); } catch(_){}
+  })();
   function abilityCooldown(key) {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 20;
     return cfg.cdBase;   // sabit 20sn
@@ -10739,15 +10838,14 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
-    // Next-coin progress: triangular — kalan mesafe (earned+1)'nci eşiğe
-    const earnedNow2  = coinsEarnedFrom(distTotal);
-    const prevT2      = distCmForCoin(earnedNow2);
-    const nextT2      = distCmForCoin(earnedNow2 + 1);
-    const span2       = Math.max(1, nextT2 - prevT2);
-    const into2       = Math.max(0, distTotal - prevT2);
-    const pct         = Math.min(100, Math.max(0, (into2 / span2) * 100));
+    // Artık "sonraki coin eşiği" yok — kazanç sabit oranlı. Bar bugünün
+    // yumuşak tavanını gösteriyor: eşiğe kadar tam oran, sonrası kısmi.
+    const today2 = coinsEarnedToday();
+    const pct    = Math.min(100, Math.max(0, (today2 / COIN_DAY_SOFT) * 100));
+    const lb = document.getElementById('coins-progress-label');
+    if (lb) lb.textContent = today2 >= COIN_DAY_SOFT ? 'TODAY · REDUCED RATE' : 'TODAY';
     const pv = document.getElementById('coins-progress-val');
-    if (pv) pv.textContent = `${fmtDist(into2)} / ${fmtDist(span2)}`;
+    if (pv) pv.textContent = `${today2} / ${COIN_DAY_SOFT}`;
     const pb = document.getElementById('coins-progress-bar');
     if (pb) {
       // Reset so the transition replays each open
@@ -10978,12 +11076,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     try { upgNew = coins > seenUpgCoins; } catch(_) { upgNew = false; }
     _setDot('#home-upgrade-btn', upgNew);
   }
-  // Coin ödülü — triangular ledger üzerinden: coinsSpent azaltılır (negatif olabilir)
+  // Coin ödülü (quest/login/referral/IAP) — kazanç defterine yazılır.
+  // Günlük yumuşak tavana TABİ DEĞİL: tavan yalnız run grind'ini dengeler,
+  // ödül/satın alma coin'ini kısmak yanlış olurdu.
   function grantCoins(n) {
-    coinsSpent -= n;
-    coins = Math.max(0, coinsEarnedFrom(distTotal) - coinsSpent);
-    localStorage.setItem('arc_coins_spent', String(coinsSpent));
-    localStorage.setItem('arc_coins', String(coins));
+    coinsEarned += n;
+    syncCoins();
     try { applyProfile(); } catch(_){}
   }
   function checkBadgeUnlocks() {
@@ -11370,8 +11468,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
   // Extreme: ya 50 coin direkt, ya 5m + 5000 puan + 5 coin (indirim).
   // İlk satın alma sonrası unlock kalıcı.
-  const EX_DIRECT_PRICE   = 50;
-  const EX_DISCOUNT_PRICE = 5;
+  const EX_DIRECT_PRICE   = 400;
+  const EX_DISCOUNT_PRICE = 50;
   const EX_DIST_REQ_CM    = 500;   // 5.00 m
   const EX_SCORE_REQ      = 5000;
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
@@ -11660,6 +11758,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
   // ══════════ DAILY QUESTS ══════════
   const QUESTS_KEY = 'arc_quests_v1';
+  // Ödül ölçeği (v23). Questler artık gelirin TAMAMI değil, run kazancının
+  // yanında anlamlı bir ek: günde 3×15 + 25 bonus + 15 login = 85.
+  const QUEST_COIN     = 15;   // görev başına
+  const QUEST_ALL_COIN = 25;   // üçünü de tamamlama bonusu
+  const LOGIN_COIN     = 15;   // günlük giriş
   // Performans temelli görevler — "start'a bas" tipi yok. Her biri +1 coin.
   // base = seri günü 1'deki hedef; hedefler seri günüyle (1→365) kademeli artar.
   //
@@ -11670,19 +11773,19 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   //   SPICE — çeşni (coin kazan / N el oyna / Extreme el bitir)
   const QUEST_AXES = {
     skill: [
-      { metric: 'score',  base: 1500, reward: 1, mk: t => `Score ${t} in one run` },
-      { metric: 'distCm', base: 350,  reward: 1, mk: t => `Reach ${fmtDist(t)} in a single run` },
-      { metric: 'combo',  base: 5,    reward: 1, mk: t => `Hit a ×${t} combo` },
+      { metric: 'score',  base: 1500, reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
+      { metric: 'distCm', base: 350,  reward: QUEST_COIN, mk: t => `Reach ${fmtDist(t)} in a single run` },
+      { metric: 'combo',  base: 5,    reward: QUEST_COIN, mk: t => `Hit a ×${t} combo` },
     ],
     grind: [
-      { metric: 'scoreTotal', base: 6000, reward: 1, mk: t => `Rack up ${t} total score today` },
-      { metric: 'distTotal',  base: 2500, reward: 1, mk: t => `Travel ${fmtDist(t)} today in total` },
-      { metric: 'goodRuns',   base: 3, param: 400, reward: 1, mk: (t, p) => `Finish ${t} runs past ${fmtDist(p)}` },
+      { metric: 'scoreTotal', base: 6000, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
+      { metric: 'distTotal',  base: 2500, reward: QUEST_COIN, mk: t => `Travel ${fmtDist(t)} today in total` },
+      { metric: 'goodRuns',   base: 3, param: 400, reward: QUEST_COIN, mk: (t, p) => `Finish ${t} runs past ${fmtDist(p)}` },
     ],
     spice: [
-      { metric: 'coinsToday',  base: 3, reward: 1, mk: t => `Earn ${t} coin${t === 1 ? '' : 's'} today` },
-      { metric: 'runsToday',   base: 5, reward: 1, mk: t => `Play ${t} runs today` },
-      { metric: 'extremeRuns', base: 1, reward: 1, mk: t => `Finish ${t} Extreme run${t === 1 ? '' : 's'} today` },
+      { metric: 'coinsToday',  base: 3, reward: QUEST_COIN, mk: t => `Earn ${t} coin${t === 1 ? '' : 's'} today` },
+      { metric: 'runsToday',   base: 5, reward: QUEST_COIN, mk: t => `Play ${t} runs today` },
+      { metric: 'extremeRuns', base: 1, reward: QUEST_COIN, mk: t => `Finish ${t} Extreme run${t === 1 ? '' : 's'} today` },
     ],
   };
   const QUEST_DEFS = [...QUEST_AXES.skill, ...QUEST_AXES.grind, ...QUEST_AXES.spice];
@@ -11735,8 +11838,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         localStorage.setItem('arc_login_day', today);
         const d = (parseInt(localStorage.getItem('arc_series_day')||'0',10) || 0) + 1;
         localStorage.setItem('arc_series_day', String(Math.min(SERIES_LEN, d)));
-        grantCoins(1);
-        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Day ' + Math.min(SERIES_LEN, d), coins: 1 }); } catch(_){}
+        grantCoins(LOGIN_COIN);
+        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Day ' + Math.min(SERIES_LEN, d), coins: LOGIN_COIN }); } catch(_){}
       }
     } catch(_){}
   }
@@ -11789,7 +11892,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         <div class="quest-top"><span class="quest-label">Daily login</span></div>
         <div class="quest-bar-wrap"><div class="quest-bar" style="width:${loginGot ? 100 : 0}%"></div></div>
         <div class="quest-bottom"><span class="quest-progress-txt">${loginGot ? 'Collected today' : 'Opens automatically'}</span>
-          <button class="quest-claim claimed" disabled>+1${loginGot ? ' ✓' : ''}</button></div>
+          <button class="quest-claim claimed" disabled>+${LOGIN_COIN}${loginGot ? ' ✓' : ''}</button></div>
       </div>`;
     const questCards = questState.quests.map((q, i) => {
       const done = questDone(q);
@@ -11820,8 +11923,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // 3 görevin hepsi alındıysa +1 bonus (günde bir kez)
     if (!questState.allBonusClaimed && questState.quests.every(x => x.claimed)) {
       questState.allBonusClaimed = true;
-      grantCoins(1);
-      try { showRewardToast({ icon: 'target', title: 'ALL QUESTS DONE', sub: 'Daily bonus', coins: 1 }); } catch(_){}
+      grantCoins(QUEST_ALL_COIN);
+      try { showRewardToast({ icon: 'target', title: 'ALL QUESTS DONE', sub: 'Daily bonus', coins: QUEST_ALL_COIN }); } catch(_){}
     }
     saveQuests();
     haptic(40);
@@ -11850,7 +11953,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   document.getElementById('friends-share-btn').addEventListener('click', () => shareChallenge());
 
   // ── Referral (davet) ödülü: kişiye özel link, tıklama başına davet edene 5 coin ──
-  const REFERRAL_COIN = 5;
+  const REFERRAL_COIN = 100;
   function inviteLink() {
     const base = (location.origin && location.origin !== 'null')
       ? location.origin + location.pathname

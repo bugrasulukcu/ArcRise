@@ -391,6 +391,82 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v23 — Ekonomi elden geçirildi: run-başı musluk + ×12 yeniden değerleme (2026-07-31)
+
+IAP açılmadan önce ekonominin tamamı incelendi. Üç yapısal kırık bulundu ve düzeltildi.
+
+**Bulgular (düzeltme öncesi ölçüm)**
+- **Musluk ~10. günde ölüyordu.** Coin N için kümülatif `N(N+1)/2` metre gerekiyordu; marjinal gelir `1/√(2m)` ile sönümleniyor. 30. gün oyuncusu için **fazladan 1 metre = 0.026 coin** → 25m'lik bir gün 0.65 coin. Aynı gün sadece uygulamayı açmak 1 coin (login) veriyordu. Bir beceri arcade'inde gelirin %80'i takvimden geliyordu.
+- **Coin Doubler matematiksel olarak her zaman zarardı.** 3 coin'e alınıyor, 30. günde 4m'lik bir run'da **0.10 coin** getiriyordu. Başabaş için tek runda 116m gerekiyordu (en zor mesafe rozeti 250m).
+- **Coin Rain hiç coin vermiyordu.** Altın top spawn'ını 2× yapıyor ama altın toplar `scoreBonus` veriyor. İsim/ikon/açıklama üçü de coin diyordu.
+
+**Yeni musluk (sönümsüz, run-başı)**
+```js
+COIN_PER_M = 2, COIN_PER_GOLD = 1        // mesafe × 2 + altın top × 1
+COIN_DAY_SOFT = 150, COIN_SOFT_RATE = 0.4 // günlük yumuşak tavan (asla sıfırlanmaz)
+```
+- Lifetime decay yerine **günlük yumuşak tavan**: eşiğe kadar tam oran, sonrası %40. Grinder 60 run oynayınca engaged'ın 3× değil ~2× gelirini alıyor.
+- **Altın toplar artık coin ödüyor** → Coin Rain dürüst hale geldi, Coin Doubler gerçek bir karar oldu.
+- Kazanç defteri açıkça tutuluyor (`arc_coins_earned`); `distTotal` artık coin'i beslemiyor, salt istatistik odometresi. Migrasyon eski üçgensel defterden bakiyeyi birebir türetiyor.
+- `grantCoins` artık `coinsSpent`'i negatife itmek yerine kazanç defterine yazıyor. Ödül/IAP coin'i **günlük tavana tabi değil** — tavan yalnız run grind'ini dengeliyor.
+- `devCheatBoost` artık `distTotal`'a dokunmuyor (eski hâli test cihazını gerçek oyuncudan farklı bir ekonomiye sokuyordu).
+
+**×12 yeniden değerleme (`arc_denom_v23`)**
+2-3-4'lük fiyatların dokusu yoktu: her tek alım bedava gibi, toplam ulaşılmazdı. Tüm katalog ×12 ölçeğine taşındı; mevcut oyuncunun **kazanç ve harcama defterlerinin ikisi de** ölçekleniyor → bakiye ×12, sahip olunan yükseltmeler (`upg` içinde) aynen kalıyor.
+
+| Blok | Yeni |
+|---|---|
+| CORE radius/speed (yön başına) | 25 / 40 / 60 / 85 |
+| Score Boost ×10 | 25→70 artan (475) |
+| **Timer ×4** | 120 / 180 / 260 / 360 (**920**) |
+| Combo Timer ×4 | 70 / 100 / 140 / 190 (500) |
+| Walls ×5 · Magnet ×8 | 315 · 460 |
+| Slot 1-4 | 50 / 150 / 400 / 900 |
+| Ability unlock ×7 | 250 |
+| Ability süre merdiveni | **10 → 4 seviye**: 60/90/130/180, adım +0.5s → **+1.0s** |
+| Consumable | revive 60 · doubler 12 · headstart 30 · coinrain 25 · preboost 25 · filter 45 |
+| Kozmetik | renk 30 · gradyen 90 · rainbow 250 · custom 600 · show 400 · tomb/name 500 |
+| Extreme | 400 direkt / 50 indirimli |
+| Quest · all-bonus · login · referral · ilk oyun | 15 · 25 · 15 · 100 · 25 |
+
+Ability merdiveni 10→4'e indiği için eski kayıtlardaki `durLvl` tek seferlik tavana kırpılıyor (`clampAbilityLadders`).
+
+**Sonuç dengesi** (katalog toplamı **11.875 coin**)
+
+| profil | günlük gelir | kataloğu bitirme |
+|---|---|---|
+| çok casual (4 run) | 113 | 105 gün |
+| casual (6 run) | 151 | 79 gün |
+| normal (12 run) | 251 | 47 gün |
+| engaged (20 run) | 379 | 31 gün |
+| grinder (60 run) | 779 | 15 gün |
+
+Aynı 30. gün oyuncusu eskiden 0.65 coin/gün alıyordu, şimdi **151** — beceri artık kalıcı olarak ödüllendiriliyor.
+
+**IAP tier'ları** (hâlâ `IAP_ENABLED=false` arkasında)
+
+| | coin | coin/$ | katalog payı |
+|---|---|---|---|
+| $0.99 | 500 | 505 | %4 |
+| $2.99 | 1.800 | 602 | %15 |
+| $5.99 | 4.000 | 668 | %34 |
+| $12.99 | 10.000 | 770 | %84 |
+
+Çapa: en pahalı tek kalem (Timer full 920, custom trace 600) $0.99'un biraz üstünde, $2.99'un rahat içinde. 1.5× coin/$ yayılımı orta tier'ı "akıllı seçim" yapıyor, üst tier'ı zorunlu yapmıyor.
+
+**UI**
+- Game-over coin barı artık büyüyen mesafe eşiğine değil, sabit oranlı kazanca doluyor. Alt satır kırılımı gösteriyor: `4.20m → 8 · 5 gold → 5 · ×2 · daily cap −3`.
+- Coins modalındaki "NEXT COIN" barı **"TODAY N / 150"** oldu (tavan aşılınca "TODAY · REDUCED RATE"). Eski `0 / 1000` statik placeholder'ı da düzeltildi.
+
+**Henüz YAPILMADI**
+- **Fortune CORE'u** (seviye başına +%8 run coin'i) — coin gelirini artıran kalıcı upgrade hâlâ yok. v21'de Profit → Score Boost olunca bu eksen boşaldı.
+- **Sunucu cüzdanı** — coin hâlâ salt localStorage. IAP açmadan önce blocking (aşağıya bak).
+- Rewarded ad → coin yolu (`ADS_ENABLED` hâlâ false).
+
+**Doğrulama**: syntax check macOS JXA ile (node yok), iki blok da temiz. Denge rakamları Python simülasyonuyla. **Tarayıcıda runtime testi yapılmadı.**
+
+---
+
 ### v22 — Timer ikiye bölündü: geri sayım rakamı vs. combo penceresi (2026-07-30)
 
 Eskiden tek bir **Timer** CORE upgrade'i vardı ve adı yanıltıcıydı: gerçekte *combo penceresini* uzatıyordu, geri sayım rakamı sabit 8'de kalıyordu. Artık iki ayrı kart:
@@ -763,7 +839,43 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-07-30 (v22). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v22/v21 changelog'larını oku; ardından çalışmaya devam et. Sıradaki büyük iş: **Android Studio'da Gradle sync + emülatör test → imzalı AAB → Play Console internal testing → sonra IAP/AdMob bağlama**.
+**Son güncelleme**: 2026-07-31 (v23). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v23/v22 changelog'larını oku; ardından çalışmaya devam et.
+
+**Sıradaki işler (öncelik sırasıyla):**
+1. **v23 ekonomisini tarayıcıda oyna-test et** — rakamlar simülasyondan, gerçek run mesafeleri varsayımla eşleşiyor mu doğrula.
+2. **Fortune CORE'u** ekle (coin gelirini artıran kalıcı upgrade — şu an yok).
+3. **Sunucu cüzdanı + login** (aşağıdaki bölüm). IAP'den ÖNCE.
+4. Android Studio Gradle sync + emülatör test → imzalı AAB → Play Console internal testing.
+5. IAP/AdMob bağlama, `IAP_ENABLED`/`ADS_ENABLED=true`.
+
+---
+
+## 💳 IAP Öncesi Blocking: Sunucu Cüzdanı + Login (2026-07-31)
+
+Coin bakiyesi şu an **salt localStorage** (`arc_coins_earned` / `arc_coins_spent`); `publishPlayerProfile` sadece skor+mesafe gönderiyor. Bugün bu "casual hile" meselesi — **para girdiği anda başka bir şey oluyor**: uygulamayı silen oyuncu satın aldığı coin'i kaybeder → iade talebi, mağaza şikâyeti, destek yükü.
+
+**Kritik teknik gerçek:** Play Billing **tüketilen (consumable) ürünleri geri yüklemez**. `queryPurchases()` sadece tüketilmemişleri döner. Coin paketleri tanımı gereği consumable → **mağaza tek başına bakiyeyi kurtaramaz.** Dayanıklı kimlik şart.
+
+**Yapılacaklar**
+1. **Google Sign-In / Sign in with Apple + Firebase account linking** (anonim → kalıcı hesap yükseltme). Mevcut anonim uid'in ilerlemesi korunur.
+2. **Login'i ilk satın almaya kadar zorunlu tutma** — checkout anında iste, ücretsiz oyuncuya sürtünme binmesin.
+3. Mevcut kurtarma kodu (`getRecoveryCode`, refresh token base64'ü) **yedek** olarak kalsın — ama tek başına yeterli değil: kod hesabın tam anahtarı, kaybolursa/sızarsa telafisi yok.
+4. Coin bakiyesi + işlem defteri Firestore'a; satın alma **sunucu tarafında receipt doğrulamalı** yazılsın.
+
+**KVKK/GDPR — login gelince değişenler**
+
+| Konu | Yapılacak |
+|---|---|
+| Aydınlatma metni | Yeni veri kategorileri (hesap kimliği, e-posta, satın alma kaydı), amaç, saklama süresi, alıcılar eklenmeli |
+| **Yurt dışına aktarım (KVKK m.9)** | Firebase sunucuları yurt dışında. Mart 2024 değişikliğiyle **standart sözleşme** yolu açıldı — imzalayıp Kurum'a **5 iş günü içinde bildirim**. Bu zaten bugün de geçerli (Firestore kullanılıyor), para girince denetim riski artar |
+| Hukuki sebep | Satın alma verisi **"sözleşmenin ifası"** — açık rıza gerekmez. Pazarlama/analitik için **ayrı** açık rıza. İkisini karıştırma |
+| Silme çelişkisi | Mevcut `deleteMyData` her şeyi siliyor. "Profil silinir, işlem kaydı anonimleştirilerek saklanır" diye ayrışmalı ve metinde yazmalı |
+| Yükü azaltan | IAP'de **merchant of record Google/Apple** — fatura, vergi, cayma hakkı onlarda. Sen sadece "bu uid'e N coin verildi" kaydını tutarsın |
+| Çocuk kullanıcı | Play Families / yaş derecelendirmesi. 13 altına yönelikse veli rızası rejimi |
+| VERBİS | <50 çalışan + <25M TL bilanço ise muaf; teyit et |
+| GDPR | AB'de yayınlanacaksa ayrıca devreye girer; Firebase DPA kabul edilmeli |
+
+⚠️ Bunlar hukuk tavsiyesi değil — gizlilik metni yayın öncesi bir avukata okutulmalı, özellikle m.9 aktarım kısmı.
 
 ---
 
