@@ -4351,6 +4351,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
   const BASE = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+  // Kabul edilebilir en yüksek skor. firestore.rules > validScore/validPlayer içindeki
+  // sınırla BİREBİR aynı tutulmalı — ikisi ayrışırsa istemci gönderir, sunucu reddeder
+  // ve run sessizce kaybolur.
+  const MAX_SUBMIT_SCORE = 50000000;
 
   // ── Anonymous Auth (Identity Toolkit REST — SDK gerekmez) ──────────────
   // Kalıcı bir uid sağlar: skor/oyuncu/referral doc'ları bu uid'e bağlanır,
@@ -4501,6 +4505,13 @@ const ARC_DB = (() => {
     if (!name) { console.warn('[ArcDB] empty name — score not saved'); return; }
     score = Number(score) || 0;
     if (score <= 0) { console.warn('[ArcDB] score <= 0 — skip'); return; }
+    // Makullük tavanı — firestore.rules'daki validScore sınırıyla AYNI sayı olmalı.
+    // Buradaki amaç sessiz sunucu reddi yerine net bir log bırakmak: rules tek başına
+    // bıraksaydı istemci "kaydettim" sanıp hiçbir şey yazmayacaktı.
+    if (score > MAX_SUBMIT_SCORE) {
+      console.warn('[ArcDB] implausible score rejected:', score, '>', MAX_SUBMIT_SCORE);
+      return;
+    }
     avatar = Number(avatar) || 0;
     mode = normMode(mode);
     // Distance — float meters (3 dp). Stored alongside the score so the
@@ -5750,6 +5761,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     speedPos: 0,  speedNeg: 0,  speedActive: 0,
     timer: 0,                                    // 0..4 — topun üzerindeki geri sayım rakamı (8 → 12)
     comboWin: 0,                                 // 0..4 — combo penceresi (yeşil bant): 2.0s + 0.5s/sv
+    comboMax: 0,                                 // 0..9 — combo zinciri tavanı: ×3 taban → ×12
     comboSplitV22: false,                        // eski tek 'timer' upgrade'inin bölünme migrasyonu
     traceColor: '#ffffff',                       // varsayılan BEYAZ ('rainbow' | 'rb:xxx' | 'custom' | hex)
     traceThickness: 0,                           // preset: 0/6/12/20
@@ -5869,6 +5881,12 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   function comboWindowSec()  { return 2 + ((upg && upg.comboWin) || 0) * 0.5; }
   // Toplam enerji süresi = kademe sayısı × kademe süresi (= pencere / 2 kademe).
   function comboTimerSec()   { return comboDisplayMax() * (comboWindowSec() / 2); }
+  // comboMax → zincirin TAVANI (kaç yeşil üst üste sayılır): taban ×3, satın alınarak
+  // ×12'ye kadar. Tavana varınca pot bankalanır ve zincir sıfırlanır (bkz. addCombo).
+  // Zincir toplamı 5·n·(n+1) olduğundan tavan doğrudan skor eksenidir:
+  //   ×3 → 60/zincir   ×6 → 210   ×9 → 450   ×12 → 780
+  const COMBO_CAP_BASE = 3;
+  function comboCap() { return COMBO_CAP_BASE + ((upg && upg.comboMax) || 0); }
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
@@ -6056,6 +6074,18 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     bestDistanceM = 0;
     localStorage.setItem('arc_bestdist', '0');
     localStorage.setItem('arc_dist_reset_v2', '1');
+  }
+  // One-shot (v24): combo sistemi yeniden yazıldı — eski skorlar tavansız 1.5^n
+  // eğrisinden geliyor ve yeni ölçekle kıyaslanamaz; maxCombo ise countdown bug'ı
+  // yüzünden zincir değil enerji kademesi (8..12) tutuyordu. İkisi de sıfırlanır ki
+  // oyuncu rekorlarını ve COMBO rozetini yeni sistemde organik olarak kursun.
+  if (localStorage.getItem('arc_combo_reset_v24') !== '1') {
+    stats.maxCombo   = 0;
+    stats.bestNormal = 0;
+    stats.bestExtreme = 0;
+    stats.scoreLifetime = 0;
+    saveStats();
+    localStorage.setItem('arc_combo_reset_v24', '1');
   }
 
   // Float texts (combo bonuses)
@@ -7661,13 +7691,22 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   }
 
   // Combo zinciri: timer canlıyken bir kazanım toplandığında +1; ≥2'de geri bildirim.
+  //
+  // v24 — EKSPONANSİYEL EĞRİ KALDIRILDI. Eskiden her link `10 * 1.5^(n-1)` veriyordu:
+  // tavansız olduğu için 38'lik bir zincir tek başına 98 MİLYON puan basıyor, run'ın
+  // geri kalanı (mesafe, altın, hayatta kalma) ölçüm dışı kalıyordu. Şimdi:
+  //   • link başına LİNEER artış (10·n) → zincir toplamı 5·n·(n+1), karesel ve okunur
+  //   • zincir uzunluğu comboCap() ile TAVANLI → tavana varınca pot otomatik bankalanır
+  // Böylece skor "en uzun tek zincir"i değil, run boyunca kurulan zincir SAYISINI
+  // ödüllendiriyor — yani oyun süresiyle doğrusal, patlamasız.
   function addCombo(wx, wy, green) {
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
-    // Combo puanı POT'ta birikir (×1.5: 10,15,23,34,…), zincir kırılınca patlayıp skora eklenir.
-    _comboPot += Math.round(10 * Math.pow(1.5, runCombo - 1));
+    _comboPot += 10 * runCombo;         // 10, 20, 30, … (cap 12'de zincir toplamı 780)
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
+    // Tavana varıldı: pot hemen patlar ve zincir sıfırlanır. Oyuncu yeni zincire başlar.
+    if (runCombo >= comboCap()) comboBreak();
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
   function comboBreak() {
@@ -7693,7 +7732,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(0,0,0,.6)';
     ctx.fillStyle = '#ffe066';
-    const t = 'COMBO ×' + runCombo;
+    // Tavan da yazılır — oyuncu "×12'ye kadar yükseltilebilir" ekseni sahnede görsün.
+    const t = 'COMBO ×' + runCombo + '/' + comboCap();
     ctx.strokeText(t, 0, 0); ctx.fillText(t, 0, 0);
     ctx.restore();
   }
@@ -7804,8 +7844,10 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (energy > 0.01) {
       comboEl.classList.add('active');
       comboVal.textContent = Number.isInteger(comboMul) ? comboMul.toFixed(1) : comboMul.toFixed(1);
-      // Track max combo (countdown reflects raw streak count)
-      if (countdown > stats.maxCombo) { stats.maxCombo = countdown; saveStats(); }
+      // NOT: burada eskiden `stats.maxCombo = countdown` yazılıyordu. countdown zincir
+      // değil ENERJİ KADEMESİ (8..12) — yani tek bir combo yapmadan, sadece timer dolu
+      // olduğu için COMBO rozetinin 5 ve 9 kademeleri açılıyordu. Gerçek zincir uzunluğu
+      // `_runMaxCombo`'da tutuluyor ve endGame'de stats'a yazılıyor; burası artık yazmıyor.
       // Color: cool (high) → warm (low)
       const comboHue = 120 * (energy);
       document.getElementById('combo-pill').style.borderColor = `hsl(${comboHue},100%,55%)`;
@@ -9898,11 +9940,15 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   // birlikte büyütüyor — CORE'un en pahalı kalemi (4 seviye toplam 72 coin).
   const TIMER_PRICES    = [120, 180, 260, 360];                               // 4 lvl — geri sayım rakamı +1/sv
   const COMBOWIN_PRICES = [70, 100, 140, 190];                                // 4 lvl — combo penceresi +0.5s/sv
+  // Combo tavanı CORE'un en güçlü SKOR ekseni: ×3 → ×12 arası zincir puanı 60 → 780
+  // (×13). Bu yüzden en uzun ve en pahalı merdiven — 9 seviye, toplam 2530 coin.
+  const COMBOMAX_PRICES = [60, 90, 130, 180, 240, 310, 400, 500, 620];        // 9 lvl — tavan +1/sv
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
   function timerPrice(n)    { return (n < 1 || n > TIMER_PRICES.length)    ? null : TIMER_PRICES[n - 1]; }
   function comboWinPrice(n) { return (n < 1 || n > COMBOWIN_PRICES.length) ? null : COMBOWIN_PRICES[n - 1]; }
+  function comboMaxPrice(n) { return (n < 1 || n > COMBOMAX_PRICES.length) ? null : COMBOMAX_PRICES[n - 1]; }
   const TRACE_COLOR_PRICE = 30;       // rebuyable cosmetic
   const DEATH_NAME_PRICE  = 500;      // one-time unlock (canlı fiyat: NAME_PRICE)
   const DEATH_AV_PRICE    = 500;      // one-time unlock (canlı fiyat: TOMB_PRICE)
@@ -9978,6 +10024,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     // Timer geri sayım rakamını, comboWin yeşil pencereyi büyütür — ayrı diller
     if (key === 'timer')          return upg.timer > 0 ? String(8 + upg.timer) : 'base';
     if (key === 'comboWin')       return upg.comboWin > 0 ? '+' + (upg.comboWin * 0.5).toFixed(1) + 's' : 'base';
+    if (key === 'comboMax')       return '×' + comboCap();
     if (key === 'traceThickness') return '+' + (upg.traceThickness * 10) + '%';
     if (key === 'traceColor')     return upg.traceColor ? iconHTML('dot', { size: 12 }) : 'default';
     if (key === 'deathName')      return upg.deathName   ? 'enabled' : 'locked';
@@ -10013,6 +10060,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     speed:        'Controls how fast you fly. Faster = more distance, harder control. Slower = easier to steer.',
     timer:        'Raises the countdown on your ball. Starts at 8, each level = +1 — more time to live and a bigger gold multiplier.',
     comboWin:     'Extends the green combo window. Starts at 2s, each level = +0.5s.',
+    comboMax:     'Raises your combo ceiling. Starts at ×3, each level = +1 (up to ×12). A longer chain banks far more points — ×3 pays 60, ×12 pays 780.',
     wallSoft:     'Softens the side walls. Each level = +1px of brush-past room before you die.',
     magnetRange:  'Grows your pickup radius for greens, golds and purples. No touching needed — just get close.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
@@ -10027,6 +10075,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     { key: 'speed',       title: 'Speed',         icon: 'bolt' },
     { key: 'timer',       title: 'Timer',         icon: 'timer' },
     { key: 'comboWin',    title: 'Combo Timer',   icon: 'hourglass' },
+    { key: 'comboMax',    title: 'Max Combo',     icon: 'fire' },
     { key: 'wallSoft',    title: 'Walls',         icon: 'wall' },
     { key: 'magnetRange', title: 'Magnet',         icon: 'magnet' },
   ];
@@ -10077,6 +10126,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (CORE_BIDI(key))        return DIR_PRICES.length;     // her yön ayrı
     if (key === 'timer')       return TIMER_PRICES.length;
     if (key === 'comboWin')    return COMBOWIN_PRICES.length;
+    if (key === 'comboMax')    return COMBOMAX_PRICES.length;
     if (key === 'profit')      return PROFIT_PRICES.length;
     if (key === 'wallSoft')    return WALLSOFT_PRICES.length;
     if (key === 'magnetRange') return MAGRANGE_PRICES.length;
@@ -10086,6 +10136,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (CORE_BIDI(key))        return dirPrice(n);
     if (key === 'timer')       return timerPrice(n);
     if (key === 'comboWin')    return comboWinPrice(n);
+    if (key === 'comboMax')    return comboMaxPrice(n);
     if (key === 'profit')      return profitPrice(n);
     if (key === 'wallSoft')    return wallSoftPrice(n);
     if (key === 'magnetRange') return magRangePrice(n);
@@ -10102,11 +10153,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   //   radius/speed  → ×1.0 ± 0.1/sv (gerçek çarpan)
   //   timer         → geri sayım rakamı: 8 + 1/sv (çarpan değil, ham sayı)
   //   comboWin      → combo penceresi saniyesi: 2.0s + 0.5s/sv
+  //   comboMax      → combo zinciri tavanı: ×3 + 1/sv (çarpan değil, tavan sayısı)
   //   wallSoft      → duvar toleransı: 0px + 1px/sv
   //   magnetRange   → ekstra toplama menzili: OFF, +22px/sv
   function coreValueText(key, lvl) {
     if (key === 'timer')       return String(8 + lvl);
     if (key === 'comboWin')    return (2 + lvl * 0.5).toFixed(1) + 's';
+    if (key === 'comboMax')    return '×' + (COMBO_CAP_BASE + lvl);
     if (key === 'wallSoft')    return lvl > 0 ? '+' + lvl + 'px' : '0px';
     if (key === 'magnetRange') return lvl > 0 ? '+' + (lvl * 22) + 'px' : 'OFF';
     return '×' + (1 + lvl * 0.1).toFixed(1);
@@ -10173,6 +10226,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           + '<line x1="30" y1="84" x2="70" y2="84"/>'
           + '<path d="M34 16 L34 40 L50 50 L66 40 L66 16" opacity=".85"/>'
           + '<path d="M34 84 L34 60 L50 50 L66 60 L66 84" opacity=".85"/></svg>';
+      case 'comboMax': // yükselen üç chevron (zincir tavanı) + üstte tavan çizgisi
+        return open + '<line x1="26" y1="14" x2="74" y2="14" opacity=".9"/>'
+          + '<path d="M30 78 L50 60 L70 78" opacity=".45"/>'
+          + '<path d="M30 62 L50 44 L70 62" opacity=".7"/>'
+          + '<path d="M30 46 L50 28 L70 46" opacity=".95"/></svg>';
       case 'wallSoft': // daire + sağda dikey duvar çizgisi
         return open + '<circle cx="45" cy="50" r="31" opacity=".7"/>'
           + '<line x1="78" y1="20" x2="78" y2="80" opacity=".9"/></svg>';
@@ -10517,6 +10575,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     if (key === 'radius' || key === 'speed') return bidiCard(key, '', '');
     if (key === 'timer')          return fwdCard('timer', '', '', TIMER_PRICES.length, timerPrice, v => String(8 + v));
     if (key === 'comboWin')       return fwdCard('comboWin', '', '', COMBOWIN_PRICES.length, comboWinPrice, v => v > 0 ? `+${(v * 0.5).toFixed(1)}s` : 'base');
+    if (key === 'comboMax')       return fwdCard('comboMax', '', '', COMBOMAX_PRICES.length, comboMaxPrice, v => `×${COMBO_CAP_BASE + v}`);
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'profit')         return fwdCard('profit', '', '', 10, profitPrice, v => v > 0 ? `+${v * 10}% coin` : 'base');
     if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : '0px');
@@ -11045,8 +11104,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
     { id: 'odometer', name: 'TRAVELLER', icon: 'rocket',
       stat: () => stats.distLifetimeCm || 0,    tiers: [10000, 50000, 250000, 1000000, 5000000],
       desc: t => `Travel ${_fmtKm(t)} in total` },
+    // Zincir artık comboCap() ile tavanlı (×3 taban → ×12 tam yükseltmede). Eski
+    // eşikler [5,9,15,25,50] tavanın üstündeydi — son üçü ERİŞİLEMEZDİ. Yeni eşikler
+    // tavan merdiveninin içinde: ×12 ancak comboMax tam alınmışsa mümkün.
     { id: 'combo',    name: 'COMBO',     icon: 'fire',
-      stat: () => stats.maxCombo || 0,          tiers: [5, 9, 15, 25, 50],
+      stat: () => stats.maxCombo || 0,          tiers: [3, 5, 7, 9, 12],
       desc: t => `Hit a ×${t} combo` },
     { id: 'gold',     name: 'GOLD',      icon: 'coin',
       stat: () => stats.goldTotal || 0,         tiers: [10, 50, 250, 1000, 5000],

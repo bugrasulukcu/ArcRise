@@ -31,11 +31,16 @@ service cloud.firestore {
     //  canlıdaki tüm scores/players doc'ları owner'lı doğrulandı.)
     function ownsOld()  { return resource.data.owner == request.auth.uid; }
 
+    // Skor tavanı (v24): eski 1000000000 (1 milyar) pratikte hiçbir şeyi elemiyordu —
+    // tavansız combo eğrisiyle 128 MİLYONLUK bir run rahatça geçiyordu. Combo artık
+    // zincir başına en fazla 780 puan bankalıyor; en uzun makul run bile ~1M
+    // mertebesinde kalıyor. 50M = ~50× başlık payı: meşru skoru reddetmez, saçmalığı
+    // sunucu tarafında keser. (Client tarafı ayrıca submitScore'da eliyor.)
     function validScore(d) {
       // name: charset ZORUNLU (A-Z0-9) — XSS/HTML injection'a karşı sunucu tarafı garanti.
       // Client zaten bu formatta yazar; REST'ten gelen kötü niyetli isimler reddedilir.
       return d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
-        && d.score is int && d.score >= 0 && d.score <= 1000000000
+        && d.score is int && d.score >= 0 && d.score <= 50000000
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
         && d.ts is int
         && d.mode in ['normal', 'extreme']
@@ -82,7 +87,7 @@ service cloud.firestore {
       return d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
         && d.tag is string && d.tag.matches('^[0-9]{4}$')
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
-        && d.score is int && d.score >= 0 && d.score <= 1000000000
+        && d.score is int && d.score >= 0 && d.score <= 50000000   // v24 — bkz. validScore
         && d.dist is number && d.dist >= 0 && d.dist <= 100000
         && d.ts is int
         && (!('owner' in d) || d.owner is string);

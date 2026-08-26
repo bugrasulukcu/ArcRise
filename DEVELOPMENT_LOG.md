@@ -391,6 +391,54 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v24 — Combo yeniden yazıldı: tavanlı lineer zincir + Max Combo yükseltmesi (2026-08-26)
+
+Ekonomi düzeldikten sonra **skor ekseni** ölçüldü ve tek başına ekonomiden daha kırıktı: skor formülünün tamamı tek bir zincire bağlıydı.
+
+**Bulgular**
+- **Combo eksponansiyeldi ve TAVANSIZDI.** Her link `10 · 1.5^(n-1)` veriyordu; zincir toplamı `20·(1.5^n − 1)`. 38'lik bir zincir tek başına **~98 milyon** puan basıyor — run'ın geri kalanı (mesafe, altın, hayatta kalma) ölçüm dışı kalıyordu. Skor "ne kadar iyi oynadın"ı değil "bir kez ne kadar uzun zincir tutturdun"u ölçüyordu.
+- **Sunucu tavanı hiçbir şeyi elemiyordu.** `firestore.rules > validScore` sınırı 1.000.000.000 (1 milyar) idi; tavansız eğriyle 128 milyonluk bir run rahatça geçiyordu. Tavan pratikte kapalıydı.
+- **COMBO rozeti combo saymıyordu.** HUD güncellemesinde `stats.maxCombo = countdown` yazılıyordu — `countdown` zincir değil **enerji kademesi** (8..12). Yani tek bir combo yapmadan, sadece timer dolu olduğu için rozetin 5 ve 9 kademeleri açılıyordu. Üstelik eski eşiklerin son üçü ([15, 25, 50]) gerçek zincirle **hiç** erişilemezdi.
+
+**Yeni eğri — lineer link, tavanlı zincir**
+```js
+_comboPot += 10 * runCombo;              // 10, 20, 30, … (eskiden 10·1.5^(n-1))
+if (runCombo >= comboCap()) comboBreak(); // tavana varınca pot bankalanır, zincir sıfırlanır
+```
+- Zincir toplamı `5·n·(n+1)` — **karesel ve okunur**, patlamasız.
+- Zincir uzunluğu `comboCap()` ile tavanlı; tavana varınca pot otomatik patlar ve oyuncu yeni zincire başlar.
+- Sonuç: skor artık "en uzun tek zincir"i değil **run boyunca kurulan zincir SAYISINI** ödüllendiriyor → oyun süresiyle doğrusal.
+- Sahnedeki etiket tavanı da yazıyor (`COMBO ×4/7`) — yükseltme ekseni oyuncuya görünür.
+
+**Yeni CORE yükseltmesi: Max Combo (`comboMax`)**
+
+CORE'un en güçlü skor ekseni olduğu için en uzun ve en pahalı merdiven: **9 seviye, toplam 2.530 coin** (katalog toplamı 11.875 → **14.405**).
+
+| Seviye | Tavan | Zincir başına puan | Fiyat |
+|---|---|---|---|
+| taban | ×3 | 60 | — |
+| 3 | ×6 | 210 | 60/90/130 |
+| 6 | ×9 | 450 | +180/240/310 |
+| 9 | ×12 | **780** | +400/500/620 |
+
+`COMBO_CAP_BASE = 3`, `comboCap() = 3 + upg.comboMax`. Eski kayıtlarda anahtar yok → `loadUpg`'ın `Object.assign` merge'i 0 veriyor, ayrı migrasyon gerekmedi.
+
+**Skor tavanı 1 milyar → 50 milyon** (`arcrise.html` + `firestore.rules`, iki yerde de aynı sayı)
+Tavanlı eğriyle en uzun makul run ~1M mertebesinde kalıyor; 50M = ~50× başlık payı. Meşru skoru reddetmez, saçmalığı sunucuda keser. İstemci tarafı `submitScore`'da da eliyor — **sadece** rules'a bırakılsaydı oyun "kaydettim" sanıp sessizce hiçbir şey yazmayacaktı.
+⚠️ İki sayı **birebir aynı** tutulmalı; ayrışırsa istemci gönderir, sunucu reddeder, run sessizce kaybolur.
+
+**Rozet eşikleri tavan merdiveninin içine alındı**
+`[5, 9, 15, 25, 50]` → **`[3, 5, 7, 9, 12]`** — sırasıyla comboMax lvl 0 / 2 / 4 / 6 / 9. Son kademe ancak merdiven tam alınmışsa mümkün.
+HUD'daki `stats.maxCombo = countdown` yazımı kaldırıldı; gerçek zincir uzunluğu zaten `_runMaxCombo`'da tutuluyor ve `endGame`'de stats'a yazılıyor.
+
+**One-shot reset (`arc_combo_reset_v24`)**
+`maxCombo`, `bestNormal`, `bestExtreme`, `scoreLifetime` sıfırlanır: eski skorlar tavansız 1.5^n eğrisinden geliyor ve yeni ölçekle kıyaslanamaz, `maxCombo` ise zincir değil enerji kademesi tutuyordu. Mesafe rekorları combo'dan etkilenmediği için **dokunulmadı**.
+Buluttaki `scores` koleksiyonu kontrol edildi — en yüksek kayıt **10.611**, şişmiş skor yok, purge gerekmedi.
+
+⚠️ **Deploy gerekiyor**: `firestore.rules` (v24 tavanı + hâlâ bekleyen `wallets/{uid}` bloğu) Console'a yapıştırılıp Publish edilmeli.
+
+---
+
 ### v23 — Ekonomi elden geçirildi: run-başı musluk + ×12 yeniden değerleme (2026-07-31)
 
 IAP açılmadan önce ekonominin tamamı incelendi. Üç yapısal kırık bulundu ve düzeltildi.
