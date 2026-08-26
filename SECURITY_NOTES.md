@@ -71,7 +71,7 @@
 
 ### Açık kalanlar
 
-1. **App Check** — `appCheckSiteKey` hâlâ boş. reCAPTCHA v3 kaydı **secret key** istiyor (google.com/recaptcha/admin'den alınır, Firebase Console'a yapıştırılır); site key alındıktan sonra `FIREBASE_CONFIG.appCheckSiteKey`'e yazılır → sonra App Check > APIs > Cloud Firestore: Monitor → Enforce.
+1. ~~**App Check**~~ — **KURULDU** (2026-08-26): reCAPTCHA v3 sitesi oluşturuldu (domainler: `bugrasulukcu.github.io`, `localhost` — Capacitor `androidScheme: https` olduğu için WebView origin'i `https://localhost`), secret Firebase'e girildi, App Check > Apps'te **Registered** görünüyor, site key `FIREBASE_CONFIG.appCheckSiteKey`'e yazıldı. App Check > APIs > Cloud Firestore şu an **Unenforced** = monitor modu. **KALAN ADIM:** push + yeni sürüm sahaya çıktıktan birkaç gün sonra metrics'te istekler "verified" akmaya başlayınca **Enforce** et. (Enforce edilmeden sahte REST istekleri ENGELLENMEZ.)
 2. **Application restriction** her iki anahtarda da hâlâ `None` (Android için SHA-1 gerekir; web'e referrer kısıtı Capacitor WebView'ı kırar → App Check doğru çözüm).
 3. **Otopilot production'da açık**: `?bot=1` / `ARC_BOT.toggle()` tam otomatik oynuyor ve skorları normal `submitScore` yolundan public leaderboard'a yazıyor. App Check bunu durdurmaz (istek meşru istemciden gelir). Release build'de derleme dışı bırakılmalı.
 4. `keystore/keystore_credentials.txt` diskte düz metin (git'te değil) — parola yöneticisine taşınmalı.
