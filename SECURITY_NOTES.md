@@ -76,3 +76,38 @@
 3. **Otopilot production'da açık**: `?bot=1` / `ARC_BOT.toggle()` tam otomatik oynuyor ve skorları normal `submitScore` yolundan public leaderboard'a yazıyor. App Check bunu durdurmaz (istek meşru istemciden gelir). Release build'de derleme dışı bırakılmalı.
 4. `keystore/keystore_credentials.txt` diskte düz metin (git'te değil) — parola yöneticisine taşınmalı.
 5. `scores`/`players` public okunabilir ve `owner` (uid) alanı taşıyor → NAME#TAG ↔ uid eşlemesi toplanabilir. Doğrudan istismarı yok; kabul edilebilir.
+
+## Market öncesi açık liste (2026-08-26 denetimi — henüz YAPILMADI)
+
+Öncelik sırasıyla. Hepsi doğrulandı, tahmin değil.
+
+### 1. Firestore okuma maliyeti — launch riski + DoS vektörü
+
+`getTopScores` mode filtresini client'ta yapıyor (composite index yok; `firestore.indexes.json` dosyası bile yok), telafi için `n*6+30` (üst sınır 250) doküman çekiyor. `arcrise.html:8423` her skor gönderiminde cache'i temizliyor → neredeyse her run yeni tam sorgu. Leaderboard için ~150, ghost listesi için ~250 okuma.
+
+Spark limiti **50.000 okuma/gün**. Birkaç düzine aktif oyuncu günü doldurur; kota bitince Firestore 429 döner, leaderboard **herkes için** gün sonuna kadar ölür. Aynı yolla kasıtlı kota yakma da mümkün — App Check bunu durdurmaz (istek meşru istemciden, geçerli token'la geliyor).
+
+**Yapılacak:** `(mode ASC, score DESC)` composite index + sorguya `where mode == X` → 250 yerine ~20 okuma. Ayrıca her run'da tüm cache'i temizlemek yerine yalnızca kendi satırını yerelde güncelle. İkisi birlikte ~10× düşürür.
+
+### 2. UGC moderasyonu yok — Play reddi riski
+
+Public leaderboard'da serbest kullanıcı adları + yabancılardan arkadaşlık isteği = user-generated content. Kodda `report`/`block`/`mute` yok. Play'in UGC politikası bildirme + engelleme bekliyor. İsim charset'i `A-Z0-9`, küfür hâlâ mümkün.
+**Minimum:** "report player" düğmesi + isim kaydında kara liste.
+
+### 3. Application restriction her iki anahtarda da `None`
+
+Web'e referrer kısıtı Capacitor WebView'ı kırar → **App Check Enforce** tek gerçek koruma. Android için SHA-1 gerekiyor; Play App Signing'e geçince Play Console'un verdiği SHA-1 kullanılmalı.
+
+### 4. Kurtarma kodu iptal edilemez (bilinen kısıt)
+
+Kod = anonim refresh token'ın base64'ü; süresi dolmaz, revoke edilemez. Sızarsa kalıcı hesap devri, geri alma yolu yok. Bugün mitigasyonu yok — uzun vadede Play Games account linking.
+
+### 5. Data Safety formu — "Photos" İŞARETLEME
+
+Custom avatar sunucuya gitmiyor: Firestore'a yalnızca `avatarIdx` (int 0-100) yazılıyor, kural da `is int` diye zorluyor. Yüklenen foto localStorage'da kalıyor. `privacy.html` "avatar you pick" diyerek fazla beyan etmiş (güvenli tarafta) ama forma bakarak "Photos" işaretlenirse gereksiz yere ağır bir kategoriye girilir.
+
+### 6. Zaten bilinenler
+
+- Otopilot (`?bot=1` / `ARC_BOT.toggle()`) release'den çıkarılmalı.
+- `keystore/keystore_credentials.txt` parola yöneticisine taşınmalı; **Play App Signing** kullanılmalı (upload key kaybı felaket olmasın).
+- **App Check Enforce sırası önemli:** önce yeni Android build'i sahaya çıksın, sonra Enforce. Tersi olursa eski APK'lar Firestore'a yazamaz.
