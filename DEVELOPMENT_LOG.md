@@ -41,7 +41,7 @@ Yeni/cowork bir ajan buraya bakınca projeyi hızlıca kavrasın diye özet. **D
 - ✅ Hesap/veri silme: Settings → **Delete Account & Data** artık bulutu da siler (`deleteMyData` + `firestore.rules`'ta owner-DELETE). **Kuralları deploy etmek gerekir.**
 - ✅ IAP tier'ları `IAP_ENABLED=false` ile gizli; sahte reklam `ADS_ENABLED=false` ile gizli.
 - ⏳ **Native paket yok** — Capacitor ile sarılacak. Toolchain (bu Windows makinesi): Node ✅, Git ✅, **JDK 17 kuruldu**, **Android Studio kuruldu**. iOS için Mac gerekir (Windows'ta yok → önce Android).
-- ⏳ Anti-cheat yok (skor client-side; rules sadece aralık kontrolü). App Check yok.
+- ⏳ Anti-cheat kısmi: skor hâlâ client-side, rules aralık kontrolü yapıyor. **App Check kuruldu (2026-08-26) ama Cloud Firestore'da hâlâ Unenforced/monitor** — yeni build sahaya çıkınca Enforce edilecek. Bkz. `SECURITY_NOTES.md`.
 
 **Yayın yol haritası (Android):** (1) Capacitor scaffold + `cap add android`, webDir=arcrise dosyaları. (2) Android Studio'da emülatörde çalıştır. (3) İkon/splash, ekran görüntüleri, `privacy.html` URL. (4) Upload keystore üret → imzalı **AAB**. (5) Play Console **internal testing** → burada IAP (RevenueCat/Play Billing) + AdMob rewarded bağla, `IAP_ENABLED`/`ADS_ENABLED=true` yap, sandbox'ta test. (6) Prod.
 
@@ -54,7 +54,12 @@ C:\Users\DELL\Desktop\BUGRA\ArcRise\
 ├── arcrise.html              ← oyunun tamamı (HTML + CSS + JS, ~11.500 satır)
 ├── index.html                ← cache-bust ile arcrise.html'e redirect (giriş)
 ├── privacy.html              ← mağaza için gizlilik politikası sayfası (yeni)
-├── firestore.rules           ← Firebase güvenlik kuralları (Console'a deploy edilir)
+├── firestore.rules           ← Firebase güvenlik kuralları
+├── firebase.json/.firebaserc ← `firebase deploy --only firestore:rules` için (2026-08-26)
+├── SECURITY_NOTES.md         ← güvenlik denetim kaydı + market öncesi açık liste
+├── sync-www.js               ← root → www/ kopyalama (`npm run sync`)
+├── verify-sync.js            ← root/www/android assets drift kontrolü (`npm run verify`) — BUILD ÖNCESİ ZORUNLU
+├── android/                  ← Capacitor Android projesi (assets kopyası .gitignore'da)
 ├── PNG/                      ← LOGO.png, GAME_ICON.png + Figma export'ları
 ├── AUDIO/                    ← BGMusic(.mp3/.wav), Touch.wav, Dead.wav
 ├── RESOURCES/                ← ham asset zip'leri (build'e dahil etme)
@@ -390,6 +395,49 @@ App yüklenince:
 ---
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
+
+### Güvenlik denetimi — App Check devrede, localStorage→DOM enjeksiyonu kapatıldı, 8 haftalık build drift'i yakalandı (2026-08-26)
+
+Ayrıntılı kayıt: **`SECURITY_NOTES.md` → "4. tur (2026-08-26)"**. Burada özet + devlog'a düşen sonuçlar.
+
+**KRİTİK bulgu: APK'ya paketlenen web kopyası 8 hafta eskiydi**
+- `android/app/src/main/assets/public/arcrise.html` 1 Tem tarihliydi — içinde **ne `esc()`, ne CSP, ne `toUid`** vardı. Yani 2026-07-02 güvenlik geçişinin (v20) hiçbiri Android build'inde yoktu.
+- `assets/capacitor.config.json` hâlâ `allowMixedContent: true` içeriyordu; root'tan kaldırılmıştı ama Capacitor runtime'da **assets'teki** kopyayı okuduğu için ayar hiç yürürlükten kalkmamıştı.
+- **Neden görünmedi:** `www/` ve `android/app/src/main/assets/` `.gitignore`'da → aralarındaki drift git'e hiç yansımıyor.
+- Her iki kopya root ile birebir eşitlendi (md5 doğrulandı) + **`verify-sync.js` / `npm run verify`** eklendi. `npm run sync` artık sonunda otomatik doğruluyor, fark varsa 1 ile çıkar. **Build öncesi zorunlu adım.**
+
+**localStorage → CSS/HTML enjeksiyonu (hesap devralmaya kadar giden zincir)**
+- `upg.customGrad` ve `upg.traceColor` ham hâlde `style="background:${...}"` içine giriyordu. `arc_upg` kurcalanırsa attribute kırılır, CSP'de `unsafe-inline` olduğu için JS çalışır, oradan `arc_fb_rt` (Firebase refresh token) okunup hesap devralınırdı.
+- `loadUpg()` içinde tek noktadan beyaz listeye bağlandı (`SAFE_CSS_VALUE` / `SAFE_TRACE_ID`). `SAFE_TRACE_ID` charset'inde `:` **bilerek** var — `rb:warm` gibi meşru id'ler elenmesin diye.
+- `arc_avatar_custom` artık yalnızca gerçek `data:image/...;base64,...` kabul ediyor (önce ham hâlde `<img src="${...}">` içine giriyordu).
+- `traceColorCss(id)` tip guard'ı: bozuk localStorage'da `id.charAt` TypeError atıp **upgrade ekranını çökertiyordu**.
+- `esc()` kalan noktalara yayıldı: quest label (`arc_quests_v1`'den geliyor), friendreq `data-acc`/`data-rej`, arkadaş `data-id` (×2).
+
+**AndroidManifest — `android:allowBackup` true → false**
+
+Hesabın tam anahtarı (`arc_fb_rt`) WebView localStorage'ında duruyor. `true` iken Android Auto Backup onu kullanıcının Drive yedeğine ve cihaz-cihaz transferine dahil ediyordu. Anonim refresh token'ın süresi dolmaz ve iptal edilemez → sızarsa **kalıcı** erişim.
+
+**App Check — KURULDU (şimdilik monitor modu)**
+- reCAPTCHA v3 sitesi oluşturuldu; domainler `bugrasulukcu.github.io` + `localhost` (Capacitor `androidScheme: https` olduğu için WebView origin'i `https://localhost`).
+- `FIREBASE_CONFIG.appId` + `appCheckSiteKey` dolu → `_appCheckInit()` SDK'yi yüklüyor, `fbFetch` her Firestore/Auth isteğine `X-Firebase-AppCheck` header'ı ekliyor. CSP zaten gstatic/google.com/recaptcha ve firebaseappcheck hostlarına izinliydi.
+- Console: App Check > Apps = **Registered**, APIs > Cloud Firestore = **Unenforced (monitor)**.
+- ⚠️ **KALAN ADIM:** yeni Android build'i sahaya çıktıktan birkaç gün sonra, metrics'te istekler "verified" akmaya başlayınca **Enforce** et. **Sıra önemli** — tersi olursa eski APK'lar Firestore'a yazamaz. Enforce edilmeden sahte REST istekleri engellenmez.
+
+**Cloud Console (yapıldı)**
+- Android API anahtarı 25 API → **5** (Firestore, Identity Toolkit, Token Service, Installations, App Check). Web anahtarı 25 API → **4**; liste `arcrise.html:52`'deki CSP `connect-src` ile birebir aynı.
+- `android/app/google-services.json` git takibinden çıkarıldı; GitHub secret scanning alert'leri (#1, #2) `wont_fix` + açıklama ile kapatıldı.
+- **Doğrulandı:** canlı Firestore kuralları `firestore.rules` ile birebir aynı (3 turun tamamı publish edilmiş) → TODO'daki "rules test mode'da" maddesi geçersiz.
+- **Doğrulandı:** projede billing account yok (Spark planı). Yani anahtar kötüye kullanımı fatura riski değil, **ücretsiz kota** riski. Blaze'e geçilirse ilk iş bütçe uyarısı kurmak.
+
+**Firebase CLI deploy config**
+
+`.firebaserc` + `firebase.json` eklendi → kurallar artık Console'a elle yapıştırmak yerine `firebase deploy --only firestore:rules` ile gidiyor (bir kerelik `firebase login` gerekiyor).
+
+**Market öncesi açık liste (henüz YAPILMADI)** — tamamı `SECURITY_NOTES.md` sonunda, öncelik sırasıyla. En kritik üçü:
+
+1. **Firestore okuma maliyeti — launch riski + DoS vektörü.** `getTopScores` mode filtresini client'ta yapıyor (composite index yok, `firestore.indexes.json` dosyası bile yok), telafi için `n*6+30` (tavan 250) doküman çekiyor; `arcrise.html:8423` her skor gönderiminde cache'i temizliyor → neredeyse her run yeni tam sorgu. Spark limiti **50.000 okuma/gün**; birkaç düzine aktif oyuncu günü doldurur, kota bitince Firestore 429 döner ve leaderboard **herkes için** gün sonuna kadar ölür. App Check bunu durdurmaz (istek meşru istemciden, geçerli token'la geliyor). Çözüm: `(mode ASC, score DESC)` composite index + sorguya `where mode == X` (250 → ~20 okuma) + tüm cache'i temizlemek yerine yalnızca kendi satırını yerelde güncelle.
+2. **UGC moderasyonu yok → Play reddi riski.** Public leaderboard'da serbest isimler + yabancılardan arkadaşlık isteği var ama kodda `report`/`block`/`mute` yok. Minimum: "report player" düğmesi + isim kaydında kara liste.
+3. **Otopilot production'da açık.** `?bot=1` / `ARC_BOT.toggle()` tam otomatik oynuyor ve skorları normal `submitScore` yolundan public leaderboard'a yazıyor; App Check durdurmaz. Release build'de derleme dışı bırakılmalı.
 
 ### v24 — Combo yeniden yazıldı: tavanlı lineer zincir + Max Combo yükseltmesi (2026-08-26)
 
@@ -820,9 +868,9 @@ Taban (0/0) → 8 kademe · 8 sn · 1 sn/kademe · 2 sn yeşil pencere — **v21
 5. **iOS Safari haptic feedback** desteklenmiyor — Feedback ayarı yanıltıcı.
 6. **Custom avatar localStorage quota** — error handling sessiz.
 7. **Music visibility change** — tab switch'te otomatik durmuyor (sadece AudioContext suspend olunca).
-8. **innerHTML XSS** — leaderboard satırlarında. Name filter (`[^A-Za-z0-9]` strip) güvence.
+8. ~~**innerHTML XSS**~~ — kapatıldı: `esc()` tüm Firestore/localStorage kaynaklı innerHTML noktalarına yayıldı (v20 + 2026-08-26 denetimi), `arc_upg`/`arc_avatar_custom` beyaz listeye bağlandı.
 9. **5000+ satır tek dosya** — bir noktada split mantıklı (vite/esbuild ile bundle olabilir).
-10. **Firestore security rules production-ready değil** — test mode'da; spam yazma riski var.
+10. ~~**Firestore rules test mode'da**~~ — geçersiz: 3 turluk sertleştirme publish edildi ve 2026-08-26'da canlı kuralların `firestore.rules` ile birebir aynı olduğu doğrulandı. Açık kalan asıl risk **okuma maliyeti/kota** (bkz. `SECURITY_NOTES.md` market öncesi liste #1).
 11. **IAP entegrasyonu yok** — coin buy butonları alert placeholder.
 
 ---
