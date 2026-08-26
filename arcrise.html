@@ -4339,7 +4339,7 @@ const FIREBASE_CONFIG = {
   //      (Enforce edilmeden sahte istekler ENGELLENMEZ; edilince token'sız REST tamamen kapanır.)
   //   4. Android (Capacitor) için daha güçlü koruma: Play Integrity provider
   //      → @capacitor-firebase/app-check plugin'i gerekir (reCAPTCHA WebView'de de çalışır ama zayıftır).
-  appId:           '',   // ör: '1:1234567890:web:abc123'
+  appId:           '1:66023331166:web:d36b4175459b490061ebcf',
   appCheckSiteKey: '',   // reCAPTCHA v3 site key
 };
 
@@ -5802,6 +5802,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       anchor:     { owned: false, durLvl: 0, cdLvl: 0 },
     },
   };
+  // GÜVENLİK: customGrad / traceColor doğrudan style="background:${...}" içine
+  // giriyor. localStorage kurcalanırsa attribute kırılıp HTML enjeksiyonuna
+  // dönüşebilir (CSP'de unsafe-inline var). Yüklemede tek noktadan süzülür.
+  const SAFE_CSS_VALUE = /^(#[0-9a-fA-F]{3,8}|(linear|radial|conic)-gradient\([0-9a-zA-Z#.,%()\s-]{1,400}\))$/;
+  // traceColor id'si ya hex ya da RAINBOWS anahtarı ('rainbow', 'rb:warm', 'custom')
+  // → ':' charset'te olmalı, yoksa meşru seçim sessizce sıfırlanır.
+  const SAFE_TRACE_ID  = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z0-9_:-]{1,32})$/;
   function loadUpg() {
     try {
       const raw = JSON.parse(localStorage.getItem(UPG_KEY) || '{}');
@@ -5815,6 +5822,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
         if (raw.timer) { merged.comboWin = raw.timer | 0; merged.timer = 0; }
         merged.comboSplitV22 = true;
       }
+      if (!SAFE_CSS_VALUE.test(String(merged.customGrad || ''))) merged.customGrad = '';
+      if (!SAFE_TRACE_ID.test(String(merged.traceColor || ''))) merged.traceColor = '#ffffff';
       return merged;
     } catch(_) { return JSON.parse(JSON.stringify(UPG_DEFAULTS)); }
   }
@@ -6368,8 +6377,11 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
 
   let audioStarted = false;
   // Custom avatar: base64 data URL stored in localStorage
+  // GÜVENLİK: bu değer `<img src="${...}">` içine giriyor; yalnızca gerçek bir
+  // base64 image data-URL kabul edilir, aksi hâlde attribute kırılabilir.
+  const SAFE_DATA_IMG = /^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
   let customAvatarSrc = (() => {
-    try { return localStorage.getItem('arc_avatar_custom') || null; } catch { return null; }
+    try { const v = localStorage.getItem('arc_avatar_custom'); return (v && SAFE_DATA_IMG.test(v)) ? v : null; } catch { return null; }
   })();
 
   function initAudio() {
@@ -9423,6 +9435,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
   const _coinBadge = p => `<span class="opt-price">${iconHTML('coin', { size: 9 })}${p}</span>`;
   // traceColor → görünür CSS (hex / gradyen / custom / rainbow)
   function traceColorCss(id) {
+    if (typeof id !== 'string') id = '#ffffff';   // bozuk localStorage -> TypeError guard
     if (id === 'custom') return upg.customGrad || 'linear-gradient(90deg,#ff3b3b,#3bd1ff,#c45bff)';
     if (id.charAt(0) === '#') return id;
     return (RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
@@ -12041,7 +12054,7 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           ? `<button class="quest-claim" data-qi="${i}">CLAIM +${q.reward}</button>`
           : `<button class="quest-claim" disabled>+${q.reward}</button>`;
       return `<div class="quest-card ${done?'done':''}"${anim(i + 1)}>
-        <div class="quest-top"><span class="quest-label">${q.label}</span></div>
+        <div class="quest-top"><span class="quest-label">${esc(q.label)}</span></div>
         <div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%"></div></div>
         <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span>${claimBtn}</div>
       </div>`;
@@ -12200,8 +12213,8 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
       const nm = e.fromName || parseId(e.from).name, tg = e.fromTag || parseId(e.from).tag;
       return `<div class="fl-inv-row">
         <span class="fl-inv-name">${esc(nm)}<span class="fl-tag">#${esc(tg)}</span></span>
-        <button class="fl-inv-acc" data-acc="${e.id}" aria-label="Accept"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
-        <button class="fl-inv-rej" data-rej="${e.id}" aria-label="Reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        <button class="fl-inv-acc" data-acc="${esc(e.id)}" aria-label="Accept"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>
+        <button class="fl-inv-rej" data-rej="${esc(e.id)}" aria-label="Reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
     host.querySelectorAll('.fl-inv-acc').forEach(b => b.addEventListener('click', () => respondInvite(b.dataset.acc, true)));
@@ -12241,13 +12254,13 @@ const ARC_RESET_VERSION = 'r-2026-06-19-2';
           <span class="fl-stats"><span class="fl-s-score">${known?pad(f.score||0):'—'}</span> PTS · <span class="fl-s-dist">${known?flFmtDist(f.dist):'—'}</span></span>
         </span>
         ${metric}
-        <button class="fl-remove" data-id="${f.id}" aria-label="Remove">&times;</button>
+        <button class="fl-remove" data-id="${esc(f.id)}" aria-label="Remove">&times;</button>
       </div>`;
     }).join('') + pend.map(f => `<div class="fl-row" style="opacity:.55">
         <span class="fl-rank">·</span>
         <span class="fl-info"><span class="fl-name">${esc(f.name)}<span class="fl-tag">#${esc(f.tag)}</span></span>
         <span class="fl-stats">Request sent — pending</span></span>
-        <button class="fl-remove" data-id="${f.id}" aria-label="Cancel">&times;</button>
+        <button class="fl-remove" data-id="${esc(f.id)}" aria-label="Cancel">&times;</button>
       </div>`).join('');
     list.querySelectorAll('.fl-remove').forEach(b => b.addEventListener('click', async () => {
       const id = b.dataset.id;

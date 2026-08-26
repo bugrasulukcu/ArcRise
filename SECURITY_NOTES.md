@@ -37,3 +37,42 @@
 - Referral sayacında rate limit yok (coin client-side olduğundan pratik değeri düşük).
 - Anonim auth → cihaz/veri silme = hesap kaybı. Market sonrası Google Play Games / account linking düşünülebilir.
 - App Check + API key kısıtı + keystore taşıma → market publish'te (yukarıdaki liste).
+
+## 4. tur (2026-08-26) — Claude ile denetim
+
+### KRİTİK: APK'ya paketlenen web kopyası 8 hafta eskiydi
+
+`android/app/src/main/assets/public/arcrise.html` 1 Tem tarihliydi; içinde **ne `esc()`, ne CSP, ne `toUid`** vardı — yani 2026-07-02 güvenlik geçişinin hiçbiri Android build'inde yoktu. `android/app/src/main/assets/capacitor.config.json` de hâlâ `allowMixedContent: true` içeriyordu (root'tan kaldırılmıştı ama Capacitor runtime'da **assets'teki** config'i okur, dolayısıyla ayar hiç yürürlükten kalkmamıştı).
+
+**Neden fark edilmedi:** `www/` ve `android/app/src/main/assets/public/` `.gitignore`'da → aralarındaki drift git'te görünmüyor.
+
+- Düzeltildi: her iki kopya root ile birebir eşitlendi (md5 doğrulandı).
+- **`verify-sync.js` eklendi** + `npm run verify`. `npm run sync` artık sonunda otomatik doğruluyor. **Build öncesi `npm run verify` çalıştır** — fark varsa 1 ile çıkar.
+
+### Kod düzeltmeleri (arcrise.html)
+
+- `appId` dolduruldu (`1:66023331166:web:...`). App Check için geriye sadece `appCheckSiteKey` kaldı.
+- **localStorage → CSS/HTML enjeksiyonu kapatıldı.** `upg.customGrad` ve `upg.traceColor` doğrudan `style="background:${...}"` içine giriyordu; `arc_upg` kurcalanırsa attribute kırılıp (CSP'de `unsafe-inline` var) JS çalıştırılabilirdi → `arc_fb_rt` okunur, hesap devralınır. `loadUpg()` içinde tek noktadan beyaz listeye bağlandı (`SAFE_CSS_VALUE` / `SAFE_TRACE_ID`). Not: `SAFE_TRACE_ID` charset'inde `:` var — `rb:warm` gibi meşru id'ler elenmesin diye.
+- **Custom avatar doğrulaması**: `arc_avatar_custom` `<img src="${...}">` içine ham giriyordu; artık yalnızca gerçek `data:image/...;base64,...` kabul ediliyor.
+- `traceColorCss(id)` tip guard'ı: bozuk localStorage'da `id.charAt` TypeError atıp upgrade ekranını çökertiyordu.
+- `esc()` eklenen noktalar: quest label (`arc_quests_v1`'den geliyor), friendreq `data-acc`/`data-rej`, arkadaş `data-id` (×2).
+
+### AndroidManifest
+
+- `android:allowBackup` **true → false**. Hesabın tam anahtarı (Firebase refresh token `arc_fb_rt`) WebView localStorage'ında; `true` iken Android Auto Backup bunu kullanıcının Drive yedeğine ve cihaz-cihaz transferine dahil ediyordu. Anonim refresh token'ın süresi dolmaz ve iptal edilemez → sızarsa kalıcı erişim.
+
+### Cloud Console (yapıldı)
+
+- Android API anahtarı: 25 API → **5** (Firestore, Identity Toolkit, Token Service, Installations, App Check).
+- Web (Browser) API anahtarı: 25 API → **4** (Firestore, Identity Toolkit, Token Service, App Check). Liste `arcrise.html:52`'deki CSP `connect-src` ile birebir aynı.
+- GitHub secret scanning alert'leri (#1, #2) `wont_fix` + açıklama ile kapatıldı; `android/app/google-services.json` git takibinden çıkarıldı.
+- Doğrulandı: canlı Firestore kuralları `firestore.rules` ile **birebir aynı** (3 turun tamamı publish edilmiş).
+- Doğrulandı: projede **billing account yok** (Spark). Yani anahtar kötüye kullanımı fatura riski değil, ücretsiz kota riski. Blaze'e geçilirse ilk iş bütçe uyarısı kurmak.
+
+### Açık kalanlar
+
+1. **App Check** — `appCheckSiteKey` hâlâ boş. reCAPTCHA v3 kaydı **secret key** istiyor (google.com/recaptcha/admin'den alınır, Firebase Console'a yapıştırılır); site key alındıktan sonra `FIREBASE_CONFIG.appCheckSiteKey`'e yazılır → sonra App Check > APIs > Cloud Firestore: Monitor → Enforce.
+2. **Application restriction** her iki anahtarda da hâlâ `None` (Android için SHA-1 gerekir; web'e referrer kısıtı Capacitor WebView'ı kırar → App Check doğru çözüm).
+3. **Otopilot production'da açık**: `?bot=1` / `ARC_BOT.toggle()` tam otomatik oynuyor ve skorları normal `submitScore` yolundan public leaderboard'a yazıyor. App Check bunu durdurmaz (istek meşru istemciden gelir). Release build'de derleme dışı bırakılmalı.
+4. `keystore/keystore_credentials.txt` diskte düz metin (git'te değil) — parola yöneticisine taşınmalı.
+5. `scores`/`players` public okunabilir ve `owner` (uid) alanı taşıyor → NAME#TAG ↔ uid eşlemesi toplanabilir. Doğrudan istismarı yok; kabul edilebilir.

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "sync": "node sync-www.js && npx cap sync android"
+    "sync": "node sync-www.js && npx cap sync android && node verify-sync.js",
+    "verify": "node verify-sync.js"
   },
   "repository": {
     "type": "git",
