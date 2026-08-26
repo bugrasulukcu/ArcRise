@@ -49,3 +49,8 @@ android/captures/
 android/app/release/
 *.aab
 *.apk
+
+# Firebase Android config — API anahtari icerir, repo disinda tutulur.
+# Google Sign-In eklenince Firebase Console > Project settings > Android app
+# uzerinden yeniden indirilir. (build.gradle dosya yoksa plugin uygulamaz.)
+android/app/google-services.json
