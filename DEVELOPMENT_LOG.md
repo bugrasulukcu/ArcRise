@@ -396,6 +396,19 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Liderlik tablosu: PB güncellemesi, uid tabanlı doküman, asılı istekler, çevrimdışı durum (2026-09-28)
+
+- **PB güncellemesi hiç yazılmıyordu (Codex #1):** eski yol skoru isimle arıyor, güncellemeyi Authorization'sız düz `fetch` ile PATCH ediyordu; kurallar `isAuthed()` + `ownsOld()` istediği için 403. Artık doküman kimliği sabit **`scores/{uid}_{mode}`**: `fbFetch` ile GET (200/404) → varsa updateMask'li kimlikli PATCH, yoksa `currentDocument.exists=false` ile oluşturma. Aynı isimli farklı oyuncular birbirinin kaydına dokunamaz; `dedupeBest` artık `owner` ile gruplar (`parseRows` `owner` döndürür). Firestore bugün sıfırlandığı için taşıma gerekmedi. (Not: admin `dedupeScores` hâlâ isimle grupluyor — yalnız bakım aracı.)
+- **Tüm Firestore istekleri sonsuza dek asılı kalabiliyordu:** reCAPTCHA yüklenemezse (reklam engelleyici, zayıf ağ) App Check SDK'nın `getToken`'ı hiç dönmüyor → `fbFetch` bekliyor. Init 6 sn, token 4 sn süre sınırı; `fbFetch` 12 sn sonra `AbortController` ile iptal. "LOADING…'te takılı kalan tablo"nun kök nedeni buydu.
+- **Çevrimdışı/hata:** `getTopScores` hata cevabını (403/5xx) boş liste olarak cache'lemiyor (`!res.ok` → hata, `topFailed()`); tablo "Offline — connect to see scores" / "Couldn't load scores — try again" gösterir, başarısız okuma `lbCache`'e yazılmaz (sonraki açılış tekrar dener).
+- Test (CDP `Fetch` ile sahte Auth+Firestore, kural taklidi: kimliksiz yazma 403): 1. run → `PATCH scores/UID123_normal exists=false` kimlikli; daha iyi 2. run → updateMask'li kimlikli PATCH, skor 7→356. Firestore tamamen engelliyken tablo 1 sn içinde hata mesajı gösteriyor.
+
+### Çift START/AGAIN, Revive'da enerji, Anchor sızıntısı (2026-09-28, bb68588)
+
+- START/AGAIN hem butona hem sarmalayıcıya dinleyici bağlıydı → tek dokunuş 2 run başlatıp kalkan/item'ı iki kez harcıyordu. Tek dinleyici + 400 ms `_startGate`. Test: kalkan 5→4 (tek tık), AGAIN çift tık tek harcama.
+- Revive: enerji en az 0.6'ya çekilir (boş enerjiyle dirilip hemen ölme yok); ghost zaman aşımı yalnız hâlâ oyundaysa ve booster ghost değilse kapatır.
+- `resetGame`: `shockWaves`, `brakeT`, `anchorPoint` sıfırlanır (önceki run'dan sızıyordu).
+
 ### Müzik zamansız çalıyordu → tek kural (2026-09-28)
 
 `musicAllowed()` = müzik açık + ses başlatıldı + `scene === 'play'` + tutorial değil + ön planda. Tüm girişler (`playBgMusic`: run başı, revive, reklamla devam, tampon geç çözülünce, müzik aç) bu kuraldan geçer; `showScene` oyun dışı her ekranda durdurur.

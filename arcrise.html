@@ -4799,11 +4799,14 @@ const ARC_DB = (() => {
     })().catch(e => { console.warn('[ArcDB] AppCheck init failed:', e); return false; });
     return _acInit;
   }
+  // reCAPTCHA yüklenemezse (reklam engelleyici, zayıf ağ) SDK'nın getToken'ı hiç
+  // dönmeyebilir → tüm Firestore istekleri sessizce asılı kalırdı. Süre sınırı koy.
+  const _withTimeout = (pr, ms) => Promise.race([pr, new Promise(r => setTimeout(() => r(null), ms))]);
   async function _appCheckToken() {
     try {
       const init = _appCheckInit();
-      if (!init || !(await init)) return null;
-      const t = await firebase.appCheck().getToken(false);
+      if (!init || !(await _withTimeout(init, 6000))) return null;
+      const t = await _withTimeout(firebase.appCheck().getToken(false), 4000);
       return (t && t.token) || null;
     } catch (_) { return null; }
   }
@@ -4814,7 +4817,11 @@ const ARC_DB = (() => {
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
     const ac = await _appCheckToken();
     if (ac) headers['X-Firebase-AppCheck'] = ac;
-    return fetch(url, Object.assign({}, opts, { headers }));
+    // Ağ asılı kalırsa 12 sn sonra hata ver — çağıranlar "LOADING…"te takılmasın.
+    const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    const tm = ctl ? setTimeout(() => ctl.abort(), 12000) : 0;
+    try { return await fetch(url, Object.assign({}, opts, { headers }, ctl ? { signal: ctl.signal } : {})); }
+    finally { clearTimeout(tm); }
   }
 
   // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
@@ -4854,20 +4861,16 @@ const ARC_DB = (() => {
     const dAv   = !!(traceData && traceData.dAv);
     console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum, hasTrace: !!tracePts });
     await ensureAuth(); const uid = getUid();
+    if (!uid) { console.warn('[ArcDB] no auth — score not saved'); return; }
+    // Sabit kimlik: oyuncunun mod başına TEK skor dokümanı (`uid_mode`). Eskiden isimle
+    // sorgulanıyordu (20 okuma; aynı isimli farklı NAME#TAG oyuncuları birbirinin kaydı
+    // sanılabiliyordu) ve güncelleme kimliksiz fetch ile yapıldığı için kurallar 403 veriyordu
+    // → ilk skordan sonraki kişisel rekorlar hiç yazılmıyordu.
+    const docId = `${uid}_${mode}`;
     try {
-      const qRes = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ structuredQuery: {
-          from: [{ collectionId: 'scores' }],
-          where: { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: name } } },
-          limit: 20,
-        }}),
-      });
-      const hits = (await qRes.json()).filter(r => r.document?.fields);
-      const match = hits.find(r => {
-        const m = r.document.fields.mode?.stringValue;
-        return (m || 'normal') === mode;
-      });
+      const gRes = await fbFetch(`${BASE}/scores/${docId}?key=${apiKey}`);
+      if (gRes.status !== 200 && gRes.status !== 404) { console.warn('[ArcDB] score read failed', gRes.status); return; }
+      const match = gRes.status === 200 ? { document: await gRes.json() } : null;
 
       if (match) {
         const oldScore = parseInt(match.document.fields.score.integerValue ?? 0);
@@ -4890,7 +4893,6 @@ const ARC_DB = (() => {
           console.log('[ArcDB] nothing better, skip', { oldScore, oldDist, newScore: score, newDist: distNum });
           return;
         }
-        const docId = match.document.name.split('/').pop();
         // Keep the higher of each metric — both compete independently.
         const finalScore = scoreBetter ? score   : oldScore;
         const finalDist  = distBetter  ? distNum : oldDist;
@@ -4923,7 +4925,7 @@ const ARC_DB = (() => {
           maskParts.push('badges');
         }
         const mask = maskParts.map(f => `updateMask.fieldPaths=${f}`).join('&');
-        const upd = await fetch(
+        const upd = await fbFetch(                        // kimlikli (kurallar sahibi doğrular)
           `${BASE}/scores/${docId}?key=${apiKey}&${mask}`,
           { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) }
         );
@@ -4946,8 +4948,9 @@ const ARC_DB = (() => {
         if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
         if (uid)            fields.owner          = { stringValue: uid };
         if (tag)            fields.tag            = { stringValue: String(tag) }; // arkadaş ekleme için kimlik
-        const ins = await fbFetch(`${BASE}/scores?key=${apiKey}`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+        // Aynı sabit kimlikle oluştur; "yoksa" ön koşulu yarışan iki yazmada üzerine yazmayı önler.
+        const ins = await fbFetch(`${BASE}/scores/${docId}?key=${apiKey}&currentDocument.exists=false`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fields }),
         });
         if (!ins.ok) { console.warn('[ArcDB] POST failed', ins.status, await ins.text()); return; }
@@ -4977,6 +4980,7 @@ const ARC_DB = (() => {
           dAv:      !!f.dAv?.booleanValue,
           badges:   f.badges?.stringValue || '',
           tag:      f.tag?.stringValue || '',
+          owner:    f.owner?.stringValue || '',
           docId:    r.document.name.split('/').pop(),
         };
       });
@@ -4986,9 +4990,9 @@ const ARC_DB = (() => {
   // (Old/legacy duplicates can sneak in; this guarantees one row per
   // (name, mode) in any rendered list.)
   function dedupeBest(rows) {
-    const best = new Map(); // key = `${name}|${normMode(mode)}`
+    const best = new Map(); // key = `${owner||name}|${normMode(mode)}` — aynı isimli farklı oyuncular birleşmez
     for (const r of rows) {
-      const key = `${r.name}|${normMode(r.mode || 'normal')}`;
+      const key = `${r.owner || r.name}|${normMode(r.mode || 'normal')}`;
       const cur = best.get(key);
       if (!cur || r.score > cur.score || (r.score === cur.score && r.ts > cur.ts)) {
         best.set(key, r);
@@ -5027,6 +5031,7 @@ const ARC_DB = (() => {
     try { sessionStorage.setItem('arc_topcache_' + key, JSON.stringify(obj)); } catch(_){}
   }
 
+  let _topFailed = false;  // son liderlik tablosu okuması başarısız mı (çevrimdışı / hata)
   async function getTopScores(n = 10, mode) {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
     const target = mode ? normMode(mode) : null;
@@ -5050,12 +5055,14 @@ const ARC_DB = (() => {
           limit:   fetchN,
         }}),
       });
+      if (!res.ok) throw new Error('runQuery ' + res.status);  // hata cevabı boş liste olarak cache'lenmesin
       // Dedupe at the read layer — only each player's best per mode survives,
       // even if the doc store somehow contains historical duplicates.
       const all = dedupeBest(parseRows(await res.json()));
       _cacheSet(key, all);
+      _topFailed = false;
       return target ? all.filter(r => r.mode === target).slice(0, n) : all.slice(0, n);
-    } catch(e) { console.warn('[ArcDB] fetch failed', e); return []; }
+    } catch(e) { console.warn('[ArcDB] fetch failed', e); _topFailed = true; return []; }
   }
 
   // Allow explicit cache wipe (e.g. after submitting a new score).
@@ -5503,7 +5510,7 @@ const ARC_DB = (() => {
     } catch(_) { return false; }
   }
 
-  const api = { submitScore, getTopScores, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  const api = { submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -10044,7 +10051,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const daily   = rows.filter(r => r.ts >= dayStart).sort((a,b)=>b.score-a.score)[0] || null;
     const monthly = rows.filter(r => r.ts >= monthStart).sort((a,b)=>b.score-a.score)[0] || null;
     const data = { rows, top, daily, monthly, metric: lbMetric };
-    lbCache[mode] = data;
+    if (!ARC_DB.topFailed()) lbCache[mode] = data;  // başarısız okuma cache'lenmesin → sonraki açılışta tekrar dener
     return data;
   }
 
@@ -10140,9 +10147,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     renderLbCard('daily',   null);
     renderLbCard('monthly', null);
     document.getElementById('lb-list').innerHTML = `<div class="lb-empty">Loading...</div>`;
-    const data = await loadLbData(mode);
+    let data = null;
+    try { data = await loadLbData(mode); } catch (e) { console.warn('[LB] load failed', e); }
     // Eğer kullanıcı bu sırada tab değiştirdiyse, sonuçları yazma
     if (lbCurrentMode !== mode) return;
+    // Bağlantı yok / okuma başarısız → boş liste yerine açık mesaj; hatalı veri cache'lenmesin
+    if (!data || (ARC_DB.topFailed() && !(data.rows || []).length)) {
+      lbCache[mode] = null;
+      document.getElementById('lb-list').innerHTML = `<div class="lb-empty">${navigator.onLine === false ? 'Offline — connect to see scores' : 'Couldn\u2019t load scores — try again'}</div>`;
+      return;
+    }
     renderLbCard('best',    data.top);
     renderLbCard('daily',   data.daily);
     renderLbCard('monthly', data.monthly);
