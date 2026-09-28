@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="arc">
 <head>
   <meta charset="utf-8" />
   <script>
@@ -3490,9 +3490,117 @@
     }
     .slot.cooling .slot-ring { opacity: 1; }
     .slot.cooling { opacity: 0.55; }
+    /* ══════════ GLOW DİLİ — avatar stilinin UI'a genellenmiş hâli ══════════
+       Her öğe tek bir vurgu rengi (--c) taşır; zemin, halka, iç ışık ve parlama
+       ondan color-mix ile türetilir. color-mix'i bilmeyen tarayıcı bu blokları
+       düşürür → eski görünüm kalır. İkon degradesi: #glow-defs'teki gg-<renk>. */
+    .gl, .btn-gray { --c: #b89bff; --gg: url(#gg-lilac); }
+    .gl-gold   { --c: #ffcc00; --gg: url(#gg-gold); }
+    .gl-amber  { --c: #ffb13b; --gg: url(#gg-amber); }
+    .gl-lilac  { --c: #b89bff; --gg: url(#gg-lilac); }
+    .gl-cyan   { --c: #00ccff; --gg: url(#gg-cyan); }
+    .gl-green  { --c: #44ff88; --gg: url(#gg-green); }
+    .gl-purple { --c: #a066ff; --gg: url(#gg-purple); }
+    .gl-red    { --c: #ff3355; --gg: url(#gg-red); }
+    .gl-pink   { --c: #ff44cc; --gg: url(#gg-pink); }
+    html#arc .gl, html#arc .btn-gray {
+      background:
+        radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 7%, transparent) 62%, transparent 100%),
+        linear-gradient(180deg, #0b0c12, #07080c);
+      border: 1.4px solid color-mix(in srgb, var(--c) 42%, transparent);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--c) 15%, transparent), inset 0 1px 0 rgba(255,255,255,.07);
+      color: color-mix(in srgb, var(--c) 72%, #fff);
+    }
+    html#arc .gl:hover, html#arc .btn-gray:hover { border-color: color-mix(in srgb, var(--c) 70%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--c) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.1); filter: none; }
+    html#arc .gl svg, html#arc .btn-gray svg { filter: drop-shadow(0 0 3.5px color-mix(in srgb, var(--c) 85%, transparent)); }
+    html#arc :is(.gl, .btn-gray) svg[stroke="currentColor"], html#arc :is(.gl, .btn-gray) svg [stroke="currentColor"] { stroke: var(--gg); }
+    html#arc :is(.gl, .btn-gray) svg [fill="currentColor"] { fill: var(--gg); }
+    html#arc .gl .gl-txt, html#arc .gl .chip-val, html#arc .gl .cl-label { text-shadow: 0 0 8px color-mix(in srgb, var(--c) 55%, transparent); }
+    /* Yarı saydam (arkası bulanık) yüzeyler: zemin opak değil */
+    /* ── Temalar (Settings → Theme). Filtre body'ye uygulanır: oyun alanı dahil tüm ekran. ── */
+    html.theme-dither body { filter: url(#fx-dither); }
+    html.theme-gameboy body { filter: url(#fx-gameboy); }
+    html.theme-onebit body { filter: url(#fx-onebit); }
+    html.theme-synth body { filter: url(#fx-synth); }
+    html.theme-blueprint body { filter: url(#fx-blueprint); }
+    html.theme-thermal body { filter: url(#fx-thermal); }
+    html.theme-noir body { filter: grayscale(1) contrast(1.35) brightness(1.05); }
+    html.theme-crt body { filter: saturate(1.3) contrast(1.08); }
+    /* CRT tarama çizgileri + köşe kararması, Noir greni: dokunmayı engellemeyen üst katman */
+    html.theme-crt body::after, html.theme-noir body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2147483000;
+    }
+    html.theme-crt body::after {
+      background:
+        repeating-linear-gradient(0deg, rgba(0,0,0,.3) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.6) 100%);
+    }
+    html.theme-noir body::after { background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='160'%20height='160'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20values='0%200%200%200%201%20%200%200%200%200%201%20%200%200%200%200%201%20%200%200%200%20.55%200'/%3E%3C/filter%3E%3Crect%20width='160'%20height='160'%20filter='url(%23n)'/%3E%3C/svg%3E"); opacity: .14; mix-blend-mode: overlay; }
+    #theme-modal {
+      position: fixed; inset: 0; z-index: 89;   /* buy-modal (90) üstte kalsın */ display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    #theme-modal.open { display: flex; }
+    #theme-modal-box { width: min(88vw, 360px); max-height: 86vh; overflow-y: auto; border-radius: 22px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+    #theme-list { display: flex; flex-direction: column; gap: 10px; }
+    .theme-card { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; cursor: pointer; text-align: left; font-family: var(--font); }
+    .theme-card.active { border-color: color-mix(in srgb, var(--c) 90%, transparent); }
+    .theme-prev { flex: 0 0 92px; height: 62px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); }
+    .theme-prev svg { width: 100%; height: 100%; display: block; }
+    .theme-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .theme-name { font-size: 13px; letter-spacing: 2px; color: #fff; }
+    .theme-desc { font-size: 11px; line-height: 1.4; color: rgba(236,230,255,.7); text-transform: none; }
+    .theme-state { font-size: 10px; letter-spacing: 1.2px; color: #9fffa0; display: inline-flex; align-items: center; gap: 4px; }
+    .theme-state.price { color: #ffd866; }
+    #theme-open { padding: 9px 14px; border-radius: 11px; font-family: var(--font); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; }
+    html#arc .gl.gl-glass {
+      background:
+        radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%),
+        rgba(9,10,16,.72);
+    }
   </style>
 </head>
 <body>
+<svg id="glow-defs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gg-gold" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#ffcc00"/><stop offset="1" stop-color="#ffcc00"/></linearGradient>
+  <linearGradient id="gg-amber" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#ffb13b"/><stop offset="1" stop-color="#ffb13b"/></linearGradient>
+  <linearGradient id="gg-lilac" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#b89bff"/><stop offset="1" stop-color="#b89bff"/></linearGradient>
+  <linearGradient id="gg-cyan" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#00ccff"/><stop offset="1" stop-color="#00ccff"/></linearGradient>
+  <linearGradient id="gg-green" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#44ff88"/><stop offset="1" stop-color="#44ff88"/></linearGradient>
+  <linearGradient id="gg-purple" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#a066ff"/><stop offset="1" stop-color="#a066ff"/></linearGradient>
+  <linearGradient id="gg-red" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#ff3355"/><stop offset="1" stop-color="#ff3355"/></linearGradient>
+  <linearGradient id="gg-pink" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="22"><stop offset="0" stop-color="#fff"/><stop offset=".48" stop-color="#ff44cc"/><stop offset="1" stop-color="#ff44cc"/></linearGradient>
+  <!-- Tema filtreleri: html.theme-<id> body'ye uygular (bkz. THEMES) -->
+  <filter id="fx-dither" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feImage href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%278%27%20height%3D%278%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%288%2C8%2C8%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28135%2C135%2C135%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2840%2C40%2C40%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28167%2C167%2C167%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28199%2C199%2C199%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2872%2C72%2C72%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28231%2C231%2C231%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28104%2C104%2C104%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2856%2C56%2C56%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28183%2C183%2C183%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2824%2C24%2C24%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28151%2C151%2C151%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28247%2C247%2C247%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28120%2C120%2C120%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28215%2C215%2C215%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2888%2C88%2C88%29%27/%3E%3C/svg%3E" x="0" y="0" width="8" height="8" preserveAspectRatio="none" result="bayer"/>
+    <feTile in="bayer" result="bt"/>
+    <feComposite in="SourceGraphic" in2="bt" operator="arithmetic" k1="0" k2="1" k3="0.3" k4="-0.15" result="n"/>
+    <feComponentTransfer in="n"><feFuncR type="discrete" tableValues="0 .33 .67 1"/><feFuncG type="discrete" tableValues="0 .33 .67 1"/><feFuncB type="discrete" tableValues="0 .33 .67 1"/></feComponentTransfer>
+  </filter>
+  <filter id="fx-gameboy" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/>
+    <feComponentTransfer><feFuncR type="discrete" tableValues=".06 .19 .55 .61"/><feFuncG type="discrete" tableValues=".22 .38 .67 .74"/><feFuncB type="discrete" tableValues=".06 .19 .06 .06"/></feComponentTransfer>
+  </filter>
+  <filter id="fx-onebit" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0" result="g"/>
+    <feImage href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%278%27%20height%3D%278%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20x%3D%270%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%288%2C8%2C8%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28135%2C135%2C135%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2840%2C40%2C40%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%270%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28167%2C167%2C167%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28199%2C199%2C199%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2872%2C72%2C72%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28231%2C231%2C231%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%272%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28104%2C104%2C104%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2856%2C56%2C56%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28183%2C183%2C183%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2824%2C24%2C24%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%274%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28151%2C151%2C151%29%27/%3E%3Crect%20x%3D%270%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28247%2C247%2C247%29%27/%3E%3Crect%20x%3D%272%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28120%2C120%2C120%29%27/%3E%3Crect%20x%3D%274%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%28215%2C215%2C215%29%27/%3E%3Crect%20x%3D%276%27%20y%3D%276%27%20width%3D%272%27%20height%3D%272%27%20fill%3D%27rgb%2888%2C88%2C88%29%27/%3E%3C/svg%3E" x="0" y="0" width="8" height="8" preserveAspectRatio="none" result="bayer"/>
+    <feTile in="bayer" result="bt"/>
+    <feComposite in="g" in2="bt" operator="arithmetic" k1="0" k2="1.1" k3="0.9" k4="-0.5" result="n"/>
+    <feComponentTransfer in="n"><feFuncR type="discrete" tableValues="0 1"/><feFuncG type="discrete" tableValues="0 1"/><feFuncB type="discrete" tableValues="0 1"/></feComponentTransfer>
+  </filter>
+  <filter id="fx-synth" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/>
+    <feComponentTransfer><feFuncR type="table" tableValues=".07 .55 1 .02 .9"/><feFuncG type="table" tableValues="0 .05 .16 .85 1"/><feFuncB type="table" tableValues=".14 .45 .43 .91 1"/></feComponentTransfer>
+  </filter>
+  <filter id="fx-blueprint" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/>
+    <feComponentTransfer><feFuncR type="table" tableValues=".04 .12 .91"/><feFuncG type="table" tableValues=".16 .3 .95"/><feFuncB type="table" tableValues=".36 .6 1"/></feComponentTransfer>
+  </filter>
+  <filter id="fx-thermal" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0"/>
+    <feComponentTransfer><feFuncR type="table" tableValues="0 .1 .8 1 1 1"/><feFuncG type="table" tableValues="0 0 .05 .35 .9 1"/><feFuncB type="table" tableValues="0 .6 .7 .1 .1 1"/></feComponentTransfer>
+  </filter>
+</defs></svg>
 <div id="toast"></div>
 <div id="reward-toast"></div>
 
@@ -3552,7 +3660,7 @@
 
 <!-- ══ PROFILE SETUP ══ -->
 <div class="screen" id="profile-setup">
-  <div class="panel">
+  <div class="panel gl gl-lilac gl-glass">
     <h2>CREATE PROFILE</h2>
     <div id="ps-name-row">
       <input type="text" id="ps-name-input" maxlength="8" placeholder="YOUR NAME"
@@ -3579,7 +3687,7 @@
   <div id="home-logo-wrap">
   <img id="home-logo" src="PNG/LOGO.png" alt="">
   <!-- Profile card (tap to edit) -->
-  <div id="home-profile" title="Tap to edit profile">
+  <div id="home-profile" class="gl gl-lilac gl-glass" title="Tap to edit profile">
     <div id="home-av-wrap">
       <img id="home-av-img" src="" alt="">
     </div>
@@ -3592,11 +3700,11 @@
       </div>
     </div>
     <div id="home-side">
-      <button id="home-coin-pill" class="home-chip chip-coin" title="Coins" aria-label="Coins">
+      <button id="home-coin-pill" class="home-chip chip-coin gl gl-gold" title="Coins" aria-label="Coins">
         <span class="chip-ic">C</span>
         <span class="chip-val" id="home-pcoins">0</span>
       </button>
-      <button id="home-upgrade-btn" class="home-chip chip-upg" title="Upgrades" aria-label="Upgrades">
+      <button id="home-upgrade-btn" class="home-chip chip-upg gl gl-purple" title="Upgrades" aria-label="Upgrades">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 5 L12 15"/>
           <path d="M6 11 L12 5 L18 11"/>
@@ -3613,7 +3721,7 @@
     </div>
     <!-- Alt aksiyon satırı: High Scores (kupa) · Quests · Settings -->
     <div class="share-settings-row">
-      <button class="btn-gray btn-icon" id="btn-lb" title="High Scores" aria-label="High Scores">
+      <button class="btn-gray btn-icon gl gl-gold" id="btn-lb" title="High Scores" aria-label="High Scores">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 21h8"/>
           <path d="M12 17v4"/>
@@ -3622,14 +3730,14 @@
           <path d="M7 4H4v3a3 3 0 0 0 3 3"/>
         </svg>
       </button>
-      <button id="btn-quests" type="button">
+      <button id="btn-quests" class="gl gl-amber" type="button">
         <span class="bsh-row">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           QUESTS
         </span>
         <span class="bsh-sub" id="btn-quests-sub">Daily quests</span>
       </button>
-      <button class="btn-gray btn-icon" id="btn-settings" title="Settings" aria-label="Settings">
+      <button class="btn-gray btn-icon gl gl-lilac" id="btn-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.01c.4.16.74.43 1 .77.27.34.44.74.5 1.16H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.06z"/>
@@ -3638,11 +3746,11 @@
     </div>
     <!-- Challenge (davet) + Friends listesi yan yana -->
     <div class="challenge-friends-row">
-      <button id="btn-challenge-link" type="button">
+      <button id="btn-challenge-link" class="gl gl-cyan" type="button">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
         <span class="cl-label">Challenge a friend</span>
       </button>
-      <button id="btn-friends" type="button">
+      <button id="btn-friends" class="gl gl-green" type="button">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span class="cl-label">Friends</span>
         <span class="fr-badge" id="friends-badge" hidden></span>
@@ -3658,7 +3766,7 @@
 
 <!-- ══ SETTINGS ══ -->
 <div class="screen" id="settings">
-  <div class="panel">
+  <div class="panel gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="settings-back" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="modal-head-title" style="font-size:21px;letter-spacing:3px">SETTINGS</div>
@@ -3735,6 +3843,12 @@
       </div>
     </div>
 
+    <!-- ── Theme ── -->
+    <div class="srow">
+      <span class="slbl">Theme</span>
+      <div class="sctl"><button id="theme-open" class="gl gl-pink" type="button"><span id="theme-cur">DEFAULT</span></button></div>
+    </div>
+
   </div>
   <!-- How to play — panel altında, boş alanda metin link -->
   <button class="home-link" id="settings-howto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg>HOW TO PLAY</button>
@@ -3753,7 +3867,7 @@
 
 <!-- ══ PRIVACY POLICY ══ -->
 <div id="privacy-modal">
-  <div id="privacy-modal-box">
+  <div id="privacy-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="privacy-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">PRIVACY</div>
@@ -3774,7 +3888,7 @@
 
 <!-- ══ RESET DATA CONFIRM ══ -->
 <div id="reset-modal">
-  <div id="reset-modal-box">
+  <div id="reset-modal-box" class="gl gl-red gl-glass">
     <div id="reset-modal-title">DELETE ACCOUNT & DATA?</div>
     <div id="reset-modal-sub">This permanently deletes <b>all your data and purchases</b> — coins, gear, abilities, badges, quests, progress — and your <b>online data</b>: leaderboard scores, profile and friend connections. This cannot be undone.</div>
     <div id="reset-modal-actions">
@@ -3786,7 +3900,7 @@
 
 <!-- ══ SATIN ALMA ONAY MODALI ══ -->
 <div id="buy-modal">
-  <div id="buy-modal-box">
+  <div id="buy-modal-box" class="gl gl-purple gl-glass">
     <div id="buy-modal-title">CONFIRM PURCHASE</div>
     <div id="buy-modal-sub"></div>
     <div id="buy-modal-price"></div>
@@ -3798,9 +3912,21 @@
   </div>
 </div>
 
+<!-- ══ THEMES ══ -->
+<div id="theme-modal">
+  <div id="theme-modal-box" class="gl gl-pink gl-glass" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <button id="theme-back" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <div class="modal-head-title">THEMES</div>
+      <span class="modal-head-spacer"></span>
+    </div>
+    <div id="theme-list"></div>
+  </div>
+</div>
+
 <!-- ══ UPGRADE INFO ══ -->
 <div id="upginfo-modal">
-  <div id="upginfo-box" role="dialog" aria-modal="true" aria-labelledby="upginfo-title">
+  <div id="upginfo-box" class="gl gl-purple gl-glass" role="dialog" aria-modal="true" aria-labelledby="upginfo-title">
     <div id="upginfo-head"><div class="core-icon" id="upginfo-icon"></div><div id="upginfo-title"></div></div>
     <div id="upginfo-anim"></div>
     <div id="upginfo-desc"></div>
@@ -3812,7 +3938,7 @@
 
 <!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
-  <div class="panel">
+  <div class="panel gl gl-purple gl-glass">
     <!-- Animated score + distance, with small best lines under each -->
     <div id="go-twin-row">
       <div class="go-twin-col">
@@ -3878,7 +4004,7 @@
 
 <!-- ══ EXTREME MODE POPUP ══ -->
 <div id="extreme-modal">
-  <div id="extreme-modal-box">
+  <div id="extreme-modal-box" class="gl gl-red gl-glass">
     <div id="extreme-modal-deco"></div>
     <div id="extreme-icon"></div>
     <div id="extreme-title">EXTREME MODE</div>
@@ -3921,7 +4047,7 @@
 <!-- ══ WIFE MODE CONFIRM ══ -->
 <!-- Revive Ticket prompt — shown when player dies and a revive ticket is available -->
 <div id="revive-modal">
-  <div id="revive-modal-box">
+  <div id="revive-modal-box" class="gl gl-red gl-glass">
     <div id="revive-modal-title">REVIVE?</div>
     <div id="revive-modal-sub">
       Use 1 ticket to continue from your last safe spot.<br>
@@ -3935,7 +4061,7 @@
 </div>
 
 <div id="wife-modal">
-  <div id="wife-modal-box">
+  <div id="wife-modal-box" class="gl gl-pink gl-glass">
     <div id="wife-modal-deco"></div>
     <div id="wife-icon"></div>
     <div id="wife-title">WIFE MODE</div>
@@ -3954,7 +4080,7 @@
 
 <!-- ══ UPGRADES MODAL (CORE + GEAR katalogu)══ -->
 <div id="upgrades-modal">
-  <div id="upgrades-modal-box">
+  <div id="upgrades-modal-box" class="gl gl-purple gl-glass">
     <div id="upg-topbar">
       <button id="upg-back-arrow" type="button" aria-label="Back">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg>
@@ -3982,7 +4108,7 @@
 
 <!-- Gear picker — slot'a basınca açılan ayrı pencere -->
 <div id="gearpick-modal">
-  <div id="gearpick-box">
+  <div id="gearpick-box" class="gl gl-purple gl-glass">
     <div class="modal-head">
       <button id="gearpick-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title" id="gearpick-title">CHOOSE GEAR</div>
@@ -3994,7 +4120,7 @@
 
 <!-- ══ COINS MODAL ══ -->
 <div id="coins-modal">
-  <div id="coins-modal-box">
+  <div id="coins-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
       <button id="coins-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="modal-head-title" style="font-size:21px;letter-spacing:3px;color:#ffd866">COINS</div>
@@ -4048,7 +4174,7 @@
 
 <!-- ══ QUESTS MODAL ══ -->
 <div id="quests-modal">
-  <div id="quests-modal-box">
+  <div id="quests-modal-box" class="gl gl-amber gl-glass">
     <div class="modal-head">
       <button id="quests-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="qm-title modal-head-title">DAILY QUESTS</div>
@@ -4061,7 +4187,7 @@
 
 <!-- ══ CHALLENGE / INVITE MODAL ══ -->
 <div id="friends-modal">
-  <div id="friends-modal-box">
+  <div id="friends-modal-box" class="gl gl-green gl-glass">
     <div class="modal-head">
       <button id="friends-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">CHALLENGE!</div>
@@ -4083,7 +4209,7 @@
 
 <!-- ══ FRIENDS LIST MODAL ══ -->
 <div id="friendslist-modal">
-  <div id="friendslist-modal-box">
+  <div id="friendslist-modal-box" class="gl gl-green gl-glass">
     <div class="modal-head">
       <button id="friendslist-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">FRIENDS</div>
@@ -4112,7 +4238,7 @@
 
 <!-- ══ HIGH SCORES MODAL ══ -->
 <div id="lb-modal">
-  <div id="lb-modal-box">
+  <div id="lb-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
       <button id="lb-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div id="lb-modal-title" class="modal-head-title">High Scores</div>
@@ -4153,7 +4279,7 @@
 <!-- ══ PROFILE EDIT MODAL ══ -->
 <!-- Avatar picker — standalone popup, açıldığında profil kutusunu kaydırmaz -->
 <div id="avpick-modal">
-  <div id="avpick-modal-box">
+  <div id="avpick-modal-box" class="gl gl-lilac gl-glass">
     <div class="avpick-title">SELECT AN AVATAR</div>
     <div id="avpick-grid"></div>
     <div class="avpick-or">OR UPLOAD AN IMAGE</div>
@@ -4166,7 +4292,7 @@
 </div>
 
 <div id="prof-modal">
-  <div id="prof-modal-box">
+  <div id="prof-modal-box" class="gl gl-lilac gl-glass">
     <!-- Geri oku (diğer alt-sayfalardaki gibi) -->
     <button id="prof-back-arrow" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
 
@@ -4252,7 +4378,7 @@
 <!-- ══ BADGES MODAL (opened from equip slots) ══ -->
 <!-- ANALYSIS (detaylı veriler) -->
 <div id="analysis-modal">
-  <div id="analysis-modal-box">
+  <div id="analysis-modal-box" class="gl gl-cyan gl-glass">
     <div class="modal-head">
       <button id="analysis-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">ANALYSIS</div>
@@ -4274,7 +4400,7 @@
 
 <!-- TRACE (iz: kalinlik + renk + animasyon) -->
 <div id="trace-modal">
-  <div id="trace-modal-box">
+  <div id="trace-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="trace-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">TRACE</div>
@@ -4294,7 +4420,7 @@
 
 <!-- CUSTOM GRADIENT (kendi gradyenini oluştur) — pencere gibi açılır -->
 <div id="custom-modal">
-  <div id="custom-modal-box">
+  <div id="custom-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="custom-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">CUSTOM GRADIENT</div>
@@ -4312,7 +4438,7 @@
 
 <!-- TOMB (mezar secici) -->
 <div id="tomb-modal">
-  <div id="tomb-modal-box">
+  <div id="tomb-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="tomb-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">TOMB</div>
@@ -4325,7 +4451,7 @@
 
 <!-- DEATH TEXT -->
 <div id="deathtext-modal">
-  <div id="deathtext-modal-box">
+  <div id="deathtext-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="deathtext-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div class="fm-title modal-head-title">DEATH TEXT</div>
@@ -4338,7 +4464,7 @@
 
 <!-- BADGES MODAL (opened from equip slots) -->
 <div id="badges-modal">
-  <div id="badges-modal-box">
+  <div id="badges-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
       <button id="badges-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div id="badges-modal-title" class="modal-head-title">Badges</div>
@@ -4351,7 +4477,7 @@
 
 <!-- ══ AVATAR MODAL ══ -->
 <div id="av-modal">
-  <div id="av-modal-box">
+  <div id="av-modal-box" class="gl gl-lilac gl-glass">
     <div id="av-modal-title">CHOOSE AVATAR</div>
     <div id="av-modal-grid"></div>
     <button id="av-modal-close">DONE</button>
@@ -5423,7 +5549,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       headstart:   `<path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${F}/><path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${S}/><circle cx="12" cy="8.3" r="1.6" fill="currentColor"/><path d="M7.8 13l-2.6 3 3-.2M16.2 13l2.6 3-3-.2" ${S}/><path d="M10.3 17.5l-.6 3M12 17.5v4M13.7 17.5l.6 3" ${S} opacity=".6"/>`,
       coinrain:    `<path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${F}/><path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${S}/><circle cx="7.5" cy="16" r="2" fill="currentColor"/><circle cx="16" cy="15.2" r="2" fill="currentColor"/><circle cx="12" cy="20.2" r="2" fill="currentColor"/>`,
       preboost:    `<rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${F}/><rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${S}/><path d="M2.5 7h19v3h-19zM12 7v13.5" ${S}/><path d="M12 7C9.5 7 7.5 4 9.5 3.2 11 2.6 12 5 12 7c0-2 1-4.4 2.5-3.8C16.5 4 14.5 7 12 7z" ${S}/>`,
-      filter:      `<path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" ${F}/><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" ${S}/><circle cx="7.5" cy="7.2" r="1.1" fill="currentColor"/><circle cx="12" cy="7.2" r="1.1" fill="currentColor"/><circle cx="16.5" cy="7.2" r="1.1" fill="currentColor"/>`,
+      filter:      `<path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${F}/><path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${S}/><path d="M12.6 13.5c.8 3 2 5.5 3.6 7.5" ${S}/>`,
     };
     // Info butonu: italik "I" yerine gerçek bir info glifi (global uppercase'ten etkilenmez)
     const infoGlyph = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="7" r="1.7" fill="currentColor"/><path d="M12 11v7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
@@ -5443,6 +5569,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const walls = (l = 22, r = 218) => `<path d="M${l} 8V142M${r} 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>`;
     const ball  = (x, y, r = 7, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.ball}" GLOW ${extra}/>`;
     const dot   = (x, y, col, r = 5, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" GLOW ${extra}/>`;
+    // Kırmızı engel — oyundaki gibi daire (top 7px ↔ oyunda 18px; engel ölçeği aynı oranda)
+    const obst  = (x, y, r = 12, inner = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.red}" GLOW>${inner}</circle>`
+      + `<circle cx="${x}" cy="${y}" r="${(r * .45).toFixed(1)}" fill="#fff" opacity=".22" pointer-events="none">${inner}</circle>`;
     const label = (x, y, t, col = C.txt, size = 13, extra = '') => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" ${FONT} fill="${col}" ${extra}>${t}</text>`;
     // opaklık zaman çizelgesi: vals "0;1;1;0" + keyTimes
     const fade = (vals, times, dur) => `<animate attributeName="opacity" values="${vals}" keyTimes="${times}" dur="${dur}s" repeatCount="indefinite"/>`;
@@ -5526,13 +5655,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          ${label(120, 142, '+1 mm PICKUP RANGE', C.dim, 9)}`),
       timeslow: () => scene(
         `${walls()}<rect width="240" height="150" rx="14" fill="#4a6cff" opacity="0">${fade('0;0;.14;.14;0', '0;.35;.4;.9;1', 4)}</rect>
-         ${[[60, 0], [150, .3], [95, .6]].map(([x, d]) => `<rect x="${x}" y="-10" width="36" height="10" rx="5" fill="${C.red}" GLOW><animate attributeName="y" values="-10;50;70;150" keyTimes="0;.35;.9;1" dur="4s" begin="${d * -4}s" repeatCount="indefinite"/></rect>`).join('')}
+         ${[[78, 0, 12], [168, .3, 10], [113, .6, 13]].map(([x, d, r]) => obst(x, -14, r, `<animate attributeName="cy" values="-14;46;66;164" keyTimes="0;.35;.9;1" dur="4s" begin="${d * -4}s" repeatCount="indefinite"/>`)).join('')}
          ${ball(120, 118, 7)}
          <g opacity="0">${label(120, 30, 'SLOW ×0.5', '#9fb3ff', 14)}${fade('0;0;1;1;0', '0;.35;.4;.9;1', 4)}</g>`),
       phaseburst: () => {
         const path = arcPath(84, 152, 110, [[1, 70]]).d, mid = arcPath(84, 152, 110, [[1, 33]]);
         return scene(
-          `${walls()}<rect x="${(mid.x - 50).toFixed(1)}" y="${(mid.y - 6).toFixed(1)}" width="100" height="12" rx="6" fill="${C.red}" GLOW/>
+          `${walls()}${obst(mid.x.toFixed(1), mid.y.toFixed(1), 15)}
            ${guide(path)}
            <g>${ball(0, 0, 7)}<animate attributeName="opacity" values="1;1;.35;.35;1;1" keyTimes="0;.32;.38;.6;.66;1" dur="3s" repeatCount="indefinite"/>${move(path, 3)}</g>
            ${label(120, 146, 'PASS THROUGH', C.dim, 9)}`);
@@ -5556,7 +5685,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
            <path d="M${(a.x + 8).toFixed(1)} ${a.y.toFixed(1)}H${(240 - a.x - 8).toFixed(1)}" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 4" opacity="0">${fade('0;0;1;0;0', '0;.44;.47;.6;1', 3)}</path>`);
       },
       shock: () => scene(
-        `${walls()}${[[80, 60], [165, 52], [70, 120], [175, 112]].map(([x, y]) => `<rect x="${x - 16}" y="${y - 5}" width="32" height="10" rx="5" fill="${C.red}" GLOW>${fade('1;1;0;0;1', '0;.3;.36;.95;1', 3)}</rect>`).join('')}
+        `${walls()}${[[78, 56, 12], [166, 50, 11], [70, 118, 10], [174, 114, 13]].map(([x, y, r]) => obst(x, y, r, fade('1;1;0;0;1', '0;.3;.36;.95;1', 3))).join('')}
          ${ball(120, 86, 8)}
          <circle cx="120" cy="86" fill="none" stroke="${C.gold}" stroke-width="3" opacity="0"><animate attributeName="r" values="8;8;80" keyTimes="0;.28;.45" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.28;.3;.48;1', 3)}</circle>`),
       anchor: () => {
@@ -5570,39 +5699,47 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       },
       revive: () => {
         const a = arcPath(96, 152, 60, [[1, 60], [-1, 40]]);
-        const hr = a.hDeg * Math.PI / 180, ox = a.x + Math.cos(hr) * 14, oy = a.y + Math.sin(hr) * 14;
+        const hr = a.hDeg * Math.PI / 180, ox = a.x + Math.cos(hr) * 19, oy = a.y + Math.sin(hr) * 19;  // top (7) + engel (12) teması
         return scene(
-          `${walls()}<rect x="${(ox - 30).toFixed(1)}" y="${(oy - 5).toFixed(1)}" width="60" height="10" rx="5" fill="${C.red}" GLOW/>
+          `${walls()}${obst(ox.toFixed(1), oy.toFixed(1), 12)}
            ${guide(a.d)}
            <g>${ball(0, 0, 7)}${move(a.d, 4, 'keyPoints="0;1;1;.55;.55" keyTimes="0;.4;.6;.62;1" calcMode="linear"')}</g>
            <g opacity="0"><path transform="translate(${(a.x - 125).toFixed(1)} ${(a.y + 12 - 74).toFixed(1)})" d="M125 74s-9-5.6-9-12.3A5 5 0 0 1 125 59a5 5 0 0 1 9 2.7c0 6.7-9 12.3-9 12.3z" fill="${C.red}" GLOW/>${fade('0;0;1;1;0;0', '0;.4;.45;.6;.65;1', 4)}</g>
            <g opacity="0">${label(186, 118, 'SAFE SPOT', C.green, 10)}${fade('0;0;1;1;0', '0;.62;.66;.9;1', 4)}</g>`);
       },
       doubler: () => scene(
-        `<circle cx="120" cy="70" r="26" fill="${C.gold}" GLOW/><circle cx="120" cy="70" r="19" fill="none" stroke="#b8860b" stroke-width="3"/>
-         <g>${label(120, 124, '+12 COINS', C.dim, 16)}${fade('1;1;0;0;1', '0;.4;.45;.95;1', 3.5)}</g>
-         <g opacity="0">${label(120, 124, '+24 COINS', C.gold, 16)}${fade('0;0;1;1;0;0', '0;.45;.5;.9;.95;1', 3.5)}</g>
-         <g opacity="0">${label(170, 50, '×2', C.gold, 18)}${fade('0;0;1;1;0;0', '0;.4;.45;.9;.95;1', 3.5)}</g>`),
+        `${[0, 1, 2, 3, 4].map(i => `<g><rect x="${38 + i * 34}" y="84" width="28" height="30" rx="7" fill="rgba(255,216,74,.1)" stroke="${C.gold}" stroke-opacity=".35" stroke-width="1.5"/>`
+          + `<g opacity="0">${label(52 + i * 34, 104, '×2', C.gold, 12)}${fade('0;0;1;1;0;0', `0;${(.08 + i * .14).toFixed(2)};${(.12 + i * .14).toFixed(2)};.9;.95;1`, 5)}</g></g>`).join('')}
+         <circle cx="120" cy="46" r="17" fill="${C.gold}" GLOW/><circle cx="120" cy="46" r="12" fill="none" stroke="#b8860b" stroke-width="2.5"/>
+         ${label(120, 134, '×2 COINS FOR 5 RUNS', C.dim, 9)}`),
       headstart: () => {
-        const path = arcPath(100, 152, 42, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
+        const a = arcPath(90, 152, 44, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]);
+        const p1 = arcPath(90, 152, 44, [[1, 45], [-1, 50]]), p2 = arcPath(90, 152, 44, [[1, 45], [-1, 90], [1, 70]]);
         return scene(
-          `${walls()}${guide(path)}
-           <g>${ball(0, 0, 7)}${move(path, 4, 'keyPoints="0;.25;1" keyTimes="0;.6;1" calcMode="linear"')}</g>
-           <g>${label(64, 30, 'FIRST 5s: ×0.5', C.gold, 11)}${fade('1;1;0;0', '0;.6;.62;1', 4)}</g>`);
+          `${walls()}${obst(p1.x.toFixed(1), p1.y.toFixed(1), 12)}${obst(p2.x.toFixed(1), p2.y.toFixed(1), 11)}${guide(a.d)}
+           <g opacity=".45">${ball(0, 0, 7)}<circle r="11" fill="none" stroke="${C.purple}" stroke-width="1.6" stroke-dasharray="3 3"/>${move(a.d, 4)}</g>
+           ${label(176, 136, 'GHOST 10s', C.purple, 11)}`);
       },
       coinrain: () => scene(
-        `${walls()}${[50, 80, 110, 140, 170, 195, 65, 125, 185].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.6 + (i % 3) * .35}s" begin="${-i * .37}s" repeatCount="indefinite"/></circle>`).join('')}
-         ${label(120, 142, '2× GOLD BALLS · 1 COIN EACH', C.dim, 9)}`),
+        `${walls()}${[46, 70, 96, 122, 148, 172, 196, 58, 110, 160, 84, 136].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.5 + (i % 3) * .3}s" begin="${-i * .23}s" repeatCount="indefinite"/></circle>`).join('')}
+         ${ball(120, 120, 7)}
+         ${label(120, 142, '4× GOLD — FROM THE START', C.gold, 9)}`),
       preboost: () => scene(
-        `<rect x="92" y="58" width="56" height="42" rx="7" fill="${C.purple}" opacity=".35"/><rect x="92" y="58" width="56" height="42" rx="7" fill="none" stroke="${C.purple}" stroke-width="2.5"/>
-         <path d="M120 58V100M88 58h64" stroke="${C.purple}" stroke-width="2.5"/>
-         <g opacity="0">${dot(120, 36, C.purple, 13)}${label(120, 41, '×2', '#fff', 12)}<animateTransform attributeName="transform" type="translate" values="0 30;0 30;0 0;0 0" keyTimes="0;.3;.5;1" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;1;0', '0;.3;.4;.9;1', 3)}</g>
-         ${label(120, 130, 'START WITH A RANDOM BOOSTER', C.dim, 9)}`),
+        `<rect x="92" y="62" width="56" height="40" rx="7" fill="${C.purple}" opacity=".35"/><rect x="92" y="62" width="56" height="40" rx="7" fill="none" stroke="${C.purple}" stroke-width="2.5"/>
+         <path d="M120 62V102M88 62h64" stroke="${C.purple}" stroke-width="2.5"/>
+         <g opacity="0">${dot(120, 38, C.purple, 13)}${label(120, 43, '×N', '#fff', 11)}<animateTransform attributeName="transform" type="translate" values="0 30;0 30;0 0;0 0" keyTimes="0;.25;.4;1" dur="4s" repeatCount="indefinite"/>${fade('0;0;1;1;0', '0;.25;.32;.92;1', 4)}</g>
+         <rect x="60" y="116" width="120" height="6" rx="3" fill="rgba(255,255,255,.1)"/>
+         <rect x="60" y="116" height="6" rx="3" fill="${C.purple}"><animate attributeName="width" values="0;0;120;0" keyTimes="0;.4;.45;1" dur="4s" repeatCount="indefinite"/></rect>
+         ${label(120, 140, 'RANDOM USEFUL BOOSTER · 2× TIME', C.dim, 9)}`),
       filter: () => scene(
-        `<path d="M62 44h116l-42 40v30l-32 12V84z" fill="${C.purple}" opacity=".16"/><path d="M62 44h116l-42 40v30l-32 12V84z" fill="none" stroke="${C.purple}" stroke-width="2.5" stroke-linejoin="round"/>
-         ${[[80, 0, 0], [104, .5, 1], [128, 1, 0], [152, 1.5, 1], [92, 2, 0], [140, 2.5, 1]].map(([x, d, ok]) =>
-          `<g opacity="0">${dot(0, 0, ok ? C.green : C.purple, 6)}${move(ok ? `M${x} 6L120 70L120 140` : `M${x} 6L${x} 52`, 3, `begin="${-d}s"`)}${fade(ok ? '0;1;1;0' : '0;1;1;0', ok ? '0;.1;.85;1' : '0;.1;.45;.5', 3).replace('repeatCount', `begin="${-d}s" repeatCount`)}</g>`).join('')}
-         ${label(196, 134, 'GHOST', C.green, 9)}${label(196, 146, '+ SPEED', C.green, 9)}`),
+        `${label(120, 34, 'BOOSTER TIME', C.dim, 10)}
+         <rect x="40" y="52" width="160" height="10" rx="5" fill="rgba(255,255,255,.1)"/>
+         <rect x="40" y="52" width="80" height="10" rx="5" fill="${C.dim}"/>
+         ${label(212, 61, '8s', C.dim, 9)}
+         <rect x="40" y="82" width="160" height="10" rx="5" fill="rgba(255,255,255,.1)"/>
+         <rect x="40" y="82" height="10" rx="5" fill="${C.green}" GLOW><animate attributeName="width" values="80;80;160;160;80" keyTimes="0;.2;.45;.9;1" dur="4s" repeatCount="indefinite"/></rect>
+         ${label(212, 91, '16s', C.green, 9)}
+         ${label(120, 128, 'EVERY BOOSTER LASTS 2× LONGER', C.green, 10)}`),
     };
 
     return { icons, infoGlyph, anims };
@@ -5859,7 +5996,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     _rtBusy = true;
     const n = Number(o.coins) || 0;
     host.classList.remove('hide');
-    host.innerHTML = `<div class="rt-card">
+    host.innerHTML = `<div class="rt-card gl gl-gold gl-glass">
       <span class="rt-ic">${iconHTML(o.icon || 'coin', { size: 26 })}</span>
       <span class="rt-txt">
         <span class="rt-title">${esc(o.title || 'REWARD')}</span>
@@ -5986,19 +6123,21 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     }, 75);
   }
 
-  function activateBooster(type) {
+  function activateBooster(type, durOverride) {
     if (type === 'mystery') {
       const pool = ['wide','narrow','magnet','xmult','ghost','speed'];
       const final = resolveBoosterType(pool[Math.floor(Math.random() * pool.length)]);
       startMysteryRoulette(final);
       return;
     }
-    applyBooster(resolveBoosterType(type));
+    applyBooster(resolveBoosterType(type), durOverride);
   }
-  function applyBooster(type) {
+  function applyBooster(type, durOverride) {
     cancelRoulette();
     const info = BOOSTER_INFO[type];
-    boosterType = type; boosterDur = info.dur; boosterTime = info.dur;
+    // Lucky Boost (eşya): o run'daki tüm booster'lar 2× uzun sürer.
+    const dur = (durOverride || info.dur) * (runLuckyBoost ? 2 : 1);
+    boosterType = type; boosterDur = dur; boosterTime = dur;
     isGhost   = (type === 'ghost');
     hasShield = (type === 'shield');
     if (type === 'speed') player.speed = GAME_SPEED * 1.6;
@@ -6017,6 +6156,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     player.speed = GAME_SPEED; // GAME_SPEED is already dynamic in extreme
     BOOSTER_EL.classList.remove('active');
     duckMusic(false);
+    if (_runPreboostQueued && scene === 'play' && running) {
+      const t = _runPreboostQueued; _runPreboostQueued = null;
+      activateBooster(t, BOOSTER_INFO[t].dur * 2);
+    }
   }
 
   function getRadius() {
@@ -6057,6 +6200,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     // Tek yönlü CORE'larda satın alınmış en yüksek seviye (radius/speed'deki Pos'un karşılığı).
     // Aktif seviye bunun altına − ile inip + ile ücretsiz geri çıkabilir.
     coreOwned: {},
+    theme: '',                                   // aktif arayüz teması ('' = varsayılan) — THEMES'te olmalı
+    themesOwned: [],                             // satın alınmış temalar
     comboSplitV22: false,                        // eski tek 'timer' upgrade'inin bölünme migrasyonu
     traceColor: '#ffffff',                       // varsayılan BEYAZ ('rainbow' | 'rb:xxx' | 'custom' | hex)
     traceThickness: 0,                           // preset: 0/6/12/20
@@ -7915,7 +8060,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       const bonusGap = 460 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
-      const spawnGold   = distCm >= 30 && Math.random() < (runCoinRainActive ? 0.24 : 0.12);
+      const spawnGold   = (runCoinRainActive || distCm >= 30) && Math.random() < (runCoinRainActive ? 0.48 : 0.12);  // Gold Rush: ×4, baştan
       const spawnPurple = distCm >= 75 && Math.random() < 0.08;
 
       const bonusProb = (t < 0.15 ? .42 : .58) * (wife ? 1.7 : 1.0);
@@ -7930,9 +8075,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-          const PURPLE_TYPES = runFilterActive
-            ? ['ghost','speed']
-            : ['wide','narrow','magnet','xmult','ghost','speed','mystery'];
+          const PURPLE_TYPES = ['wide','narrow','magnet','xmult','ghost','speed','mystery'];
           const ptype = PURPLE_TYPES[Math.floor(Math.random() * PURPLE_TYPES.length)];
           purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
         }
@@ -8666,8 +8809,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       : `${fmtDist(runDistCm)} → ${f1(fromDist)}` + (coinModeMul() > 1 ? ' (extreme ×2)' : '')
         + (fromGold ? ` · ${_runGolds} gold → ${fromGold}` : '')
         + (runDoublerActive ? ' · ×2' : '')
-        + (_runCoinsCapped >= 0.05 ? ` · daily cap −${f1(_runCoinsCapped)}` : '')
-        + ` · next coin ${Math.floor(coinCarry * 100)}%`;
+        + (_runCoinsCapped >= 0.05 ? ` · daily cap −${f1(_runCoinsCapped)}` : '');   // sonraki coin'e ilerleme çubukta
     progEl.textContent = breakdown;
     let lastEarnedShown = 0;
     const popEarned = (n) => {
@@ -8871,13 +9013,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
   function loop(ts) {
     const dtRaw = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
-    // Time Slow ability + Head Start consumable simulation yavaşlatır.
+    // Time Slow ability simülasyonu yavaşlatır.
     let slow = 1.0;
     if (activeAbility && activeAbility.key === 'timeslow') slow *= 0.5;
-    if (runHeadstartT > 0 && scene === 'play' && running) {
-      slow *= 0.5;
-      runHeadstartT = Math.max(0, runHeadstartT - dtRaw);
-    }
     // Ölüm: oyuncu donar, patlama efekti oynar, ~0.55s sonra gerçek endGame
     if (dyingT >= 0) {
       dyingT += dtRaw;
@@ -10416,8 +10554,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       { key: 'doubler',    title: 'Coin Doubler', icon: 'u-doubler' },
       { key: 'preboost',   title: 'Pre-Booster',  icon: 'u-preboost' },
       { key: 'headstart',  title: 'Head Start',   icon: 'u-headstart' },
-      { key: 'filter',     title: 'Boost Filter', icon: 'u-filter' },
-      { key: 'coinrain',   title: 'Coin Rain',    icon: 'u-coinrain' },
+      { key: 'filter',     title: 'Lucky Boost', icon: 'u-filter' },
+      { key: 'coinrain',   title: 'Gold Rush',    icon: 'u-coinrain' },
     ]},
     { title: 'ABILITIES', items: [
       { key: 'timeslow',   title: 'Time Slow',    icon: 'u-timeslow' },
@@ -10612,6 +10750,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       out.push({ t: 'RECHARGE ' + abilityCooldown(key) + 's' });
     } else if (CONSUMABLE_CFG[key]) {
       out.push({ t: 'STOCK ' + ((upg.inv[key] && upg.inv[key].count) || 0) + '/' + CONSUMABLE_CFG[key].max });
+      const left = key === 'doubler' ? ((upg.inv.doubler && upg.inv.doubler.runsLeft) | 0) : 0;
+      if (left) out.push({ t: 'ACTIVE · ' + left + ' RUN' + (left === 1 ? '' : 'S') + ' LEFT', next: true });
     }
     return out;
   }
@@ -10633,6 +10773,70 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     document.getElementById('upginfo-anim').innerHTML = '';   // SMIL döngüleri kapalıyken çalışmasın
   }
   document.getElementById('upginfo-ok').addEventListener('click', closeUpgInfo);
+
+  // ── Arayüz temaları (Settings → Theme) ─────────────────────
+  // Tema = <html> üzerinde theme-<id> sınıfı → CSS body'ye filtre uygular. id sınıf adına
+  // girdiği için yalnızca THEMES'teki değerler kabul edilir (localStorage kurcalamasına karşı).
+  const THEMES = [
+    { id: '',       name: 'Default', price: 0,  desc: 'The original neon look.' },
+    { id: 'dither',    name: 'Dither',     price: 60, desc: 'Retro dither art: the whole game in a tiny palette, drawn with pixel dot patterns.' },
+    { id: 'gameboy',   name: 'Game Boy',   price: 50, desc: 'Four shades of green, straight from a classic handheld.' },
+    { id: 'crt',       name: 'CRT Arcade', price: 40, desc: 'Scanlines, dark corners and punchy colours, like an old arcade screen.' },
+    { id: 'onebit',    name: '1-Bit',      price: 60, desc: 'Pure black and white, dithered like an early Macintosh.' },
+    { id: 'synth',     name: 'Synthwave',  price: 50, desc: 'Deep purple nights, hot pink and electric cyan.' },
+    { id: 'noir',      name: 'Noir',       price: 40, desc: 'High-contrast black and white with film grain.' },
+    { id: 'blueprint', name: 'Blueprint',  price: 45, desc: 'White lines on engineer blue.' },
+    { id: 'thermal',   name: 'Thermal',    price: 50, desc: 'See the game through a heat camera.' },
+  ];
+  // Önizlemedeki filtre: SVG temaları kendi filtresini, CSS temaları eşdeğer CSS filtresini kullanır.
+  const THEME_PREVIEW_FILTER = { crt: 'saturate(1.3) contrast(1.08)', noir: 'grayscale(1) contrast(1.35) brightness(1.05)' };
+  const themeById = id => THEMES.find(t => t.id === id);
+  function themeOwned(id) { return id === '' || (Array.isArray(upg.themesOwned) && upg.themesOwned.includes(id)); }
+  function applyTheme() {
+    if (!themeById(upg.theme) || !themeOwned(upg.theme)) upg.theme = '';
+    const root = document.documentElement;
+    [...root.classList].filter(c => c.startsWith('theme-')).forEach(c => root.classList.remove(c));
+    if (upg.theme) root.classList.add('theme-' + upg.theme);
+    const cur = document.getElementById('theme-cur');
+    if (cur) cur.textContent = themeById(upg.theme).name;
+  }
+  // Önizleme: küçük oyun sahnesi, temanın filtresiyle
+  const themePreview = id => `<svg viewBox="0 0 92 62" ${id ? `style="filter:${THEME_PREVIEW_FILTER[id] || `url(#fx-${id})`}"` : ''}><rect width="92" height="62" fill="#0d0a1a"/>`
+    + `<path d="M8 4V58M84 4V58" stroke="#8a6cff" stroke-width="2"/><path d="M30 60A26 26 0 0 1 56 34A18 18 0 0 0 74 16" fill="none" stroke="#7CFF7A" stroke-width="3" stroke-linecap="round"/>`
+    + `<circle cx="74" cy="16" r="5" fill="#fff"/><circle cx="26" cy="22" r="7" fill="#ff3355"/><circle cx="50" cy="12" r="3.5" fill="#ffd84a"/><circle cx="64" cy="46" r="3.5" fill="#7CFF7A"/></svg>`;
+  function renderThemes() {
+    const list = document.getElementById('theme-list');
+    list.innerHTML = '';
+    for (const t of THEMES) {
+      const owned = themeOwned(t.id), active = upg.theme === t.id;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'theme-card gl gl-pink' + (active ? ' active' : '');
+      b.innerHTML = `<div class="theme-prev">${themePreview(t.id)}</div><div class="theme-meta">`
+        + `<span class="theme-name">${t.name}</span><span class="theme-desc">${t.desc}</span>`
+        + (active ? `<span class="theme-state">ACTIVE</span>`
+           : owned ? `<span class="theme-state">TAP TO APPLY</span>`
+           : `<span class="theme-state price">${iconHTML('coin', { size: 12 })}${t.price}</span>`)
+        + `</div>`;
+      b.addEventListener('click', () => {
+        if (active) return;
+        const use = () => { upg.theme = t.id; saveUpg(); applyTheme(); renderThemes(); };
+        if (owned) { use(); return; }
+        confirmPurchase(t.name + ' theme', t.price, () => {
+          if (!spendCoins(t.price)) return;
+          if (!Array.isArray(upg.themesOwned)) upg.themesOwned = [];
+          upg.themesOwned.push(t.id);
+          use();
+        });
+      });
+      list.appendChild(b);
+    }
+  }
+  const themeModal = document.getElementById('theme-modal');
+  document.getElementById('theme-open').addEventListener('click', () => { renderThemes(); themeModal.classList.add('open'); });
+  document.getElementById('theme-back').addEventListener('click', () => themeModal.classList.remove('open'));
+  themeModal.addEventListener('click', e => { if (e.target === themeModal) themeModal.classList.remove('open'); });
+  applyTheme();
   upgInfoModal.addEventListener('click', e => { if (e.target === upgInfoModal) closeUpgInfo(); });
 
   function buildCoreCard(t) {
@@ -10799,7 +11003,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       ? `<button class="core-buy toggle on" disabled>AUTO</button>`
       : `<button class="core-buy toggle ${inv.armed ? 'on' : ''}" data-act="arm" ${inv.count < 1 ? 'disabled' : ''}>${inv.armed ? 'ARMED' : 'ARM'}</button>`;
     buttons += full ? `<button class="core-buy maxed">FULL</button>` : gearBuyBtn('buy', cfg.price, '+1');
-    const card = gearCardShell(meta, `${inv.count}/${cfg.max}`, buttons, { desc: cfg.desc });
+    const left = key === 'doubler' ? (inv.runsLeft | 0) : 0;   // aktif Doubler'ın kalan run'ı
+    const card = gearCardShell(meta, `${inv.count}/${cfg.max}` + (left ? ` · ${left}▸` : ''), buttons, { desc: cfg.desc });
     gearWire(card, 'arm', () => { if (inv.count < 1) return; inv.armed = !inv.armed; saveUpg(); renderUpgrades(); });
     gearWire(card, 'buy', () => confirmPurchase(meta.title, cfg.price, () => {
       if (inv.count >= cfg.max || !spendCoins(cfg.price)) return;
@@ -10993,11 +11198,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // coinrain) ortalama getirisinden UCUZ olmalı — aksi halde tuzak olur.
   const CONSUMABLE_CFG = {
     revive:    { price: 7, max: 5, autoArm: true,  desc: 'When you crash, you can continue from your last safe spot instead of ending the run. You are asked when it happens; one revive per run.' },
-    doubler:   { price: 2, max: 5, autoArm: false, desc: 'Arm it before a run to double every coin you earn in that run.' },
-    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: the first 5 seconds play at half speed for an easy start.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to get twice as many gold balls. Every gold ball is worth 1 coin.' },
-    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random booster already active.' },
-    filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: only Ghost and Speed boosters appear during that run.' },
+    doubler:   { price: 6, max: 5, autoArm: false, desc: 'Arm it before a run: every coin you earn is doubled for your next 5 runs.' },
+    headstart: { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: you start as a Ghost for 10 seconds and pass through obstacles and walls.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each is worth 1 coin and lots of points.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random useful booster (no Tight Arc) that lasts twice as long.' },
+    filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
@@ -11805,34 +12010,45 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
-    // Pre-Booster armed ise rastgele bir booster ile başlat
+    // Head Start: 10 sn Ghost. Pre-Booster da takılıysa ghost bitince başlar.
+    if (runHeadGhost) {
+      activateBooster('ghost', 10);
+      if (_runPreboostPending) { _runPreboostQueued = _runPreboostPending; _runPreboostPending = null; }
+    }
+    // Pre-Booster: rastgele (işe yarar) bir booster, normal sürenin 2 katı
     if (_runPreboostPending) {
-      activateBooster(_runPreboostPending);
+      activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
       _runPreboostPending = null;
     }
   }
 
   // Per-run consumable flags
   let runDoublerActive = false;
-  let runHeadstartT = 0;          // saniye geri sayım (0 olunca normal hız)
-  let runCoinRainActive = false;  // gold spawn x2
-  let runFilterActive = false;    // sadece ghost+speed
+  let runHeadGhost = false;       // Head Start: run 10 sn Ghost ile başlar
+  let runCoinRainActive = false;  // Gold Rush: altın spawn ×4, 0 m'den itibaren
+  let runLuckyBoost = false;      // Lucky Boost ('filter' anahtarı): tüm booster'lar 2× uzun
   let _runPreboostPending = null; // beginArc sonrası activateBooster için
+  let _runPreboostQueued  = null; // Head Start ghost'u bitince başlayacak Pre-Booster
+  const DOUBLER_RUNS = 5;         // bir Coin Doubler kaç run ×2 verir
   function consumeArmedConsumables() {
     runDoublerActive = false;
-    runHeadstartT = 0;
+    runHeadGhost = false;
     runCoinRainActive = false;
-    runFilterActive = false;
+    runLuckyBoost = false;
     _runPreboostPending = null;
+    _runPreboostQueued = null;
     if (gameMode === 'wife') return; // Wife mode coin/etki yok
     const inv = upg.inv;
     const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
-    if (inv.doubler.armed   && inv.doubler.count   > 0) { runDoublerActive = true;        consume('doubler');   }
-    if (inv.headstart.armed && inv.headstart.count > 0) { runHeadstartT = 5.0;            consume('headstart'); }
+    // Coin Doubler: bir adet DOUBLER_RUNS run boyunca ×2 verir (runsLeft sayacı; kurcalamaya karşı kırpılır).
+    inv.doubler.runsLeft = Math.max(0, Math.min(DOUBLER_RUNS - 1, inv.doubler.runsLeft | 0));
+    if ((inv.doubler.runsLeft | 0) > 0) { runDoublerActive = true; inv.doubler.runsLeft--; }
+    else if (inv.doubler.armed && inv.doubler.count > 0) { runDoublerActive = true; consume('doubler'); inv.doubler.runsLeft = DOUBLER_RUNS - 1; }
+    if (inv.headstart.armed && inv.headstart.count > 0) { runHeadGhost = true;            consume('headstart'); }
     if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
-    if (inv.filter.armed    && inv.filter.count    > 0) { runFilterActive = true;         consume('filter');    }
+    if (inv.filter.armed    && inv.filter.count    > 0) { runLuckyBoost = true;           consume('filter');    }
     if (inv.preboost.armed  && inv.preboost.count  > 0) {
-      const pool = ['wide','narrow','magnet','xmult','ghost','speed'];
+      const pool = ['wide','magnet','xmult','ghost','speed'];   // işe yaramayan Narrow/Mystery yok
       _runPreboostPending = pool[Math.floor(Math.random() * pool.length)];
       consume('preboost');
     }

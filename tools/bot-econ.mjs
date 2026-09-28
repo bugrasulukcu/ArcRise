@@ -15,11 +15,12 @@ const BLOCK = ['*firestore.googleapis.com*', '*identitytoolkit.googleapis.com*',
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function instance(idx) {
-  const port = 9400 + idx;
+  const port = 9400 + (Number(process.env.PORT_BASE) || 0) + idx;   // paralel süreçler için PORT_BASE
   const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TMPDIR}bot${idx}-${Date.now()}`,
     '--no-first-run', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--window-size=450,800', 'about:blank'], { stdio: 'ignore' });
   let wsUrl;
-  for (let i = 0; i < 60 && !wsUrl; i++) { try { const t = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); wsUrl = t.find(x => x.type === 'page')?.webSocketDebuggerUrl; } catch {} if (!wsUrl) await sleep(250); }
+  // Birden çok Chrome aynı anda açılırken başlatma 15 sn'yi geçebiliyor → 40 sn bekle.
+  for (let i = 0; i < 160 && !wsUrl; i++) { try { const t = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); wsUrl = t.find(x => x.type === 'page')?.webSocketDebuggerUrl; } catch {} if (!wsUrl) await sleep(250); }
   const ws = new WebSocket(wsUrl);
   let id = 0; const pend = new Map(); const netHits = [];
   ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d); pend.delete(d.id); }

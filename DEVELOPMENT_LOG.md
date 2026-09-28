@@ -396,6 +396,40 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Glow UI dili, 8 satın alınabilir tema, eşyalar yeniden tasarlandı (2026-09-28)
+
+**Eşyalar — ölçümle karar verildi.** `tools/bot-econ.mjs` ile her eşya takılıyken 10–15 run (5 varyant paralel, Firebase engelli): hiçbirinin etkisi run'dan run'a dalgalanmayı aşmıyordu (ort. 1.3–1.8 m, 1.4–1.9 coin/run). Coin Rain altını *artırmadı* bile (0.13 vs 0.21 — altın zaten nadir). Yeniden tasarım (anahtarlar aynı, kayıtlar bozulmaz):
+
+| Anahtar | Yeni hâli | Fiyat |
+|---|---|---|
+| `revive` | Aynı (tek gerçekten işe yarayan) | 7 |
+| `doubler` | Bir adet **5 run** ×2 coin verir (`inv.doubler.runsLeft`, kurcalamaya karşı kırpılır; kartta `· N▸`) | 2 → 6 |
+| `headstart` | Yarı hız yerine run **10 sn Ghost** ile başlar (engel+duvar geçer). Pre-Booster da takılıysa ghost bitince başlar (`_runPreboostQueued`) | 3 → 4 |
+| `coinrain` → **Gold Rush** | Altın **×4** ve 0 m'den itibaren (normalde 30 cm sonra) | 3 |
+| `preboost` | Havuzdan Narrow çıktı, süre **2×** | 3 |
+| `filter` → **Lucky Boost** | Booster havuzunu kısıtlamak yerine o run'daki **tüm booster'lar 2× uzun** (`runLuckyBoost`, `applyBooster(type, durOverride)`) | 5 |
+
+Not: `hasShield` ölü kod — BOOSTER_INFO'da `shield` yok, hiç true olmuyor.
+
+**Glow UI dili.** Avatar stili (koyu zemin + vurgu rengiyle iç ışık + ince halka + üstten beyaza açılan parlayan ikon) ortak CSS'e dönüştü: `.gl` + `.gl-<renk>` (`--c`, `--gg`), yarı saydamlar için `.gl-glass`. İkon degradesi `#glow-defs`'teki `gg-<renk>` (userSpaceOnUse). Kurallar `html#arc` önekli → mevcut `#id` kurallarını ezer; `color-mix` bilmeyen tarayıcı bloğu düşürür, eski görünüm kalır. Uygulanan: ana ekran, 23 modal kutusu, Settings/Profile Setup/Game Over panelleri, ödül kartı, tüm `.btn-gray`.
+
+**Temalar (Settings → Theme, `THEMES`).** `<html class="theme-<id>">` → CSS `body`'ye filtre (oyun alanı dahil). id sınıf adına girdiği için yalnız THEMES'teki değerler kabul edilir (`applyTheme`). `upg.theme`, `upg.themesOwned`.
+
+| Tema | Yöntem | Fiyat |
+|---|---|---|
+| Dither | SVG: 4×4 Bayer + kanal başı 4 seviye | 60 |
+| Game Boy | SVG: gri → 4 yeşil (discrete) | 50 |
+| CRT Arcade | CSS filtre + `body::after` tarama çizgisi/vinyet | 40 |
+| 1-Bit | SVG: gri + Bayer → siyah/beyaz | 60 |
+| Synthwave | SVG: gri → mor/pembe/camgöbeği tablo | 50 |
+| Noir | CSS gri+kontrast + `body::after` gren | 40 |
+| Blueprint | SVG: iki ton mavi | 45 |
+| Thermal | SVG: ısı kamerası tablosu | 50 |
+
+⚠️ Filtre her karede tüm ekrana uygulanıyor. Headless'ta 60 FPS'e dokunmadı ama GPU'suz test telefonu yansıtmaz — **gerçek cihazda denenmeli**; takılırsa filtreyi oyun alanından çıkarıp yalnız menülere uygula.
+
+**Diğer:** info animasyonlarında engeller daire (oyundaki gibi, `obst()`); Game Over coin satırından "next coin %" kaldırıldı (çubuk zaten gösteriyor); `tools/bot-econ.mjs` `PORT_BASE` (paralel süreçler) + 40 sn Chrome bağlanma beklemesi.
+
 ### Upgrade ikonları, info animasyonları ve avatarlar yenilendi (2026-09-28)
 
 - **İkon seti (`UPG_ART.icons`, `ICONS['u-<key>']`):** 21 upgrade/gear ikonu tek stilde yeniden çizildi (24×24, 1.8px çizgi + %22 dolgu, currentColor). Renkli emoji-benzeri üç ikon (madalya, alev, roket) ve paylaşılan ikonlar (Doubler/Coin Rain, Combo Timer/Time Slow, Filter/Shockwave) ayrıştırıldı; Brake'teki okunmayan "STOP" yazısı kaldırıldı. Slot HUD da yeni ikonları kullanıyor.
