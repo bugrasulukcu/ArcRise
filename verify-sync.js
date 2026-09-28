@@ -37,7 +37,9 @@ for (const file of FILES) {
 const capSrc = path.join(__dirname, 'capacitor.config.json');
 const capDst = path.join(__dirname, 'android', 'app', 'src', 'main', 'assets', 'capacitor.config.json');
 if (fs.existsSync(capSrc) && fs.existsSync(capDst)) {
-  if (md5(capSrc) !== md5(capDst)) { console.error('FARKLI  Android assets/capacitor.config.json'); bad++; }
+  // cap sync JSON'u tab'la yeniden yazıyor → byte değil içerik karşılaştır.
+  const capJson = p => JSON.stringify(JSON.parse(fs.readFileSync(p, 'utf8')));
+  if (capJson(capSrc) !== capJson(capDst)) { console.error('FARKLI  Android assets/capacitor.config.json'); bad++; }
   else console.log('ayni    Android assets/capacitor.config.json');
 }
 
