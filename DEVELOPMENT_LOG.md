@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Otomatik testler: `npm test` (2026-09-29)
+
+`tests/e2e.mjs` — headless Chrome (CDP) + kendi statik sunucusu + **bellekte sahte Firebase** (Auth + Firestore, kural taklidi: kimliksiz yazma 403). Gerçek Firebase'e hiçbir istek gitmez; reCAPTCHA/gstatic engelli. ~50 sn, 10 test:
+start tek run/tek item · AGAIN çift tık tek harcama · PB oluştur+kimlikli güncelle, aynı isimli başka oyuncuya dokunmama, liderlikte iki ayrı satır · reset kapısı yeni anonim hesap · iz deposu 120 · çevrimdışı liderlik mesajı · müzik yalnız oyunda · coin/m, extreme ×2, günlük yumuşak tavan · run sonu coin tam sayı + kesir taşıma · yeni gün (görev yenileme, seri, giriş +1, aynı gün tekrar yok).
+- Seçerek: `npm test -- pb,müzik`; ayrıntılı zamanlama: `E2E_DEBUG=1 npm test`. Test başına 90 sn sınırı, `ev` 15 sn; JS dialog'ları otomatik kapatılır; macOS'ta `caffeinate`.
+- Her test aynı origin'deki boş sayfada (`/__blank`) depoyu temizleyip tohumlar — önceki oyun sayfası kapanırken durumunu geri yazamaz.
+- Oyuna `window.ARC_TEST` (yalnız `ARC_DEBUG`): `scene`, `mode/setMode`, `runCoinsRaw`, `applySoftCap`, `coinsEarnedToday`.
+- Testin bulduğu hata: `parseRows` eksik alanlı tek bir dokümanda (`avatar` yok) patlıyor → **tüm liderlik tablosu boş** dönüyordu. Artık adı olmayan atlanır, diğer alanlar varsayılana düşer.
+- Not: arka planda (araç tarafından) koşturulunca macOS süreci dakikalarca dondurabiliyor → uzun `pb` testi zaman aşımına düşüyor; ön planda sorunsuz.
+
 ### Reset kapısı ↔ auth yarışı, iz deposu sınırı (2026-09-28)
 
 - **Reset sonrası eski hesap geri geliyordu (Codex #2):** ARC_DB IIFE'si kurulurken `ensureAuth()` refresh token'ı senkron okuyordu; tek seferlik reset kapısı bundan **sonra** çalıştığı için eski uid tazelenip silinen `arc_fb_rt` geri yazılıyordu. Kapı `<head>` script'ine (localStorage guard + debug bayrağından hemen sonra) taşındı → tüm okumalardan önce çalışır. Test (sahte auth): eski sürüm `refresh:OLD_RT → OLDUID`; yeni sürüm `signUp → NEWUID`, `arc_fb_rt = NEW_RT`.

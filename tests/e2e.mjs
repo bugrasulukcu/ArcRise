@@ -1,0 +1,311 @@
+// ArcRise uçtan uca testleri — `npm test`
+//
+// Headless Chrome (CDP) ile arcrise.html'i gerçek tarayıcıda çalıştırır.
+// Firebase ASLA gerçek sunucuya gitmez: tüm *googleapis.com istekleri CDP Fetch ile
+// yakalanıp bellekteki sahte Auth + Firestore'a yönlendirilir (kural taklidi dahil:
+// kimliksiz yazma → 403). reCAPTCHA / gstatic engellidir.
+//
+// Çalıştırma: npm test            (tümü)
+//             npm test -- pb      (adında "pb" geçen testler; virgülle birden çok: pb,müzik)
+// Chrome yolu farklıysa: CHROME=/yol/chrome npm test
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const FILTER = (process.argv[2] || '').toLowerCase();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const TEST_TIMEOUT = 90000;
+let lastStep = '-';
+
+// macOS: test sürerken sistemin uyumasını/App Nap'i engelle (uyku, zamanlayıcıları dakikalarca
+// dondurup testleri "asılı" gösteriyordu).
+if (process.platform === 'darwin') { try { spawn('caffeinate', ['-i', '-s', '-w', String(process.pid)], { stdio: 'ignore' }).unref(); } catch {} }
+
+// ── Statik sunucu ────────────────────────────────────────────
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.json': 'application/json', '.css': 'text/css' };
+const server = http.createServer((req, res) => {
+  const f = path.join(ROOT, decodeURIComponent(new URL(req.url, 'http://x').pathname));
+  if (req.url === '/__blank') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>blank</title>'); }
+  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  fs.createReadStream(f).pipe(res);
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const ORIGIN = `http://127.0.0.1:${server.address().port}`;
+const PAGE = `${ORIGIN}/arcrise.html`;
+
+// ── Chrome + CDP ─────────────────────────────────────────────
+const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'arc-e2e-'));
+const chrome = spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
+  '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
+let wsUrl;
+for (let i = 0; i < 200 && !wsUrl; i++) {
+  try {
+    const port = fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0];
+    wsUrl = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(x => x.type === 'page')?.webSocketDebuggerUrl;
+  } catch {}
+  if (!wsUrl) await sleep(100);
+}
+if (!wsUrl) { console.error('Chrome başlatılamadı:', CHROME); process.exit(2); }
+const ws = new WebSocket(wsUrl); await new Promise(r => (ws.onopen = r));
+let msgId = 0; const pending = new Map(); let jsErrors = []; const dialogs = [];
+const send = (method, params = {}) => new Promise(res => { const i = ++msgId; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
+const ev = async expr => {
+  lastStep = expr.replace(/\s+/g, ' ').slice(0, 70);
+  const r = await Promise.race([send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }),
+    sleep(15000).then(() => { throw new Error('ev zaman aşımı: ' + lastStep); })]);
+  if (r.result?.exceptionDetails) throw new Error('page: ' + (r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text));
+  return r.result?.result?.value;
+};
+
+// ── Sahte Firebase ───────────────────────────────────────────
+const fb = { docs: new Map(), writes: [], authCalls: [], offline: false, uidN: 0 };
+const fbReset = () => { fb.docs.clear(); fb.writes = []; fb.authCalls = []; fb.offline = false; };
+const reply = (requestId, status, body) => send('Fetch.fulfillRequest', { requestId, responseCode: status,
+  responseHeaders: [{ name: 'Content-Type', value: 'application/json' }, { name: 'Access-Control-Allow-Origin', value: '*' },
+    { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: '*' }],
+  body: Buffer.from(JSON.stringify(body)).toString('base64') });
+function onFirebase({ requestId, request }) {
+  if (fb.offline) return send('Fetch.failRequest', { requestId, errorReason: 'InternetDisconnected' });
+  const url = new URL(request.url);
+  if (request.method === 'OPTIONS') return reply(requestId, 204, {});
+  if (url.pathname.includes('accounts:signUp')) {
+    const uid = 'UID' + (++fb.uidN); fb.authCalls.push('signUp');
+    return reply(requestId, 200, { idToken: 'tok-' + uid, refreshToken: 'RT-' + uid, localId: uid, expiresIn: '3600' });
+  }
+  if (url.host.includes('securetoken')) {
+    const rt = decodeURIComponent((request.postData || '').split('refresh_token=')[1] || ''); fb.authCalls.push('refresh:' + rt);
+    const uid = rt.replace(/^RT-/, '');
+    return reply(requestId, 200, { id_token: 'tok-' + uid, refresh_token: rt, user_id: uid, expires_in: '3600' });
+  }
+  if (!url.host.includes('firestore')) return reply(requestId, 404, {});
+  const authed = Object.keys(request.headers || {}).some(k => k.toLowerCase() === 'authorization');
+  const docPath = decodeURIComponent(url.pathname.split('/documents/')[1] || '');
+  if (url.pathname.endsWith(':runQuery')) {
+    const q = JSON.parse(request.postData || '{}').structuredQuery || {};
+    const coll = q.from?.[0]?.collectionId;
+    const rows = [...fb.docs.entries()].filter(([k]) => k.split('/')[0] === coll).map(([, d]) => d)
+      .sort((a, b) => Number(b.fields.score?.integerValue || 0) - Number(a.fields.score?.integerValue || 0));
+    return reply(requestId, 200, rows.length ? rows.map(document => ({ document })) : [{ readTime: new Date().toISOString() }]);
+  }
+  if (request.method === 'GET') return fb.docs.has(docPath) ? reply(requestId, 200, fb.docs.get(docPath)) : reply(requestId, 404, { error: { code: 404 } });
+  if (request.method === 'PATCH' || request.method === 'POST') {
+    const body = JSON.parse(request.postData || '{}');
+    const target = request.method === 'POST' ? `${docPath}/AUTO${fb.writes.length}` : docPath;
+    const w = { method: request.method, path: target, authed, masked: url.searchParams.getAll('updateMask.fieldPaths').length > 0,
+      mustNotExist: url.searchParams.get('currentDocument.exists') === 'false', status: 200 };
+    fb.writes.push(w);
+    if (!authed) { w.status = 403; return reply(requestId, 403, { error: { code: 403, message: 'PERMISSION_DENIED' } }); }
+    if (w.mustNotExist && fb.docs.has(target)) { w.status = 409; return reply(requestId, 409, { error: { code: 409 } }); }
+    const cur = fb.docs.get(target) || { name: `projects/p/databases/(default)/documents/${target}`, fields: {} };
+    cur.fields = { ...cur.fields, ...(body.fields || {}) };
+    fb.docs.set(target, cur);
+    return reply(requestId, 200, cur);
+  }
+  return reply(requestId, 200, {});
+}
+ws.onmessage = m => {
+  const d = JSON.parse(m.data);
+  if (d.id && pending.has(d.id)) { pending.get(d.id)(d); pending.delete(d.id); }
+  if (d.method === 'Fetch.requestPaused') onFirebase(d.params);
+  if (d.method === 'Page.javascriptDialogOpening') { dialogs.push(d.params.message); send('Page.handleJavaScriptDialog', { accept: true }); }
+  if (d.method === 'Runtime.exceptionThrown') jsErrors.push(d.params.exceptionDetails.exception?.description?.split('\n')[0] || d.params.exceptionDetails.text);
+};
+await send('Fetch.enable', { patterns: [{ urlPattern: '*googleapis.com/*' }] });
+await send('Network.enable');
+await send('Network.setBlockedURLs', { urls: ['*recaptcha*', '*gstatic.com/*'] });
+await send('Page.enable'); await send('Runtime.enable');
+// Müzik sayacı: döngülü AudioBufferSource = arka plan müziği
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__music = 0;
+  const _st = AudioBufferSourceNode.prototype.start, _sp = AudioBufferSourceNode.prototype.stop;
+  AudioBufferSourceNode.prototype.start = function(...a) { if (this.loop) { window.__music++; this.__m = 1; } return _st.apply(this, a); };
+  AudioBufferSourceNode.prototype.stop  = function(...a) { if (this.__m) { window.__music--; this.__m = 0; } return _sp.apply(this, a); };` });
+
+// ── Yardımcılar ──────────────────────────────────────────────
+const nav = async url => { await send('Page.navigate', { url: 'about:blank' }); await sleep(100); await send('Page.navigate', { url }); };
+let RESET_V = null;
+async function waitFor(expr, ms = 15000, step = 150) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) { try { if (await ev(expr)) return true; } catch {} await sleep(step); }
+  return false;
+}
+// Temiz profil: localStorage'ı sil, `seed` anahtarlarını yaz, sayfayı yeniden yükle.
+async function fresh(seed = {}, { firstplay = true, name = 'ARC', keepReset = true } = {}) {
+  if (!RESET_V) { await nav(PAGE); await waitFor(`!!window.ARC_BOT`); RESET_V = await ev(`localStorage.getItem('arc_reset_v')`); }
+  const all = { arc_debug: '1', ...(keepReset ? { arc_reset_v: RESET_V } : {}), ...(name ? { arc_name: name } : {}), ...(firstplay ? { arc_firstplay: '1' } : {}), ...seed };
+  // Önceki sayfa (belki oyun ortasında) kapanırken durumunu geri yazmasın: aynı origin'deki
+  // oyun kodu olmayan boş sayfaya geç, depoyu orada temizleyip tohumla.
+  await send('Page.navigate', { url: `${ORIGIN}/__blank` });
+  if (!await waitFor(`location.pathname === '/__blank' && document.readyState === 'complete'`, 5000)) throw new Error('boş sayfa açılmadı');
+  await ev(`localStorage.clear(); sessionStorage.clear(); Object.entries(${JSON.stringify(all)}).forEach(([k, v]) => localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v))); true`);
+  await send('Page.navigate', { url: PAGE });
+  if (!await waitFor(`!!window.ARC_TEST`)) throw new Error('sayfa hazır olmadı');
+  await sleep(600);
+  await ev(`document.querySelectorAll('#reward-toast').forEach(e => e.classList.remove('show')); true`);
+}
+const ls = k => ev(`localStorage.getItem(${JSON.stringify(k)})`);
+const lsJSON = async k => JSON.parse(await ls(k) || 'null');
+const scene = () => ev(`ARC_TEST.scene`);
+async function realClick(sel) {   // gerçek fare olayı (sentetik .click() değil) — çift dinleyici hatalarını yakalar
+  const r = await ev(`(() => { const b = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: r.x, y: r.y, button: 'left', clickCount: 1 });
+}
+async function playRun(ms) {   // bot `ms` oynar, sonra bırakır → top düşer → game over
+  dbg('run başlıyor'); await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  await sleep(ms); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu');
+  if (!await waitFor(`ARC_TEST.scene === 'over'`, 30000)) throw new Error('game over ekranına gelinmedi');
+  dbg('game over');
+  await sleep(2500);   // skor gönderimi (async) bitsin
+}
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+
+class Fail extends Error {}
+const T0 = { t: Date.now() };
+const dbg = m => { if (process.env.E2E_DEBUG) console.log(`    · ${((Date.now() - T0.t) / 1000).toFixed(1)}s ${m}`); };
+if (process.env.E2E_DEBUG) setInterval(() => dbg('♥ son adım: ' + lastStep + ' · bekleyen CDP: ' + pending.size), 5000).unref();
+const check = (cond, msg) => { if (!cond) throw new Fail(msg); };
+
+// ── Testler ──────────────────────────────────────────────────
+const tests = [];
+const test = (name, fn) => tests.push({ name, fn });
+
+test('start: tek dokunuş tek run başlatır, item bir kez harcanır', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 5, armed: true } } } });
+  await realClick('#btn-start'); await sleep(600);
+  check(await scene() === 'play', 'oyun başlamadı');
+  const n = (await lsJSON('arc_upg_v1')).inv.shield.count;
+  check(n === 4, `shield 5 → ${n} (beklenen 4)`);
+});
+
+test('again: çift tıklama tek run, tek harcama', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 5, armed: true } } } });
+  await realClick('#btn-start');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'game over gelmedi');
+  await sleep(1200);
+  await realClick('#btn-again'); await sleep(60); await realClick('#btn-again'); await sleep(600);
+  const n = (await lsJSON('arc_upg_v1')).inv.shield.count;
+  check(n === 3, `shield → ${n} (beklenen 3: START + tek AGAIN)`);
+});
+
+test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli başka oyuncuya dokunulmaz', async () => {
+  fbReset();
+  const other = { name: 'projects/p/databases/(default)/documents/scores/OTHER_normal',
+    fields: { name: { stringValue: 'ARC' }, owner: { stringValue: 'OTHER' }, score: { integerValue: '99999' }, mode: { stringValue: 'normal' }, ts: { integerValue: String(Date.now()) } } };
+  fb.docs.set('scores/OTHER_normal', JSON.parse(JSON.stringify(other)));
+  dbg('fresh'); await fresh(); dbg('sayfa hazır');
+  const uid = await waitFor(`!!ARC_DB.getUid()`) && await ev(`ARC_DB.getUid()`);
+  const myDoc = `scores/${uid}_normal`;
+  await playRun(1500);
+  const w1 = fb.writes.filter(w => w.path === myDoc);
+  check(w1.length === 1 && w1[0].authed && w1[0].mustNotExist && w1[0].status === 200, `ilk yazım hatalı: ${JSON.stringify(w1)}`);
+  const s1 = Number(fb.docs.get(myDoc).fields.score.integerValue);
+  await ev(`document.getElementById('btn-again').click(); ARC_BOT.start(); true`);
+  dbg('2. run'); await sleep(14000); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu, sahne=' + await scene());
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'ikinci run bitmedi'); dbg('2. game over');
+  await sleep(2500);
+  const best = Number(await ls('arc_best'));
+  const s2 = Number(fb.docs.get(myDoc).fields.score.integerValue);
+  check(best > s1, `ikinci run daha iyi olmadı (s1=${s1}, best=${best}) — bot ayarını kontrol et`);
+  const w2 = fb.writes.filter(w => w.path === myDoc).slice(1);
+  check(w2.some(w => w.authed && w.masked && w.status === 200), `PB güncellemesi yazılmadı: ${JSON.stringify(w2)}`);
+  check(s2 === best, `bulut skoru ${s2}, yerel en iyi ${best}`);
+  check(JSON.stringify(fb.docs.get('scores/OTHER_normal')) === JSON.stringify(other), 'aynı isimli başka oyuncunun kaydı değişti');
+  check(!fb.writes.some(w => w.status === 403), '403 alan yazım var');
+  const rows = await ev(`ARC_DB.invalidateTopCache(), ARC_DB.getTopScores(20, 'normal').then(r => r.map(x => x.name + ':' + x.score))`);
+  check(rows.length === 2 && rows.every(r => r.startsWith('ARC:')), `liderlikte iki ayrı ARC olmalı: ${rows}`);
+});
+
+test('reset: sürüm kapısı eski hesabı tazelemez, yeni anonim hesap açar', async () => {
+  fbReset();
+  await fresh({ arc_reset_v: 'r-OLD', arc_fb_rt: 'RT-OLDUID' }, { keepReset: false });
+  await waitFor(`!!ARC_DB.getUid()`);
+  check(!fb.authCalls.some(c => c.startsWith('refresh:RT-OLDUID')), `eski token tazelendi: ${fb.authCalls}`);
+  check(fb.authCalls.includes('signUp'), 'yeni anonim hesap açılmadı');
+  const uid = await ev(`ARC_DB.getUid()`);
+  check(uid !== 'OLDUID' && (await ls('arc_fb_rt')) === 'RT-' + uid, `uid=${uid}, arc_fb_rt=${await ls('arc_fb_rt')}`);
+  check(await ls('arc_name') === null, 'reset yerel profili silmedi');
+  check(await ls('arc_debug') === '1', 'reset arc_debug bayrağını sildi');
+});
+
+test('izler: depo 120 izle sınırlı, eski büyük depo kırpılır', async () => {
+  const traces = Array.from({ length: 300 }, (_, i) => ({ points: [{ x: 0, y: -i }, { x: 5, y: -i - 50 }], yMin: -i - 50, yMax: -i, mode: 'normal' }));
+  await fresh({ arc_traces_v1: traces });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  const n = (await lsJSON('arc_traces_v1')).length;
+  check(n === 120, `iz sayısı ${n} (beklenen 120)`);
+});
+
+test('liderlik: çevrimdışıyken "LOADING"de takılmaz, mesaj gösterir', async () => {
+  fbReset();
+  await fresh();
+  fb.offline = true;
+  await ev(`ARC_DB.invalidateTopCache(); document.getElementById('btn-lb').click(); true`);
+  const ok = await waitFor(`/couldn|offline/i.test(document.getElementById('lb-list').textContent)`, 15000);
+  const txt = await ev(`document.getElementById('lb-list').textContent.trim()`);
+  fb.offline = false;
+  check(ok, `liste: "${txt}"`);
+});
+
+test('müzik: yalnız oyun ekranında çalar', async () => {
+  await fresh();
+  await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(1500);
+  check(await ev('window.__music') === 0, 'ana ekranda müzik çalıyor');
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`window.__music > 0`, 8000), 'oyunda müzik başlamadı');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'game over gelmedi');
+  check(await waitFor(`window.__music === 0`, 3000), 'game over ekranında müzik sürüyor');
+});
+
+test('ekonomi: metre başına coin, extreme ×2, günlük yumuşak tavan', async () => {
+  await fresh({ arc_coin_day: today(), arc_coin_day_amt: '20' });
+  const [n, x] = await ev(`(() => { const m = ARC_TEST.mode; ARC_TEST.setMode('normal'); const a = ARC_TEST.runCoinsRaw(1000, 0);
+    ARC_TEST.setMode('extreme'); const b = ARC_TEST.runCoinsRaw(1000, 0); ARC_TEST.setMode(m); return [a, b]; })()`);
+  check(n === 10 && x === 20, `10 m → normal ${n} (10), extreme ${x} (20)`);
+  const capped = await ev(`ARC_TEST.applySoftCap(10)`);
+  check(Math.abs(capped - 7) < 1e-9, `bugün 20 kazanılmışken 10 ham → ${capped} (beklenen 5 + 5×0.4 = 7)`);
+});
+
+test('ekonomi: run sonu coin tam sayı, kesir taşınır', async () => {
+  await fresh({ arc_coins_earned: '0', arc_coin_carry: '0.5', arc_login_day: today() });
+  await playRun(3000);
+  const carry = Number(await ls('arc_coin_carry'));
+  const earned = Number(await ls('arc_coins_earned'));
+  check(carry >= 0 && carry < 1, `taşınan kesir ${carry} [0,1) dışında`);
+  check(Number.isInteger(earned) && earned >= 0, `kazanılan coin tam sayı değil: ${earned}`);
+});
+
+test('günlük: yeni gün → görevler yenilenir, seri ilerler, giriş +1 coin', async () => {
+  await fresh({ arc_login_day: '2000-1-1', arc_series_day: '3', arc_coins_earned: '0',
+    arc_quests_v1: { date: '2000-1-1', day: 3, quests: [{ metric: 'runs', target: 1, progress: 1, claimed: true, reward: 2, label: 'x' }], allBonusClaimed: true } });
+  const q = await lsJSON('arc_quests_v1');
+  check(q.date === today(), `görev tarihi ${q.date}`);
+  check(q.quests.length === 3 && q.quests.every(x => !x.claimed && x.progress === 0), 'görevler sıfırlanmadı');
+  check(await ls('arc_series_day') === '4', `seri günü ${await ls('arc_series_day')} (beklenen 4)`);
+  check(Number(await ls('arc_coins_earned')) === 1, `giriş coini: ${await ls('arc_coins_earned')} (beklenen 1)`);
+  await nav(PAGE); await waitFor(`!!window.ARC_TEST`); await sleep(600);
+  check(Number(await ls('arc_coins_earned')) === 1, 'aynı gün ikinci açılışta giriş coini tekrar verildi');
+});
+
+// ── Koştur ───────────────────────────────────────────────────
+let pass = 0, fail = 0;
+const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
+for (const t of run) {
+  jsErrors = [];
+  const t0 = Date.now(); T0.t = t0;
+  try {
+    await Promise.race([t.fn(), sleep(TEST_TIMEOUT).then(() => { throw new Fail(`${TEST_TIMEOUT / 1000} sn içinde bitmedi (son adım: ${lastStep})`); })]);
+    if (jsErrors.length) throw new Fail('JS hatası: ' + [...new Set(jsErrors)].slice(0, 3).join(' | '));
+    pass++; console.log(`✓ ${t.name}  (${((Date.now() - t0) / 1000).toFixed(1)} sn)`);
+  } catch (e) {
+    fail++; console.log(`✗ ${t.name}\n    ${e instanceof Fail ? e.message : e.stack}`);
+  }
+}
+console.log(`\n${pass} geçti, ${fail} kaldı (${run.length} test)`);
+chrome.kill(); server.close();
+try { fs.rmSync(profile, { recursive: true, force: true }); } catch {}
+process.exit(fail ? 1 : 0);

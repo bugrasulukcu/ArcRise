@@ -4997,13 +4997,14 @@ const ARC_DB = (() => {
   // mode alanı olmayan ESKİ kayıtlar `mode: null` olarak gelir — getTopScores bunları filtreler.
   function parseRows(rows) {
     return rows
-      .filter(r => r.document?.fields)
+      // Tek bozuk doküman (eksik alan) tüm tabloyu düşürmesin: adı olmayanı atla, gerisi varsayılan.
+      .filter(r => r.document?.fields?.name?.stringValue)
       .map(r => {
         const f = r.document.fields;
         return {
           name:     f.name.stringValue,
-          avatar:   parseInt(f.avatar.integerValue ?? 3),
-          score:    parseInt(f.score.integerValue ?? 0),
+          avatar:   parseInt(f.avatar?.integerValue ?? 3),
+          score:    parseInt(f.score?.integerValue ?? 0) || 0,
           distance: Number(f.distance?.doubleValue ?? 0),
           ts:       parseInt(f.ts?.integerValue ?? 0),
           mode:     f.mode?.stringValue || null,
@@ -9874,6 +9875,11 @@ const ARC_DB = (() => {
     return { start, stop, toggle, frame, setTapRate, get active() { return on; }, get tapRate() { return MAX_TAP_HZ; } };
   })();
   window.ARC_BOT = ARC_BOT;
+  // Otomatik testler (tests/e2e.mjs) için iç durum — yalnız debug modunda dışarı açılır.
+  if (window.ARC_DEBUG) window.ARC_TEST = {
+    get scene() { return scene; }, get mode() { return gameMode; }, setMode: m => { gameMode = m; },
+    runCoinsRaw, applySoftCap, coinsEarnedToday,
+  };
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
   let debugOverlayOn = false;

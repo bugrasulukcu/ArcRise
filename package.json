@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node tests/e2e.mjs",
     "sync": "node sync-www.js && npx cap sync android && node verify-sync.js",
     "verify": "node verify-sync.js"
   },
