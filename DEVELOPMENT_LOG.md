@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Upgrade ikonları, info animasyonları ve avatarlar yenilendi (2026-09-28)
+
+- **İkon seti (`UPG_ART.icons`, `ICONS['u-<key>']`):** 21 upgrade/gear ikonu tek stilde yeniden çizildi (24×24, 1.8px çizgi + %22 dolgu, currentColor). Renkli emoji-benzeri üç ikon (madalya, alev, roket) ve paylaşılan ikonlar (Doubler/Coin Rain, Combo Timer/Time Slow, Filter/Shockwave) ayrıştırıldı; Brake'teki okunmayan "STOP" yazısı kaldırıldı. Slot HUD da yeni ikonları kullanıyor.
+- **Info penceresi (`#upginfo-modal`, `openUpgInfo`):** 1.6 sn'lik toast yerine kapatılana kadar açık kalan pencere: SMIL animasyonu (`UPG_ART.anims`, 21 sahne, JS gerektirmez), normal harfli açıklama, CORE için NOW/NEXT, yetenek için süre/recharge, eşya için stok. Kapanınca animasyon DOM'dan silinir. Info düğmesi italik serif "I" yerine SVG glif.
+- **Metinler** oyunun gerçek davranışına göre düzeltildi (tek kaynak: `CORE_DESC` / `ABILITY_DESC` / `CONSUMABLE_CFG.desc`): Revive otomatik değil soruluyor ve run başına 1; Combo Timer toplam hayatta kalma süresini de uzatıyor; Timer yeşil/mor puanını da artırıyor; Anchor'da ikinci kullanım recharge bekliyor; Coin Rain'deki "altın coin verir" ima'sı düzeltildi; Radius/Speed'de iki yönlü satın alma anlatıldı.
+- **Avatarlar (`_avSVGs`):** 20 avatar tek stilde yeniden çizildi (renkli iç ışık + ince halka + degradeli parlayan glif). Sıra/isim/renk korundu (`avatarIdx` Firestore'da saklanıyor).
+- **Bilinen hatalar (düzeltilmedi):** Brake Extreme'de çalışmıyor (hız her karede yeniden hesaplanıyor); Phase Burst bitince aktif Ghost booster'ını da kapatıyor.
+
 ### v25 — Ekonomi ×1 ölçeğine indi (1 m = 1 coin), 3 yıllık katalog, veri sıfırlama (2026-09-28)
 
 **Canlı veri sıfırlandı.** Firestore'daki tüm koleksiyonlar (`scores`, `players`, `wallets`, `friendreqs`; `referrals` zaten boştu) `firebase firestore:delete --all-collections` ile silindi. Silmeden önce 35 doküman yedeklendi: `~/Desktop/Projects/Games/ArcRise_firestore_backup_2026-09-28/` (repo dışı). Gerçek IAP alımı yoktu (`wallets.purchased` hiçbir dokümanda yok). İstemci tarafında `ARC_RESET_VERSION` iki kez artırıldı (`r-2026-09-28-1`, sonra ölçek değişince `-2`) → her cihaz açılışta `arc_*` anahtarlarını (`arc_fb_rt` dahil) siler ve **yeni anonim uid** ile başlar, bu yüzden buluttaki eski ×12 cüzdanlara hiç bağlanmaz. ⚠️ Eski APK'lar sıfırlanmaz — yeni Android build gerekli.

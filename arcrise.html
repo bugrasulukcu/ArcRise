@@ -2120,6 +2120,39 @@
       background: rgba(6,8,14,.55); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
     }
     #buy-modal.open { display: flex; }
+    /* Upgrade info penceresi — animasyon + açıklama + şu anki/sonraki değer */
+    #upginfo-modal {
+      position: fixed; inset: 0; z-index: 91; display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,.6); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
+    }
+    #upginfo-modal.open { display: flex; }
+    #upginfo-box {
+      width: min(88vw, 340px); max-height: 88vh; overflow-y: auto;
+      background:
+        radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.18), transparent 62%),
+        linear-gradient(180deg, rgba(24,16,42,.97), rgba(12,8,22,.98));
+      border: 2px solid rgba(170,120,255,.45); border-radius: 22px; padding: 18px 18px 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 0 36px rgba(150,90,240,.28), inset 0 1px 0 rgba(255,255,255,.08);
+      animation: upginfoIn .22s cubic-bezier(.2,.8,.3,1);
+    }
+    @keyframes upginfoIn { from { transform: translateY(14px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+    #upginfo-head { display: flex; align-items: center; gap: 10px; }
+    #upginfo-head .core-icon { width: 38px; height: 38px; border-radius: 11px; }
+    #upginfo-title { font-size: 15px; letter-spacing: 2px; color: #fff; }
+    #upginfo-anim .upg-anim { width: 100%; height: auto; display: block; border-radius: 14px; border: 1px solid rgba(170,120,255,.22); }
+    #upginfo-desc { font-size: 13px; line-height: 1.55; letter-spacing: .2px; color: rgba(236,230,255,.92); text-transform: none; }
+    #upginfo-stat { display: flex; flex-wrap: wrap; gap: 6px; }
+    #upginfo-stat span {
+      font-size: 11px; letter-spacing: 1px; padding: 6px 10px; border-radius: 999px;
+      background: rgba(170,120,255,.12); border: 1px solid rgba(170,120,255,.3); color: #d9c8ff;
+    }
+    #upginfo-stat span.next { background: rgba(110,224,124,.12); border-color: rgba(110,224,124,.4); color: #9fffa0; }
+    #upginfo-hint { font-size: 11px; line-height: 1.5; color: rgba(236,230,255,.55); text-transform: none; }
+    #upginfo-ok {
+      width: 100%; padding: 12px 0; border-radius: 12px; font-size: 12px; letter-spacing: 1.5px; font-family: var(--font);
+      cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.22); color: #fff;
+    }
     #buy-modal-box {
       width: min(84vw, 300px);
       background:
@@ -2185,7 +2218,7 @@
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(190,160,255,.35);
       color: rgba(205,180,255,.8);
-      font-size: 12px; font-style: italic; font-weight: 700; font-family: Georgia, serif;
+      font-size: 12px;
       cursor: pointer; line-height: 1; padding: 0;
       transition: background .15s, color .15s;
     }
@@ -3762,6 +3795,18 @@
       <button id="buy-cancel" type="button">CANCEL</button>
       <button id="buy-confirm-btn" type="button">BUY</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ UPGRADE INFO ══ -->
+<div id="upginfo-modal">
+  <div id="upginfo-box" role="dialog" aria-modal="true" aria-labelledby="upginfo-title">
+    <div id="upginfo-head"><div class="core-icon" id="upginfo-icon"></div><div id="upginfo-title"></div></div>
+    <div id="upginfo-anim"></div>
+    <div id="upginfo-desc"></div>
+    <div id="upginfo-stat"></div>
+    <div id="upginfo-hint"></div>
+    <button id="upginfo-ok" type="button">GOT IT</button>
   </div>
 </div>
 
@@ -5347,6 +5392,188 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     return `<svg${cls} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" style="color:${color};display:inline-block;vertical-align:middle${extra}">${body}</svg>`;
   }
 
+  // ── Upgrade sanatı: kart ikonları + info animasyonları ─────────
+  // İkonlar 24×24, currentColor, 1.8px çizgi + %22 dolgu (duotone). Animasyonlar
+  // 240×150 SMIL sahneleri — oyunun kendi dilinde: beyaz top, yeşil/altın/mor
+  // toplar, kırmızı engeller, mor duvarlar. Hepsi sonsuz döngü, JS gerektirmez.
+  const UPG_ART = (() => {
+    const S = 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+    const F = 'fill="currentColor" opacity=".22"';
+    const icons = {
+      // CORE
+      profit:      `<path d="M3.5 20.5h17" ${S}/><rect x="5" y="14" width="3.4" height="6.5" rx="1" ${F}/><rect x="10.3" y="11" width="3.4" height="9.5" rx="1" ${F}/><rect x="15.6" y="8" width="3.4" height="12.5" rx="1" ${F}/><rect x="5" y="14" width="3.4" height="6.5" rx="1" ${S}/><rect x="10.3" y="11" width="3.4" height="9.5" rx="1" ${S}/><rect x="15.6" y="8" width="3.4" height="12.5" rx="1" ${S}/><path d="M5 8.5l4.5-4 3 2L17 2.8" ${S}/><path d="M14.3 2.8H17v2.7" ${S}/>`,
+      radius:      `<circle cx="12" cy="12" r="8.5" ${F}/><path d="M12 3.5a8.5 8.5 0 1 1-8.5 8.5" ${S}/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 12l6-6" ${S}/><path d="M15.2 5.6h2.8v2.8" ${S}/><circle cx="3.5" cy="12" r="1.9" fill="currentColor"/>`,
+      speed:       `<path d="M4.2 17a8.5 8.5 0 1 1 15.6 0" ${S}/><path d="M4.2 17a8.5 8.5 0 0 1 3.3-9.6" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" opacity=".3"/><path d="M12 14.5l5-5.5" ${S}/><circle cx="12" cy="14.5" r="1.9" fill="currentColor"/><path d="M8 20h8" ${S}/>`,
+      timer:       `<circle cx="12" cy="13.5" r="7.5" ${F}/><circle cx="12" cy="13.5" r="7.5" ${S}/><path d="M10 2.8h4M12 2.8v3.2" ${S}/><path d="M18.4 6.6l1.4-1.4" ${S}/><path d="M12 13.5V9.2M12 13.5l3 1.8" ${S}/><circle cx="12" cy="13.5" r="1.3" fill="currentColor"/>`,
+      comboWin:    `<path d="M5.1 17.5a8.2 8.2 0 1 1 13.8 0" ${S} opacity=".45"/><path d="M8 5.3a8.2 8.2 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M12 13V9.5" ${S}/><circle cx="12" cy="13.5" r="1.6" fill="currentColor"/><path d="M9 20.5h6" ${S}/>`,
+      comboMax:    `<circle cx="5" cy="17" r="2.4" ${F}/><circle cx="5" cy="17" r="2.4" ${S}/><circle cx="11" cy="12" r="2.4" ${F}/><circle cx="11" cy="12" r="2.4" ${S}/><path d="M6.9 15.4l2.2-1.8M12.9 10.4l2.2-1.8" ${S}/><path d="M18 3.2l.9 2.5 2.6.2-2 1.7.7 2.6-2.2-1.5-2.2 1.5.7-2.6-2-1.7 2.6-.2z" fill="currentColor"/>`,
+      wallSoft:    `<path d="M19.5 3v18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M16.5 4c-1.5 2 1.5 3 0 5s1.5 3 0 5 1.5 3 0 5" ${S} opacity=".55"/><circle cx="9" cy="12" r="4.2" ${F}/><circle cx="9" cy="12" r="4.2" ${S}/><path d="M3 12h1.2" ${S} opacity=".6"/>`,
+      magnetRange: `<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2.2 2.6" opacity=".55"/><path d="M8 6.5v5a4 4 0 0 0 8 0v-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="butt"/><path d="M6.6 6.5h2.8M14.6 6.5h2.8" fill="none" stroke="currentColor" stroke-width="3.2" opacity=".45"/>`,
+      // ABILITIES
+      timeslow:    `<path d="M6 3h12M6 21h12" ${S}/><path d="M7.5 3c0 5 4.5 6 4.5 9s-4.5 4-4.5 9M16.5 3c0 5-4.5 6-4.5 9s4.5 4 4.5 9" ${S}/><path d="M9.2 19.5h5.6L12 16z" fill="currentColor" opacity=".55"/><path d="M9.8 6.5h4.4" ${S} opacity=".55"/>`,
+      phaseburst:  `<path d="M13 3v18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".45"/><circle cx="16.5" cy="12" r="3.6" ${F}/><circle cx="16.5" cy="12" r="3.6" ${S}/><circle cx="9" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1.6 1.8" opacity=".6"/><path d="M2.5 12h2" ${S} opacity=".5"/>`,
+      coinpull:    `<circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M4 4l4.5 4.5M20 4l-4.5 4.5M4 20l4.5-4.5M20 20l-4.5-4.5" ${S}/><path d="M8.5 5.5v3h-3M15.5 5.5v3h3M8.5 18.5v-3h-3M15.5 18.5v-3h3" ${S}/>`,
+      brake:       `<path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z" ${F}/><path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z" ${S}/><path d="M9.5 8.5v7M14.5 8.5v7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>`,
+      mirror:      `<path d="M12 2.5v19" ${S} stroke-dasharray="2 2.4"/><path d="M9 7l-5 5 5 5z" ${F}/><path d="M9 7l-5 5 5 5z" ${S}/><path d="M15 7l5 5-5 5z" fill="currentColor"/>`,
+      shock:       `<circle cx="12" cy="12" r="2.6" fill="currentColor"/><circle cx="12" cy="12" r="6" ${S} opacity=".75"/><circle cx="12" cy="12" r="9.5" ${S} opacity=".35"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5" ${S}/>`,
+      anchor:      `<circle cx="12" cy="5" r="2.3" ${S}/><path d="M12 7.3V21M8 11h8" ${S}/><path d="M4.5 14.5A7.5 7.5 0 0 0 12 21a7.5 7.5 0 0 0 7.5-6.5" ${S}/><path d="M3 16l1.5-1.5L6 16M18 16l1.5-1.5L21 16" ${S}/>`,
+      // ITEMS
+      revive:      `<path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${F}/><path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${S}/><path d="M9 3.5a5 5 0 0 1 7.5 1.2" ${S}/><path d="M16.8 2.3l-.3 2.6-2.5-.6" ${S}/>`,
+      doubler:     `<circle cx="15" cy="9" r="6" ${F}/><circle cx="15" cy="9" r="6" ${S} opacity=".55"/><circle cx="9" cy="15" r="6.5" fill="currentColor" opacity=".35"/><circle cx="9" cy="15" r="6.5" ${S}/><path d="M11.1 12.7a3 3 0 1 0 0 4.6" ${S}/>`,
+      headstart:   `<path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${F}/><path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${S}/><circle cx="12" cy="8.3" r="1.6" fill="currentColor"/><path d="M7.8 13l-2.6 3 3-.2M16.2 13l2.6 3-3-.2" ${S}/><path d="M10.3 17.5l-.6 3M12 17.5v4M13.7 17.5l.6 3" ${S} opacity=".6"/>`,
+      coinrain:    `<path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${F}/><path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${S}/><circle cx="7.5" cy="16" r="2" fill="currentColor"/><circle cx="16" cy="15.2" r="2" fill="currentColor"/><circle cx="12" cy="20.2" r="2" fill="currentColor"/>`,
+      preboost:    `<rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${F}/><rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${S}/><path d="M2.5 7h19v3h-19zM12 7v13.5" ${S}/><path d="M12 7C9.5 7 7.5 4 9.5 3.2 11 2.6 12 5 12 7c0-2 1-4.4 2.5-3.8C16.5 4 14.5 7 12 7z" ${S}/>`,
+      filter:      `<path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" ${F}/><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" ${S}/><circle cx="7.5" cy="7.2" r="1.1" fill="currentColor"/><circle cx="12" cy="7.2" r="1.1" fill="currentColor"/><circle cx="16.5" cy="7.2" r="1.1" fill="currentColor"/>`,
+    };
+    // Info butonu: italik "I" yerine gerçek bir info glifi (global uppercase'ten etkilenmez)
+    const infoGlyph = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="7" r="1.7" fill="currentColor"/><path d="M12 11v7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+
+    // ── Animasyon sahneleri ──────────────────────────────────────
+    const C = { bg: '#0d0a1a', wall: 'rgba(170,140,255,.55)', ball: '#ffffff', green: '#7CFF7A', gold: '#ffd84a', purple: '#b36bff', red: '#ff3355', txt: '#e9e2ff', dim: 'rgba(233,226,255,.45)' };
+    const FONT = 'font-family="Sarpanch,system-ui,sans-serif" font-weight="700"';
+    let uid = 0;
+    const scene = (inner, defs) => {
+      const id = 'ua' + (++uid);
+      return `<svg class="upg-anim" viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" role="img">`
+        + `<defs><radialGradient id="${id}g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1c1436"/><stop offset="1" stop-color="${C.bg}"/></radialGradient>`
+        + `<filter id="${id}f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>${defs || ''}</defs>`
+        + `<rect width="240" height="150" rx="14" fill="url(#${id}g)"/>`
+        + inner.replace(/GLOW/g, `filter="url(#${id}f)"`) + `</svg>`;
+    };
+    const walls = (l = 22, r = 218) => `<path d="M${l} 8V142M${r} 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>`;
+    const ball  = (x, y, r = 7, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.ball}" GLOW ${extra}/>`;
+    const dot   = (x, y, col, r = 5, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" GLOW ${extra}/>`;
+    const label = (x, y, t, col = C.txt, size = 13, extra = '') => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" ${FONT} fill="${col}" ${extra}>${t}</text>`;
+    // opaklık zaman çizelgesi: vals "0;1;1;0" + keyTimes
+    const fade = (vals, times, dur) => `<animate attributeName="opacity" values="${vals}" keyTimes="${times}" dur="${dur}s" repeatCount="indefinite"/>`;
+    const move = (path, dur, extra = '') => `<animateMotion path="${path}" dur="${dur}s" repeatCount="indefinite" ${extra}/>`;
+
+    const anims = {
+      profit: () => scene(
+        `<g transform="translate(0,6)">${[0, 1, 2, 3].map(i => `<rect x="${52 + i * 36}" y="${108 - (i + 1) * 18}" width="24" height="${(i + 1) * 18}" rx="4" fill="${C.purple}" opacity=".35"/>`).join('')}
+         ${[0, 1, 2, 3].map(i => `<rect x="${52 + i * 36}" width="24" rx="4" fill="${C.purple}"><animate attributeName="height" values="${(i + 1) * 18};${(i + 1) * 18 * 1.3};${(i + 1) * 18 * 1.3};${(i + 1) * 18}" keyTimes="0;.35;.85;1" dur="3s" repeatCount="indefinite"/><animate attributeName="y" values="${108 - (i + 1) * 18};${108 - (i + 1) * 18 * 1.3};${108 - (i + 1) * 18 * 1.3};${108 - (i + 1) * 18}" keyTimes="0;.35;.85;1" dur="3s" repeatCount="indefinite"/></rect>`).join('')}
+         <path d="M40 110H200" stroke="${C.dim}" stroke-width="2" stroke-linecap="round"/></g>
+         ${label(120, 26, 'SCORE ×1.0', C.dim, 14, '')}
+         <g opacity="0">${fade('0;0;1;1;0', '0;.3;.4;.85;1', 3)}${label(120, 26, 'SCORE ×1.3', C.green, 14)}</g>`),
+      radius: () => scene(
+        `${walls()}
+         <path d="M120 128a34 34 0 0 1 0-68" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
+         <path d="M120 128a58 58 0 0 1 0-116" fill="none" stroke="${C.purple}" stroke-width="2.5" stroke-dasharray="3 5" opacity=".9"/>
+         <g>${ball(0, 0, 6.5)}${move('M120 128a34 34 0 0 1 0-68', 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.5;1', 3)}</g>
+         <g>${ball(0, 0, 6.5)}${move('M120 128a58 58 0 0 1 0-116', 3, 'keyPoints="0;0;1" keyTimes="0;.5;1" calcMode="linear"')}${fade('0;0;1;1', '0;.5;.52;1', 3)}</g>
+         ${label(148, 98, 'TIGHT', C.dim, 10)}${label(196, 40, 'WIDE', C.purple, 10)}`),
+      speed: () => scene(
+        `${walls()}
+         <path d="M70 140C70 90 170 90 170 40" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
+         <path d="M40 140C40 90 140 90 140 40" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5" opacity=".6"/>
+         <g>${ball(0, 0, 6)}${move('M40 140C40 90 140 90 140 20', 2.6)}</g>
+         <g>${ball(0, 0, 6)}<circle r="10" fill="none" stroke="${C.green}" stroke-width="1.5" opacity=".6"/>${move('M70 140C70 90 170 90 170 20', 1.6)}</g>
+         ${label(52, 32, '×1.0', C.dim, 12)}${label(196, 128, '×1.4', C.green, 12)}`),
+      timer: () => scene(
+        `${walls()}
+         <circle cx="120" cy="84" r="30" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
+         <circle cx="120" cy="84" r="30" fill="none" stroke="${C.green}" stroke-width="5" stroke-linecap="round" transform="rotate(-90 120 84)" stroke-dasharray="188.5" stroke-dashoffset="0">
+           <animate attributeName="stroke-dashoffset" values="0;188.5;0" keyTimes="0;.92;1" dur="4s" repeatCount="indefinite"/></circle>
+         ${ball(120, 84, 11)}
+         <g>${label(120, 45, '8', C.dim, 18)}${fade('1;1;0;0', '0;.45;.5;1', 4)}</g>
+         <g opacity="0">${label(120, 45, '9', C.green, 18)}${fade('0;0;1;1', '0;.5;.55;1', 4)}</g>
+         <g opacity="0">${label(178, 50, '+1', C.green, 12)}${fade('0;0;1;0;0', '0;.5;.58;.8;1', 4)}</g>
+         ${label(120, 138, 'MORE TIME · BIGGER POINTS', C.dim, 9)}`),
+      comboWin: () => scene(
+        `${[...Array(8)].map((_, i) => `<rect x="${34 + i * 22}" y="58" width="18" height="26" rx="4" fill="${i < 2 ? C.green : 'rgba(255,255,255,.12)'}" ${i < 2 ? 'GLOW' : ''}/>`).join('')}
+         <rect x="34" y="92" height="4" rx="2" fill="${C.green}"><animate attributeName="width" values="40;40;62;62;40" keyTimes="0;.4;.55;.9;1" dur="4s" repeatCount="indefinite"/></rect>
+         <rect x="34" y="58" height="26" rx="4" fill="${C.green}" opacity=".35"><animate attributeName="width" values="0;0;62;62;0" keyTimes="0;.4;.55;.9;1" dur="4s" repeatCount="indefinite"/></rect>
+         <g>${label(120, 40, 'COMBO WINDOW 2.0s', C.dim, 12)}${fade('1;1;0;0;1', '0;.4;.45;.95;1', 4)}</g>
+         <g opacity="0">${label(120, 40, 'COMBO WINDOW 2.5s', C.green, 12)}${fade('0;0;1;1;0', '0;.45;.5;.9;1', 4)}</g>
+         ${label(120, 124, 'EACH STEP LASTS LONGER', C.dim, 9)}`),
+      comboMax: () => {
+        const xs = [48, 84, 120, 156, 192];
+        return scene(
+          `${xs.map((x, i) => `<g opacity="0">${dot(x, 88, C.green, 7)}${label(x, 66, '×' + (i + 1), C.green, 12)}${fade(`0;0;1;1;0;0`, `0;${(i * .13).toFixed(2)};${(i * .13 + .05).toFixed(2)};.78;.82;1`, 5)}</g>`).join('')}
+           <path d="M48 88H192" stroke="${C.green}" stroke-width="2" opacity=".35" stroke-dasharray="2 5"/>
+           <g opacity="0">${label(120, 124, '+150', C.gold, 22)}${fade('0;0;1;1;0', '0;.8;.84;.95;1', 5)}</g>
+           ${label(120, 30, 'CHAIN CAP ×5', C.txt, 12)}`);
+      },
+      wallSoft: () => scene(
+        `<rect x="186" y="8" width="18" height="134" fill="${C.green}" opacity=".0"><animate attributeName="opacity" values="0;0;.18;.18;0" keyTimes="0;.3;.4;.8;1" dur="3.4s" repeatCount="indefinite"/></rect>
+         <path d="M204 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
+         <path d="M28 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
+         <path d="M80 142C140 120 200 100 196 75S120 30 80 8" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
+         <g>${ball(0, 0, 7)}${move('M80 142C140 120 200 100 196 75S120 30 80 8', 3.4)}</g>
+         ${label(150, 146, 'BRUSH PAST — NO CRASH', C.dim, 9)}`),
+      magnetRange: () => scene(
+        `${walls()}
+         <g>${ball(120, 110, 7)}<circle cx="120" cy="110" fill="none" stroke="${C.purple}" stroke-width="1.5" stroke-dasharray="3 4"><animate attributeName="r" values="12;12;22;22;12" keyTimes="0;.1;.2;.9;1" dur="3.6s" repeatCount="indefinite"/></circle></g>
+         <g>${dot(0, 0, C.green, 5)}${move('M150 40L140 90L120 110', 3.6, 'keyPoints="0;.72;1;1" keyTimes="0;.55;.7;1" calcMode="linear"')}${fade('1;1;0;0', '0;.7;.72;1', 3.6)}</g>
+         <g>${dot(0, 0, C.gold, 5)}${move('M86 30L98 88L120 110', 3.6, 'keyPoints="0;.72;1;1" keyTimes="0;.6;.75;1" calcMode="linear"')}${fade('1;1;0;0', '0;.75;.77;1', 3.6)}</g>
+         ${label(120, 142, '+1 mm PICKUP RANGE', C.dim, 9)}`),
+      timeslow: () => scene(
+        `${walls()}<rect width="240" height="150" rx="14" fill="#4a6cff" opacity="0">${fade('0;0;.14;.14;0', '0;.35;.4;.9;1', 4)}</rect>
+         ${[[60, 0], [150, .3], [95, .6]].map(([x, d]) => `<rect x="${x}" y="-10" width="36" height="10" rx="5" fill="${C.red}" GLOW><animate attributeName="y" values="-10;50;70;150" keyTimes="0;.35;.9;1" dur="4s" begin="${d * -4}s" repeatCount="indefinite"/></rect>`).join('')}
+         ${ball(120, 118, 7)}
+         <g opacity="0">${label(120, 30, 'SLOW ×0.5', '#9fb3ff', 14)}${fade('0;0;1;1;0', '0;.35;.4;.9;1', 4)}</g>`),
+      phaseburst: () => scene(
+        `${walls()}<rect x="70" y="66" width="100" height="12" rx="6" fill="${C.red}" GLOW/>
+         <g>${ball(0, 0, 7)}<animate attributeName="opacity" values="1;1;.35;.35;1;1" keyTimes="0;.3;.35;.65;.7;1" dur="3s" repeatCount="indefinite"/>${move('M120 140V10', 3)}</g>
+         ${label(120, 108, 'PASS THROUGH', C.dim, 9)}`),
+      coinpull: () => scene(
+        `${walls()}${ball(120, 112, 8)}
+         ${[[50, 30, C.green], [190, 26, C.gold], [80, 60, C.purple], [168, 70, C.green], [120, 20, C.gold]].map(([x, y, col], i) =>
+          `<g>${dot(0, 0, col, 5)}${move(`M${x} ${y}L120 112`, 3, 'keyPoints="0;0;1;1" keyTimes="0;.4;.6;1" calcMode="linear"')}${fade('1;1;0;0;1', '0;.6;.62;.98;1', 3)}</g>`).join('')}
+         <circle cx="120" cy="112" fill="none" stroke="${C.gold}" stroke-width="2" opacity="0"><animate attributeName="r" values="8;8;26" keyTimes="0;.6;.8" dur="3s" repeatCount="indefinite"/>${fade('0;0;.8;0;0', '0;.6;.62;.8;1', 3)}</circle>`),
+      brake: () => scene(
+        `${walls()}${[0, 1, 2, 3].map(i => `<path d="M${60 + i * 40} 0v18" stroke="${C.dim}" stroke-width="2" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0 0;0 150" dur="${i % 2 ? .7 : .9}s" repeatCount="indefinite"/></path>`).join('')}
+         ${ball(120, 100, 7)}
+         <g opacity="0">${label(120, 138, 'SPEED ×0.5', C.gold, 12)}${fade('0;1;1;0', '0;.1;.9;1', 3)}</g>`),
+      mirror: () => scene(
+        `${walls()}<path d="M120 10V140" stroke="${C.dim}" stroke-width="1.5" stroke-dasharray="4 5"/>
+         <g>${ball(0, 0, 7)}${move('M60 140C60 110 70 90 70 75', 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.47;1', 3)}</g>
+         <g opacity="0">${ball(0, 0, 7)}${move('M170 75C170 60 180 40 180 10', 3, 'keyPoints="0;0;1" keyTimes="0;.47;1" calcMode="linear"')}${fade('0;0;1;1', '0;.46;.48;1', 3)}</g>
+         <path d="M76 75H164" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 4" opacity="0">${fade('0;0;1;0;0', '0;.44;.47;.6;1', 3)}</path>`),
+      shock: () => scene(
+        `${walls()}${[[80, 60], [165, 52], [70, 120], [175, 112]].map(([x, y]) => `<rect x="${x - 16}" y="${y - 5}" width="32" height="10" rx="5" fill="${C.red}" GLOW>${fade('1;1;0;0;1', '0;.3;.36;.95;1', 3)}</rect>`).join('')}
+         ${ball(120, 86, 8)}
+         <circle cx="120" cy="86" fill="none" stroke="${C.gold}" stroke-width="3" opacity="0"><animate attributeName="r" values="8;8;80" keyTimes="0;.28;.45" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.28;.3;.48;1', 3)}</circle>`),
+      anchor: () => scene(
+        `${walls()}
+         <g opacity="0"><path d="M80 118v-12M74 111l6 6 6-6" stroke="${C.purple}" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="80" cy="118" r="10" fill="none" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 3"/>${fade('0;1;1;0;0', '0;.12;.75;.8;1', 4)}</g>
+         <g>${ball(0, 0, 7)}${move('M80 118C80 80 170 80 170 30L80 118', 4, 'keyPoints="0;0;.9;.9;1;1" keyTimes="0;.15;.62;.7;.72;1" calcMode="linear"')}</g>
+         <g opacity="0">${label(120, 26, 'TELEPORT BACK', C.purple, 11)}${fade('0;0;1;1;0', '0;.68;.72;.92;1', 4)}</g>`),
+      revive: () => scene(
+        `${walls()}<rect x="100" y="36" width="60" height="10" rx="5" fill="${C.red}" GLOW/>
+         <path d="M110 140C110 110 120 90 125 52" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
+         <g>${ball(0, 0, 7)}${move('M110 140C110 110 120 90 125 52L116 100', 4, 'keyPoints="0;.8;.8;1;1" keyTimes="0;.4;.6;.62;1" calcMode="linear"')}</g>
+         <g opacity="0"><path d="M125 74s-9-5.6-9-12.3A5 5 0 0 1 125 59a5 5 0 0 1 9 2.7c0 6.7-9 12.3-9 12.3z" fill="${C.red}" GLOW/>${fade('0;0;1;1;0;0', '0;.4;.45;.6;.65;1', 4)}</g>
+         <g opacity="0">${label(170, 104, 'SAFE SPOT', C.green, 10)}${fade('0;0;1;1;0', '0;.62;.66;.9;1', 4)}</g>`),
+      doubler: () => scene(
+        `<circle cx="120" cy="70" r="26" fill="${C.gold}" GLOW/><circle cx="120" cy="70" r="19" fill="none" stroke="#b8860b" stroke-width="3"/>
+         <g>${label(120, 124, '+12 COINS', C.dim, 16)}${fade('1;1;0;0;1', '0;.4;.45;.95;1', 3.5)}</g>
+         <g opacity="0">${label(120, 124, '+24 COINS', C.gold, 16)}${fade('0;0;1;1;0;0', '0;.45;.5;.9;.95;1', 3.5)}</g>
+         <g opacity="0">${label(170, 50, '×2', C.gold, 18)}${fade('0;0;1;1;0;0', '0;.4;.45;.9;.95;1', 3.5)}</g>`),
+      headstart: () => scene(
+        `${walls()}<path d="M90 140C90 100 150 90 150 10" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
+         <g>${ball(0, 0, 7)}${move('M90 140C90 100 150 90 150 10', 4, 'keyPoints="0;.25;1" keyTimes="0;.6;1" calcMode="linear"')}</g>
+         <g>${label(60, 30, 'FIRST 5s: ×0.5', C.gold, 11)}${fade('1;1;0;0', '0;.6;.62;1', 4)}</g>`),
+      coinrain: () => scene(
+        `${walls()}${[50, 80, 110, 140, 170, 195, 65, 125, 185].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.6 + (i % 3) * .35}s" begin="${-i * .37}s" repeatCount="indefinite"/></circle>`).join('')}
+         ${label(120, 142, '2× GOLD BALLS · 1 COIN EACH', C.dim, 9)}`),
+      preboost: () => scene(
+        `<rect x="92" y="58" width="56" height="42" rx="7" fill="${C.purple}" opacity=".35"/><rect x="92" y="58" width="56" height="42" rx="7" fill="none" stroke="${C.purple}" stroke-width="2.5"/>
+         <path d="M120 58V100M88 58h64" stroke="${C.purple}" stroke-width="2.5"/>
+         <g opacity="0">${dot(120, 36, C.purple, 13)}${label(120, 41, '×2', '#fff', 12)}<animateTransform attributeName="transform" type="translate" values="0 30;0 30;0 0;0 0" keyTimes="0;.3;.5;1" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;1;0', '0;.3;.4;.9;1', 3)}</g>
+         ${label(120, 130, 'START WITH A RANDOM BOOSTER', C.dim, 9)}`),
+      filter: () => scene(
+        `<path d="M62 44h116l-42 40v30l-32 12V84z" fill="${C.purple}" opacity=".16"/><path d="M62 44h116l-42 40v30l-32 12V84z" fill="none" stroke="${C.purple}" stroke-width="2.5" stroke-linejoin="round"/>
+         ${[[80, 0, 0], [104, .5, 1], [128, 1, 0], [152, 1.5, 1], [92, 2, 0], [140, 2.5, 1]].map(([x, d, ok]) =>
+          `<g opacity="0">${dot(0, 0, ok ? C.green : C.purple, 6)}${move(ok ? `M${x} 6L120 70L120 140` : `M${x} 6L${x} 52`, 3, `begin="${-d}s"`)}${fade(ok ? '0;1;1;0' : '0;1;1;0', ok ? '0;.1;.85;1' : '0;.1;.45;.5', 3).replace('repeatCount', `begin="${-d}s" repeatCount`)}</g>`).join('')}
+         ${label(196, 134, 'GHOST', C.green, 9)}${label(196, 146, '+ SPEED', C.green, 9)}`),
+    };
+
+    return { icons, infoGlyph, anims };
+  })();
+  // Kart ikonları ICONS'a 'u-<anahtar>' adıyla kaydedilir → iconHTML ile kullanılır (slot HUD dahil).
+  for (const k in UPG_ART.icons) ICONS['u-' + k] = UPG_ART.icons[k];
+
   // ── DOM refs ──────────────────────────────────────────────
   const hudEl      = document.getElementById('hud');
   const hScore     = document.getElementById('h-score');
@@ -5377,48 +5604,77 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     'SIGMA','PRISM','APEX','DELTA','OMEGA',
     'ZENITH','SPARK','CORE','GHOST','TITAN'
   ];
-  const _avSVGs = [
-    // 0 ARC
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="19" fill="none" stroke="#7CFF7A" stroke-width="4" stroke-dasharray="90 30" stroke-linecap="round"/><circle cx="32" cy="13" r="6" fill="#7CFF7A"/></svg>`,
-    // 1 VOID
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="22" fill="#160008"/><circle cx="32" cy="32" r="11" fill="#ff2255"/><circle cx="27" cy="28" r="3.5" fill="#fff" opacity=".75"/></svg>`,
-    // 2 STORM
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="37,8 24,36 35,36 27,56 46,28 34,28" fill="#00ccff"/></svg>`,
-    // 3 NOVA
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,8 35,25 51,22 40,34 47,49 32,40 17,49 24,34 13,22 29,25" fill="#ff7700"/></svg>`,
-    // 4 ORBIT
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="11" fill="#4488ff"/><ellipse cx="32" cy="32" rx="24" ry="9" fill="none" stroke="#4488ff" stroke-width="3" opacity=".65" transform="rotate(-30 32 32)"/></svg>`,
-    // 5 FLUX
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M32 9 L43 27 H37 V37 H43 L32 55 L21 37 H27 V27 H21 Z" fill="#ffdd00"/></svg>`,
-    // 6 ECHO
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="6" fill="#9944ff"/><circle cx="32" cy="32" r="13" fill="none" stroke="#9944ff" stroke-width="3" opacity=".65"/><circle cx="32" cy="32" r="21" fill="none" stroke="#9944ff" stroke-width="2" opacity=".3"/></svg>`,
-    // 7 NEXUS
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,8 56,32 32,56 8,32" fill="none" stroke="#ff3355" stroke-width="3"/><line x1="19" y1="19" x2="45" y2="45" stroke="#ff3355" stroke-width="3"/><line x1="45" y1="19" x2="19" y2="45" stroke="#ff3355" stroke-width="3"/></svg>`,
-    // 8 BYTE
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><g fill="#44ff88"><rect x="15" y="15" width="9" height="9" rx="2"/><rect x="27" y="15" width="9" height="9" rx="2" opacity=".45"/><rect x="39" y="15" width="9" height="9" rx="2"/><rect x="15" y="27" width="9" height="9" rx="2" opacity=".45"/><rect x="27" y="27" width="9" height="9" rx="2"/><rect x="39" y="27" width="9" height="9" rx="2" opacity=".45"/><rect x="15" y="39" width="9" height="9" rx="2"/><rect x="27" y="39" width="9" height="9" rx="2" opacity=".45"/><rect x="39" y="39" width="9" height="9" rx="2"/></g></svg>`,
-    // 9 ZERO
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><ellipse cx="32" cy="32" rx="15" ry="21" fill="none" stroke="#fff" stroke-width="4"/><line x1="15" y1="32" x2="49" y2="32" stroke="#080a0e" stroke-width="6"/><line x1="20" y1="32" x2="44" y2="32" stroke="#fff" stroke-width="2.5"/></svg>`,
-    // 10 SIGMA
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="20" fill="none" stroke="#00ccaa" stroke-width="3" stroke-dasharray="9 5.5" stroke-linecap="round"/><circle cx="32" cy="32" r="5" fill="#00ccaa"/></svg>`,
-    // 11 PRISM
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 54,49 10,49" fill="none" stroke="#ff44cc" stroke-width="3"/><line x1="32" y1="10" x2="32" y2="49" stroke="#ff44cc" stroke-width="1.5" opacity=".5"/><line x1="21" y1="30" x2="43" y2="30" stroke="#ff44cc" stroke-width="1.5" opacity=".5"/></svg>`,
-    // 12 APEX
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 51,51 13,51" fill="#ffcc00" opacity=".85"/><polygon points="32,23 45,51 19,51" fill="#080a0e"/></svg>`,
-    // 13 DELTA
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 54,51 10,51" fill="none" stroke="#ff5500" stroke-width="4"/><polygon points="32,25 47,51 17,51" fill="#ff5500" opacity=".28"/></svg>`,
-    // 14 OMEGA
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M13 45 Q13 13 32 13 Q51 13 51 45" fill="none" stroke="#6644ff" stroke-width="4"/><rect x="11" y="45" width="15" height="6" rx="2" fill="#6644ff"/><rect x="38" y="45" width="15" height="6" rx="2" fill="#6644ff"/></svg>`,
-    // 15 ZENITH
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><line x1="32" y1="8" x2="32" y2="56" stroke="#00eeff" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#00eeff" stroke-width="4" stroke-linecap="round"/><line x1="17" y1="17" x2="47" y2="47" stroke="#00eeff" stroke-width="2" stroke-linecap="round" opacity=".45"/><line x1="47" y1="17" x2="17" y2="47" stroke="#00eeff" stroke-width="2" stroke-linecap="round" opacity=".45"/></svg>`,
-    // 16 SPARK
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M32 8 C41 18 45 28 37 34 C46 27 48 41 32 56 C16 41 18 27 27 34 C19 28 23 18 32 8Z" fill="#ff8800"/></svg>`,
-    // 17 CORE
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><circle cx="32" cy="32" r="21" fill="none" stroke="#ff66aa" stroke-width="1.5" opacity=".3"/><circle cx="32" cy="32" r="14" fill="none" stroke="#ff66aa" stroke-width="2.5" opacity=".6"/><circle cx="32" cy="32" r="7" fill="#ff66aa"/></svg>`,
-    // 18 GHOST
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><path d="M20 51 L20 30 Q20 13 32 13 Q44 13 44 30 L44 51 L39 44 L34 51 L29 44 L24 51 Z" fill="#bbbbee"/><circle cx="26" cy="29" r="3" fill="#080a0e"/><circle cx="38" cy="29" r="3" fill="#080a0e"/></svg>`,
-    // 19 TITAN
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="#080a0e"/><polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="#99aabb" stroke-width="3"/><polygon points="32,20 44,27 44,37 32,44 20,37 20,27" fill="#99aabb" opacity=".28"/></svg>`,
-  ];
+  // Standart avatarlar — 64×64. Sıra = avatarIdx (Firestore'da saklanıyor), renkler
+  // AVATAR_COLORS ile aynı. Ortak iskelet: koyu disk + renkli iç ışık + ince halka +
+  // parlayan, yukarıdan aşağı açılan degradeli glif.
+  const _avSVGs = (() => {
+    const cols = ['#7CFF7A','#ff2255','#00ccff','#ff7700','#4488ff','#ffdd00','#9944ff','#ff3355','#44ff88','#ffffff',
+                  '#00ccaa','#ff44cc','#ffcc00','#ff5500','#6644ff','#00eeff','#ff8800','#ff66aa','#bbbbee','#99aabb'];
+    const G = 'url(#g)';
+    const star = (n, R, r, cx = 32, cy = 32, rot = -90) => {
+      const pts = [];
+      for (let i = 0; i < n * 2; i++) {
+        const a = (rot + i * 180 / n) * Math.PI / 180, rr = i % 2 ? r : R;
+        pts.push((cx + Math.cos(a) * rr).toFixed(1) + ',' + (cy + Math.sin(a) * rr).toFixed(1));
+      }
+      return pts.join(' ');
+    };
+    const hex = (r, cx = 32, cy = 32) => [...Array(6)].map((_, i) => {
+      const a = (i * 60 - 90) * Math.PI / 180; return (cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1);
+    }).join(' ');
+    const glyphs = [
+      // 0 ARC — yay + top (oyunun kendisi)
+      c => `<circle cx="32" cy="32" r="17" fill="none" stroke="${G}" stroke-width="5" stroke-linecap="round" stroke-dasharray="80 27" transform="rotate(-60 32 32)"/><circle cx="40.5" cy="17.3" r="5.5" fill="#fff"/>`,
+      // 1 VOID — kara delik + yığılma diski
+      c => `<ellipse cx="32" cy="32" rx="23" ry="7.5" fill="none" stroke="${c}" stroke-opacity=".45" stroke-width="3" transform="rotate(-18 32 32)"/><circle cx="32" cy="32" r="11.5" fill="#000" stroke="${G}" stroke-width="3"/><path d="M9 32a23 7.5 0 0 0 46 0" fill="none" stroke="${G}" stroke-width="3.2" stroke-linecap="round" transform="rotate(-18 32 32)"/>`,
+      // 2 STORM — şimşek
+      c => `<polygon points="37,7 19,35 30.5,35 25,57 46,27 34.5,27 42,7" fill="${G}" stroke="#fff" stroke-opacity=".35" stroke-width="1" stroke-linejoin="round"/>`,
+      // 3 NOVA — 8 kollu patlama
+      c => `<polygon points="${star(8, 23, 9.5)}" fill="${G}"/><circle cx="32" cy="32" r="5.5" fill="#fff"/>`,
+      // 4 ORBIT — halkalı gezegen (halka önden ve arkadan geçer)
+      c => `<path d="M8 32a24 7 0 0 1 48 0" fill="none" stroke="${c}" stroke-opacity=".45" stroke-width="2.6" transform="rotate(-24 32 32)"/><circle cx="32" cy="32" r="12.5" fill="${G}"/><path d="M8 32a24 7 0 0 0 48 0" fill="none" stroke="${G}" stroke-width="2.8" stroke-linecap="round" transform="rotate(-24 32 32)"/>`,
+      // 5 FLUX — çift yönlü ok
+      c => `<path d="M32 7l12.5 14.5H36v21h8.5L32 57 19.5 42.5H28v-21h-8.5z" fill="${G}" stroke-linejoin="round"/>`,
+      // 6 ECHO — sonar halkaları
+      c => `<circle cx="32" cy="32" r="6" fill="#fff"/><circle cx="32" cy="32" r="12.5" fill="none" stroke="${G}" stroke-width="3.2"/><circle cx="32" cy="32" r="19.5" fill="none" stroke="${c}" stroke-opacity=".6" stroke-width="2.4"/><circle cx="32" cy="32" r="26" fill="none" stroke="${c}" stroke-opacity=".28" stroke-width="1.6"/>`,
+      // 7 NEXUS — ağ düğümü
+      c => `<path d="M32 9 55 32 32 55 9 32z" fill="${c}" fill-opacity=".12" stroke="${G}" stroke-width="3" stroke-linejoin="round"/><path d="M32 9v46M9 32h46" stroke="${c}" stroke-opacity=".5" stroke-width="2"/>${[[32, 9], [55, 32], [32, 55], [9, 32]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${c}"/>`).join('')}<circle cx="32" cy="32" r="6" fill="#fff"/>`,
+      // 8 BYTE — piksel ızgara
+      c => [...Array(9)].map((_, i) => { const x = 14 + (i % 3) * 13, y = 14 + Math.floor(i / 3) * 13; return `<rect x="${x}" y="${y}" width="10" height="10" rx="2.5" fill="${i % 2 ? c : G}" ${i % 2 ? 'fill-opacity=".38"' : ''}/>`; }).join(''),
+      // 9 ZERO — çizgili sıfır
+      c => `<ellipse cx="32" cy="32" rx="13.5" ry="20" fill="none" stroke="${G}" stroke-width="4.5"/><path d="M21.5 48.5 42.5 15.5" stroke="${G}" stroke-width="4" stroke-linecap="round"/>`,
+      // 10 SIGMA — Σ
+      c => `<path d="M45 14H19.5l13.5 18-13.5 18H45" fill="none" stroke="${G}" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+      // 11 PRISM — ışığı kıran prizma
+      c => `<path d="M6 36h17" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M32 12 50 46H14z" fill="${c}" fill-opacity=".16" stroke="${G}" stroke-width="3.2" stroke-linejoin="round"/><path d="M40 33 58 27M41 36 58 36M40 39 58 45" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><path d="M40 33 58 27" stroke="#fff" stroke-opacity=".6" stroke-width="1.2" stroke-linecap="round"/>`,
+      // 12 APEX — zirve
+      c => `<path d="M7 49 26 18l9 14 6-8 16 25z" fill="${G}" stroke-linejoin="round"/><path d="M26 18l-5.5 9 5.5-2.5 4.5 3z" fill="#fff"/><path d="M41 24l-3 4.5 3-1.2 2.4 1.5z" fill="#fff" fill-opacity=".8"/>`,
+      // 13 DELTA — Δ
+      c => `<path d="M32 10 54 51H10z" fill="none" stroke="${G}" stroke-width="5" stroke-linejoin="round"/><path d="M32 26 43.5 46h-23z" fill="${c}" fill-opacity=".45"/>`,
+      // 14 OMEGA — Ω
+      c => `<path d="M16.5 49h10v-4.5a14.5 14.5 0 1 1 11 0V49h10" fill="none" stroke="${G}" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+      // 15 ZENITH — dört köşeli yıldız
+      c => `<path d="M32 7c1.8 16.5 7.5 22.2 25 25-17.5 2.8-23.2 8.5-25 25-1.8-16.5-7.5-22.2-25-25 17.5-2.8 23.2-8.5 25-25z" fill="${G}"/><path d="M32 18v28M18 32h28" stroke="#fff" stroke-opacity=".4" stroke-width="1.2"/><circle cx="32" cy="32" r="3.5" fill="#fff"/>`,
+      // 16 SPARK — alev
+      c => `<path d="M32 7c9 9.5 14 18.5 12.5 27.5-.8 5-3.4 8.5-6.5 10.2 1.3-4.6-.3-8.8-4-11.7.2 5.2-2.6 8.6-6.2 10.3-3.4-5.4-2.2-11.3.8-16.3-6.4 3.6-9.8 10-8.6 17 1 6 5.6 10.5 12 11.5-13.7-.6-20.5-9.6-19.8-20.4C12.9 23.6 22 17.4 32 7z" fill="${G}"/><path d="M32.5 57c-5.3-.6-8.4-4.4-8.4-9.2 0-4.2 2.6-7.6 5.8-10.2-.4 4.8 1.6 7.4 4.6 8.6 2.3-2.9 2.4-6 1.3-9.2 4 2.6 6.2 6.6 5.7 11.2-.6 5.2-4.2 8.4-9 8.8z" fill="#ffe27a" fill-opacity=".95"/>`,
+      // 17 CORE — çekirdek + yörüngeler
+      c => `<ellipse cx="32" cy="32" rx="22" ry="8.5" fill="none" stroke="${c}" stroke-opacity=".7" stroke-width="2.2" transform="rotate(35 32 32)"/><ellipse cx="32" cy="32" rx="22" ry="8.5" fill="none" stroke="${c}" stroke-opacity=".7" stroke-width="2.2" transform="rotate(-35 32 32)"/><circle cx="32" cy="32" r="8.5" fill="${G}"/><circle cx="29.5" cy="29.5" r="2.6" fill="#fff" fill-opacity=".85"/>`,
+      // 18 GHOST — hayalet
+      c => `<path d="M18 51V30a14 14 0 0 1 28 0v21l-4.7-4.5-4.6 4.5-4.7-4.5-4.7 4.5-4.6-4.5z" fill="${G}" stroke-linejoin="round"/><ellipse cx="26.5" cy="30" rx="2.8" ry="3.6" fill="#0a0a14"/><ellipse cx="37.5" cy="30" rx="2.8" ry="3.6" fill="#0a0a14"/>`,
+      // 19 TITAN — altıgen kalkan
+      c => `<polygon points="${hex(22)}" fill="${c}" fill-opacity=".1" stroke="${G}" stroke-width="3.6" stroke-linejoin="round"/><polygon points="${hex(12)}" fill="${G}"/><path d="M34 22.5 27.5 33h6l-3.5 8.5 8-11.5h-6z" fill="#0a0a14" fill-opacity=".75"/>`,
+    ];
+    return glyphs.map((gl, i) => {
+      const c = cols[i];
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs>`
+        + `<radialGradient id="b" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="${c}" stop-opacity=".32"/><stop offset=".6" stop-color="${c}" stop-opacity=".07"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`
+        + `<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="${c}"/><stop offset="1" stop-color="${c}"/></linearGradient>`
+        + `<filter id="gl" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.5" result="x"/><feMerge><feMergeNode in="x"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`
+        + `<circle cx="32" cy="32" r="32" fill="#07080c"/><circle cx="32" cy="32" r="32" fill="url(#b)"/>`
+        + `<circle cx="32" cy="32" r="30.6" fill="none" stroke="${c}" stroke-opacity=".38" stroke-width="1.4"/>`
+        + `<g filter="url(#gl)">${gl(c)}</g></svg>`;
+    });
+  })();
   const AVATARS = _avSVGs.map(s => 'data:image/svg+xml,' + encodeURIComponent(s));
 
   // ── Profil ───────────────────────────────────────────────
@@ -10093,14 +10349,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   // CORE upgrade açıklamaları — detay sayfasında üst kısımda gösterilir
   const CORE_DESC = {
-    profit:       'Boosts your score. Each level = +10% more score.',
-    radius:       'Widens or tightens your turning arc. Wide = more ground per turn. Tight = easier through narrow gaps.',
-    speed:        'Controls how fast you fly. Faster = more distance, harder control. Slower = easier to steer.',
-    timer:        'Raises the countdown on your ball. Starts at 8, each level = +1 — more time to live and a bigger gold multiplier.',
-    comboWin:     'Extends the green combo window. Starts at 2s, each level = +0.5s.',
-    comboMax:     'Raises your combo ceiling. Starts at ×3, each level = +1 (up to ×7). A longer chain banks far more points — ×3 pays 60, ×7 pays 280.',
-    wallSoft:     'Softens the side walls. Each level = +1px of brush-past room before you die.',
-    magnetRange:  'Grows your pickup radius for greens, golds and purples. No touching needed — just get close.',
+    profit:       'Multiplies your final score. Each level adds +10%, up to ×2.0.',
+    radius:       'Changes the size of the arc your ball flies. A wider arc covers more ground per tap; a tighter arc squeezes through narrow gaps. Buy levels in either direction and switch between them for free.',
+    speed:        'Changes how fast your ball flies. Faster covers more distance but is harder to control; slower is easier to steer. Buy levels in either direction and switch between them for free.',
+    timer:        'Raises the countdown number on your ball (starts at 8). A higher number gives you more time before your energy runs out, and makes greens, golds and purples worth more points.',
+    comboWin:     'Makes each countdown step last longer (+0.5 s per level). You survive longer between greens, and the green combo window at the top of the countdown stays open longer.',
+    comboMax:     'Raises your combo chain cap (starts at ×3, up to ×7). Collect balls while the countdown is in the green window to grow the chain. At the cap it cashes in: ×3 pays 60 points, ×7 pays 280.',
+    wallSoft:     'Lets you brush the side walls slightly without crashing. Each level adds a little more room.',
+    magnetRange:  'Collects greens, golds and purples from a distance, so you do not have to touch them. Each level adds 1 mm of pickup range.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
     traceThickness: 'Makes your trail thicker and easier to see. Each level adds +10% width.',
     deathName:    'Set a new distance record and your name is planted at that spot — every player can see it.',
@@ -10108,33 +10364,33 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   };
   // CORE — kalıcı sayısal buff'lar
   const PASSIVE_TILES = [
-    { key: 'profit',      title: 'Score Boost',   icon: 'medal' },
-    { key: 'radius',      title: 'Radius',        icon: 'ring' },
-    { key: 'speed',       title: 'Speed',         icon: 'bolt' },
-    { key: 'timer',       title: 'Timer',         icon: 'timer' },
-    { key: 'comboWin',    title: 'Combo Timer',   icon: 'hourglass' },
-    { key: 'comboMax',    title: 'Max Combo',     icon: 'fire' },
-    { key: 'wallSoft',    title: 'Walls',         icon: 'wall' },
-    { key: 'magnetRange', title: 'Magnet',         icon: 'magnet' },
+    { key: 'profit',      title: 'Score Boost',   icon: 'u-profit' },
+    { key: 'radius',      title: 'Radius',        icon: 'u-radius' },
+    { key: 'speed',       title: 'Speed',         icon: 'u-speed' },
+    { key: 'timer',       title: 'Timer',         icon: 'u-timer' },
+    { key: 'comboWin',    title: 'Combo Timer',   icon: 'u-comboWin' },
+    { key: 'comboMax',    title: 'Max Combo',     icon: 'u-comboMax' },
+    { key: 'wallSoft',    title: 'Walls',         icon: 'u-wallSoft' },
+    { key: 'magnetRange', title: 'Magnet',         icon: 'u-magnetRange' },
   ];
   // GEAR — tek kullanımlık (SINGLE-USE) + abilities. (Loadout/cosmetic artık profil altında.)
   const GEAR_GROUPS = [
     { title: 'SINGLE-USE', items: [
-      { key: 'revive',     title: 'Revive',       icon: 'revive' },
-      { key: 'doubler',    title: 'Coin Doubler', icon: 'coinUp' },
-      { key: 'preboost',   title: 'Pre-Booster',  icon: 'gift' },
-      { key: 'headstart',  title: 'Head Start',   icon: 'rocket' },
-      { key: 'filter',     title: 'Boost Filter', icon: 'sparkle' },
-      { key: 'coinrain',   title: 'Coin Rain',    icon: 'coinUp' },
+      { key: 'revive',     title: 'Revive',       icon: 'u-revive' },
+      { key: 'doubler',    title: 'Coin Doubler', icon: 'u-doubler' },
+      { key: 'preboost',   title: 'Pre-Booster',  icon: 'u-preboost' },
+      { key: 'headstart',  title: 'Head Start',   icon: 'u-headstart' },
+      { key: 'filter',     title: 'Boost Filter', icon: 'u-filter' },
+      { key: 'coinrain',   title: 'Coin Rain',    icon: 'u-coinrain' },
     ]},
     { title: 'ABILITIES', items: [
-      { key: 'timeslow',   title: 'Time Slow',    icon: 'hourglass' },
-      { key: 'phaseburst', title: 'Phase Burst',  icon: 'ghost' },
-      { key: 'coinpull',   title: 'Coin Pull',    icon: 'magnet' },
-      { key: 'brake',      title: 'Brake',        icon: 'stop' },
-      { key: 'mirror',     title: 'Mirror Flip',  icon: 'mirror' },
-      { key: 'shock',      title: 'Shockwave',    icon: 'sparkle' },
-      { key: 'anchor',     title: 'Anchor',       icon: 'target' },
+      { key: 'timeslow',   title: 'Time Slow',    icon: 'u-timeslow' },
+      { key: 'phaseburst', title: 'Phase Burst',  icon: 'u-phaseburst' },
+      { key: 'coinpull',   title: 'Coin Pull',    icon: 'u-coinpull' },
+      { key: 'brake',      title: 'Brake',        icon: 'u-brake' },
+      { key: 'mirror',     title: 'Mirror Flip',  icon: 'u-mirror' },
+      { key: 'shock',      title: 'Shockwave',    icon: 'u-shock' },
+      { key: 'anchor',     title: 'Anchor',       icon: 'u-anchor' },
     ]},
   ];
 
@@ -10300,6 +10556,49 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   }
   // Bir CORE kartı: üstte başlık · ortada ×oran · solda − · sağda +.
   // Yeni bölge açan butonda coin rozeti; ücretsiz hareket sade; tavanda MAX; tabanda − boş gri.
+  // ── Upgrade info penceresi ─────────────────────────────────
+  // Metin tek kaynaktan: CORE_DESC / ABILITY_DESC / CONSUMABLE_CFG.desc.
+  function upgInfoDesc(key) { return CORE_DESC[key] || ABILITY_DESC[key] || (CONSUMABLE_CFG[key] && CONSUMABLE_CFG[key].desc) || ''; }
+  function upgInfoStats(key) {
+    const out = [];
+    if (PASSIVE_TILES.some(t => t.key === key)) {
+      const lvl = coreLevel(key), max = coreSideMax(key);
+      out.push({ t: 'NOW ' + coreValueText(key, lvl) });
+      if (CORE_BIDI(key)) {
+        if (lvl < max)  out.push({ t: '+ ' + coreValueText(key, lvl + 1), next: true });
+        if (lvl > -max) out.push({ t: '− ' + coreValueText(key, lvl - 1), next: true });
+      } else {
+        out.push(lvl < max ? { t: 'NEXT ' + coreValueText(key, lvl + 1), next: true } : { t: 'MAX' });
+      }
+    } else if (ABILITY_CFG[key]) {
+      const cfg = ABILITY_CFG[key];
+      if (!cfg.noDur) out.push({ t: 'LASTS ' + _fmtS(abilityDuration(key)) + 's' });
+      out.push({ t: 'RECHARGE ' + abilityCooldown(key) + 's' });
+    } else if (CONSUMABLE_CFG[key]) {
+      out.push({ t: 'STOCK ' + ((upg.inv[key] && upg.inv[key].count) || 0) + '/' + CONSUMABLE_CFG[key].max });
+    }
+    return out;
+  }
+  const upgInfoModal = document.getElementById('upginfo-modal');
+  function openUpgInfo(key, title, icon) {
+    if (!UPG_ART.anims[key]) { try { showToast(upgInfoDesc(key) || title); } catch(_){} return; }
+    document.getElementById('upginfo-icon').innerHTML = icon ? iconHTML(icon, { size: 22 }) : '';
+    document.getElementById('upginfo-title').textContent = title;
+    document.getElementById('upginfo-anim').innerHTML = UPG_ART.anims[key]();
+    document.getElementById('upginfo-desc').textContent = upgInfoDesc(key);
+    document.getElementById('upginfo-stat').innerHTML = upgInfoStats(key)
+      .map(s => `<span${s.next ? ' class="next"' : ''}>${s.t}</span>`).join('');
+    document.getElementById('upginfo-hint').textContent = ABILITY_CFG[key]
+      ? 'Equip it in a gear slot, then tap the slot during a run.' : '';
+    upgInfoModal.classList.add('open');
+  }
+  function closeUpgInfo() {
+    upgInfoModal.classList.remove('open');
+    document.getElementById('upginfo-anim').innerHTML = '';   // SMIL döngüleri kapalıyken çalışmasın
+  }
+  document.getElementById('upginfo-ok').addEventListener('click', closeUpgInfo);
+  upgInfoModal.addEventListener('click', e => { if (e.target === upgInfoModal) closeUpgInfo(); });
+
   function buildCoreCard(t) {
     const key = t.key;
     const card = document.createElement('div');
@@ -10313,7 +10612,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
     };
     card.innerHTML = `
-      <button class="core-info" type="button" aria-label="Info">i</button>
+      <button class="core-info" type="button" aria-label="Info">${UPG_ART.infoGlyph}</button>
       <div class="core-icon">${t.icon ? iconHTML(t.icon, { size: 26 }) : ''}</div>
       <div class="core-card-foot">
         <div class="core-card-head">
@@ -10327,7 +10626,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       </div>
     `;
     const info = card.querySelector('.core-info');
-    if (info) info.addEventListener('click', () => { try { showToast(CORE_DESC[key] || t.title); } catch(_){} });
+    if (info) info.addEventListener('click', () => openUpgInfo(key, t.title, t.icon));
     const wire = (act, fn) => { const b = card.querySelector(`[data-act="${act}"]`); if (b && !b.hasAttribute('disabled')) b.addEventListener('click', fn); };
     wire('plus-free',  () => coreInc(key));
     wire('minus-free', () => coreDec(key));
@@ -10348,7 +10647,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     card.className = 'core-card' + (opts.dim ? '' : '');
     if (opts.dim) card.style.opacity = '.55';
     card.innerHTML = `
-      <button class="core-info" type="button" aria-label="Info">i</button>
+      <button class="core-info" type="button" aria-label="Info">${UPG_ART.infoGlyph}</button>
       ${opts.eq ? '<span class="core-eq">EQUIPPED</span>' : ''}
       <div class="core-icon">${meta.icon ? iconHTML(meta.icon, { size: 26 }) : ''}</div>
       <div class="core-card-foot">
@@ -10359,7 +10658,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         ${buttonsHTML ? `<div class="core-card-buys">${buttonsHTML}</div>` : ''}
       </div>`;
     const info = card.querySelector('.core-info');
-    if (info) info.addEventListener('click', () => { if (opts.desc) try { showToast(opts.desc); } catch(_){} });
+    if (info) info.addEventListener('click', () => {
+      if (UPG_ART.anims[meta.key]) openUpgInfo(meta.key, meta.title, meta.icon);
+      else if (opts.desc) try { showToast(opts.desc); } catch(_){}
+    });
     return card;
   }
   // Yeşil satın alma butonu (yüzen coin rozeti + adım etiketi). price null → MAX.
@@ -10475,7 +10777,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const card = document.createElement('div');
     card.className = 'core-card wide';
     card.innerHTML = `
-      <button class="core-info" type="button" aria-label="Info">i</button>
+      <button class="core-info" type="button" aria-label="Info">${UPG_ART.infoGlyph}</button>
       <div class="core-card-title">${meta.title}</div>
       <div class="core-swatches">
         ${TRACE_COLORS.map(c => `<div class="upg-color-swatch ${c === cur ? 'active' : ''}" data-c="${c}" style="background:${c};color:${c}"></div>`).join('')}
@@ -10654,12 +10956,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // ayarlandı (ortalama run ≈ 11-30 coin). KURAL: gelir çarpan eşyası (doubler,
   // coinrain) ortalama getirisinden UCUZ olmalı — aksi halde tuzak olur.
   const CONSUMABLE_CFG = {
-    revive:    { price: 7, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
-    doubler:   { price: 2, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
-    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls — and every gold ball pays a coin.' },
-    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
-    filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
+    revive:    { price: 7, max: 5, autoArm: true,  desc: 'When you crash, you can continue from your last safe spot instead of ending the run. You are asked when it happens; one revive per run.' },
+    doubler:   { price: 2, max: 5, autoArm: false, desc: 'Arm it before a run to double every coin you earn in that run.' },
+    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: the first 5 seconds play at half speed for an easy start.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to get twice as many gold balls. Every gold ball is worth 1 coin.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random booster already active.' },
+    filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: only Ghost and Speed boosters appear during that run.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
@@ -10810,13 +11112,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     return card;
   }
   const ABILITY_DESC = {
-    timeslow:   'Slows the whole world down for a few seconds. Tap its slot during a run to use it.',
-    phaseburst: 'Turns you invincible for a moment — fly straight through walls and obstacles.',
-    coinpull:   'Instantly sucks in every green, gold and purple ball on screen.',
-    brake:      'Cuts your speed in half for a moment — handy in tight spots.',
-    mirror:     'Instantly jumps you to the mirrored spot on the other side of the screen.',
-    shock:      'Blasts away every obstacle around you in one hit.',
-    anchor:     'Tap to drop a marker. Tap again to teleport back to it.',
+    timeslow:   'Slows the whole game to half speed for a few seconds, so you can line up tight gaps.',
+    phaseburst: 'Makes you untouchable for a moment: you fly straight through red obstacles and the side walls.',
+    coinpull:   'Instantly pulls every green, gold and purple ball ahead of you into your ball.',
+    brake:      'Halves your speed for a few seconds. Handy when things get tight.',
+    mirror:     'Flips you to the mirror-image spot on the other side of the screen, turning the other way.',
+    shock:      'Destroys every red obstacle within about a third of the screen around you.',
+    anchor:     'First use drops a marker where you are. Use it again after it recharges to teleport back to the marker.',
   };
 
 
