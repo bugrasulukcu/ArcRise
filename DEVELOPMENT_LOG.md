@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Müzik zamansız çalıyordu → tek kural (2026-09-28)
+
+`musicAllowed()` = müzik açık + ses başlatıldı + `scene === 'play'` + tutorial değil + ön planda. Tüm girişler (`playBgMusic`: run başı, revive, reklamla devam, tampon geç çözülünce, müzik aç) bu kuraldan geçer; `showScene` oyun dışı her ekranda durdurur.
+Düzeltilen kaynaklar: (1) müzik tamponu geç çözülünce hangi ekrandaysa orada başlıyordu; (2) ölümde müzik henüz başlamadıysa "hazır olunca çal" işareti temizlenmiyordu; (3) menüye dönüşte müziği durduran kod yoktu; (4) ölümün 430 ms gecikmeli "durdur"u hızlı yeni run'ın müziğini kesebiliyordu (`_fadeStopT` iptal edilir); (5) `startGame` müziği ekran `play` olmadan çağırıyordu (sıra düzeltildi).
+Test (döngülü AudioBufferSource sayımı, gerçek oyuncu akışı): ana ekran/tutorial/game over/menü/ayarlar sessiz; run/yeni run/AGAIN/ön plana dönüş çalıyor; arka planda bağlam askıda; `<audio>` öğesi 0.
+
 ### Ses sistemi: tümü Web Audio, ilk dokunuşta hazır, kilit ekranı kartı yok (2026-09-28)
 
 - **Tutorial'da sesler gecikip toplu çalıyordu:** Web Audio bağlamı yalnız START'ta (`startGame → initAudio`) kuruluyordu; tutorial ilk girişte START'tan önce başladığı için dokunuşlar `<audio>` klonlarıyla çalınıyor, iOS bunları sıraya alıp sonradan birden çalıyordu. Artık bağlam **ilk dokunuşta** (`pointerdown/touchend/keydown`, capture) kurulur; tampon hazır değilse ses **atlanır** (`playSfx`). `<audio>` yalnız Web Audio hiç yoksa yedek.

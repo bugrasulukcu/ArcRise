@@ -7060,6 +7060,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   function _fallbackAudio(url, vol) { try { const a = new Audio(url); a.volume = vol; return a; } catch(_) { return null; } }
   let sfxCtx = null, touchBuffer = null, deadBuffer = null, musicBuffer = null;
   let _musicGain = null, _musicSrc = null, _musicStartAt = 0, _musicOffset = 0, _musicWanted = false;
+  let _duckRAF = null;
 
   async function loadSfxBuffer(ctx, url) {
     try {
@@ -7117,9 +7118,20 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   function _musicPlaying() { return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
   function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgBaseVol); }
   function _setMusicVol(v) { if (_musicGain) _musicGain.gain.value = v; if (bgAudio) bgAudio.volume = v; }
+  // ── Müzik kuralı (tek yer) ─────────────────────────────
+  // Müzik YALNIZ şu durumda çalar: oyun ekranı + tutorial dışı + müzik açık + uygulama ön planda.
+  // Her giriş noktası (run başı, revive, reklamla devam, tampon geç yüklenince, müzik aç)
+  // playBgMusic'ten geçer ve bu kural orada denetlenir; ekran değişince showScene durdurur.
+  // Eskiden tampon geç çözülünce müzik hangi ekrandaysa orada başlıyordu, menüye dönünce
+  // hiç durmuyordu, ölümün gecikmeli "durdur"u yeni run'ın müziğini kesebiliyordu.
+  function musicAllowed() {
+    return musOn && audioStarted && scene === 'play' && !_tutOn() && !document.hidden;   // _tutOn: TDZ güvenli tutActive
+  }
+  let _fadeStopT = null;
   // Senkron + gesture dostu (iOS'ta resume/play tıklama karesinde olmalı).
   function playBgMusic() {
-    if (!musOn || !audioStarted) return;
+    if (!musicAllowed()) { _musicWanted = false; return; }
+    if (_fadeStopT) { clearTimeout(_fadeStopT); _fadeStopT = null; }   // önceki ölümün bekleyen durdurması yeni müziği kesmesin
     initAudioViz();
     if (sfxCtx) {
       if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {});
@@ -7140,6 +7152,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   function stopBgMusic() {
     _musicWanted = false;
+    if (_duckRAF) { cancelAnimationFrame(_duckRAF); _duckRAF = null; }
     if (_musicSrc) {
       _musicOffset += sfxCtx.currentTime - _musicStartAt;    // sıradaki çalış aynı yerden
       try { _musicSrc.stop(); } catch(_) {}
@@ -7150,7 +7163,6 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   }
 
   // ── Müzik dinamiği ──────────────────────────────────────
-  let _duckRAF = null;
   // Hedef sese kısa rampla geç (boost ducking / ölüm fade)
   function _rampMusicTo(target, ms) {
     if (_duckRAF) cancelAnimationFrame(_duckRAF);
@@ -7169,9 +7181,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   }
   // Ölümde sert pause yerine 0.4s fade-out — dead SFX sting olarak öne çıkar
   function fadeOutMusic() {
+    _musicWanted = false;               // tampon sonradan çözülse de bu ölümde başlamasın
     if (!_musicPlaying()) return;
     _rampMusicTo(0, 400);
-    setTimeout(() => { stopBgMusic(); }, 430);
+    if (_fadeStopT) clearTimeout(_fadeStopT);
+    _fadeStopT = setTimeout(() => { _fadeStopT = null; stopBgMusic(); }, 430);
   }
 
   function playTouchSound() {
@@ -7181,7 +7195,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // Uygulama arka plana/kapanınca: tüm ses askıya alınır (arka planda çalmaz); dönünce devam.
   function _audioPause() { try { if (sfxCtx && sfxCtx.state === 'running') sfxCtx.suspend(); } catch(_) {} if (bgAudio) bgAudio.pause(); }
   function _audioResume() { try { if (sfxCtx && sfxCtx.state === 'suspended') sfxCtx.resume(); } catch(_) {} }
-  document.addEventListener('visibilitychange', () => { document.hidden ? _audioPause() : _audioResume(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { _audioPause(); }
+    else { _audioResume(); if (scene === 'play' && running) playBgMusic(); }
+  });
   window.addEventListener('pagehide', _audioPause);
   try { if ('mediaSession' in navigator) { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; } } catch(_) {}
   let nextSpawnY, lastBonusY;
@@ -9563,6 +9580,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   function showScene(s) {
     scene = s;
+    if (s !== 'play' && _musicPlaying() && !_fadeStopT) stopBgMusic();   // menü/ayar/profil: müzik yok
     profileSetupEl.classList.toggle('active', s === 'profile-setup');
     homeEl.classList.toggle('active',         s === 'home');
     settingsEl.classList.toggle('active',     s === 'settings');
@@ -9930,7 +9948,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     document.getElementById('mus-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('mus-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
     // If turned off mid-game, pause; if turned on mid-game, resume
-    if (scene === 'play') { v ? playBgMusic() : stopBgMusic(); }
+    v ? playBgMusic() : stopBgMusic();
   }
   applyAA();
   document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
@@ -12570,8 +12588,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     }
     resetGame();
     consumeArmedConsumables();
-    playBgMusic();
     showScene('play');
+    playBgMusic();                     // kural scene==='play' ister → ekran değiştikten sonra
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
