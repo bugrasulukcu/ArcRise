@@ -4007,7 +4007,7 @@
     <div id="upginfo-desc"></div>
     <div id="upginfo-stat"></div>
     <div id="upginfo-hint"></div>
-    <button id="upginfo-ok" type="button">GOT IT</button>
+    <button id="upginfo-ok" type="button">BACK</button>
   </div>
 </div>
 
@@ -5665,13 +5665,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       phaseburst:  `<path d="M13 3v18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".45"/><circle cx="16.5" cy="12" r="3.6" ${F}/><circle cx="16.5" cy="12" r="3.6" ${S}/><circle cx="9" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1.6 1.8" opacity=".6"/><path d="M2.5 12h2" ${S} opacity=".5"/>`,
       coinpull:    `<circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M4 4l4.5 4.5M20 4l-4.5 4.5M4 20l4.5-4.5M20 20l-4.5-4.5" ${S}/><path d="M8.5 5.5v3h-3M15.5 5.5v3h3M8.5 18.5v-3h-3M15.5 18.5v-3h3" ${S}/>`,
       brake:       `<path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z" ${F}/><path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3z" ${S}/><path d="M9.5 8.5v7M14.5 8.5v7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>`,
-      mirror:      `<path d="M12 2.5v19" ${S} stroke-dasharray="2 2.4"/><path d="M9 7l-5 5 5 5z" ${F}/><path d="M9 7l-5 5 5 5z" ${S}/><path d="M15 7l5 5-5 5z" fill="currentColor"/>`,
       shock:       `<circle cx="12" cy="12" r="2.6" fill="currentColor"/><circle cx="12" cy="12" r="6" ${S} opacity=".75"/><circle cx="12" cy="12" r="9.5" ${S} opacity=".35"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5" ${S}/>`,
       anchor:      `<circle cx="12" cy="5" r="2.3" ${S}/><path d="M12 7.3V21M8 11h8" ${S}/><path d="M4.5 14.5A7.5 7.5 0 0 0 12 21a7.5 7.5 0 0 0 7.5-6.5" ${S}/><path d="M3 16l1.5-1.5L6 16M18 16l1.5-1.5L21 16" ${S}/>`,
       // ITEMS
       revive:      `<path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${F}/><path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${S}/><path d="M9 3.5a5 5 0 0 1 7.5 1.2" ${S}/><path d="M16.8 2.3l-.3 2.6-2.5-.6" ${S}/>`,
       doubler:     `<circle cx="15" cy="9" r="6" ${F}/><circle cx="15" cy="9" r="6" ${S} opacity=".55"/><circle cx="9" cy="15" r="6.5" fill="currentColor" opacity=".35"/><circle cx="9" cy="15" r="6.5" ${S}/><path d="M11.1 12.7a3 3 0 1 0 0 4.6" ${S}/>`,
-      headstart:   `<path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${F}/><path d="M12 2.5c3.2 2.3 4.6 5.8 4.2 10.5H7.8C7.4 8.3 8.8 4.8 12 2.5z" ${S}/><circle cx="12" cy="8.3" r="1.6" fill="currentColor"/><path d="M7.8 13l-2.6 3 3-.2M16.2 13l2.6 3-3-.2" ${S}/><path d="M10.3 17.5l-.6 3M12 17.5v4M13.7 17.5l.6 3" ${S} opacity=".6"/>`,
+      shield:      `<path d="M12 2.8 19.5 5.6v6.2c0 4.6-3.1 8.2-7.5 9.6-4.4-1.4-7.5-5-7.5-9.6V5.6z" ${F}/><path d="M12 2.8 19.5 5.6v6.2c0 4.6-3.1 8.2-7.5 9.6-4.4-1.4-7.5-5-7.5-9.6V5.6z" ${S}/><path d="M8.6 12.2l2.4 2.4 4.6-4.8" ${S}/>`,
       coinrain:    `<path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${F}/><path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${S}/><circle cx="7.5" cy="16" r="2" fill="currentColor"/><circle cx="16" cy="15.2" r="2" fill="currentColor"/><circle cx="12" cy="20.2" r="2" fill="currentColor"/>`,
       preboost:    `<rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${F}/><rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${S}/><path d="M2.5 7h19v3h-19zM12 7v13.5" ${S}/><path d="M12 7C9.5 7 7.5 4 9.5 3.2 11 2.6 12 5 12 7c0-2 1-4.4 2.5-3.8C16.5 4 14.5 7 12 7z" ${S}/>`,
       filter:      `<path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${F}/><path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${S}/><path d="M12.6 13.5c.8 3 2 5.5 3.6 7.5" ${S}/>`,
@@ -5730,12 +5729,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          <g>${ball(0, 0, 6.5)}${move('M120 128a58 58 0 0 1 0-116', 3, 'keyPoints="0;0;1" keyTimes="0;.5;1" calcMode="linear"')}${fade('0;0;1;1', '0;.5;.52;1', 3)}</g>
          ${label(148, 98, 'TIGHT', C.dim, 10)}${label(196, 40, 'WIDE', C.purple, 10)}`),
       speed: () => {
-        const slow = arcPath(62, 152, 40, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d, fast = arcPath(142, 152, 40, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
+        const lanes = [[58, 4.2, 'SLOW', C.dim], [120, 2.6, 'NORMAL', C.txt], [182, 1.8, 'FAST', C.green]];
         return scene(
-          `${walls()}${guide(slow, .6)}${guide(fast)}
-           <g>${ball(0, 0, 6)}${move(slow, 3.2)}</g>
-           <g>${ball(0, 0, 6)}<circle r="10" fill="none" stroke="${C.green}" stroke-width="1.5" opacity=".6"/>${move(fast, 2)}</g>
-           ${label(44, 142, '×1.0', C.dim, 12)}${label(200, 142, '×1.4', C.green, 12)}`);
+          `${walls()}${lanes.map(([x, dur, t, col]) => { const d = arcPath(x, 152, 24, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
+            return `${guide(d, .45)}<g>${ball(0, 0, 5.5)}${move(d, dur)}</g>${label(x, 146, t, col, 9)}`; }).join('')}`);
       },
       timer: () => scene(
         `${walls()}
@@ -5757,10 +5754,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       comboMax: () => {
         const xs = [48, 84, 120, 156, 192];
         return scene(
-          `${xs.map((x, i) => `<g opacity="0">${dot(x, 88, C.green, 7)}${label(x, 66, '×' + (i + 1), C.green, 12)}${fade(`0;0;1;1;0;0`, `0;${(i * .13).toFixed(2)};${(i * .13 + .05).toFixed(2)};.78;.82;1`, 5)}</g>`).join('')}
-           <path d="M48 88H192" stroke="${C.green}" stroke-width="2" opacity=".35" stroke-dasharray="2 5"/>
-           <g opacity="0">${label(120, 124, '+150', C.gold, 22)}${fade('0;0;1;1;0', '0;.8;.84;.95;1', 5)}</g>
-           ${label(120, 30, 'CHAIN CAP ×5', C.txt, 12)}`);
+          `${xs.map((x, i) => `<g opacity="0">${dot(x, 82, C.green, 7)}${label(x, 62, '×' + (i + 1), C.green, 12)}${fade('0;0;1;1;0;0', `0;${(i * .13).toFixed(2)};${(i * .13 + .05).toFixed(2)};.78;.82;1`, 5)}</g>`).join('')}
+           <path d="M48 82H192" stroke="${C.green}" stroke-width="2" opacity=".35" stroke-dasharray="2 5"/>
+           <g opacity="0">${label(120, 122, 'COMBO ×5!', C.gold, 20)}${fade('0;0;1;1;0', '0;.66;.7;.95;1', 5)}</g>
+           ${label(120, 30, 'LONGER CHAINS, UP TO ×7 POINTS', C.txt, 10)}`);
       },
       wallSoft: () => {
         const path = arcPath(130, 152, 105, [[-1, 190]], -20).d;   // en sağda x≈199 → top duvara ~2px sürtünür
@@ -5778,11 +5775,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          <g>${dot(0, 0, C.green, 5)}${move('M150 40L140 90L120 110', 3.6, 'keyPoints="0;.72;1;1" keyTimes="0;.55;.7;1" calcMode="linear"')}${fade('1;1;0;0', '0;.7;.72;1', 3.6)}</g>
          <g>${dot(0, 0, C.gold, 5)}${move('M86 30L98 88L120 110', 3.6, 'keyPoints="0;.72;1;1" keyTimes="0;.6;.75;1" calcMode="linear"')}${fade('1;1;0;0', '0;.75;.77;1', 3.6)}</g>
          ${label(120, 142, '+1 mm PICKUP RANGE', C.dim, 9)}`),
-      timeslow: () => scene(
-        `${walls()}<rect width="240" height="150" rx="14" fill="#4a6cff" opacity="0">${fade('0;0;.14;.14;0', '0;.35;.4;.9;1', 4)}</rect>
-         ${[[78, 0, 12], [168, .3, 10], [113, .6, 13]].map(([x, d, r]) => obst(x, -14, r, `<animate attributeName="cy" values="-14;46;66;164" keyTimes="0;.35;.9;1" dur="4s" begin="${d * -4}s" repeatCount="indefinite"/>`)).join('')}
-         ${ball(120, 118, 7)}
-         <g opacity="0">${label(120, 30, 'SLOW ×0.5', '#9fb3ff', 14)}${fade('0;0;1;1;0', '0;.35;.4;.9;1', 4)}</g>`),
+      timeslow: () => {
+        // Engeller önce normal hızda iner, sonra (mavi ton) belirgin şekilde yavaşlar, sonra devam
+        const obs = [[70, -20, 12], [160, 30, 10], [115, 80, 13]];
+        const kp = 'keyPoints="0;.45;.62;1" keyTimes="0;.3;.85;1" calcMode="linear"';
+        return scene(
+          `${walls()}<rect width="240" height="150" rx="14" fill="#4a6cff" opacity="0">${fade('0;0;.16;.16;0;0', '0;.3;.34;.82;.86;1', 5)}</rect>
+           ${obs.map(([x, y0, r]) => obst(0, 0, r, move(`M${x} ${y0}L${x} ${y0 + 190}`, 5, kp))).join('')}
+           ${ball(120, 124, 7)}
+           <g opacity="0">${label(120, 28, 'TIME ×0.5', '#9fb3ff', 14)}${fade('0;0;1;1;0;0', '0;.3;.34;.82;.86;1', 5)}</g>`);
+      },
       phaseburst: () => {
         const path = arcPath(84, 152, 110, [[1, 70]]).d, mid = arcPath(84, 152, 110, [[1, 33]]);
         return scene(
@@ -5796,23 +5798,27 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          ${[[50, 30, C.green], [190, 26, C.gold], [80, 60, C.purple], [168, 70, C.green], [120, 20, C.gold]].map(([x, y, col], i) =>
           `<g>${dot(0, 0, col, 5)}${move(`M${x} ${y}L120 112`, 3, 'keyPoints="0;0;1;1" keyTimes="0;.4;.6;1" calcMode="linear"')}${fade('1;1;0;0;1', '0;.6;.62;.98;1', 3)}</g>`).join('')}
          <circle cx="120" cy="112" fill="none" stroke="${C.gold}" stroke-width="2" opacity="0"><animate attributeName="r" values="8;8;26" keyTimes="0;.6;.8" dur="3s" repeatCount="indefinite"/>${fade('0;0;.8;0;0', '0;.6;.62;.8;1', 3)}</circle>`),
-      brake: () => scene(
-        `${walls()}${[0, 1, 2, 3].map(i => `<path d="M${60 + i * 40} 0v18" stroke="${C.dim}" stroke-width="2" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0 0;0 150" dur="${i % 2 ? .7 : .9}s" repeatCount="indefinite"/></path>`).join('')}
-         ${ball(120, 100, 7)}
-         <g opacity="0">${label(120, 138, 'SPEED ×0.5', C.gold, 12)}${fade('0;1;1;0', '0;.1;.9;1', 3)}</g>`),
-      mirror: () => {
-        const a = arcPath(66, 152, 44, [[1, 50], [-1, 60]]);
-        const b = arcPath(240 - a.x, a.y, 44, [[-1, 40], [1, 80]], 180 - a.hDeg);
+      brake: () => {
+        const d = arcPath(120, 152, 34, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
         return scene(
-          `${walls()}<path d="M120 10V140" stroke="${C.dim}" stroke-width="1.5" stroke-dasharray="4 5"/>
-           <g>${ball(0, 0, 7)}${move(a.d, 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.47;1', 3)}</g>
-           <g opacity="0">${ball(0, 0, 7)}${move(b.d, 3, 'keyPoints="0;0;1" keyTimes="0;.47;1" calcMode="linear"')}${fade('0;0;1;1', '0;.46;.48;1', 3)}</g>
-           <path d="M${(a.x + 8).toFixed(1)} ${a.y.toFixed(1)}H${(240 - a.x - 8).toFixed(1)}" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 4" opacity="0">${fade('0;0;1;0;0', '0;.44;.47;.6;1', 3)}</path>`);
+          `${walls()}${guide(d)}
+           <g>${ball(0, 0, 7)}${move(d, 4.5, 'keyPoints="0;.3;.5;1" keyTimes="0;.22;.78;1" calcMode="linear"')}</g>
+           <g opacity="0">${label(186, 28, 'SPEED ×0.5', C.gold, 11)}${fade('0;0;1;1;0;0', '0;.22;.26;.74;.78;1', 4.5)}</g>`);
       },
-      shock: () => scene(
-        `${walls()}${[[78, 56, 12], [166, 50, 11], [70, 118, 10], [174, 114, 13]].map(([x, y, r]) => obst(x, y, r, fade('1;1;0;0;1', '0;.3;.36;.95;1', 3))).join('')}
-         ${ball(120, 86, 8)}
-         <circle cx="120" cy="86" fill="none" stroke="${C.gold}" stroke-width="3" opacity="0"><animate attributeName="r" values="8;8;80" keyTimes="0;.28;.45" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.28;.3;.48;1', 3)}</circle>`),
+      shock: () => {
+        const cx = 120, cy = 86, r0 = 8, r1 = 112, t0 = .22, t1 = .58;
+        const obs = [[80, 56, 12], [168, 50, 11], [62, 118, 10], [180, 116, 13], [120, 30, 9]];
+        const hit = d => (t0 + (Math.max(0, d - r0) / (r1 - r0)) * (t1 - t0));
+        return scene(
+          `${walls()}${obs.map(([x, y, r]) => { const th = hit(Math.hypot(x - cx, y - cy) - r);
+              const a = th.toFixed(3), b = (th + .03).toFixed(3);
+              return obst(x, y, r, fade('1;1;0;0;1', `0;${a};${b};.95;1`, 3.4))
+                + `<circle cx="${x}" cy="${y}" fill="${C.gold}" opacity="0">${fade('0;0;.9;0;0', `0;${a};${b};${(th + .12).toFixed(3)};1`, 3.4)}<animate attributeName="r" values="${r};${r};${r * 2.2};${r * 2.2}" keyTimes="0;${a};${(th + .12).toFixed(3)};1" dur="3.4s" repeatCount="indefinite"/></circle>`; }).join('')}
+           ${ball(cx, cy, 8)}
+           <circle cx="${cx}" cy="${cy}" fill="rgba(255,226,122,.12)" stroke="${C.gold}" stroke-width="3" opacity="0" GLOW>
+             <animate attributeName="r" values="${r0};${r0};${r1};${r1}" keyTimes="0;${t0};${t1};1" dur="3.4s" repeatCount="indefinite"/>
+             ${fade('0;0;1;.2;0;0', `0;${t0};${t0 + .02};${t1};${t1 + .03};1`, 3.4)}</circle>`);
+      },
       anchor: () => {
         const a = arcPath(70, 128, 44, [[1, 60], [-1, 110]]);
         return scene(
@@ -5837,13 +5843,15 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
           + `<g opacity="0">${label(52 + i * 34, 104, '×2', C.gold, 12)}${fade('0;0;1;1;0;0', `0;${(.08 + i * .14).toFixed(2)};${(.12 + i * .14).toFixed(2)};.9;.95;1`, 5)}</g></g>`).join('')}
          <circle cx="120" cy="46" r="17" fill="${C.gold}" GLOW/><circle cx="120" cy="46" r="12" fill="none" stroke="#b8860b" stroke-width="2.5"/>
          ${label(120, 134, '×2 COINS FOR 5 RUNS', C.dim, 9)}`),
-      headstart: () => {
-        const a = arcPath(90, 152, 44, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]);
-        const p1 = arcPath(90, 152, 44, [[1, 45], [-1, 50]]), p2 = arcPath(90, 152, 44, [[1, 45], [-1, 90], [1, 70]]);
+      shield: () => {
+        const a = arcPath(90, 152, 70, [[1, 70]]), mid = arcPath(90, 152, 70, [[1, 35]]);
+        const hr = mid.hDeg * Math.PI / 180, ox = mid.x + Math.cos(hr) * 19, oy = mid.y + Math.sin(hr) * 19;
         return scene(
-          `${walls()}${obst(p1.x.toFixed(1), p1.y.toFixed(1), 12)}${obst(p2.x.toFixed(1), p2.y.toFixed(1), 11)}${guide(a.d)}
-           <g opacity=".45">${ball(0, 0, 7)}<circle r="11" fill="none" stroke="${C.purple}" stroke-width="1.6" stroke-dasharray="3 3"/>${move(a.d, 4)}</g>
-           ${label(176, 136, 'GHOST 10s', C.purple, 11)}`);
+          `${walls()}${obst(ox.toFixed(1), oy.toFixed(1), 12, fade('1;1;0;0;1', '0;.5;.53;.97;1', 4))}${guide(a.d, .5)}
+           <circle cx="${ox.toFixed(1)}" cy="${oy.toFixed(1)}" fill="none" stroke="#9fd0ff" stroke-width="2.5" opacity="0">
+             <animate attributeName="r" values="10;10;38;38" keyTimes="0;.5;.64;1" dur="4s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.5;.51;.64;1', 4)}</circle>
+           <g>${ball(0, 0, 7)}<circle r="15" fill="rgba(120,190,255,.14)" stroke="#9fd0ff" stroke-width="2">${fade('1;1;0;0;1', '0;.49;.5;.97;1', 4)}</circle>${move(a.d, 4)}</g>
+           ${label(180, 136, 'ONE FREE CRASH', '#9fd0ff', 10)}`);
       },
       coinrain: () => scene(
         `${walls()}${[46, 70, 96, 122, 148, 172, 196, 58, 110, 160, 84, 136].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.5 + (i % 3) * .3}s" begin="${-i * .23}s" repeatCount="indefinite"/></circle>`).join('')}
@@ -6288,10 +6296,6 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     player.speed = GAME_SPEED; // GAME_SPEED is already dynamic in extreme
     BOOSTER_EL.classList.remove('active');
     duckMusic(false);
-    if (_runPreboostQueued && scene === 'play' && running) {
-      const t = _runPreboostQueued; _runPreboostQueued = null;
-      activateBooster(t, BOOSTER_INFO[t].dur * 2);
-    }
   }
 
   function getRadius() {
@@ -6360,7 +6364,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       // Consumables: count = stok, armed = sıradaki run'da otomatik kullan.
       revive:    { count: 0, armed: false },  // ölünce devam (always-armed; armed flag yok sayılır)
       doubler:   { count: 0, armed: false },  // run'da coin gain ×2
-      headstart: { count: 0, armed: false },  // ilk 5s yarı hız
+      shield:    { count: 0, armed: false },  // ilk çarpışmayı affeder (engel parçalanır / duvardan seker)
       coinrain:  { count: 0, armed: false },  // gold ball spawn ×2
       preboost:  { count: 0, armed: false },  // run rastgele booster ile başlar
       filter:    { count: 0, armed: false },  // sadece ghost+speed booster spawn
@@ -6369,7 +6373,6 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       phaseburst: { owned: false, durLvl: 0, cdLvl: 0 },
       coinpull:   { owned: false, durLvl: 0, cdLvl: 0 },
       brake:      { owned: false, durLvl: 0, cdLvl: 0 },
-      mirror:     { owned: false, durLvl: 0, cdLvl: 0 },
       shock:      { owned: false, durLvl: 0, cdLvl: 0 },
       anchor:     { owned: false, durLvl: 0, cdLvl: 0 },
     },
@@ -6387,6 +6390,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       const merged = Object.assign({}, UPG_DEFAULTS, raw);
       // Deep-merge inv so newly added items don't lose defaults
       merged.inv = Object.assign({}, UPG_DEFAULTS.inv, raw.inv || {});
+      // Head Start kaldırıldı → Shield ile değişti; eski stok Shield'a devredilir
+      if (merged.inv.headstart) {
+        merged.inv.shield = { count: Math.min(5, ((merged.inv.shield && merged.inv.shield.count) | 0) + (merged.inv.headstart.count | 0)), armed: !!merged.inv.headstart.armed };
+        delete merged.inv.headstart;
+      }
       merged.coreOwned = Object.assign({}, raw.coreOwned || {});
       // v22 migrasyonu: 'timer' eskiden combo penceresini uzatıyordu, artık geri
       // sayım rakamını yükseltiyor. Eskiden satın alınan seviyeler oyuncunun
@@ -8013,6 +8021,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(cdText, px, py);
+    if (runShield) {                      // Shield eşyası: topun etrafında balon
+      const k = 0.5 + 0.5 * Math.sin(performance.now() / 260);
+      ctx.strokeStyle = `rgba(120,190,255,${0.55 + 0.3 * k})`; ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#7ab8ff'; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(px, py, r + 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(120,190,255,.10)'; ctx.fill(); ctx.shadowBlur = 0;
+    }
     if (tutActive && tutStage === 3) {   // tutorial: "bu sayı enerjin" — nabız halkası
       const k = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       ctx.strokeStyle = `rgba(124,255,122,${0.45 + 0.45 * k})`; ctx.lineWidth = 3;
@@ -8141,6 +8156,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
+    shockWaves.length = 0; brakeT = 0;
     // Load ghost traces fresh each game so the next save shows up next run.
     allGhosts = loadGhostTraces();
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
@@ -8335,7 +8351,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   function step(dt) {
     if (!running) return;
-    const w  = player.speed / player.radius;
+    // Brake: açısal hıza çarpan (player.speed'i ezmez → Extreme'in kare-başı hız hesabıyla çakışmaz)
+    const w  = player.speed / player.radius * (brakeT > 0 ? 0.5 : 1);
+    if (brakeT > 0) brakeT = Math.max(0, brakeT - dt);
     player.ang += w * dt * player.dir;
     player.x    = player.cx + Math.cos(player.ang) * player.radius;
     player.y    = player.cy + Math.sin(player.ang) * player.radius;
@@ -8518,17 +8536,33 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
+    if (dyingT < 0) updateShockWaves(dt);
+    // Ghost (Phase Burst / booster) engellerden geçer ama oyun alanından çıkamaz → duvardan seker
+    if (isGhost && !tutActive && dyingT < 0 &&
+        (player.x - player.r < walls.left || player.x + player.r > walls.right)) {
+      player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
+      beginArc(-player.dir, getRadius());
+    }
     if (!isGhost && !tutActive && dyingT < 0) {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
       const wallTol = (upg.wallSoft || 0);
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
-        if (hasShield) { clearBooster(); } else { beginDeath(); return; }
+        if (runShield) {                      // Shield eşyası: duvardan sektirir, kalkan gider
+          runShield = false; spawnShieldPop(player.x, player.y);
+          player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
+          beginArc(-player.dir, getRadius());
+        } else if (hasShield) { clearBooster(); } else { beginDeath(); return; }
       }
       for (const ob of obstacles) {
         const dx = player.x - ob._ox, dy = player.y - ob._oy;
         const rr = player.r + ob.r;
         const d2 = dx*dx + dy*dy;
         if (d2 < rr*rr) {
+          if (runShield) {                    // Shield eşyası: engeli parçalar, kalkan gider
+            runShield = false; spawnShieldPop(player.x, player.y);
+            spawnGoldParticles(ob._ox, ob._oy); obstacles.splice(obstacles.indexOf(ob), 1);
+            break;
+          }
           if (hasShield) { clearBooster(); break; } else { beginDeath(); return; }
         }
         // Near-miss: engelin dibinden sıyırınca bonus — engel başına bir kez.
@@ -9277,7 +9311,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawObstacles(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawObstacles(); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawComboLabel(); drawResumeCountdown(); }
@@ -9598,7 +9632,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       if (pickupsNear() && fireReady(['coinpull'])) return;
       // Kalanları (mirror/anchor dahil) ara sıra tetikle → hepsi test edilsin
       if (abilTimer <= 0) {
-        fireReady(['mirror', 'anchor', 'brake', 'timeslow', 'shock', 'phaseburst', 'coinpull']);
+        fireReady(['anchor', 'brake', 'timeslow', 'shock', 'phaseburst', 'coinpull']);
         abilTimer = 6 + Math.random() * 4;
       }
     }
@@ -10439,7 +10473,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     let a; try { a = JSON.parse(localStorage.getItem('arc_slots_v1') || 'null'); } catch(_) { a = null; }
     if (!Array.isArray(a)) a = [];
     while (a.length < SLOT_COUNT) a.push(null);       // 2-slot eski kayıtları 4'e genişlet
-    return a.slice(0, SLOT_COUNT);
+    // Kaldırılmış yetenekler (ör. Mirror Flip) slotta kalmasın
+    const REMOVED = ['mirror'];
+    return a.slice(0, SLOT_COUNT).map(it => (it && REMOVED.includes(it.key)) ? null : it);
   })();
   function saveSlots() {
     try { localStorage.setItem('arc_slots_v1', JSON.stringify(slotItems)); } catch(_){}
@@ -10522,6 +10558,40 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   let activeAbility = null;
   // Anchor: { x, y } veya null. Çift-tap mekaniği: 1) anchor bırak, 2) ışınla.
   let anchorPoint = null;
+  let brakeT = 0;
+  function spawnShieldPop(x, y) {       // kalkan kırılınca: mavi halka dalgası + titreşim
+    shockWaves.push({ x, y, r: player.r, maxR: 70, pop: true });
+    haptic(90);
+  }                 // Brake: kalan süre (s) — step()'te açısal hız ×0.5
+  const SHOCK_MAX_R = 260;        // şok dalgasının ulaştığı yarıçap (px, ekranın ~%43'ü)
+  const SHOCK_SPEED = 820;        // px/s
+  let shockWaves = [];            // { x, y, r, maxR } — dünya koordinatı
+  function updateShockWaves(dt) {
+    for (let i = shockWaves.length - 1; i >= 0; i--) {
+      const w = shockWaves[i];
+      w.r += SHOCK_SPEED * dt;
+      if (!w.pop) for (let j = obstacles.length - 1; j >= 0; j--) {   // kalkan kırılması (pop) engellere dokunmaz
+        const o = obstacles[j], ox = o._ox ?? o.x, oy = o._oy ?? o.y;
+        const d = Math.hypot(ox - w.x, oy - w.y);
+        if (d < w.r + o.r) { spawnGoldParticles(ox, oy); obstacles.splice(j, 1); }
+      }
+      if (w.r >= w.maxR) shockWaves.splice(i, 1);
+    }
+  }
+  function drawShockWaves() {
+    for (const w of shockWaves) {
+      const k = Math.min(1, w.r / w.maxR), sy = W2S(w.y);
+      ctx.save();
+      ctx.globalAlpha = 1 - k * 0.85;
+      ctx.lineWidth = 10 * (1 - k) + 2;
+      const col = w.pop ? '#9fd0ff' : '#ffe27a';
+      ctx.strokeStyle = col; ctx.shadowColor = w.pop ? '#5aa8ff' : '#ffcc00'; ctx.shadowBlur = 24;
+      ctx.beginPath(); ctx.arc(w.x, sy, w.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = (1 - k) * 0.18; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(w.x, sy, w.r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
   // Mirror: tek-shot etkili; sadece player.x reflect.
   function triggerAbility(slotIdx) {
     const item = slotItems[slotIdx];
@@ -10541,31 +10611,17 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       // dt scaling loop'ta zaten activeAbility'e bakıyor
     } else if (key === 'phaseburst') {
       isGhost = true;
-      setTimeout(() => { if (scene === 'play') isGhost = false; }, dur * 1000);
+      setTimeout(() => { if (scene === 'play' && boosterType !== 'ghost') isGhost = false; }, dur * 1000);
     } else if (key === 'coinpull') {
       // Tek-shot: ekrandaki gold/purple/bonuses'u oyuncuya snap
       const snap = (arr) => { for (const o of arr) { o.x = player.x; o.y = player.y; } };
       snap(bonuses); snap(goldBalls); snap(purpleBalls);
     } else if (key === 'brake') {
-      const restoreSpeed = player.speed;
-      player.speed = restoreSpeed * 0.5;
-      setTimeout(() => { if (scene === 'play') player.speed = GAME_SPEED; }, dur * 1000);
-    } else if (key === 'mirror') {
-      player.x = W - player.x;
-      // Yön de aynalansın
-      player.dir = -player.dir;
-      player.heading = Math.PI - player.heading;
+      brakeT = dur;
     } else if (key === 'shock') {
-      // Etrafındaki obstacle'ları yok et (R = 200px)
-      const R = 200;
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const o = obstacles[i];
-        const dx = player.x - o.x, dy = player.y - o.y;
-        if (dx*dx + dy*dy < R*R) {
-          spawnGoldParticles(o.x, o.y);
-          obstacles.splice(i, 1);
-        }
-      }
+      // Genişleyen şok dalgası: değdiği her engeli patlatır (bkz. updateShockWaves)
+      shockWaves.push({ x: player.x, y: player.y, r: player.r, maxR: SHOCK_MAX_R });
+      haptic(80);
     } else if (key === 'anchor') {
       if (!anchorPoint) {
         anchorPoint = { x: player.x, y: player.y };
@@ -10735,7 +10791,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     speed:        'Changes how fast your ball flies. Faster covers more distance but is harder to control; slower is easier to steer. Buy levels in either direction and switch between them for free.',
     timer:        'Raises the countdown number on your ball (starts at 8). A higher number gives you more time before your energy runs out, and makes greens, golds and purples worth more points.',
     comboWin:     'Makes each countdown step last longer (+0.5 s per level). You survive longer between greens, and the green combo window at the top of the countdown stays open longer.',
-    comboMax:     'Raises your combo chain cap (starts at ×3, up to ×7). Collect balls while the countdown is in the green window to grow the chain. At the cap it cashes in: ×3 pays 60 points, ×7 pays 280.',
+    comboMax:     'Raises your combo cap from ×3 up to ×7. Collect balls while the countdown is in the green window: each ball in a chain is worth more than the last, up to ×7 points.',
     wallSoft:     'Lets you brush the side walls slightly without crashing. Each level adds a little more room.',
     magnetRange:  'Collects greens, golds and purples from a distance, so you do not have to touch them. Each level adds 1 mm of pickup range.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
@@ -10760,7 +10816,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       { key: 'revive',     title: 'Revive',       icon: 'u-revive' },
       { key: 'doubler',    title: 'Coin Doubler', icon: 'u-doubler' },
       { key: 'preboost',   title: 'Pre-Booster',  icon: 'u-preboost' },
-      { key: 'headstart',  title: 'Head Start',   icon: 'u-headstart' },
+      { key: 'shield',     title: 'Shield',       icon: 'u-shield' },
       { key: 'filter',     title: 'Lucky Boost', icon: 'u-filter' },
       { key: 'coinrain',   title: 'Gold Rush',    icon: 'u-coinrain' },
     ]},
@@ -10769,7 +10825,6 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       { key: 'phaseburst', title: 'Phase Burst',  icon: 'u-phaseburst' },
       { key: 'coinpull',   title: 'Coin Pull',    icon: 'u-coinpull' },
       { key: 'brake',      title: 'Brake',        icon: 'u-brake' },
-      { key: 'mirror',     title: 'Mirror Flip',  icon: 'u-mirror' },
       { key: 'shock',      title: 'Shockwave',    icon: 'u-shock' },
       { key: 'anchor',     title: 'Anchor',       icon: 'u-anchor' },
     ]},
@@ -11405,7 +11460,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   const CONSUMABLE_CFG = {
     revive:    { price: 7, max: 5, autoArm: true,  desc: 'When you crash, you can continue from your last safe spot instead of ending the run. You are asked when it happens; one revive per run.' },
     doubler:   { price: 6, max: 5, autoArm: false, desc: 'Arm it before a run: every coin you earn is doubled for your next 5 runs.' },
-    headstart: { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: you start as a Ghost for 10 seconds and pass through obstacles and walls.' },
+    shield:    { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: a shield absorbs your first crash. The obstacle shatters (or the wall bounces you back) and you keep going.' },
     coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each is worth 1 coin and lots of points.' },
     preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random useful booster (no Tight Arc) that lasts twice as long.' },
     filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
@@ -11420,12 +11475,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     phaseburst: { durBase: 1, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 1→5s
     coinpull:   { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
     brake:      { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
-    mirror:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
     shock:      { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
     anchor:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
   };
-  // Yetenek açma — n'inci açılış bu fiyattan (ilk yetenek ucuz, yedincisi pahalı). 3.850 toplam.
-  const ABILITY_UNLOCK_PRICES = [30, 60, 120, 240, 480, 970, 1950];
+  // Yetenek açma — n'inci açılış bu fiyattan (ilk yetenek ucuz, altıncısı pahalı). 1.900 toplam.
+  const ABILITY_UNLOCK_PRICES = [30, 60, 120, 240, 480, 970];
   function abilityUnlockPrice() {
     const owned = Object.keys(ABILITY_CFG).filter(k => upg.inv[k] && upg.inv[k].owned).length;
     return ABILITY_UNLOCK_PRICES[Math.min(owned, ABILITY_UNLOCK_PRICES.length - 1)];
@@ -11560,11 +11614,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   }
   const ABILITY_DESC = {
     timeslow:   'Slows the whole game to half speed for a few seconds, so you can line up tight gaps.',
-    phaseburst: 'Makes you untouchable for a moment: you fly straight through red obstacles and the side walls.',
+    phaseburst: 'Makes you untouchable for a moment: you fly straight through red obstacles. The side walls still bounce you back.',
     coinpull:   'Instantly pulls every green, gold and purple ball ahead of you into your ball.',
     brake:      'Halves your speed for a few seconds. Handy when things get tight.',
-    mirror:     'Flips you to the mirror-image spot on the other side of the screen, turning the other way.',
-    shock:      'Destroys every red obstacle within about a third of the screen around you.',
+    shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes.',
     anchor:     'First use drops a marker where you are. Use it again after it recharges to teleport back to the marker.',
   };
 
@@ -11963,8 +12016,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       cond: () => !!stats.nightOwlDone },
     { id: 'survivor',  icon: 'shield',    name: 'SURVIVOR',  desc: '10.00m without revive or continue',
       cond: () => !!stats.survivorDone },
-    { id: 'boss',      icon: 'crown',     name: 'BOSS',      desc: 'Own all 7 abilities',
-      cond: () => ['timeslow','phaseburst','coinpull','brake','mirror','shock','anchor']
+    { id: 'boss',      icon: 'crown',     name: 'BOSS',      desc: 'Own all 6 abilities',
+      cond: () => ['timeslow','phaseburst','coinpull','brake','shock','anchor']
                     .every(k => upg.inv[k]?.owned) },
   ];
   // Düz BADGES listesi — mevcut altyapı (earnedBadges / equip / unlock) id bazlı çalışır.
@@ -12223,11 +12276,6 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
-    // Head Start: 10 sn Ghost. Pre-Booster da takılıysa ghost bitince başlar.
-    if (runHeadGhost) {
-      activateBooster('ghost', 10);
-      if (_runPreboostPending) { _runPreboostQueued = _runPreboostPending; _runPreboostPending = null; }
-    }
     // Pre-Booster: rastgele (işe yarar) bir booster, normal sürenin 2 katı
     if (_runPreboostPending) {
       activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
@@ -12237,19 +12285,17 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   // Per-run consumable flags
   let runDoublerActive = false;
-  let runHeadGhost = false;       // Head Start: run 10 sn Ghost ile başlar
+  let runShield = false;          // Shield eşyası: ilk çarpışmayı affeder
   let runCoinRainActive = false;  // Gold Rush: altın spawn ×4, 0 m'den itibaren
   let runLuckyBoost = false;      // Lucky Boost ('filter' anahtarı): tüm booster'lar 2× uzun
   let _runPreboostPending = null; // beginArc sonrası activateBooster için
-  let _runPreboostQueued  = null; // Head Start ghost'u bitince başlayacak Pre-Booster
   const DOUBLER_RUNS = 5;         // bir Coin Doubler kaç run ×2 verir
   function consumeArmedConsumables() {
     runDoublerActive = false;
-    runHeadGhost = false;
+    runShield = false;
     runCoinRainActive = false;
     runLuckyBoost = false;
     _runPreboostPending = null;
-    _runPreboostQueued = null;
     if (gameMode === 'wife') return; // Wife mode coin/etki yok
     const inv = upg.inv;
     const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
@@ -12257,7 +12303,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     inv.doubler.runsLeft = Math.max(0, Math.min(DOUBLER_RUNS - 1, inv.doubler.runsLeft | 0));
     if ((inv.doubler.runsLeft | 0) > 0) { runDoublerActive = true; inv.doubler.runsLeft--; }
     else if (inv.doubler.armed && inv.doubler.count > 0) { runDoublerActive = true; consume('doubler'); inv.doubler.runsLeft = DOUBLER_RUNS - 1; }
-    if (inv.headstart.armed && inv.headstart.count > 0) { runHeadGhost = true;            consume('headstart'); }
+    if (inv.shield.armed    && inv.shield.count    > 0) { runShield = true;               consume('shield');    }
     if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
     if (inv.filter.armed    && inv.filter.count    > 0) { runLuckyBoost = true;           consume('filter');    }
     if (inv.preboost.armed  && inv.preboost.count  > 0) {
