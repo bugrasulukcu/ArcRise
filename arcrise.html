@@ -3699,6 +3699,19 @@
       background: rgba(6,8,14,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
     #theme-modal.open { display: flex; }
+    #theme-loader {
+      position: fixed; inset: 0; z-index: 2147483600; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      background: #07080c; color: #ffb3e6; font-family: var(--font); font-size: 11px; letter-spacing: 3px;
+    }
+    #theme-loader.show { display: flex; animation: tlIn .18s ease-out; }
+    @keyframes tlIn { from { opacity: 0; } }
+    #theme-loader .tl-spin {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 3px solid rgba(255,68,204,.2); border-top-color: #ff44cc;
+      animation: tlSpin .7s linear infinite;
+    }
+    @keyframes tlSpin { to { transform: rotate(360deg); } }
     #theme-modal-box { width: min(88vw, 360px); max-height: 86vh; overflow-y: auto; border-radius: 22px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
     #theme-list { display: flex; flex-direction: column; gap: 10px; }
     .theme-card { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; cursor: pointer; text-align: left; font-family: var(--font); }
@@ -4051,6 +4064,9 @@
     </div>
   </div>
 </div>
+
+<!-- Tema değişirken sayfa yenilenir → kısa yükleme ekranı -->
+<div id="theme-loader" aria-hidden="true"><div class="tl-spin"></div><div class="tl-txt">APPLYING THEME</div></div>
 
 <!-- ══ THEMES ══ -->
 <div id="theme-modal">
@@ -11150,7 +11166,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   function applyTheme() {
     if (!themeById(upg.theme) || !themeOwned(upg.theme)) upg.theme = '';
     // Canvas paleti açılışta kurulur (THEME_STYLE). Farklı bir stile geçildiyse yeniden yükle.
-    if ((THEME_STYLE[upg.theme] || null) !== _tStyle) { saveUpg(); location.reload(); return; }
+    if ((THEME_STYLE[upg.theme] || null) !== _tStyle) {
+      saveUpg();
+      // Yeniden yüklenince tema penceresi açık dönsün (ana ekrana atmasın)
+      try { sessionStorage.setItem('arc_reopen_theme', '1'); } catch(_) {}
+      document.getElementById('theme-loader')?.classList.add('show');
+      setTimeout(() => location.reload(), 60);   // yükleme ekranı bir kare çizilsin
+      return;
+    }
     const root = document.documentElement;
     [...root.classList].filter(c => c.startsWith('theme-')).forEach(c => root.classList.remove(c));
     if (upg.theme) root.classList.add('theme-' + upg.theme);
@@ -11198,6 +11221,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   document.getElementById('theme-back').addEventListener('click', () => themeModal.classList.remove('open'));
   themeModal.addEventListener('click', e => { if (e.target === themeModal) themeModal.classList.remove('open'); });
   applyTheme();
+  // Tema değişimi sonrası yeniden yükleme: kaldığı yere (Settings → Themes) dön
+  try {
+    if (sessionStorage.getItem('arc_reopen_theme') === '1') {
+      sessionStorage.removeItem('arc_reopen_theme');
+      if (localStorage.getItem('arc_name')) { showScene('settings'); renderThemes(); themeModal.classList.add('open'); }
+    }
+  } catch(_) {}
   upgInfoModal.addEventListener('click', e => { if (e.target === upgInfoModal) closeUpgInfo(); });
 
   function buildCoreCard(t) {
