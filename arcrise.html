@@ -285,12 +285,14 @@
     /* START / AGAIN — dönen gökkuşağı çerçevenin arkasında bulanık hale + camsı iç + parıltı süpürmesi */
     .rb-wrap { position: relative; isolation: isolate; transition: transform .12s; }
     .rb-wrap:active { transform: scale(.97); }
+    /* Hale: sabit (dönmeyen) bulanık gökkuşağı → blur bir kez rasterize edilir; yalnız opacity/scale
+       canlanır (kompozitörde, her karede yeniden bulanıklaştırma yok — düşük güç modunda kasıyordu). */
     .rb-wrap::before {
       content: ''; position: absolute; inset: -5px; border-radius: 22px; z-index: -1;
-      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
-      filter: blur(14px); opacity: .5; animation: spinA 3s linear infinite, rbHalo 2.6s ease-in-out infinite;
+      background: linear-gradient(90deg, #00ccff, #8844ff, #ff2255, #ff7700, #ffe000, #7CFF7A);
+      filter: blur(14px); opacity: .45; will-change: opacity, transform; animation: rbHalo 2.6s ease-in-out infinite;
     }
-    @keyframes rbHalo { 50% { opacity: .85; transform: scale(1.03); } }
+    @keyframes rbHalo { 50% { opacity: .8; transform: scale(1.03); } }
     .rb-inner {
       position: relative; overflow: hidden;
       background: radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.11), transparent 62%), linear-gradient(180deg, #171b2a, #090b13) !important;
@@ -298,13 +300,19 @@
       text-shadow: 0 0 18px rgba(255,255,255,.35);
     }
     .rb-inner::after {
-      content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
-      background: linear-gradient(100deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg);
+      content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.2), transparent);
+      transform: translateX(-150%) skewX(-20deg); will-change: transform;
       animation: rbSheen 3.4s ease-in-out infinite;
     }
-    @keyframes rbSheen { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+    @keyframes rbSheen { 0%, 60% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(330%) skewX(-20deg); } }
     .start-play { width: .72em; height: .72em; margin-right: .32em; vertical-align: -.06em; filter: drop-shadow(0 0 6px rgba(255,255,255,.6)); }
     html.theme-gameboy .rb-wrap::before, html.theme-gameboy .rb-inner::after { display: none; }
+    /* ══ Düşük efekt modu (iPhone düşük güç modu / zayıf cihaz — otomatik, bkz. LOWFX) ══ */
+    html.lowfx .rb-wrap::before, html.lowfx .rb-inner::after, html.lowfx .mode-deco { display: none !important; }
+    html.lowfx .rb-wrap, html.lowfx #home-av-wrap::before, html.lowfx .seg-ind { animation: none !important; }
+    html.lowfx * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    html.lowfx .gl-glass { background-color: rgba(9,10,16,.9) !important; }
     /* Start + Again — bold, +50% over original, uppercase */
     #btn-start, #btn-again {
       font-size: 30px; font-weight: 700; letter-spacing: 4px;
@@ -3915,8 +3923,8 @@
         <div id="mode-fx-wrap">
           <button id="mode-btn-wife" title="Wife Mode" aria-label="Wife Mode"></button>
           <div id="mode-sel">
-            <button class="mode-btn active-normal" id="mode-btn-normal"><svg class="mode-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10M9.5 3.8 12 6.3l2.5-2.5M9.5 20.2 12 17.7l2.5 2.5M4.2 10.6l3.4 1-1 3.4M19.8 10.6l-3.4 1 1 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Chill</button>
-            <button class="mode-btn" id="mode-btn-extreme"><svg class="mode-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.5 3.6 6 6.9 6 10.9a6 6 0 0 1-12 0c0-2.2 1-4 2.4-5.4.1 1.8.9 3 2.2 3.6C10.1 8.6 10.7 5.2 12 2.5z" fill="currentColor"/></svg>Extreme</button>
+            <button class="mode-btn active-normal" id="mode-btn-normal">Chill</button>
+            <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
           </div>
         </div>
       </div>
@@ -5594,6 +5602,29 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         return grd;
       };
     }
+  }
+  // ── Düşük efekt modu ───────────────────────────────────────────
+  // iPhone düşük güç modu rAF'ı ~30 fps'e indirir ve CPU'yu kısar; ışıma (shadowBlur) ve arka plan
+  // bulanıklaştırma o zaman kasıyor. Kare hızı 42'nin altına inerse (ya da sistem "reduced motion"
+  // istiyorsa) html.lowfx açılır: CSS dekorları kapanır, canvas shadowBlur 0'a iner. Oynanış aynı.
+  let LOWFX = false;
+  function enableLowFx() {
+    if (LOWFX) return;
+    LOWFX = true;
+    document.documentElement.classList.add('lowfx');
+    console.log('[ArcRise] düşük efekt modu açıldı');
+  }
+  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) enableLowFx(); } catch(_) {}
+  (() => {
+    const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
+    if (d && d.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', { configurable: true, enumerable: true,
+      get() { return d.get.call(this); }, set(v) { d.set.call(this, LOWFX ? 0 : v); } });
+  })();
+  let _fpsT = 0, _fpsN = 0;
+  function trackFps(dtReal) {      // loop'tan her kare; sekme gizliyken büyük dt'ler atlanır
+    if (LOWFX || dtReal <= 0 || dtReal > 0.25) return;
+    _fpsT += dtReal; _fpsN++;
+    if (_fpsT >= 3) { if (_fpsN / _fpsT < 42) enableLowFx(); _fpsT = 0; _fpsN = 0; }
   }
   const gc = document.getElementById('gc');
   const bg = document.getElementById('bg');
@@ -9294,6 +9325,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // Rolling FPS sample for the debug overlay (no allocs in the hot path).
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
   function loop(ts) {
+    trackFps((ts - lastT) / 1000);
     const dtRaw = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
     // Time Slow ability simülasyonu yavaşlatır.
     let slow = 1.0;
@@ -12388,6 +12420,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   const FLAME_GLYPHS  = ['fire', 'sparkle'];
   let modeDecoTimer = 0;
   function tickModeDeco(dt) {
+    if (LOWFX) return;
     // Mod seçici Settings ekranında → efektler orada üretilmeli (eskiden yalnız 'home'da
     // çalışıyordu, seçici görünmediği için hiç görünmüyordu).
     if (scene !== 'settings') return;

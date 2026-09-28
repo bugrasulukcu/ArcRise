@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Düşük efekt modu (iPhone düşük güç modunda kasma) (2026-09-28)
+
+iPhone düşük güç modu rAF'ı ~30 fps'e indirir ve CPU'yu kısar; yeni efektlerle kasıyordu.
+- **Ucuzlatma:** START halesi artık dönen gradyeni her karede yeniden bulanıklaştırmıyor (sabit bulanık katman, yalnız opacity/scale canlanır); parıltı `left` yerine `transform` ile → ikisi de kompozitörde.
+- **`LOWFX` / `html.lowfx`:** oyun döngüsü 3 sn'lik pencerede kare hızını ölçer (`trackFps`), 42'nin altında (ya da `prefers-reduced-motion`) açılır: START halesi/parıltısı, mod parçacıkları, dönen avatar halkası, segment animasyonları ve **tüm backdrop-filter bulanıklaştırmaları** kapanır (camsı paneller opak olur); canvas'ta `shadowBlur` prototip setter'ı ile 0'a iner. Oynanış aynı. Test: 30 fps taklidi (rAF kare atlama) ve reduced-motion'da açılıyor, normal cihazda kapalı.
+- Settings'teki mod düğmelerinden ikonlar kaldırıldı (yazılar sıkışıyordu); efektler duruyor.
+
 ### Yetenek/eşya revizyonu + UI: START, mod efektleri, High Scores, Settings (2026-09-28)
 
 **Oynanış**
