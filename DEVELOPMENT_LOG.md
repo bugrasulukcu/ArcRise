@@ -396,6 +396,57 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v25 — Ekonomi ×1 ölçeğine indi (1 m = 1 coin), 3 yıllık katalog, veri sıfırlama (2026-09-28)
+
+**Canlı veri sıfırlandı.** Firestore'daki tüm koleksiyonlar (`scores`, `players`, `wallets`, `friendreqs`; `referrals` zaten boştu) `firebase firestore:delete --all-collections` ile silindi. Silmeden önce 35 doküman yedeklendi: `~/Desktop/Projects/Games/ArcRise_firestore_backup_2026-09-28/` (repo dışı). Gerçek IAP alımı yoktu (`wallets.purchased` hiçbir dokümanda yok). İstemci tarafında `ARC_RESET_VERSION` iki kez artırıldı (`r-2026-09-28-1`, sonra ölçek değişince `-2`) → her cihaz açılışta `arc_*` anahtarlarını (`arc_fb_rt` dahil) siler ve **yeni anonim uid** ile başlar, bu yüzden buluttaki eski ×12 cüzdanlara hiç bağlanmaz. ⚠️ Eski APK'lar sıfırlanmaz — yeni Android build gerekli.
+
+**Neden: v23 simülasyonu gerçek oynanışla tutmuyordu.** `ARC_BOT` ile ölçüldü (upgrade'siz, Normal, 50 run, Firebase istekleri tarayıcıda engellenerek): ortalama **2.13 m/run** (medyan 1.68, run'ların %40'ı < 1 m), 0.24 altın/run, 41 sn/run. v23'ün varsaydığı ~17 coin/run yerine gerçekte ~4 coin/run çıkıyordu; günlük gelirin yarısından fazlası login/görevden geliyordu (v23'ün düzeltmek istediği "gelir takvimden geliyor" sorunu geri gelmişti). Bot iyi bir oyuncuyu temsil ediyor → insanlar için üst sınır.
+
+**Yeni gelir modeli (×1 ölçek)**
+- `COIN_PER_M = 1`, `COIN_EXTREME_MUL = 2` (Extreme'de metre ×2, altın hariç), `COIN_PER_GOLD = 1`.
+- **Kesirli birikim:** run kazancı kesirli hesaplanır, kalan `arc_coin_carry`'de sonraki run'a devreder → 1 m'ye varmayan run bile boşa gitmez. Game over çubuğu sayımdan sonra bir sonraki coin'e biriken yüzdeyi gösterir ("next coin 40%").
+- `applySoftCap` artık kesirli; `COIN_DAY_SOFT` 150 → **25** (normal oyuncu ~25 m/gün, tavana takılmaz; grinder ~2× ilerler).
+- Ödüller: login **1**, görev **2** × 3, hepsi bonusu **1** (günlük toplam 8), ilk oyun 3, davet 10 (HTML'deki "5 coins" metni eskimişti, düzeltildi).
+- Normal oyuncu ≈ 25 (run) + 8 (görev) = **~33 coin/gün**.
+
+**Extreme:** skor ×3 kaldırıldı (`getScoreMul` her modda 1.5), yerine **coin ×2**. Popup "Coins ×2", `store_listing.md` güncellendi. Açma 45 / indirimli 6. ⚠️ İndirim şartı "5.000 skor" ×3 gidince çok zorlaştı (bot Normal'de max 2.834) — gözden geçirilmeli.
+
+**Katalog: normal oyuncu için ~3 yıl (36.131 coin).** İlk seviyeler 1-2 günlük, geometrik dikleşir. Timer / Combo Timer / Max Combo en güçlü eksenler → diğerlerinin 2 katı ağırlık.
+
+| Blok | Fiyatlar | Toplam |
+|---|---|---|
+| Score Boost ×10 | 3, 6, 14, 30, 60, 130, 280, 600, 1250, 2700 | 5.073 |
+| Radius / Speed (yön başı ×4) | 3, 16, 85, 440 | 544 × 4 |
+| Timer ×4 | 15, 95, 580, 3550 | 4.240 |
+| Combo Timer ×4 | 8, 60, 490, 3800 | 4.358 |
+| Max Combo ×4 | 7, 55, 460, 3700 | 4.222 |
+| Walls ×5 | 4, 16, 60, 240, 940 | 1.260 |
+| Magnet ×8 | 3, 8, 19, 45, 120, 300, 740, 1850 | 3.085 |
+| Ability açma (sıraya göre) | 30, 60, 120, 240, 480, 970, 1950 | 3.850 |
+| Ability süresi ×4 (3 yetenek) | 7, 40, 230, 1350 | 1.627 × 3 |
+| Gear slot ×4 | 6, 45, 340, 2550 | 2.941 |
+| Extreme | 45 | 45 |
+
+Kozmetik, consumable ve IAP ~÷9 ölçeklendi (renk 3, gradyen 10, rainbow 28, custom 65, show 45, tomb/name 55; revive 7, doubler 2, headstart/coinrain/preboost 3, filter 5; IAP 55/200/450/1100). Kozmetikler 3 yıl hedefinin dışında.
+
+**Upgrade etkileri**
+- **Max Combo tavanı ×12 → ×7** (`COMBOMAX_PRICES` 4 seviye). COMBO rozeti kademeleri [3,5,7,9,12] → **[3,4,5,6,7]**.
+- **Magnet nerf:** seviye başı +22 px → **+1 mm yarıçap** (`MAG_PX_PER_LVL = H_REF / CM_PER_SCREEN / 10` ≈ 7.1 px). Max 176 px → ~57 px. Etiket artık "+3mm".
+- **Ability açma fiyatı** yeteneğe değil **kaçıncı açılış olduğuna** bağlı (`ABILITY_UNLOCK_PRICES`, `abilityUnlockPrice()`); `ABILITY_CFG.unlock` alanı kaldırıldı.
+
+**Hata düzeltmeleri**
+- **"−" düğmesi parayı yakıyordu.** Tek yönlü CORE'larda (Score Boost, Timer…) ve ability süresinde seviye düşürüp geri çıkınca aynı seviye tekrar ücretli satın alınıyordu. Artık satın alınmış tavan ayrıca saklanıyor: `upg.coreOwned[key]` (radius/speed'deki `Pos`/`Neg` modeli) ve `upg.inv[k].durOwn`. Tavana kadar − / + ücretsiz.
+- **Seviyeler yüklemede kırpılmıyordu** (localStorage'da `comboMax: 100000` → combo tavanı kalkıp skor patlıyordu). `clampCoreLevels()` ve `clampAbilityLadders()` her yüklemede katalog tavanına kırpar.
+- **"Hit a ×N combo" görevi** 5'ten başlıyordu (seriyle 15'e kadar) ama taban tavan ×3 → Max Combo almamış oyuncu görevi hiç tamamlayamıyordu (v24'ten beri). Hedef artık `min(hedef, comboCap())`.
+- `verify-sync.js`: `capacitor.config.json` md5 yerine JSON içeriğiyle karşılaştırılıyor (Capacitor 8 dosyayı tab'la yeniden yazıyor, içerik aynıyken "FARKLI" diyordu).
+
+**Açık kalanlar**
+- Walls çok zayıf (max 5 px, 18 px'lik topta) — etkisi büyütülmeli.
+- Combo Timer hayatta kalma için Timer'dan hâlâ daha verimli (enerji = Timer × pencere/2).
+- Extreme dakika başına ~2.3× coin veriyor; günlük tavan sınırlıyor ama izlenmeli.
+- Rakamlar bot üst sınırına dayanıyor → canlıda 1-2 hafta gerçek mesafe verisiyle tek çarpanla ince ayar.
+- IAP paketleri (55/200/450/1100) fiyat noktaları yeniden değerlendirilmeli.
+
 ### Güvenlik denetimi — App Check devrede, localStorage→DOM enjeksiyonu kapatıldı, 8 haftalık build drift'i yakalandı (2026-08-26)
 
 Ayrıntılı kayıt: **`SECURITY_NOTES.md` → "4. tur (2026-08-26)"**. Burada özet + devlog'a düşen sonuçlar.
@@ -935,7 +986,7 @@ Her biri için `.claude/agents/<isim>.md` dosyasında prompt + tool permissions 
 
 ---
 
-**Son güncelleme**: 2026-07-31 (v23). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v23/v22 changelog'larını oku; ardından çalışmaya devam et.
+**Son güncelleme**: 2026-09-28 (v25). Sonraki oturumda **önce en üstteki "🚀 COWORK HANDOFF" bölümünü**, sonra v23/v22 changelog'larını oku; ardından çalışmaya devam et.
 
 **Sıradaki işler (öncelik sırasıyla):**
 1. **v23 ekonomisini tarayıcıda oyna-test et** — rakamlar simülasyondan, gerçek run mesafeleri varsayımla eşleşiyor mu doğrula.

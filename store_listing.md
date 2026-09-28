@@ -26,7 +26,7 @@ HOW TO PLAY
 
 TWO WAYS TO PLAY
 • Chill Mode — a relaxed, steady-paced climb
-• Extreme Mode — 3x score, accelerating speed, and a screen that's literally on fire
+• Extreme Mode — 2x coins, accelerating speed, and a screen that's literally on fire
 
 CHASE YOUR BEST
 • Global leaderboards for both Score and Distance

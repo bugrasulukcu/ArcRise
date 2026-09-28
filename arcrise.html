@@ -3838,18 +3838,18 @@
     <div id="extreme-icon"></div>
     <div id="extreme-title">EXTREME MODE</div>
     <div id="extreme-desc">
-      <div class="extreme-row"><span class="extreme-lbl">Score</span><span class="extreme-val">&times;3.0</span></div>
+      <div class="extreme-row"><span class="extreme-lbl">Coins</span><span class="extreme-val">&times;2</span></div>
       <div class="extreme-row"><span class="extreme-lbl">Acceleration</span><span class="extreme-val">On</span></div>
     </div>
     <div id="extreme-reqs">
       <div class="ex-path-head" id="ex-path-direct-head">DIRECT</div>
       <div class="ex-req-row met" id="ex-req-direct">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">Pay 400 coins</span>
+        <span class="ex-req-label">Pay 45 coins</span>
         <span class="ex-req-val" id="ex-req-direct-val"></span>
       </div>
       <div class="ex-path-or">— OR —</div>
-      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 50 coins if both are met</div>
+      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 6 coins if both are met</div>
       <div class="ex-req-row unmet" id="ex-req-dist">
         <span class="ex-req-check"></span>
         <span class="ex-req-label">5.00m distance</span>
@@ -3979,20 +3979,20 @@
          ~%75'i. Coin/$ oranı 505 → 770 (1.5× yayılım) — orta tier "akıllı
          seçim" gibi dursun, üst tier zorunlu gibi durmasın. -->
     <div id="coins-buy-row" hidden>
-      <button class="coins-buy" data-amount="500">
-        <span class="coins-buy-amount">+500</span>
+      <button class="coins-buy" data-amount="55">
+        <span class="coins-buy-amount">+55</span>
         <span class="coins-buy-price">$0.99</span>
       </button>
-      <button class="coins-buy" data-amount="1800">
-        <span class="coins-buy-amount">+1800</span>
+      <button class="coins-buy" data-amount="200">
+        <span class="coins-buy-amount">+200</span>
         <span class="coins-buy-price">$2.99</span>
       </button>
-      <button class="coins-buy" data-amount="4000">
-        <span class="coins-buy-amount">+4000</span>
+      <button class="coins-buy" data-amount="450">
+        <span class="coins-buy-amount">+450</span>
         <span class="coins-buy-price">$5.99</span>
       </button>
-      <button class="coins-buy" data-amount="10000">
-        <span class="coins-buy-amount">+10000</span>
+      <button class="coins-buy" data-amount="1100">
+        <span class="coins-buy-amount">+1100</span>
         <span class="coins-buy-price">$12.99</span>
       </button>
     </div>
@@ -4025,7 +4025,7 @@
     <!-- Davet ödülü vurgusu -->
     <div class="fm-reward-banner">
       <span class="fm-reward-ic"><span class="chip-ic">C</span>+5</span>
-      <span class="fm-reward-txt">Earn <b>5 coins</b> every time a friend opens your invite link</span>
+      <span class="fm-reward-txt">Earn <b>10 coins</b> every time a friend opens your invite link</span>
     </div>
     <div class="fm-reward-stat" id="friends-reward-stat"></div>
     <button id="friends-share-btn" type="button">
@@ -5191,7 +5191,7 @@ const ARC_DB = (() => {
 //   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
 //      sessionStorage
 //   3) writes the new version so the wipe doesn't repeat
-const ARC_RESET_VERSION = 'r-2026-09-28-1';
+const ARC_RESET_VERSION = 'r-2026-09-28-2';
 (() => {
   try {
     if (localStorage.getItem('arc_reset_v') === ARC_RESET_VERSION) return;
@@ -5757,11 +5757,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // ── Upgrade state (kalıcı upgrade & GEAR envanteri) ─────────────
   const UPG_KEY = 'arc_upg_v1';
   const UPG_DEFAULTS = {
-    radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -3..+3 active
+    radiusPos: 0, radiusNeg: 0, radiusActive: 0, // -4..+4 active
     speedPos: 0,  speedNeg: 0,  speedActive: 0,
     timer: 0,                                    // 0..4 — topun üzerindeki geri sayım rakamı (8 → 12)
     comboWin: 0,                                 // 0..4 — combo penceresi (yeşil bant): 2.0s + 0.5s/sv
-    comboMax: 0,                                 // 0..9 — combo zinciri tavanı: ×3 taban → ×12
+    comboMax: 0,                                 // 0..4 — combo zinciri tavanı: ×3 taban → ×7
+    // Tek yönlü CORE'larda satın alınmış en yüksek seviye (radius/speed'deki Pos'un karşılığı).
+    // Aktif seviye bunun altına − ile inip + ile ücretsiz geri çıkabilir.
+    coreOwned: {},
     comboSplitV22: false,                        // eski tek 'timer' upgrade'inin bölünme migrasyonu
     traceColor: '#ffffff',                       // varsayılan BEYAZ ('rainbow' | 'rb:xxx' | 'custom' | hex)
     traceThickness: 0,                           // preset: 0/6/12/20
@@ -5782,7 +5785,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     traceAnimsOwned: ['none'],
     profit: 0,                                   // 0..10 (each +%10 score)
     wallSoft: 0,                                 // 0..5 (each +1px collision tolerance toward walls)
-    magnetRange: 0,                              // 0..8 (each +10% magnet pull radius)
+    magnetRange: 0,                              // 0..8 — toplama menzili +1mm yarıçap/sv (MAG_PX_PER_LVL)
     // GEAR envanteri — consumable stock + ability unlock/ladder durumu
     inv: {
       // Consumables: count = stok, armed = sıradaki run'da otomatik kullan.
@@ -5815,6 +5818,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
       const merged = Object.assign({}, UPG_DEFAULTS, raw);
       // Deep-merge inv so newly added items don't lose defaults
       merged.inv = Object.assign({}, UPG_DEFAULTS.inv, raw.inv || {});
+      merged.coreOwned = Object.assign({}, raw.coreOwned || {});
       // v22 migrasyonu: 'timer' eskiden combo penceresini uzatıyordu, artık geri
       // sayım rakamını yükseltiyor. Eskiden satın alınan seviyeler oyuncunun
       // gerçekte aldığı şeye — yeni 'comboWin' anahtarına — taşınır.
@@ -5868,8 +5872,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   let gameMode = localStorage.getItem('arc_mode') || 'normal';
   let GAME_SPEED = gameMode === 'extreme' ? 800 : 400;
   function getScoreMul() {
-    if (gameMode === 'extreme') return 3.0;
-    if (gameMode === 'wife')    return 1.5; // same reward tier as Chill
+    // Extreme artık skor değil COIN ödüllendirir (metre başına ×2, bkz. COIN_EXTREME_MUL).
     return 1.5;
   }
   function getBaseSpeed() {
@@ -5891,9 +5894,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // Toplam enerji süresi = kademe sayısı × kademe süresi (= pencere / 2 kademe).
   function comboTimerSec()   { return comboDisplayMax() * (comboWindowSec() / 2); }
   // comboMax → zincirin TAVANI (kaç yeşil üst üste sayılır): taban ×3, satın alınarak
-  // ×12'ye kadar. Tavana varınca pot bankalanır ve zincir sıfırlanır (bkz. addCombo).
+  // ×7'ye kadar. Tavana varınca pot bankalanır ve zincir sıfırlanır (bkz. addCombo).
   // Zincir toplamı 5·n·(n+1) olduğundan tavan doğrudan skor eksenidir:
-  //   ×3 → 60/zincir   ×6 → 210   ×9 → 450   ×12 → 780
+  //   ×3 → 60/zincir   ×4 → 100   ×5 → 150   ×6 → 210   ×7 → 280
   const COMBO_CAP_BASE = 3;
   function comboCap() { return COMBO_CAP_BASE + ((upg && upg.comboMax) || 0); }
 
@@ -5920,6 +5923,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // 1 ekran yüksekliği = 15 cm (sabit referans). Mesafe metre cinsinden,
   // 0.00 formatında gösteriliyor. fmtDist girdisi cm, çıktısı "X.XXm".
   const CM_PER_SCREEN = 15;
+  // Magnet: seviye başı +1 mm toplama yarıçapı, oyunun mesafe metriğiyle (1066px = 15cm → ~7px).
+  const MAG_PX_PER_LVL = H_REF / CM_PER_SCREEN / 10;
   const fmtDist = (cm) => (cm / 100).toFixed(2) + 'm';
 
   // distTotal (cm) = ömür-boyu mesafe odometresi. v23'ten itibaren coin'i
@@ -5940,10 +5945,15 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // ── v23 coin musluğu: run başına sabit oran (sönümsüz) ─────────
   // Beceri hep ödüllenir; aşırı grind'i lifetime decay yerine GÜNLÜK YUMUŞAK
   // TAVAN dengeler (tavandan sonra oran düşer, hiçbir zaman sıfırlanmaz).
-  const COIN_PER_M     = 2;     // her metre başına coin
-  const COIN_PER_GOLD  = 1;     // toplanan her altın top başına coin
-  const COIN_DAY_SOFT  = 150;   // bu günlük eşikten sonra oran düşer
-  const COIN_SOFT_RATE = 0.4;   // eşik sonrası oran
+  // v25: ölçek ×12'den ×1'e indi — 1 metre = 1 coin. Kesirli kazanç run'lar arası
+  // birikir (arc_coin_carry), böylece 1 m'ye varmayan run bile bir sonraki coin'e sayar.
+  const COIN_PER_M       = 1;     // her metre başına coin
+  const COIN_EXTREME_MUL = 2;     // Extreme'de metre başına ×2 (altın toplar hariç)
+  const COIN_PER_GOLD    = 1;     // toplanan her altın top başına coin
+  const COIN_DAY_SOFT    = 25;    // bu günlük eşikten sonra oran düşer (normal oyuncu ~25 m/gün)
+  const COIN_SOFT_RATE   = 0.4;   // eşik sonrası oran
+  const COIN_CARRY_KEY   = 'arc_coin_carry';
+  let coinCarry = Math.min(0.999, Math.max(0, Number(localStorage.getItem(COIN_CARRY_KEY)) || 0));
 
   // v23 yeniden değerleme: eski 2-3-4'lük fiyatların dokusu yoktu (her tek alım
   // bedava gibi, toplam ulaşılmaz). Tüm katalog ×12 ölçeğine taşındı; mevcut
@@ -6030,15 +6040,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     } catch(_){}
   }
   // Ham kazancı günlük tavana göre yumuşat: eşiğe kadar tam oran, sonrası kısmi.
+  // Kesirli çalışır — yuvarlama çağıranda, taşınan kesirle birlikte yapılır.
   function applySoftCap(raw) {
     const already = coinsEarnedToday();
-    if (already >= COIN_DAY_SOFT) return Math.floor(raw * COIN_SOFT_RATE);
-    const full = Math.min(raw, COIN_DAY_SOFT - already);
-    return full + Math.floor((raw - full) * COIN_SOFT_RATE);
+    const full = Math.max(0, Math.min(raw, COIN_DAY_SOFT - already));
+    return full + (raw - full) * COIN_SOFT_RATE;
   }
-  // Bir run'ın ham coin kazancı — mesafe + toplanan altın toplar.
+  // Bir run'ın ham (kesirli) coin kazancı — mesafe + toplanan altın toplar.
+  function coinModeMul() { return gameMode === 'extreme' ? COIN_EXTREME_MUL : 1; }
   function runCoinsRaw(distCm, golds) {
-    return Math.floor((Math.max(0, distCm) / 100) * COIN_PER_M) + (golds | 0) * COIN_PER_GOLD;
+    return (Math.max(0, distCm) / 100) * COIN_PER_M * coinModeMul() + (golds | 0) * COIN_PER_GOLD;
   }
   let lastScore = Number(localStorage.getItem('arc_last') || 0);
 
@@ -7715,7 +7726,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
     if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
-    _comboPot += 10 * runCombo;         // 10, 20, 30, … (cap 12'de zincir toplamı 780)
+    _comboPot += 10 * runCombo;         // 10, 20, 30, … (cap 7'de zincir toplamı 280)
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
     // Tavana varıldı: pot hemen patlar ve zincir sıfırlanır. Oyuncu yeni zincire başlar.
     if (runCombo >= comboCap()) comboBreak();
@@ -7965,7 +7976,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
       _lastSafePos = { x: player.x, y: player.y };
     }
     // MAGNET (pasif): her seviye toplama menzilini büyütür → değmeden, yaklaşınca toplar.
-    const magGrab = (upg.magnetRange || 0) * 22;
+    const magGrab = (upg.magnetRange || 0) * MAG_PX_PER_LVL;
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
@@ -8238,10 +8249,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
       distTotal += deltaCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
       const rawCoins = runCoinsRaw(deltaCm, deltaGold) * doublerMul;
-      const gained   = applySoftCap(rawCoins);
+      const capped   = applySoftCap(rawCoins);
+      const total    = capped + coinCarry;
+      const gained   = Math.floor(total);
+      coinCarry = total - gained;
+      try { localStorage.setItem(COIN_CARRY_KEY, String(coinCarry)); } catch(_){}
       if (gained > 0) { coinsEarned += gained; addCoinsEarnedToday(gained); }
       _runCoinsRaw    = rawCoins;    // game-over ekranı kırılımı gösterebilsin
-      _runCoinsCapped = rawCoins - gained;
+      _runCoinsCapped = rawCoins - capped;
       syncCoins();
     }
     const earned = coins - prevCoins;
@@ -8263,7 +8278,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
         // İlk oyun bonusu: ilk GERÇEK run (wife hariç — bu blok zaten wife'ta çalışmaz)
         // tamamlanınca tek seferlik +1 coin. Reset sonrası taze profilde tekrar verilir.
         if (stats.gamesTotal === 1) {
-          try { grantCoins(25); showRewardToast({ icon: 'coin', title: 'FIRST GAME', sub: 'Welcome bonus', coins: 25 }); } catch(_){}
+          try { grantCoins(3); showRewardToast({ icon: 'coin', title: 'FIRST GAME', sub: 'Welcome bonus', coins: 3 }); } catch(_){}
         }
         if (gameMode === 'extreme') stats.gamesExtreme++;
         else stats.gamesNormal++;
@@ -8348,16 +8363,19 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     const progEl   = document.getElementById('go-coin-progress');
     const barEl    = document.getElementById('go-coin-bar');
     const gained   = Math.max(0, earned);
-    const fromDist = Math.floor((runDistCm / 100) * COIN_PER_M);
+    const fromDist = (runDistCm / 100) * COIN_PER_M * coinModeMul();
     const fromGold = _runGolds * COIN_PER_GOLD;
+    const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
     barEl.style.transition = 'none';
     barEl.style.width = '0%';
     earnedEl.textContent = '+0';
     const breakdown = (gameMode === 'wife')
       ? 'Wife Mode · no coins'
-      : `${fmtDist(runDistCm)} → ${fromDist}` + (fromGold ? ` · ${_runGolds} gold → ${fromGold}` : '')
+      : `${fmtDist(runDistCm)} → ${f1(fromDist)}` + (coinModeMul() > 1 ? ' (extreme ×2)' : '')
+        + (fromGold ? ` · ${_runGolds} gold → ${fromGold}` : '')
         + (runDoublerActive ? ' · ×2' : '')
-        + (_runCoinsCapped > 0 ? ` · daily cap −${_runCoinsCapped}` : '');
+        + (_runCoinsCapped >= 0.05 ? ` · daily cap −${f1(_runCoinsCapped)}` : '')
+        + ` · next coin ${Math.floor(coinCarry * 100)}%`;
     progEl.textContent = breakdown;
     let lastEarnedShown = 0;
     const popEarned = (n) => {
@@ -8385,7 +8403,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
         haptic(8);
       }
       if (t < 1) requestAnimationFrame(animCoin);
-      else if (lastEarnedShown !== gained) popEarned(gained);
+      else {
+        if (lastEarnedShown !== gained) popEarned(gained);
+        if (gameMode !== 'wife') {   // bar → bir sonraki coin'e biriken kısım
+          barEl.style.transition = 'width .5s ease-out';
+          barEl.style.width = Math.floor(coinCarry * 100) + '%';
+        }
+      }
     }
     setTimeout(() => requestAnimationFrame(animCoin), 350);
 
@@ -9413,12 +9437,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   });
 
   // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
-  const TR_THICK_PRICE = 20, TR_ANIM_PRICE = 40, TRACE_SHOW_PRICE = 400, TOMB_PRICE = 500, NAME_PRICE = 500, CUSTOM_PRICE = 600;
+  const TR_THICK_PRICE = 2, TR_ANIM_PRICE = 4, TRACE_SHOW_PRICE = 45, TOMB_PRICE = 55, NAME_PRICE = 55, CUSTOM_PRICE = 65;
   const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
   const TRACE_ANIMS  = [['none', 'OFF'], ['wave', 'WAVE'], ['pulse', 'PULSE'], ['glow', 'GLOW']];
-  // Renk fiyatları: beyaz bedava · düz renk 30 · gradyen 90 · gökkuşağı 250 · custom 600
+  // Renk fiyatları: beyaz bedava · düz renk 3 · gradyen 10 · gökkuşağı 28 · custom 65
   const traceColorPrice = id =>
-    id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 250 : (id.indexOf('rb:') === 0 ? 90 : 30);
+    id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 28 : (id.indexOf('rb:') === 0 ? 10 : 3);
   const traceColorOwned = id => id === '#ffffff' || _has('traceColorsOwned', id);
   const RAINBOWS = [
     ['rainbow', 'linear-gradient(90deg,#ff3b3b,#ffb13b,#ffe23b,#5bff7a,#3bd1ff,#3b7bff,#c45bff)'],
@@ -9770,10 +9794,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   });
 
   // ── Equippable slot state ───────────────────────────────
-  // 4 gear slotu; coin ile sırayla satın alınır (2/4/8/16). Sadece satın alınanlar
+  // 4 gear slotu; coin ile sırayla satın alınır. Sadece satın alınanlar
   // görünür (home + oyun-içi); kilitliler oyun-içinde gizli, home'da fiyatla.
   const SLOT_COUNT  = 4;
-  const SLOT_PRICES = [50, 150, 400, 900];   // 4. slot bilinçli olarak "flex" fiyatı
+  const SLOT_PRICES = [6, 45, 340, 2550];   // 4. slot bilinçli olarak "flex" fiyatı — 2.941
   let slotItems = (() => {
     let a; try { a = JSON.parse(localStorage.getItem('arc_slots_v1') || 'null'); } catch(_) { a = null; }
     if (!Array.isArray(a)) a = [];
@@ -9941,30 +9965,31 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // Coin eğrisi üçgensel (n coin ≈ 0.5·n·(n+1) m), bu yüzden her seviye için
   // SABİT fiyat alıyoruz: geç seviyeler "coin kazanmak zorlaştığı için" otomatik
   // pahalılaşıyor. CORE: her seviye 2 coin. Dizi uzunlukları = max seviye (korunur).
-  const DIR_PRICES = [25, 40, 60, 85];                                        // 4 seviye/yön — artan
-  const THICKNESS_PRICES = [
-    20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
-    20, 20, 20, 20, 20, 20, 20, 20, 20, 20,                                   // 20 seviye, her biri 20
-  ];
-  const PROFIT_PRICES   = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70];           // 10 lvl (skor çarpanı)
-  const WALLSOFT_PRICES = [30, 45, 60, 80, 100];                              // 5 lvl
-  const MAGRANGE_PRICES = [25, 30, 40, 50, 60, 70, 85, 100];                  // 8 lvl
+  // v25 fiyatlama (1 m = 1 coin ölçeği) — hedef: normal oyuncu (12 run/gün, bot ölçümüyle
+  // ~2.1 m/run → ~25 coin + görevler 8 = ~33 coin/gün) oynanış kataloğunu (CORE + ability +
+  // slot + extreme ≈ 36.100 coin) ~3 yılda bitirir. İlk seviyeler 1-2 günlük, geometrik
+  // dikleşir. Timer / Combo Timer / Max Combo en güçlü eksenler → diğerlerinin 2 katı ağırlık.
+  const DIR_PRICES = [3, 16, 85, 440];                                       // 4 seviye/yön — 544/yön
+  const THICKNESS_PRICES = Array(20).fill(2);
+  // Score Boost tüm skoru çarptığı için Max Combo ile birlikte en pahalı iki merdivenden biri.
+  const PROFIT_PRICES   = [3, 6, 14, 30, 60, 130, 280, 600, 1250, 2700]; // 10 lvl (skor çarpanı) — 5.073
+  const WALLSOFT_PRICES = [4, 16, 60, 240, 940];                           // 5 lvl — 1.260
+  const MAGRANGE_PRICES = [3, 8, 19, 45, 120, 300, 740, 1850];            // 8 lvl — +1mm/sv — 3.085
   // Geri sayım rakamı hem hayatta kalma süresini hem altın çarpanını (countdown/2)
-  // birlikte büyütüyor — CORE'un en pahalı kalemi (4 seviye toplam 72 coin).
-  const TIMER_PRICES    = [120, 180, 260, 360];                               // 4 lvl — geri sayım rakamı +1/sv
-  const COMBOWIN_PRICES = [70, 100, 140, 190];                                // 4 lvl — combo penceresi +0.5s/sv
-  // Combo tavanı CORE'un en güçlü SKOR ekseni: ×3 → ×12 arası zincir puanı 60 → 780
-  // (×13). Bu yüzden en uzun ve en pahalı merdiven — 9 seviye, toplam 2530 coin.
-  const COMBOMAX_PRICES = [60, 90, 130, 180, 240, 310, 400, 500, 620];        // 9 lvl — tavan +1/sv
+  // birlikte büyütüyor.
+  const TIMER_PRICES    = [15, 95, 580, 3550];                            // 4 lvl — geri sayım rakamı +1/sv — 4.240
+  const COMBOWIN_PRICES = [8, 60, 490, 3800];                             // 4 lvl — combo penceresi +0.5s/sv — 4.358
+  // Combo tavanı CORE'un en güçlü SKOR ekseni: ×3 → ×7 arası zincir puanı 60 → 280.
+  const COMBOMAX_PRICES = [7, 55, 460, 3700];                             // 4 lvl — tavan +1/sv (×3 → ×7) — 4.222
   function profitPrice(n)   { return (n < 1 || n > PROFIT_PRICES.length)   ? null : PROFIT_PRICES[n - 1]; }
   function wallSoftPrice(n) { return (n < 1 || n > WALLSOFT_PRICES.length) ? null : WALLSOFT_PRICES[n - 1]; }
   function magRangePrice(n) { return (n < 1 || n > MAGRANGE_PRICES.length) ? null : MAGRANGE_PRICES[n - 1]; }
   function timerPrice(n)    { return (n < 1 || n > TIMER_PRICES.length)    ? null : TIMER_PRICES[n - 1]; }
   function comboWinPrice(n) { return (n < 1 || n > COMBOWIN_PRICES.length) ? null : COMBOWIN_PRICES[n - 1]; }
   function comboMaxPrice(n) { return (n < 1 || n > COMBOMAX_PRICES.length) ? null : COMBOMAX_PRICES[n - 1]; }
-  const TRACE_COLOR_PRICE = 30;       // rebuyable cosmetic
-  const DEATH_NAME_PRICE  = 500;      // one-time unlock (canlı fiyat: NAME_PRICE)
-  const DEATH_AV_PRICE    = 500;      // one-time unlock (canlı fiyat: TOMB_PRICE)
+  const TRACE_COLOR_PRICE = 3;        // rebuyable cosmetic
+  const DEATH_NAME_PRICE  = 55;       // one-time unlock (canlı fiyat: NAME_PRICE)
+  const DEATH_AV_PRICE    = 55;       // one-time unlock (canlı fiyat: TOMB_PRICE)
   const TRACE_COLORS = [
     '#88bbff', '#ff5566', '#ffaa44', '#ffee55', '#66ff88',
     '#66eeff', '#aa66ff', '#ff77cc', '#ffffff', '#aaaaaa',
@@ -10045,7 +10070,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     if (key === 'profit')         return '+' + (upg.profit * 10) + '%';
     if (key === 'wallSoft')       return upg.wallSoft > 0 ? '+' + upg.wallSoft + 'px' : 'base';
     // Mıknatıs %'sel değil, seviye başına +22px menzil ekler (0 = kapalı)
-    if (key === 'magnetRange')    return upg.magnetRange > 0 ? '+' + (upg.magnetRange * 22) + 'px' : 'off';
+    if (key === 'magnetRange')    return upg.magnetRange > 0 ? '+' + upg.magnetRange + 'mm' : 'off';
     // Consumables: stock + ARMED durumu
     if (CONSUMABLE_CFG && CONSUMABLE_CFG[key]) {
       const inv = upg.inv?.[key] || {};
@@ -10073,7 +10098,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     speed:        'Controls how fast you fly. Faster = more distance, harder control. Slower = easier to steer.',
     timer:        'Raises the countdown on your ball. Starts at 8, each level = +1 — more time to live and a bigger gold multiplier.',
     comboWin:     'Extends the green combo window. Starts at 2s, each level = +0.5s.',
-    comboMax:     'Raises your combo ceiling. Starts at ×3, each level = +1 (up to ×12). A longer chain banks far more points — ×3 pays 60, ×12 pays 780.',
+    comboMax:     'Raises your combo ceiling. Starts at ×3, each level = +1 (up to ×7). A longer chain banks far more points — ×3 pays 60, ×7 pays 280.',
     wallSoft:     'Softens the side walls. Each level = +1px of brush-past room before you die.',
     magnetRange:  'Grows your pickup radius for greens, golds and purples. No touching needed — just get close.',
     traceColor:   'Choose the colour of the trail your ball leaves behind. Each new colour costs coins.',
@@ -10158,6 +10183,25 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   function coreLevel(key) {
     return CORE_BIDI(key) ? (upg[key + 'Active'] | 0) : (upg[key] | 0);  // bidi: işaretli
   }
+  function coreOwned(key) { return upg.coreOwned[key] | 0; }   // tek yönlü: satın alınmış tavan
+  // Kayıtlı seviyeler yalnızca arayüzde sınırlanıyordu; localStorage kurcalanınca
+  // (ör. comboMax: 1e5) combo tavanı kalkıp skor patlıyordu. Yüklemede katalog
+  // tavanına kırpılır. coreOwned eski kayıtlarda yok → aktif seviyeden türetilir.
+  (function clampCoreLevels() {
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v | 0));
+    for (const t of PASSIVE_TILES) {
+      const k = t.key, max = coreSideMax(k);
+      if (CORE_BIDI(k)) {
+        upg[k + 'Pos'] = clamp(upg[k + 'Pos'], 0, max);
+        upg[k + 'Neg'] = clamp(upg[k + 'Neg'], 0, max);
+        upg[k + 'Active'] = clamp(upg[k + 'Active'], -upg[k + 'Neg'], upg[k + 'Pos']);
+      } else {
+        upg[k] = clamp(upg[k], 0, max);
+        upg.coreOwned[k] = Math.max(upg[k], clamp(upg.coreOwned[k], 0, max));
+      }
+    }
+    try { saveUpg(); } catch(_){}
+  })();
   function coreApply() { saveUpg(); applyUpgradeSideEffects(); renderUpgrades(); }
   // Her stat KENDİ gerçek birimiyle konuşur — genel ×çarpan yalnızca gerçekten
   // çarpan olanlarda kullanılır (önceden hepsi ×1.0 gösteriyordu; Walls/Magnet
@@ -10168,13 +10212,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   //   comboWin      → combo penceresi saniyesi: 2.0s + 0.5s/sv
   //   comboMax      → combo zinciri tavanı: ×3 + 1/sv (çarpan değil, tavan sayısı)
   //   wallSoft      → duvar toleransı: 0px + 1px/sv
-  //   magnetRange   → ekstra toplama menzili: OFF, +22px/sv
+  //   magnetRange   → ekstra toplama menzili: OFF, +1mm/sv (oyun metriğiyle ~7px)
   function coreValueText(key, lvl) {
     if (key === 'timer')       return String(8 + lvl);
     if (key === 'comboWin')    return (2 + lvl * 0.5).toFixed(1) + 's';
     if (key === 'comboMax')    return '×' + (COMBO_CAP_BASE + lvl);
     if (key === 'wallSoft')    return lvl > 0 ? '+' + lvl + 'px' : '0px';
-    if (key === 'magnetRange') return lvl > 0 ? '+' + (lvl * 22) + 'px' : 'OFF';
+    if (key === 'magnetRange') return lvl > 0 ? '+' + lvl + 'mm' : 'OFF';
     return '×' + (1 + lvl * 0.1).toFixed(1);
   }
   function coreValueLabel(key) { return coreValueText(key, coreLevel(key)); }
@@ -10191,8 +10235,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
       plus  = (lvl < pos)  ? { mode: 'free' } : (pos < max ? { mode: 'buy', price: coreSidePrice(key, pos + 1) } : { mode: 'max' });
       minus = (lvl > -neg) ? { mode: 'free' } : (neg < max ? { mode: 'buy', price: coreSidePrice(key, neg + 1) } : { mode: 'max' });
     } else {
-      const max = coreSideMax(key);
-      plus  = (lvl < max) ? { mode: 'buy', price: coreSidePrice(key, lvl + 1) } : { mode: 'max' };
+      const max = coreSideMax(key), own = coreOwned(key);
+      plus  = (lvl < own) ? { mode: 'free' } : (lvl < max ? { mode: 'buy', price: coreSidePrice(key, lvl + 1) } : { mode: 'max' });
       minus = (lvl > 0)   ? { mode: 'free' } : { mode: 'empty' };
     }
     return { plus, minus };
@@ -10204,7 +10248,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     confirmPurchase(coreNextLabel(key, +1), price, () => {
       if (!spendCoins(price)) return;
       if (CORE_BIDI(key)) { upg[key + 'Pos'] = (upg[key + 'Pos'] | 0) + 1; upg[key + 'Active'] = coreLevel(key) + 1; }
-      else upg[key] = coreLevel(key) + 1;
+      else { upg[key] = coreLevel(key) + 1; upg.coreOwned[key] = Math.max(coreOwned(key), upg[key]); }
       coreApply();
     });
   }
@@ -10372,11 +10416,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
     const desc = ABILITY_DESC[key] || '';
     if (!inv.owned) {
-      const card = gearCardShell(meta, LOCK_SVG, gearBuyBtn('unlock', cfg.unlock, 'UNLOCK'), { desc, lockedVal: true });
+      const price = abilityUnlockPrice();
+      const card = gearCardShell(meta, LOCK_SVG, gearBuyBtn('unlock', price, 'UNLOCK'), { desc, lockedVal: true });
       gearWire(card, 'unlock', () => {
         if (slotsOwned === 0) { try { showToast('You need to buy a gear slot first'); } catch(_){} return; }
-        confirmPurchase(meta.title, cfg.unlock, () => {
-          if (slotsOwned === 0 || !spendCoins(cfg.unlock)) return;
+        confirmPurchase(meta.title, price, () => {
+          if (slotsOwned === 0 || !spendCoins(price)) return;
           inv.owned = true; saveUpg(); renderUpgrades();
         });
       });
@@ -10391,15 +10436,18 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     const durLvl = inv.durLvl || 0, max = cfg.durPrices.length;
     const val = secStr(abilityDuration(key));
     const minus = durLvl > 0 ? { mode: 'free' } : { mode: 'empty' };
-    const plus  = durLvl < max ? { mode: 'buy', price: cfg.durPrices[durLvl] } : { mode: 'max' };
+    const plus  = durLvl < (inv.durOwn | 0) ? { mode: 'free' }
+                : durLvl < max ? { mode: 'buy', price: cfg.durPrices[durLvl] } : { mode: 'max' };
     const buttons = coreMkBtn(minus, '−', 'minus') + coreMkBtn(plus, '+', 'plus');
     const card = gearCardShell(meta, val, buttons, { desc, eq });
     gearWire(card, 'minus-free', () => { inv.durLvl = Math.max(0, (inv.durLvl || 0) - 1); saveUpg(); renderUpgrades(); });
+    gearWire(card, 'plus-free',  () => { inv.durLvl = Math.min(inv.durOwn | 0, (inv.durLvl || 0) + 1); saveUpg(); renderUpgrades(); });
     gearWire(card, 'plus-buy', () => {
       const p = cfg.durPrices[inv.durLvl || 0];
       const nextDur = cfg.durBase + ((inv.durLvl || 0) + 1) * cfg.durStep;
       confirmPurchase(meta.title + ' ' + secStr(nextDur), p, () => {
-        if (!spendCoins(p)) return; inv.durLvl = (inv.durLvl || 0) + 1; saveUpg(); renderUpgrades();
+        if (!spendCoins(p)) return; inv.durLvl = (inv.durLvl || 0) + 1;
+        inv.durOwn = Math.max(inv.durOwn | 0, inv.durLvl); saveUpg(); renderUpgrades();
       });
     });
     return card;
@@ -10592,7 +10640,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     if (key === 'traceThickness') return fwdCard('traceThickness', '', '', 20, thicknessPrice, v => `+${v * 10}%`);
     if (key === 'profit')         return fwdCard('profit', '', '', 10, profitPrice, v => v > 0 ? `+${v * 10}% coin` : 'base');
     if (key === 'wallSoft')       return fwdCard('wallSoft', '', '', 5,  wallSoftPrice, v => v > 0 ? `+${v}px` : '0px');
-    if (key === 'magnetRange')    return fwdCard('magnetRange', '', '', 8, magRangePrice, v => v > 0 ? `+${v * 22}px` : 'OFF');
+    if (key === 'magnetRange')    return fwdCard('magnetRange', '', '', 8, magRangePrice, v => v > 0 ? `+${v}mm` : 'OFF');
     if (key === 'traceColor')     return colorCard();
     if (key === 'deathName')      return toggleCard('deathName', DEATH_NAME_PRICE, CORE_DESC.deathName);
     if (key === 'deathAvatar')    return toggleCard('deathAvatar', DEATH_AV_PRICE, CORE_DESC.deathAvatar);
@@ -10606,33 +10654,41 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   // ayarlandı (ortalama run ≈ 11-30 coin). KURAL: gelir çarpan eşyası (doubler,
   // coinrain) ortalama getirisinden UCUZ olmalı — aksi halde tuzak olur.
   const CONSUMABLE_CFG = {
-    revive:    { price: 60, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
-    doubler:   { price: 12, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
-    headstart: { price: 30, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
-    coinrain:  { price: 25, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls — and every gold ball pays a coin.' },
-    preboost:  { price: 25, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
-    filter:    { price: 45, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
+    revive:    { price: 7, max: 5, autoArm: true,  desc: 'Die and you auto-continue from your last safe spot. No arming needed — it just works.' },
+    doubler:   { price: 2, max: 5, autoArm: false, desc: 'Arm before a run: double coins for the whole run.' },
+    headstart: { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: first 5 seconds play at half speed — an easy start.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: twice as many gold balls — and every gold ball pays a coin.' },
+    preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm before a run: start with a random booster already active.' },
+    filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm before a run: only Ghost and Speed boosters spawn that run.' },
   };
   const ABILITY_CFG = {
     // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
     // Anlık (noDur) yetenekler: yükseltme yok, açıldı→hazır.
     // Süre merdiveni 10 → 4 SEVİYE: 30 adet +0.5s'lik adım okunmuyordu ve
     // kataloğun %35'ini tek başına yutuyordu. Adım büyütüldü (+1.0s/sv).
-    timeslow:   { unlock: 250, durBase: 2, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 2→6s
-    phaseburst: { unlock: 250, durBase: 1, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 1→5s
-    coinpull:   { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
-    brake:      { unlock: 250, durBase: 2, durStep: 1, cdBase: 20, durPrices: [60,90,130,180] },  // 2→6s
-    mirror:     { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
-    shock:      { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
-    anchor:     { unlock: 250, durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    // Açma fiyatı yeteneğe değil KAÇINCI açılış olduğuna bağlı: ABILITY_UNLOCK_PRICES.
+    timeslow:   { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
+    phaseburst: { durBase: 1, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 1→5s
+    coinpull:   { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    brake:      { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
+    mirror:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    shock:      { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    anchor:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
   };
-  // Merdiven 10→4'e indiği için eski kayıtlardaki durLvl tavanı aşabilir.
-  // Süre kaybı yaşamasınlar diye kırpma yukarı doğru değil, sadece tavana.
+  // Yetenek açma — n'inci açılış bu fiyattan (ilk yetenek ucuz, yedincisi pahalı). 3.850 toplam.
+  const ABILITY_UNLOCK_PRICES = [30, 60, 120, 240, 480, 970, 1950];
+  function abilityUnlockPrice() {
+    const owned = Object.keys(ABILITY_CFG).filter(k => upg.inv[k] && upg.inv[k].owned).length;
+    return ABILITY_UNLOCK_PRICES[Math.min(owned, ABILITY_UNLOCK_PRICES.length - 1)];
+  }
+  // durLvl aktif süre seviyesi, durOwn satın alınmış tavan (− ile inip + ile ücretsiz
+  // geri çıkılır — CORE'daki coreOwned ile aynı model). İkisi de merdiven tavanına kırpılır.
   (function clampAbilityLadders() {
     for (const k in ABILITY_CFG) {
       const inv = upg.inv && upg.inv[k]; if (!inv) continue;
       const max = ABILITY_CFG[k].durPrices.length;
-      if ((inv.durLvl || 0) > max) { inv.durLvl = max; }
+      inv.durLvl = Math.max(0, Math.min(max, inv.durLvl | 0));
+      inv.durOwn = Math.max(inv.durLvl, Math.min(max, inv.durOwn | 0));
     }
     try { saveUpg(); } catch(_){}
   })();
@@ -10691,18 +10747,18 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     const card = document.createElement('div');
     card.className = 'upg-card';
     if (!inv.owned) {
-      const can = coins >= cfg.unlock;
+      const can = coins >= abilityUnlockPrice();
       card.innerHTML = `
         <div class="upg-card-sub" style="text-align:center;padding:6px 8px 10px">${ABILITY_DESC[key] || ''}</div>
         <div style="display:flex;justify-content:center;padding:6px 4px">
           <button class="upg-buy" id="ab-unlock" ${can?'':'disabled'}>
-            Unlock <span class="upg-coin">${iconHTML('coin', { size: 14 })}${cfg.unlock}</span>
+            Unlock <span class="upg-coin">${iconHTML('coin', { size: 14 })}${abilityUnlockPrice()}</span>
           </button>
         </div>
       `;
       card.querySelector('#ab-unlock').addEventListener('click', () => {
         if (slotsOwned === 0) { showToast('You need to buy a gear slot first'); return; }
-        if (!can) return; if (!spendCoins(cfg.unlock)) return;
+        if (!can) return; if (!spendCoins(abilityUnlockPrice())) return;
         inv.owned = true; saveUpg(); renderUpgrades();
       });
       return card;
@@ -11119,9 +11175,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
       desc: t => `Travel ${_fmtKm(t)} in total` },
     // Zincir artık comboCap() ile tavanlı (×3 taban → ×12 tam yükseltmede). Eski
     // eşikler [5,9,15,25,50] tavanın üstündeydi — son üçü ERİŞİLEMEZDİ. Yeni eşikler
-    // tavan merdiveninin içinde: ×12 ancak comboMax tam alınmışsa mümkün.
+    // tavan merdiveninin içinde: ×7 ancak comboMax tam alınmışsa mümkün.
     { id: 'combo',    name: 'COMBO',     icon: 'fire',
-      stat: () => stats.maxCombo || 0,          tiers: [3, 5, 7, 9, 12],
+      stat: () => stats.maxCombo || 0,          tiers: [3, 4, 5, 6, 7],
       desc: t => `Hit a ×${t} combo` },
     { id: 'gold',     name: 'GOLD',      icon: 'coin',
       stat: () => stats.goldTotal || 0,         tiers: [10, 50, 250, 1000, 5000],
@@ -11615,8 +11671,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
   // Extreme: ya 50 coin direkt, ya 5m + 5000 puan + 5 coin (indirim).
   // İlk satın alma sonrası unlock kalıcı.
-  const EX_DIRECT_PRICE   = 400;
-  const EX_DISCOUNT_PRICE = 50;
+  const EX_DIRECT_PRICE   = 45;
+  const EX_DISCOUNT_PRICE = 6;
   const EX_DIST_REQ_CM    = 500;   // 5.00 m
   const EX_SCORE_REQ      = 5000;
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
@@ -11907,9 +11963,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   const QUESTS_KEY = 'arc_quests_v1';
   // Ödül ölçeği (v23). Questler artık gelirin TAMAMI değil, run kazancının
   // yanında anlamlı bir ek: günde 3×15 + 25 bonus + 15 login = 85.
-  const QUEST_COIN     = 15;   // görev başına
-  const QUEST_ALL_COIN = 25;   // üçünü de tamamlama bonusu
-  const LOGIN_COIN     = 15;   // günlük giriş
+  const QUEST_COIN     = 2;    // görev başına
+  const QUEST_ALL_COIN = 1;    // üçünü de tamamlama bonusu
+  const LOGIN_COIN     = 1;    // günlük giriş
   // Performans temelli görevler — "start'a bas" tipi yok. Her biri +1 coin.
   // base = seri günü 1'deki hedef; hedefler seri günüyle (1→365) kademeli artar.
   //
@@ -11963,7 +12019,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
     ];
     const quests = axes.map(pool => {
       const def = pool[Math.floor(rng() * pool.length)];
-      const target = scaleTarget(def, s);
+      // Combo zinciri comboCap()'te kırılır → hedef tavanı aşarsa görev imkânsızdır.
+      const target = def.metric === 'combo' ? Math.min(scaleTarget(def, s), comboCap()) : scaleTarget(def, s);
       // goodRuns'ın mesafe eşiği de günle birlikte büyür (eskiden sabitti)
       const param = def.param ? Math.max(def.param, Math.round(def.param * s / 50) * 50) : 0;
       return { metric: def.metric, target, param, reward: def.reward, label: def.mk(target, param), progress: 0, claimed: false };
@@ -12100,7 +12157,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-1';
   document.getElementById('friends-share-btn').addEventListener('click', () => shareChallenge());
 
   // ── Referral (davet) ödülü: kişiye özel link, tıklama başına davet edene 5 coin ──
-  const REFERRAL_COIN = 100;
+  const REFERRAL_COIN = 10;
   function inviteLink() {
     const base = (location.origin && location.origin !== 'null')
       ? location.origin + location.pathname
