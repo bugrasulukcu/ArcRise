@@ -5396,7 +5396,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const local = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('arc_') && k !== 'arc_reset_v') local.push(k);
+      // arc_debug korunur: ?debug ile açılan bayrak aynı yüklemede silinmesin (telefonda test)
+      if (k && k.startsWith('arc_') && k !== 'arc_reset_v' && k !== 'arc_debug') local.push(k);
     }
     local.forEach(k => localStorage.removeItem(k));
     // Same for sessionStorage (Firestore read cache, etc.)
@@ -9598,13 +9599,13 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     try { applyProfile(); } catch(_){}
     console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥1500cm');
   }
-  // Telefonda dev coin'i: debug modunda Coins penceresindeki sayıya 1.5 sn içinde 5 dokunuş → +900 coin.
+  // Telefonda dev coin'i: debug modunda Coins penceresindeki sayıya 2.5 sn içinde 5 dokunuş → +900 coin.
   // (Yalnız coin — RR'deki gibi rekorları şişirmez; o rekorlar oyuncu listesine gidiyor.)
   let _devTaps = [];
   function devCoinTap() {
     if (!window.ARC_DEBUG) return false;
     const now = performance.now();
-    _devTaps = _devTaps.filter(t => now - t < 1500); _devTaps.push(now);
+    _devTaps = _devTaps.filter(t => now - t < 2500); _devTaps.push(now);
     if (_devTaps.length < 5) return false;
     _devTaps = [];
     coinsEarned += 900; syncCoins();
@@ -11734,7 +11735,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   // Coins popup
   const coinsModal = document.getElementById('coins-modal');
-  document.getElementById('coins-modal-count').addEventListener('click', () => {
+  // pointerdown: iOS'ta çift-dokunma zoom engeli (touchend preventDefault, ≤350ms) hızlı
+  // dokunuşların click'ini yutuyor → sayaç click'e bağlıyken telefonda hiç tetiklenmiyordu.
+  document.getElementById('coins-modal-count').addEventListener('pointerdown', () => {
     if (devCoinTap()) document.getElementById('coins-modal-count').textContent = String(coins);
   });
   document.getElementById('home-coin-pill').addEventListener('click', e => {
