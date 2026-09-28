@@ -282,6 +282,29 @@
       user-select: none;
     }
     .rb-inner:active { transform: scale(0.97); }
+    /* START / AGAIN — dönen gökkuşağı çerçevenin arkasında bulanık hale + camsı iç + parıltı süpürmesi */
+    .rb-wrap { position: relative; isolation: isolate; transition: transform .12s; }
+    .rb-wrap:active { transform: scale(.97); }
+    .rb-wrap::before {
+      content: ''; position: absolute; inset: -5px; border-radius: 22px; z-index: -1;
+      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      filter: blur(14px); opacity: .5; animation: spinA 3s linear infinite, rbHalo 2.6s ease-in-out infinite;
+    }
+    @keyframes rbHalo { 50% { opacity: .85; transform: scale(1.03); } }
+    .rb-inner {
+      position: relative; overflow: hidden;
+      background: radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.11), transparent 62%), linear-gradient(180deg, #171b2a, #090b13) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -10px 20px rgba(0,0,0,.35);
+      text-shadow: 0 0 18px rgba(255,255,255,.35);
+    }
+    .rb-inner::after {
+      content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; pointer-events: none;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg);
+      animation: rbSheen 3.4s ease-in-out infinite;
+    }
+    @keyframes rbSheen { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+    .start-play { width: .72em; height: .72em; margin-right: .32em; vertical-align: -.06em; filter: drop-shadow(0 0 6px rgba(255,255,255,.6)); }
+    html.theme-gameboy .rb-wrap::before, html.theme-gameboy .rb-inner::after { display: none; }
     /* Start + Again — bold, +50% over original, uppercase */
     #btn-start, #btn-again {
       font-size: 30px; font-weight: 700; letter-spacing: 4px;
@@ -488,12 +511,22 @@
     .lb-best-score { font-size: 15.5px; letter-spacing: 1.6px; color: var(--green); }
     .lb-best-empty { font-size: 11.5px; color: rgba(255,255,255,.3); letter-spacing: 1.2px; }
     /* Themed record cards */
-    .lb-best-card.card-alltime  { border-color: rgba(255,210,80,.35); background: rgba(255,210,80,.06); }
-    .lb-best-card.card-alltime  .lb-best-lbl { color: #ffd866; }
-    .lb-best-card.card-today    { border-color: rgba(124,255,122,.35); background: rgba(124,255,122,.06); }
-    .lb-best-card.card-today    .lb-best-lbl { color: #7CFF7A; }
-    .lb-best-card.card-month    { border-color: rgba(170,120,255,.40); background: rgba(170,120,255,.07); }
-    .lb-best-card.card-month    .lb-best-lbl { color: #c099ff; }
+    /* Rekor kartları: tek aile (altın = sıralama rengi). Kare değil → boşluk yok; ikonlu etiket. */
+    .lb-best-card {
+      aspect-ratio: auto; justify-content: flex-start; gap: 7px; padding: 12px 6px 11px; border-radius: 14px;
+      border-color: rgba(255,210,80,.28);
+      background: radial-gradient(120% 80% at 50% 0%, rgba(255,210,80,.14), transparent 65%), rgba(14,11,5,.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .lb-best-card.card-alltime { border-color: rgba(255,210,80,.55); box-shadow: 0 0 16px rgba(255,190,40,.18), inset 0 1px 0 rgba(255,255,255,.08); }
+    .lb-best-lbl { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; letter-spacing: 1.8px; color: #ffd866; }
+    .lb-best-lbl svg { width: 12px; height: 12px; flex: 0 0 auto; filter: drop-shadow(0 0 4px rgba(255,200,60,.7)); }
+    .lb-best-card.card-today .lb-best-lbl, .lb-best-card.card-month .lb-best-lbl { color: #f3d9a0; }
+    .lb-best-score { color: #ffd866 !important; font-size: 14px; }
+    .lb-best-card.empty .lb-best-name { color: rgba(255,255,255,.32); font-size: 10.5px; letter-spacing: 1.4px; }
+    .lb-best-card.empty .lb-best-score { display: none; }
+    .lb-list-row { border: 1px solid rgba(255,255,255,.05); }
+    .lb-row-rank { font-variant-numeric: tabular-nums; color: rgba(255,216,102,.75); opacity: 1; }
 
     #lb-list {
       display: flex; flex-direction: column; gap: 4px;
@@ -3296,8 +3329,27 @@
       font-size: 15.5px; will-change: transform, opacity;
       z-index: 2;
     }
-    .ice-deco { color: #aaddff; text-shadow: 0 0 6px rgba(140,200,255,.9); }
-    .flame-deco { font-size: 18px; text-shadow: 0 0 8px rgba(255,180,40,.9); }
+    .ice-deco { color: #aaddff; text-shadow: 0 0 6px rgba(140,200,255,.9); filter: drop-shadow(0 0 5px rgba(140,200,255,.9)); }
+    .mode-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .mode-ic { width: 14px; height: 14px; flex: 0 0 auto; opacity: .75; transition: opacity .2s, transform .3s; }
+    .mode-btn.active-normal .mode-ic, .mode-btn.active-extreme .mode-ic { opacity: 1; transform: scale(1.12); filter: drop-shadow(0 0 5px currentColor); }
+    .mode-btn.active-normal .mode-ic { animation: icSpin 6s linear infinite; }
+    .mode-btn.active-extreme .mode-ic { animation: icFlick .9s ease-in-out infinite; transform-origin: 50% 90%; }
+    /* Mod ikonları ve buz/alev parçacıkları kendi rengini taşır — panelin glow degradesi (.gl svg) uygulanmaz */
+    html#arc :is(.mode-ic, .mode-deco) [fill="currentColor"], html#arc :is(.mode-ic, .mode-deco)[fill="currentColor"],
+    html#arc .mode-deco svg[fill="currentColor"] { fill: currentColor !important; }
+    html#arc :is(.mode-ic, .mode-deco) [stroke="currentColor"], html#arc .mode-deco svg[stroke="currentColor"] { stroke: currentColor !important; }
+    #mode-btn-normal .mode-ic { color: #9fdcff; }
+    #mode-btn-extreme .mode-ic { color: #ffe066; }
+    #mode-btn-extreme.active-extreme .mode-ic { color: #fff3b0; }
+    @keyframes icSpin { to { transform: scale(1.12) rotate(360deg); } }
+    @keyframes icFlick { 0%, 100% { transform: scale(1.12) skewX(0); } 30% { transform: scale(1.18, 1.06) skewX(-4deg); } 65% { transform: scale(1.08, 1.16) skewX(3deg); } }
+    /* Aktif mod göstergesi canlı: buz ışıltısı / alev nabzı */
+    .seg-ind.th-blue { background-size: 200% 100% !important; animation: iceShimmer 3s linear infinite; }
+    @keyframes iceShimmer { 50% { filter: brightness(1.18) saturate(1.1); } }
+    .seg-ind.th-orange { animation: fireGlow 1.1s ease-in-out infinite; }
+    @keyframes fireGlow { 50% { box-shadow: 0 0 22px rgba(255,120,40,.75), inset 0 1px 0 rgba(255,255,255,.3); filter: brightness(1.12); } }
+    .flame-deco { font-size: 18px; color: #ffb347; text-shadow: 0 0 8px rgba(255,180,40,.9); filter: drop-shadow(0 0 5px rgba(255,150,40,.9)); }
     @keyframes iceFloat {
       0%   { transform: translate(0, 0)    rotate(0deg);   opacity: 0; }
       15%  { opacity: .9; }
@@ -3511,6 +3563,11 @@
       padding-block: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-bottom, 0px));
     }
     #profile-setup > :first-child, #settings > :first-child, #gameover > :first-child { margin-top: auto; }
+    /* Settings'in alt düğmeleri (backup/restore/delete) ekranın dibine absolute sabitti → panel
+       aşağı kayınca (ortalama/küçük ekran) üstüne biniyordu. Artık her boyda akışta, panelin altında. */
+    #backup-outer, #reset-outer { position: static !important; transform: none !important; margin-top: 14px; }
+    #settings-appearance { margin-top: 12px; padding: 12px 20px !important; }
+    #settings-appearance::before { content: 'APPEARANCE'; display: block; font-size: 9px; letter-spacing: 2.5px; color: rgba(255,170,230,.7); margin-bottom: 8px; }
     #profile-setup > :last-child, #settings > :last-child, #gameover > :last-child { margin-bottom: auto; }
     @media (max-height: 700px) {
       #profile-setup .panel { padding: 18px 16px 16px; gap: 12px; }
@@ -3521,8 +3578,6 @@
       #av-grid { gap: 6px; width: min(100%, 250px); }
       #ps-name-input { padding: 10px 12px; }
       #ps-confirm { padding: 12px; font-size: 14px; }
-      /* Settings'in alt düğmeleri ekranın dibine sabitti → kısa ekranda panelin üstüne biniyordu */
-      #backup-outer, #reset-outer { position: static; transform: none; margin-top: 14px; }
     }
     @media (max-height: 540px) {
       /* SE 1 + Safari (~460px): avatar ızgarası 4 satır yerine yana kayan 2 satırlık şerit
@@ -3792,7 +3847,7 @@
   </div><!-- /home-logo-wrap -->
   <div class="menu" style="margin-top:14px">
     <div class="rb-wrap" id="wrap-start">
-      <div class="rb-inner" id="btn-start">START<span class="start-mode" id="start-mode"> · CHILL</span></div>
+      <div class="rb-inner" id="btn-start"><svg class="start-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>START<span class="start-mode" id="start-mode"> · CHILL</span></div>
     </div>
     <!-- Alt aksiyon satırı: High Scores (kupa) · Quests · Settings -->
     <div class="share-settings-row">
@@ -3860,8 +3915,8 @@
         <div id="mode-fx-wrap">
           <button id="mode-btn-wife" title="Wife Mode" aria-label="Wife Mode"></button>
           <div id="mode-sel">
-            <button class="mode-btn active-normal" id="mode-btn-normal">Chill</button>
-            <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
+            <button class="mode-btn active-normal" id="mode-btn-normal"><svg class="mode-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10M9.5 3.8 12 6.3l2.5-2.5M9.5 20.2 12 17.7l2.5 2.5M4.2 10.6l3.4 1-1 3.4M19.8 10.6l-3.4 1 1 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Chill</button>
+            <button class="mode-btn" id="mode-btn-extreme"><svg class="mode-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.5 3.6 6 6.9 6 10.9a6 6 0 0 1-12 0c0-2.2 1-4 2.4-5.4.1 1.8.9 3 2.2 3.6C10.1 8.6 10.7 5.2 12 2.5z" fill="currentColor"/></svg>Extreme</button>
           </div>
         </div>
       </div>
@@ -3918,12 +3973,14 @@
       </div>
     </div>
 
-    <!-- ── Theme ── -->
+
+  </div>
+  <!-- Görünüm: tema seçimi kendi çerçevesinde -->
+  <div class="panel gl gl-pink gl-glass" id="settings-appearance">
     <div class="srow">
       <span class="slbl">Theme</span>
       <div class="sctl"><button id="theme-open" class="gl gl-pink" type="button"><span id="theme-cur">DEFAULT</span></button></div>
     </div>
-
   </div>
   <!-- How to play — panel altında, boş alanda metin link -->
   <button class="home-link" id="settings-howto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg>HOW TO PLAY</button>
@@ -4330,17 +4387,17 @@
     </div>
     <div class="lb-bests-row">
       <div class="lb-best-card card-alltime">
-        <div class="lb-best-lbl">ALL-TIME</div>
+        <div class="lb-best-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-1.6-10-4.6 4L12 5l-2.8 7-4.6-4z" fill="currentColor"/></svg>ALL-TIME</div>
         <div class="lb-best-name" id="lb-best-name">—</div>
         <div class="lb-best-score" id="lb-best-score">000000</div>
       </div>
       <div class="lb-best-card card-today">
-        <div class="lb-best-lbl">TODAY</div>
+        <div class="lb-best-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>TODAY</div>
         <div class="lb-best-name" id="lb-daily-name">—</div>
         <div class="lb-best-score" id="lb-daily-score">—</div>
       </div>
       <div class="lb-best-card card-month">
-        <div class="lb-best-lbl">MONTH</div>
+        <div class="lb-best-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>MONTH</div>
         <div class="lb-best-name" id="lb-monthly-name">—</div>
         <div class="lb-best-score" id="lb-monthly-score">—</div>
       </div>
@@ -9370,8 +9427,19 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const active = c.querySelector(SEG_ACTIVE[kind]);
     if (!active || !c.offsetParent) { ind.style.opacity = '0'; return; }
     ind.style.opacity = '1';
-    ind.style.width = active.offsetWidth + 'px';
-    ind.style.transform = `translateX(${active.offsetLeft - c.clientLeft}px)`;
+    // offsetWidth/Left tam sayıya yuvarlanıyor → son düğmede sağda 1px boşluk kalıyordu.
+    // Kesirli ölçü (rect) + açılış animasyonundaki scale'e göre düzeltme; son düğme iç kenara kadar uzar.
+    const cr = c.getBoundingClientRect(), ar = active.getBoundingClientRect();
+    const k = cr.width / (c.offsetWidth || cr.width || 1);
+    const left = (ar.left - cr.left) / k - c.clientLeft;
+    let width = ar.width / k;
+    const btns = [...c.children].filter(el => el !== ind && el.tagName === 'BUTTON');
+    if (active === btns[btns.length - 1]) {
+      const padR = parseFloat(getComputedStyle(c).paddingRight) || 0;
+      width = c.clientWidth - padR - left;
+    }
+    ind.style.width = width + 'px';
+    ind.style.transform = `translateX(${left}px)`;
     const cls = 'seg-ind ' + _segTheme(kind, active);
     if (ind.className !== cls) ind.className = cls;
   }
@@ -9857,10 +9925,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     return pad(Math.round(v || 0));
   }
   function renderLbCard(prefix, entry, fallback) {
-    document.getElementById('lb-' + prefix + '-name').textContent =
-      entry ? entry.name : (fallback || '—');
-    document.getElementById('lb-' + prefix + '-score').textContent =
-      entry ? fmtMetric(entry.score) : '—';
+    const nameEl = document.getElementById('lb-' + prefix + '-name');
+    nameEl.textContent = entry ? entry.name : (fallback || 'NO RECORD');
+    document.getElementById('lb-' + prefix + '-score').textContent = entry ? fmtMetric(entry.score) : '';
+    nameEl.closest('.lb-best-card')?.classList.toggle('empty', !entry);   // boşken tek sönük satır
   }
 
   // İsim yanında küçük badge ikonları (en fazla 2) — leaderboard satırları için
@@ -12320,7 +12388,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   const FLAME_GLYPHS  = ['fire', 'sparkle'];
   let modeDecoTimer = 0;
   function tickModeDeco(dt) {
-    if (scene !== 'home') return;
+    // Mod seçici Settings ekranında → efektler orada üretilmeli (eskiden yalnız 'home'da
+    // çalışıyordu, seçici görünmediği için hiç görünmüyordu).
+    if (scene !== 'settings') return;
     modeDecoTimer += dt;
     if (modeDecoTimer < 0.18) return;
     modeDecoTimer = 0;

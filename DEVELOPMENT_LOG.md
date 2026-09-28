@@ -396,6 +396,25 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yetenek/eşya revizyonu + UI: START, mod efektleri, High Scores, Settings (2026-09-28)
+
+**Oynanış**
+- **Shockwave:** anlık 200px yarıçap yerine **genişleyen şok dalgası** (`shockWaves`, 820 px/s, 260px'e kadar); halkanın değdiği her engel patlar. Canvas'ta altın halka (`drawShockWaves`).
+- **Ghost (Phase Burst / booster):** engelden geçer ama **oyun alanından çıkamaz** — duvardan seker. Phase Burst bitince aktif Ghost booster'ını artık kapatmıyor.
+- **Brake:** `player.speed`'i ezmek yerine açısal hıza ×0.5 çarpan (`brakeT`) → Extreme'de de çalışıyor (orada hız her karede yeniden hesaplandığı için etkisizdi).
+- **Mirror Flip kaldırıldı** (kullanımı zordu): 6 yetenek, açma merdiveni 6 fiyat (toplam 1.900), BOSS rozeti "6 yetenek", slotta kalan mirror yüklemede boşaltılır.
+- **Head Start → Shield** (4 coin): run boyunca **ilk çarpışmayı affeder** — engel parçalanır ya da duvardan seker; topun etrafında mavi balon, kırılınca mavi halka. Eski Head Start stoğu Shield'a devredilir. (Head Start'ın ölçülür bir faydası yoktu; oyunun başında zaten az engel var.)
+
+**Info / animasyonlar:** GOT IT → **BACK**; Speed: yan yana yavaş/normal/hızlı; Max Combo: puan rakamları yerine "×7'ye kadar puan"; Time Slow: engeller normal → belirgin yavaş → normal (mavi ton); Brake: yol üstünde yavaşlama; Shockwave: büyüyen halka, engel değdiği anda patlar; Shield sahnesi.
+
+**UI**
+- **START / AGAIN:** dönen gökkuşağı çerçevenin arkasında nefes alan bulanık hale, camsı iç, parıltı süpürmesi, oynat ikonu.
+- **Mod efektleri hiç görünmüyordu:** `tickModeDeco` yalnız `home` sahnesinde çalışıyordu ama mod seçici Settings'te → düzeltildi. Mod düğmelerine ikon (dönen kar tanesi / titreyen alev), aktif göstergeye buz ışıltısı / alev nabzı. İkonlar ve parçacıklar panelin glow degradesinden muaf (lila görünüyordu).
+- **Settings'te Extreme'in sağında 1px boşluk:** segment göstergesi tam sayı `offsetWidth` ile ölçülüyordu → kesirli rect (+açılış scale düzeltmesi), son düğme iç kenara uzar. Ölçüm: 0px.
+- **Settings çakışması (benim küçük ekran düzeltmemin yan etkisi):** panel `margin-top:auto` ile dibe iniyordu, Backup/Restore/Delete hâlâ `absolute` dipteydi → uzun ekranda bile üst üste biniyordu. Artık her boyda akışta.
+- **Theme** kendi çerçevesinde ("APPEARANCE").
+- **High Scores:** ALL-TIME/TODAY/MONTH kartları tek altın ailesi (sıralama rengi), ikonlu (taç/güneş/takvim), kare değil; boşken iki "—" yerine tek sönük "NO RECORD". Sıra numaraları altın.
+
 ### Game Boy teması: filtre → gerçek LCD stili; Coins'te "next coin" (2026-09-28)
 
 - **Game Boy "düğmeye basınca patlıyordu" (iOS):** menü katmanlarına uygulanan SVG filtresi (`#fx-gb-ui`) Safari'de yazılımla hesaplanıyor; basınca `transform` tüm filtre alanını yeniden çizdiriyordu. Profil ekranı da tam boyanmıyordu. Artık arayüz 4 tonlu LCD paleti doğrudan CSS (`--gb0..3`): düz yüzeyler, gölge/parlama/blur yok, seçili/onay öğeleri "ters" (açık zemin, koyu yazı), basınca küçülme yerine zemin değişir. Filtre yalnız küçük görsellerde (img, satır içi svg, avatar). Üstte **nokta matrisi LCD ızgarası** (`body::after`, 3px) — CRT'nin tarama çizgisinden farklı. Canvas zaten `THEME_STYLE` ile çizim anında boyanıyor.
