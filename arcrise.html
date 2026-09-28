@@ -28,8 +28,13 @@
     }
 
     // ── Debug flag ── ?debug URL paramı veya arc_debug=1 ile açılır.
+    // ?debug bir kez açılınca kalıcı olur (telefonda test için); ?debug=0 kapatır.
     // Kapalıyken console.log susturulur (warn/error her zaman açık kalır).
-    window.ARC_DEBUG = /[?&]debug/.test(location.search) ||
+    try {
+      if (/[?&]debug=0\b/.test(location.search)) localStorage.removeItem('arc_debug');
+      else if (/[?&]debug/.test(location.search)) localStorage.setItem('arc_debug', '1');
+    } catch (_) {}
+    window.ARC_DEBUG = (/[?&]debug/.test(location.search) && !/[?&]debug=0\b/.test(location.search)) ||
       (() => { try { return localStorage.getItem('arc_debug') === '1'; } catch (_) { return false; } })();
     if (!window.ARC_DEBUG) console.log = function () {};
 
@@ -9560,6 +9565,20 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     try { applyProfile(); } catch(_){}
     console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥1500cm');
   }
+  // Telefonda dev coin'i: debug modunda Coins penceresindeki sayıya 1.5 sn içinde 5 dokunuş → +900 coin.
+  // (Yalnız coin — RR'deki gibi rekorları şişirmez; o rekorlar oyuncu listesine gidiyor.)
+  let _devTaps = [];
+  function devCoinTap() {
+    if (!window.ARC_DEBUG) return false;
+    const now = performance.now();
+    _devTaps = _devTaps.filter(t => now - t < 1500); _devTaps.push(now);
+    if (_devTaps.length < 5) return false;
+    _devTaps = [];
+    coinsEarned += 900; syncCoins();
+    try { applyProfile(); } catch(_){}
+    try { showToast('+900 COINS (DEV)'); } catch(_){}
+    return true;
+  }
   function toggleDebug(force) {
     debugOverlayOn = (force !== undefined) ? force : !debugOverlayOn;
     const el = document.getElementById('debug-overlay');
@@ -9575,7 +9594,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       if (now - lastTPress < 500) { toggleDebug(); lastTPress = 0; }
       else lastTPress = now;
     }
-    else if (e.key === 'r' || e.key === 'R') {
+    else if ((e.key === 'r' || e.key === 'R') && window.ARC_DEBUG) {   // dev hilesi: yalnız debug modunda
       const now = performance.now();
       if (now - lastRPress < 500) { devCheatBoost(); lastRPress = 0; }
       else lastRPress = now;
@@ -11682,6 +11701,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   // Coins popup
   const coinsModal = document.getElementById('coins-modal');
+  document.getElementById('coins-modal-count').addEventListener('click', () => {
+    if (devCoinTap()) document.getElementById('coins-modal-count').textContent = String(coins);
+  });
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
