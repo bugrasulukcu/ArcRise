@@ -396,6 +396,28 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Rozetler yeniden (eşik + madalyon), iz animasyonları, hesap silmede tema (2026-09-28)
+
+**Rozet eşikleri** bot ölçümüne göre (iyi oyuncu ort. 2.1 m/run, en iyi ~7 m, ~2.5 altın/gün); eskilerin çoğu ilk kademede bile erişilemezdi:
+
+| Aile | Eski (I→V) | Yeni (I→V) |
+|---|---|---|
+| SCORE | 1k / 5k / 20k / 75k / 250k | 500 / 2.000 / 6.000 / 15.000 / 40.000 |
+| DISTANCE | 10 / 25 / 50 / 100 / 250 m | 2 / 5 / 10 / 20 / 40 m |
+| TRAVELLER | 100 m / 500 m / 2.5 / 10 / 50 km | 50 m / 250 m / 1 / 3 / 10 km |
+| GOLD, COLLECTOR | 10 / 50 / 250 / 1.000 / 5.000 | 10 / 50 / 200 / 600 / 1.500 |
+| VETERAN | … / 5.000 | 10 / 50 / 250 / 1.000 / 3.000 |
+| EXTREME | … / 250 / 1.000 | 1 / 10 / 50 / 200 / 500 |
+| COMBO, STREAK, SOCIAL | — | değişmedi |
+
+Özel: SPEEDRUN 60 sn'de 10 m → **5 m**; SURVIVOR 10 m → **8 m**, artık Shield da "ikinci şans" sayılır (`_runShieldArmed`).
+
+**Madalyon ikonları** (`badgeHTML`, `BADGE_GLYPHS`): avatar stili — koyu disk, kademe renginde iç ışık + halka, üstten beyaza açılan parlayan glif (aileye özgü: kupa, bayrak, kuyruklu yıldız, zincir, coin yığını, mücevher, kalkan, alev, şimşek, kişiler, kronometre, ay, kalp, taç), altta kademe noktaları. Rozet ızgarası, takılı yuvalar, leaderboard ve "badge unlocked" bildirimi hepsi madalyon kullanıyor. `ICONS/README.md` notu + tablosu güncellendi.
+
+**İz animasyonları:** Pulse → **Glitter** (iz boyunca yanıp sönen 4 köşeli parıltılar, `drawGlitter`); Glow sabitti → **sinüsle nefes alır** (×1.1 ↔ ×3.0). Pulse sahipleri Glitter'a göçer. Menü önizlemesi düz bir çizgiydi (animasyon görünmüyordu) → seçili renk/kalınlık/animasyonla **canlı canvas önizleme** (menü açıkken rAF). Not: global `canvas{position:absolute;inset:0}` kuralı yüzünden önizleme kutusu `position:relative` olmalı.
+
+**Hesap silmede tema kalıyordu:** Game Boy / Noir'ın canvas paleti yalnız açılışta kurulur; sıfırlama sayfayı yenilemediği için oyun baştan başlıyor ama tema kalıyordu. Artık tema sınıfı hemen kalkar, canvas teması varsa sayfa yenilenir (→ profil oluşturma).
+
 ### Düşük efekt modu (iPhone düşük güç modunda kasma) (2026-09-28)
 
 iPhone düşük güç modu rAF'ı ~30 fps'e indirir ve CPU'yu kısar; yeni efektlerle kasıyordu.

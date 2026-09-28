@@ -1478,7 +1478,8 @@
     #privacy-body b { color: #fff; }
     /* Trace paneli */
     #trace-preview {
-      width: 100%; height: 44px; border-radius: 10px; background: rgba(0,0,0,.3);
+      position: relative; overflow: hidden;   /* canlı önizleme canvas'ı (global canvas{absolute}) buna sığsın */
+      width: 100%; height: 56px; border-radius: 10px; background: rgba(0,0,0,.3);
       border: 1px solid rgba(150,110,230,.25);
     }
     #trace-thick-row, #trace-anim-row { display: flex; gap: 6px; width: 100%; }
@@ -6241,7 +6242,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const n = Number(o.coins) || 0;
     host.classList.remove('hide');
     host.innerHTML = `<div class="rt-card gl gl-gold gl-glass">
-      <span class="rt-ic">${iconHTML(o.icon || 'coin', { size: 26 })}</span>
+      <span class="rt-ic">${o.badge ? badgeHTML(o.badge, 34) : iconHTML(o.icon || 'coin', { size: 26 })}</span>
       <span class="rt-txt">
         <span class="rt-title">${esc(o.title || 'REWARD')}</span>
         <span class="rt-sub">${esc(o.sub || '')}</span>
@@ -8004,13 +8005,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     const comboT = (scene === 'play') ? Math.max(0, Math.ceil(energy * comboDisplayMax())) / comboDisplayMax() : 0;
     const comboMulVis = 1 + comboT * 0.6;
     const thickMul  = (1 + ((upg && upg.traceThickness) || 0) * 0.10) * comboMulVis;
-    // ── Trace animasyonu (oyun-içi): wave / pulse / glow ──
+    // ── Trace animasyonu (oyun-içi): wave / glitter / glow ──
     const animType0 = (upg && upg.traceAnim) || 'none';
-    const animType  = (animType0 === 'rainbow') ? 'wave' : animType0;
-    const _hb = x => { x = ((x % 1) + 1) % 1; return Math.exp(-((x - 0.08) ** 2) / 0.004) + 0.65 * Math.exp(-((x - 0.27) ** 2) / 0.004); }; // kalp atışı
+    const animType  = animType0 === 'rainbow' ? 'wave' : animType0 === 'pulse' ? 'glitter' : animType0;
     let animBright = 1, glowBoost = 1;
-    if (animType === 'pulse') animBright = 0.5 + 0.8 * Math.min(1, _hb(time * 0.85));
-    else if (animType === 'glow') glowBoost = 1.9;
+    // Glow: ışıltı sinüs dalgasıyla nefes alır (×1.1 ↔ ×3.0, ~2.6 sn)
+    if (animType === 'glow') glowBoost = 1.1 + 1.9 * (0.5 + 0.5 * Math.sin(time * 2.4));
     // Dalga ekran konumuna sabitli (trail içinden geçer) → topu takip ediyor gibi durmaz
     const waveAt = sy => animType === 'wave' ? (0.32 + 0.68 * (0.5 + 0.5 * Math.sin(sy * 0.03 - time * 2.6))) : 1;
     // Segment rengi (alpha verilir). Custom → akan tek renk; gökkuşağı → gradient.
@@ -8044,7 +8044,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
       const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.16 + 0.12 * comboT) * mul * glowBoost;
-      const w  = (1 + t * 3.8) * thickMul * 1.9 * (animType === 'glow' ? 1.2 : 1);
+      const w  = (1 + t * 3.8) * thickMul * 1.9 * (animType === 'glow' ? 0.9 + 0.35 * glowBoost : 1);
       ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
       ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
@@ -8058,7 +8058,26 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
       ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
+    // 3) GLITTER — iz boyunca yanıp sönen parıltı yıldızcıkları (her 3. noktada, noktaya özgü faz)
+    if (animType === 'glitter') drawGlitter(ctx, trail.length, i => ({ x: trail[i].x, y: W2S(trail[i].y) }), time, thickMul);
     ctx.restore();
+  }
+  // Parıltı: nokta başına sabit faz (hash) + keskin sinüs tepesi → rastgele ama titremeyen pırıltı.
+  // Oyundaki iz ve menü önizlemesi aynı çizimi kullanır.
+  function drawGlitter(c, n, at, time, scale) {
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 2; i < n; i += 3) {
+      const h = Math.sin(i * 12.9898) * 43758.5453, ph = h - Math.floor(h);
+      const tw = Math.pow(Math.max(0, Math.sin(time * 5.5 + ph * 6.283)), 10);
+      if (tw < 0.05) continue;
+      const p = at(i), s = (2.2 + 3.2 * tw) * Math.min(1.8, 0.8 + scale * 0.3), a = tw * (0.4 + 0.6 * i / n);
+      c.fillStyle = `rgba(255,255,255,${a})`;
+      c.beginPath();                                   // 4 köşeli yıldız
+      c.moveTo(p.x, p.y - s * 2); c.quadraticCurveTo(p.x, p.y, p.x + s * 2, p.y);
+      c.quadraticCurveTo(p.x, p.y, p.x, p.y + s * 2); c.quadraticCurveTo(p.x, p.y, p.x - s * 2, p.y);
+      c.quadraticCurveTo(p.x, p.y, p.x, p.y - s * 2); c.fill();
+    }
+    c.globalCompositeOperation = 'source-over';
   }
   function hexToRgb(hex) {
     const m = /^#?([a-f\d]{6})$/i.exec(hex || '');
@@ -9067,8 +9086,9 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       }
       // Badge koşulları için run metrikleri
       const runTimeS = (performance.now() - _runStartTs) / 1000;
-      if (runDistCm >= 1000 && runTimeS <= 60 && !stats.speedrunDone) stats.speedrunDone = true;
-      if (runDistCm >= 1000 && !_runUsedRevive && !_adContinueUsed && !stats.survivorDone) stats.survivorDone = true;
+      if (runDistCm >= 500 && runTimeS <= 60 && !stats.speedrunDone) stats.speedrunDone = true;
+      // Survivor: hiçbir "ikinci şans" olmadan (revive / reklamla devam / Shield eşyası)
+      if (runDistCm >= 800 && !_runUsedRevive && !_adContinueUsed && !_runShieldArmed && !stats.survivorDone) stats.survivorDone = true;
       const hr = new Date().getHours();
       if (hr >= 0 && hr < 4 && !stats.nightOwlDone) stats.nightOwlDone = true;
       saveStats();
@@ -9556,10 +9576,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     try { updateQuestButton(); } catch(_){}
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
+    // Tema da sıfırlanır: CSS sınıfı hemen kalkar; canvas paleti (Game Boy / Noir) yalnız açılışta
+    // kurulduğu için o durumda sayfa yenilenir — yoksa oyun baştan başlıyor ama tema kalıyordu.
+    const hadCanvasTheme = !!_tStyle;
+    [...document.documentElement.classList].filter(c => c.startsWith('theme-')).forEach(c => document.documentElement.classList.remove(c));
+    try { const cur = document.getElementById('theme-cur'); if (cur) cur.textContent = 'DEFAULT'; } catch(_){}
     const done = document.getElementById('reset-confirm');
     done.style.display = 'block';
     setTimeout(() => {
       done.style.display = 'none';
+      if (hadCanvasTheme) { location.reload(); return; }   // açılışta arc_name yok → profil oluşturma
       showScene('profile-setup');
     }, 2000);
   }
@@ -9985,9 +10011,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     return String(str).split(',').slice(0, 2).map(id => {
       const b = findBadge(id.trim());
       if (!b) return '';
-      // Kademeli rozetlerde ikon, kademe rengini taşır (bronz→elmas)
-      const col = (b.tier > 0 && typeof TIER_COLORS !== 'undefined') ? TIER_COLORS[b.tier - 1] : undefined;
-      return `<span style="display:inline-block;vertical-align:middle;margin-left:4px;opacity:.85">${iconHTML(b.icon, { size: 11, color: col })}</span>`;
+      // Madalyon: kademe rengi + kademe noktaları (bronz→elmas)
+      return `<span style="display:inline-block;vertical-align:middle;margin-left:4px">${badgeHTML(b, 14)}</span>`;
     }).join('');
   }
 
@@ -10226,7 +10251,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // TRACE — kalınlık · renk/rainbow · animasyon. Hepsi UPGRADES gibi ÜCRETLİ (own-once).
   const TR_THICK_PRICE = 2, TR_ANIM_PRICE = 4, TRACE_SHOW_PRICE = 45, TOMB_PRICE = 55, NAME_PRICE = 55, CUSTOM_PRICE = 65;
   const TRACE_THICKS = [['S', 0], ['M', 6], ['L', 12], ['XL', 20]];
-  const TRACE_ANIMS  = [['none', 'OFF'], ['wave', 'WAVE'], ['pulse', 'PULSE'], ['glow', 'GLOW']];
+  const TRACE_ANIMS  = [['none', 'OFF'], ['wave', 'WAVE'], ['glitter', 'GLITTER'], ['glow', 'GLOW']];
   // Renk fiyatları: beyaz bedava · düz renk 3 · gradyen 10 · gökkuşağı 28 · custom 65
   const traceColorPrice = id =>
     id === '#ffffff' ? 0 : id === 'custom' ? CUSTOM_PRICE : id === 'rainbow' ? 28 : (id.indexOf('rb:') === 0 ? 10 : 3);
@@ -10251,19 +10276,65 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     if (id.charAt(0) === '#') return id;
     return (RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
   }
+  // ── Trace önizlemesi: menü açıkken rAF ile çizilir, kapanınca durur ──
+  let _tpvRaf = 0;
+  function startTracePreview() {
+    if (_tpvRaf) return;
+    const tick = ts => {
+      const cv = document.getElementById('trace-pv-cv'), modal = document.getElementById('trace-modal');
+      if (!cv || !modal || !modal.classList.contains('open')) { _tpvRaf = 0; return; }
+      drawTracePreview(cv, ts / 1000);
+      _tpvRaf = requestAnimationFrame(tick);
+    };
+    _tpvRaf = requestAnimationFrame(tick);
+  }
+  function drawTracePreview(cv, time) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), W0 = cv.clientWidth, H0 = cv.clientHeight;
+    if (!W0 || !H0) return;
+    if (cv.width !== Math.round(W0 * dpr)) { cv.width = Math.round(W0 * dpr); cv.height = Math.round(H0 * dpr); }
+    const c = cv.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W0, H0);
+    const N = 60, pts = [];
+    for (let i = 0; i < N; i++) { const u = i / (N - 1); pts.push({ x: 12 + u * (W0 - 24), y: H0 / 2 + Math.sin(u * 6.283 * 1.15 - 0.6) * (H0 * 0.28) }); }
+    const id = upg.traceColor || '#ffffff', anim = upg.traceAnim === 'pulse' ? 'glitter' : (upg.traceAnim || 'none');
+    const rgb = id.charAt(0) === '#' ? hexToRgb(id) : null;
+    const rb = (!rgb && id !== 'custom') ? (RB_HUE[id] || RB_HUE['rainbow']) : null;
+    const cust = id === 'custom' ? ((upg.customStops && upg.customStops.length ? upg.customStops : ['#ff3b3b', '#3bd1ff', '#c45bff']).filter(x => x !== 'transparent').map(hexToRgb)) : null;
+    const colAt = (i, al) => {
+      if (rgb) return `rgba(${rgb.r},${rgb.g},${rgb.b},${al})`;
+      if (cust && cust.length) { const q = cust[Math.floor(((time * 0.5 + i * 0.07) % cust.length + cust.length) % cust.length)]; return `rgba(${q.r},${q.g},${q.b},${al})`; }
+      return `hsla(${rb[0] + ((time * 80 + i * 3) % rb[1])},100%,65%,${al})`;
+    };
+    const thick = 1 + (upg.traceThickness | 0) * 0.1;
+    const glowBoost = anim === 'glow' ? 1.1 + 1.9 * (0.5 + 0.5 * Math.sin(time * 2.4)) : 1;
+    const waveAt = x => anim === 'wave' ? 0.32 + 0.68 * (0.5 + 0.5 * Math.sin(x * 0.06 - time * 2.6)) : 1;
+    c.lineCap = 'round';
+    for (const pass of [0, 1]) {                       // 0: ışıltı (lighter), 1: çekirdek
+      c.globalCompositeOperation = pass ? 'source-over' : 'lighter';
+      for (let i = 1; i < N; i++) {
+        const a = pts[i - 1], b = pts[i], t = i / (N - 1), m = waveAt(a.x);
+        c.strokeStyle = colAt(i, pass ? (0.35 + 0.65 * t) * m : (0.18 + 0.1 * t) * m * glowBoost);
+        c.lineWidth = pass ? (1.5 + t * 2.5) * thick : (1.5 + t * 2.5) * thick * 2.4 * (anim === 'glow' ? 0.9 + 0.35 * glowBoost : 1);
+        c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+      }
+    }
+    if (anim === 'glitter') drawGlitter(c, N, i => pts[i], time, thick);
+    c.globalCompositeOperation = 'source-over';
+  }
   function renderTrace() {
     // Eski 'rainbow' animasyonu → 'wave' (sahiplik + seçim göçü)
     let _mig = false;
     if (_has('traceAnimsOwned', 'rainbow') && !_has('traceAnimsOwned', 'wave')) { _own('traceAnimsOwned').push('wave'); _mig = true; }
     if (upg.traceAnim === 'rainbow') { upg.traceAnim = 'wave'; _mig = true; }
+    // Pulse → Glitter (sahiplik + seçim göçü)
+    if (_has('traceAnimsOwned', 'pulse') && !_has('traceAnimsOwned', 'glitter')) { _own('traceAnimsOwned').push('glitter'); _mig = true; }
+    if (upg.traceAnim === 'pulse') { upg.traceAnim = 'glitter'; _mig = true; }
     if (_mig) saveUpg();
     const cur = upg.traceColor || '#ffffff';
-    // Önizleme
+    // Önizleme: seçili renk + kalınlık + animasyonla canlı çizilen kıvrımlı iz (startTracePreview)
     const pv = document.getElementById('trace-preview');
-    const th = Math.max(3, 3 + (upg.traceThickness | 0));
-    const curCss = traceColorCss(cur);
-    const pvGlow = (upg.traceAnim === 'glow' || upg.traceAnim === 'wave') ? '0 0 14px rgba(255,255,255,.6)' : 'none';
-    if (pv) pv.innerHTML = `<div style="height:${th}px;border-radius:99px;margin:${(44 - th) / 2}px 14px;background:${curCss};background-repeat:no-repeat;box-shadow:${pvGlow}"></div>`;
+    if (pv && !pv.querySelector('canvas')) pv.innerHTML = '<canvas id="trace-pv-cv" style="width:100%;height:100%;display:block"></canvas>';
+    startTracePreview();
     // İzi diğer oyunculara göster — 50 coin ile aç, sonra aç/kapa
     const sr = document.getElementById('trace-show-row');
     if (sr) {
@@ -12103,35 +12174,36 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   const _fmtN = n => n.toLocaleString('en-US');
   const _fmtKm = cm => cm >= 100000 ? (cm / 100000) + 'km' : fmtDist(cm);
   const BADGE_FAMILIES = [
+    // Eşikler bot ölçümüne göre (iyi oyuncu: ort. 2.1 m/run, en iyi ~7 m; ~2.5 altın/gün).
+    // Eskiler çoğu ailede ilk kademede bile erişilemezdi (DISTANCE I = 10 m, GOLD V ≈ 5+ yıl).
+    // I–II ilk haftalarda, III–IV aylar içinde, V ancak ustalık/uzun oyunla.
     { id: 'score',    name: 'SCORE',     icon: 'medal',
-      stat: () => bestAny(),                    tiers: [1000, 5000, 20000, 75000, 250000],
+      stat: () => bestAny(),                    tiers: [500, 2000, 6000, 15000, 40000],
       desc: t => `Score ${_fmtN(t)}+ in one run` },
     { id: 'range',    name: 'DISTANCE',  icon: 'ruler',
-      stat: () => bestDistAny(),                tiers: [1000, 2500, 5000, 10000, 25000],
+      stat: () => bestDistAny(),                tiers: [200, 500, 1000, 2000, 4000],
       desc: t => `Reach ${fmtDist(t)} in one run` },
     { id: 'odometer', name: 'TRAVELLER', icon: 'rocket',
-      stat: () => stats.distLifetimeCm || 0,    tiers: [10000, 50000, 250000, 1000000, 5000000],
+      stat: () => stats.distLifetimeCm || 0,    tiers: [5000, 25000, 100000, 300000, 1000000],
       desc: t => `Travel ${_fmtKm(t)} in total` },
-    // Zincir artık comboCap() ile tavanlı (×3 taban → ×12 tam yükseltmede). Eski
-    // eşikler [5,9,15,25,50] tavanın üstündeydi — son üçü ERİŞİLEMEZDİ. Yeni eşikler
-    // tavan merdiveninin içinde: ×7 ancak comboMax tam alınmışsa mümkün.
+    // Zincir comboCap() ile tavanlı (×3 taban → ×7 tam yükseltmede).
     { id: 'combo',    name: 'COMBO',     icon: 'fire',
       stat: () => stats.maxCombo || 0,          tiers: [3, 4, 5, 6, 7],
       desc: t => `Hit a ×${t} combo` },
     { id: 'gold',     name: 'GOLD',      icon: 'coin',
-      stat: () => stats.goldTotal || 0,         tiers: [10, 50, 250, 1000, 5000],
+      stat: () => stats.goldTotal || 0,         tiers: [10, 50, 200, 600, 1500],
       desc: t => `Collect ${_fmtN(t)} gold balls (total)` },
     { id: 'boost',    name: 'COLLECTOR', icon: 'gem',
-      stat: () => stats.purpleTotal || 0,       tiers: [10, 50, 250, 1000, 5000],
+      stat: () => stats.purpleTotal || 0,       tiers: [10, 50, 200, 600, 1500],
       desc: t => `Collect ${_fmtN(t)} boosters (total)` },
     { id: 'veteran',  name: 'VETERAN',   icon: 'target',
-      stat: () => stats.gamesTotal || 0,        tiers: [10, 50, 250, 1000, 5000],
+      stat: () => stats.gamesTotal || 0,        tiers: [10, 50, 250, 1000, 3000],
       desc: t => `Play ${_fmtN(t)} runs` },
     { id: 'daily',    name: 'STREAK',    icon: 'runner',
       stat: () => stats.dayStreak || 0,         tiers: [3, 7, 14, 30, 100],
       desc: t => `Play ${t} days in a row` },
     { id: 'extreme',  name: 'EXTREME',   icon: 'bolt',
-      stat: () => stats.gamesExtreme || 0,      tiers: [1, 10, 50, 250, 1000],
+      stat: () => stats.gamesExtreme || 0,      tiers: [1, 10, 50, 200, 500],
       desc: t => `Play ${_fmtN(t)} Extreme run${t === 1 ? '' : 's'}` },
     { id: 'social',   name: 'SOCIAL',    icon: 'hearts',
       stat: () => { try { return acceptedFriends().length; } catch(_) { return 0; } },
@@ -12140,11 +12212,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   ];
   // Tek seferlik ÖZEL rozetler (kademesiz — beceri/an yakalama)
   const BADGE_SPECIALS = [
-    { id: 'speedrun',  icon: 'hourglass', name: 'SPEEDRUN',  desc: '10.00m in under 60 seconds',
+    { id: 'speedrun',  icon: 'hourglass', name: 'SPEEDRUN',  desc: '5.00m in under 60 seconds',
       cond: () => !!stats.speedrunDone },
     { id: 'night-owl', icon: 'owl',       name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
       cond: () => !!stats.nightOwlDone },
-    { id: 'survivor',  icon: 'shield',    name: 'SURVIVOR',  desc: '10.00m without revive or continue',
+    { id: 'survivor',  icon: 'shield',    name: 'SURVIVOR',  desc: '8.00m without revive, continue or shield',
       cond: () => !!stats.survivorDone },
     { id: 'boss',      icon: 'crown',     name: 'BOSS',      desc: 'Own all 6 abilities',
       cond: () => ['timeslow','phaseburst','coinpull','brake','shock','anchor']
@@ -12158,6 +12230,45 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     desc: f.desc(t), cond: () => f.stat() >= t,
   })));
   BADGE_SPECIALS.forEach(s => BADGES.push(Object.assign({ family: null, tier: 0 }, s)));
+
+  // ── Rozet madalyonları (avatar stili) ─────────────────────────
+  // Koyu disk + kademe renginde iç ışık ve halka + üstten beyaza açılan parlayan glif + altta
+  // kademe noktaları (I–V). Glifler 24×24; P = degrade boya, D = koyu detay çizgisi.
+  const BADGE_SPECIAL_COLORS = { speedrun: '#35e0ff', 'night-owl': '#9b8cff', survivor: '#ff5a8c', boss: '#ffcc33' };
+  const BADGE_GLYPHS = {
+    score:    (P, D) => `<path d="M7 3h10v4a5 5 0 0 1-10 0z" fill="${P}"/><path d="M17 4.5h2.4a2.6 2.6 0 0 1-2.6 4.2M7 4.5H4.6a2.6 2.6 0 0 0 2.6 4.2" fill="none" stroke="${P}" stroke-width="1.8" stroke-linecap="round"/><path d="M10.5 12.5h3v4h-3zM7.5 17h9v3.5h-9z" fill="${P}"/>`,
+    range:    (P, D) => `<path d="M6 21.5V2.5" stroke="${P}" stroke-width="2.2" stroke-linecap="round"/><path d="M7 3.5h12l-3 4 3 4H7z" fill="${P}"/><path d="M11 3.5v8M15 3.5v8" stroke="${D}" stroke-width="1.2" opacity=".5"/>`,
+    odometer: (P, D) => `<circle cx="15.5" cy="8.5" r="4.6" fill="${P}"/><path d="M12 12 3.5 20.5M9.5 9.2 4.5 14.2M14.8 14.5 9.8 19.5" stroke="${P}" stroke-width="2" stroke-linecap="round"/><circle cx="14.2" cy="7.2" r="1.4" fill="#fff" opacity=".8"/>`,
+    combo:    (P, D) => `<circle cx="5.5" cy="17.5" r="3" fill="${P}"/><circle cx="12" cy="12" r="3" fill="${P}"/><path d="M7.6 15.5l2.3-1.8M14 10l2.3-1.8" stroke="${P}" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2l1.3 3.4 3.5.3-2.7 2.3.9 3.5-3-2-3 2 .9-3.5-2.7-2.3 3.5-.3z" fill="${P}"/>`,
+    gold:     (P, D) => `<ellipse cx="12" cy="17.5" rx="7.5" ry="3" fill="${P}"/><ellipse cx="12" cy="13" rx="7.5" ry="3" fill="${P}" stroke="${D}" stroke-width="1" stroke-opacity=".5"/><ellipse cx="12" cy="8.5" rx="7.5" ry="3" fill="${P}" stroke="${D}" stroke-width="1" stroke-opacity=".5"/>`,
+    boost:    (P, D) => `<path d="M7 3.5h10l4.5 5.5L12 21 2.5 9z" fill="${P}"/><path d="M2.5 9h19M9 3.5 7.5 9 12 21M15 3.5 16.5 9 12 21" fill="none" stroke="${D}" stroke-width="1.1" stroke-opacity=".5" stroke-linejoin="round"/>`,
+    veteran:  (P, D) => `<path d="M12 2.5l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10v-6z" fill="${P}"/><path d="M8 10l4 3 4-3M8 14.5l4 3 4-3" fill="none" stroke="${D}" stroke-width="1.8" stroke-opacity=".55" stroke-linecap="round" stroke-linejoin="round"/>`,
+    daily:    (P, D) => `<path d="M12 2.5c3.8 3.6 6.5 7 6.5 11a6.5 6.5 0 0 1-13 0c0-2.4 1.1-4.4 2.6-5.8.1 1.9 1 3.2 2.4 3.9C10 8.6 10.6 5.3 12 2.5z" fill="${P}"/><path d="M12 21c-2 0-3.3-1.4-3.3-3.2 0-1.6 1-2.9 2.3-3.9-.1 1.8.6 2.8 1.8 3.3.9-1.1.9-2.3.5-3.5 1.6 1 2.4 2.5 2.2 4.2-.2 1.9-1.6 3.1-3.5 3.1z" fill="#fff" opacity=".75"/>`,
+    extreme:  (P, D) => `<path d="M14 2 4.5 13.5H11L9.5 22l10-12H13L15.5 2z" fill="${P}" stroke-linejoin="round"/>`,
+    social:   (P, D) => `<circle cx="8.5" cy="7.5" r="3.4" fill="${P}"/><circle cx="16" cy="9" r="2.8" fill="${P}" opacity=".85"/><path d="M2.5 20a6 6 0 0 1 12 0zM13.5 20a5.2 5.2 0 0 1 8.5-3.9V20z" fill="${P}"/>`,
+    speedrun: (P, D) => `<circle cx="13" cy="13.5" r="7.5" fill="${P}"/><path d="M11 2.5h4M13 2.5V5.5M19.4 6.4l1.4-1.4" stroke="${P}" stroke-width="2" stroke-linecap="round"/><path d="M13 13.5V9.5M13 13.5l3 1.8" stroke="${D}" stroke-width="1.8" stroke-opacity=".6" stroke-linecap="round"/><path d="M1.5 11h3M1 14.5h3.5M2 18h3" stroke="${P}" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>`,
+    'night-owl': (P, D) => `<path d="M15.5 3.5a8.5 8.5 0 1 0 5 13.9A7 7 0 0 1 15.5 3.5z" fill="${P}"/><path d="M19 3l.7 1.6 1.7.2-1.3 1.2.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.2 1.7-.2zM21.5 9.5l.4.9 1 .1-.8.7.2 1-.8-.5-.8.5.2-1-.8-.7 1-.1z" fill="#fff" opacity=".85"/>`,
+    survivor: (P, D) => `<path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" fill="${P}"/><path d="M12 9.5v6M9 12.5h6" stroke="${D}" stroke-width="2" stroke-opacity=".55" stroke-linecap="round"/>`,
+    boss:     (P, D) => `<path d="M3 18.5h18L19.5 7l-4.2 4L12 4.5 8.7 11 4.5 7z" fill="${P}" stroke-linejoin="round"/><path d="M3.5 21h17" stroke="${P}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="4.2" r="1.5" fill="#fff" opacity=".85"/>`,
+  };
+  let _bdgUid = 0;
+  function badgeHTML(b, size) {
+    if (!b) return '';
+    const col = b.tier > 0 ? TIER_COLORS[b.tier - 1] : (BADGE_SPECIAL_COLORS[b.id] || '#ff66cc');
+    const u = 'bdg' + (++_bdgUid);
+    const glyph = (BADGE_GLYPHS[b.family || b.id] || BADGE_GLYPHS.score)(`url(#${u}g)`, '#0a0a14');
+    const n = b.tier | 0;
+    const pips = [...Array(n)].map((_, i) => {
+      const a = (90 + (i - (n - 1) / 2) * 17) * Math.PI / 180;
+      return `<circle cx="${(32 + Math.cos(a) * 24.5).toFixed(1)}" cy="${(32 + Math.sin(a) * 24.5).toFixed(1)}" r="2.3" fill="${col}"/>`;
+    }).join('');
+    return `<svg class="bdg-medal" viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs>`
+      + `<radialGradient id="${u}b" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="${col}" stop-opacity=".4"/><stop offset=".65" stop-color="${col}" stop-opacity=".08"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></radialGradient>`
+      + `<linearGradient id="${u}g" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="${col}"/><stop offset="1" stop-color="${col}"/></linearGradient></defs>`
+      + `<circle cx="32" cy="32" r="30" fill="#07080c"/><circle cx="32" cy="32" r="30" fill="url(#${u}b)"/>`
+      + `<circle cx="32" cy="32" r="28.6" fill="none" stroke="${col}" stroke-opacity=".62" stroke-width="2"/>`
+      + `<g transform="translate(14 11) scale(1.5)" style="filter:drop-shadow(0 0 1.6px ${col})">${glyph}</g>${pips}</svg>`;
+  }
   let equippedBadges = (() => {
     try { return JSON.parse(localStorage.getItem('arc_badges_v1') || '[null,null]'); }
     catch(_) { return [null, null]; }
@@ -12252,7 +12363,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         showRewardToast({ icon: 'medal', title: 'BADGES UNLOCKED', sub: list.length + ' new badges' });
       } else {
         list.forEach(b => showRewardToast({
-          icon: b.icon, title: 'BADGE UNLOCKED', sub: b.name,
+          icon: b.icon, badge: b, title: 'BADGE UNLOCKED', sub: b.name,
         }));
       }
     } catch(_){}
@@ -12280,7 +12391,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       const b = id ? findBadge(id) : null;
       el.classList.toggle('filled', !!b);
       const iconEl = el.querySelector('.prof-eq-icon');
-      if (iconEl) iconEl.innerHTML = b ? iconHTML(b.icon, { size: 22, color: b.tier > 0 ? TIER_COLORS[b.tier - 1] : undefined }) : '';
+      if (iconEl) iconEl.innerHTML = b ? badgeHTML(b, 30) : '';
     });
   }
   // Badges grid renderer — used by the standalone Badges modal.
@@ -12300,7 +12411,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       el.className = 'prof-badge' + (equippedBadges.includes(id) ? ' sel' : '');
       if (locked) { el.style.opacity = '0.32'; el.style.filter = 'grayscale(1)'; }
       el.title = desc;
-      el.innerHTML = `<span class="prof-badge-icon">${iconHTML(icon, { size: 26, color: locked ? undefined : col })}</span><span class="prof-badge-name">${label}</span>`;
+      el.innerHTML = `<span class="prof-badge-icon">${badgeHTML(findBadge(id) || { id, tier: 0 }, 44)}</span><span class="prof-badge-name">${label}</span>`;
       el.addEventListener('click', () => {
         if (locked) { try { showToast((desc + (progressTxt ? ' · ' + progressTxt : '')).toUpperCase()); } catch(_){} return; }
         const idx = equippedBadges.indexOf(id);
@@ -12416,13 +12527,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // Per-run consumable flags
   let runDoublerActive = false;
   let runShield = false;          // Shield eşyası: ilk çarpışmayı affeder
+  let _runShieldArmed = false;    // bu run Shield ile mi başladı (kullanılmış olsa bile) — Survivor rozeti için
   let runCoinRainActive = false;  // Gold Rush: altın spawn ×4, 0 m'den itibaren
   let runLuckyBoost = false;      // Lucky Boost ('filter' anahtarı): tüm booster'lar 2× uzun
   let _runPreboostPending = null; // beginArc sonrası activateBooster için
   const DOUBLER_RUNS = 5;         // bir Coin Doubler kaç run ×2 verir
   function consumeArmedConsumables() {
     runDoublerActive = false;
-    runShield = false;
+    runShield = false; _runShieldArmed = false;
     runCoinRainActive = false;
     runLuckyBoost = false;
     _runPreboostPending = null;
@@ -12434,6 +12546,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     if ((inv.doubler.runsLeft | 0) > 0) { runDoublerActive = true; inv.doubler.runsLeft--; }
     else if (inv.doubler.armed && inv.doubler.count > 0) { runDoublerActive = true; consume('doubler'); inv.doubler.runsLeft = DOUBLER_RUNS - 1; }
     if (inv.shield.armed    && inv.shield.count    > 0) { runShield = true;               consume('shield');    }
+    _runShieldArmed = runShield;
     if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
     if (inv.filter.armed    && inv.filter.count    > 0) { runLuckyBoost = true;           consume('filter');    }
     if (inv.preboost.armed  && inv.preboost.count  > 0) {

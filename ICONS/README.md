@@ -46,6 +46,9 @@ yerleşik ikonları görünmeye devam edecek.
 
 # ICONS/badges — Rozet ikonları
 
+> **Not (2026-09-28):** Rozetler artık kodda madalyon olarak çiziliyor (`badgeHTML`, `BADGE_GLYPHS` —
+> avatar stili, kademe rengi + kademe noktaları). Bu klasördeki SVG'ler kullanılmıyor; eşikler aşağıda güncel.
+
 Rozet sistemi kademelidir: 10 ailenin her birinin 5 kademesi vardır
 (I bronz → II gümüş → III altın → IV platin → V elmas). **Her kademe AYRI
 dosyadır**: `score-1.svg` … `score-5.svg` gibi — dosya adları koddaki rozet
@@ -65,22 +68,22 @@ bu paleti veya istediğin varyasyonu kullanabilirsin — SABİT renk serbest
 
 | Dosyalar (her biri -1 … -5) | Rozet ailesi | Kademe hedefleri (I→V) |
 |---|---|---|
-| score-N.svg | SCORE — tek elde skor | 1.000 / 5.000 / 20.000 / 75.000 / 250.000 |
-| range-N.svg | DISTANCE — tek elde mesafe | 10m / 25m / 50m / 100m / 250m |
-| odometer-N.svg | TRAVELLER — toplam mesafe | 100m / 500m / 2.5km / 10km / 50km |
-| combo-N.svg | COMBO — en yüksek kombo | 5 / 9 / 15 / 25 / 50 |
-| gold-N.svg | GOLD — toplam altın top | 10 / 50 / 250 / 1.000 / 5.000 |
-| boost-N.svg | COLLECTOR — toplam booster | 10 / 50 / 250 / 1.000 / 5.000 |
-| veteran-N.svg | VETERAN — oynanan el | 10 / 50 / 250 / 1.000 / 5.000 |
+| score-N.svg | SCORE — tek elde skor | 500 / 2.000 / 6.000 / 15.000 / 40.000 |
+| range-N.svg | DISTANCE — tek elde mesafe | 2m / 5m / 10m / 20m / 40m |
+| odometer-N.svg | TRAVELLER — toplam mesafe | 50m / 250m / 1km / 3km / 10km |
+| combo-N.svg | COMBO — en yüksek kombo | ×3 / ×4 / ×5 / ×6 / ×7 |
+| gold-N.svg | GOLD — toplam altın top | 10 / 50 / 200 / 600 / 1.500 |
+| boost-N.svg | COLLECTOR — toplam booster | 10 / 50 / 200 / 600 / 1.500 |
+| veteran-N.svg | VETERAN — oynanan el | 10 / 50 / 250 / 1.000 / 3.000 |
 | daily-N.svg | STREAK — üst üste gün | 3 / 7 / 14 / 30 / 100 |
-| extreme-N.svg | EXTREME — extreme el | 1 / 10 / 50 / 250 / 1.000 |
+| extreme-N.svg | EXTREME — extreme el | 1 / 10 / 50 / 200 / 500 |
 | social-N.svg | SOCIAL — arkadaş sayısı | 1 / 3 / 5 / 10 / 25 |
 
 Özel rozetler (kademesiz, tek ikon):
 
 | Dosya | Rozet | Koşul |
 |---|---|---|
-| speedrun.svg | SPEEDRUN | 60 saniyede 10.00m |
+| speedrun.svg | SPEEDRUN | 60 saniyede 5.00m |
 | night-owl.svg | NIGHT OWL | 00:00-04:00 arası bir el bitir |
-| survivor.svg | SURVIVOR | Revive/continue olmadan 10.00m |
+| survivor.svg | SURVIVOR | Revive/continue/Shield olmadan 8.00m |
 | boss.svg | BOSS | 7 yeteneğin hepsine sahip ol |
