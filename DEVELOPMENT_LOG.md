@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Game Boy teması: filtre → gerçek LCD stili; Coins'te "next coin" (2026-09-28)
+
+- **Game Boy "düğmeye basınca patlıyordu" (iOS):** menü katmanlarına uygulanan SVG filtresi (`#fx-gb-ui`) Safari'de yazılımla hesaplanıyor; basınca `transform` tüm filtre alanını yeniden çizdiriyordu. Profil ekranı da tam boyanmıyordu. Artık arayüz 4 tonlu LCD paleti doğrudan CSS (`--gb0..3`): düz yüzeyler, gölge/parlama/blur yok, seçili/onay öğeleri "ters" (açık zemin, koyu yazı), basınca küçülme yerine zemin değişir. Filtre yalnız küçük görsellerde (img, satır içi svg, avatar). Üstte **nokta matrisi LCD ızgarası** (`body::after`, 3px) — CRT'nin tarama çizgisinden farklı. Canvas zaten `THEME_STYLE` ile çizim anında boyanıyor.
+- **Coins penceresi:** "TODAY x/25" (günlük yumuşak tavan) yerine **NEXT COIN · 0.64M TO GO** + birikmiş oran çubuğu (`coinCarry`). Kalan mesafe Extreme ×2'yi ve tavan aşıldıysa ×0.4'ü hesaba katar ("REDUCED RATE").
+
 ### Küçük ekran düzeltmeleri — iPhone SE (2026-09-28)
 
 Bildirilen: iPhone SE'de ilk girişteki profil paneli ekrandan taşıyordu. Headless ölçüm (375×667, Safari çubuklarıyla 375×553, SE1 320×568 ve 320×460) — her ekran/pencere için taşma px:

@@ -3585,8 +3585,43 @@
     /* Oyun alanı (.stack → canvas) filtrelenmez; renkleri THEME_STYLE ile çizim anında değişir.
        Arayüz katmanları statik → eşleme bir kez rasterize edilir, her kare maliyet yok. */
     html.theme-noir body > :not(.stack) { filter: grayscale(1) contrast(1.15); }
-    html.theme-gameboy body > :not(.stack) { filter: url(#fx-gb-ui); }
-    html.theme-gameboy body { background: #0f380f; }
+    /* ── Game Boy arayüzü: STİL (filtre değil). Büyük katmanlara SVG filtresi iOS Safari'de
+       yazılımla hesaplanıyor → düğmeye basınca (transform) tüm alan yeniden çiziliyor ve
+       "patlıyordu". Artık 4 tonlu LCD paleti doğrudan CSS: düz yüzeyler, parlama/gölge yok,
+       basınca küçülme yerine zemin değişir. Filtre yalnız küçük görsellerde (avatar, ikon). */
+    html.theme-gameboy { --gb0: #0f380f; --gb1: #306230; --gb2: #8bac0f; --gb3: #9bbc0f; }
+    html.theme-gameboy body { background: var(--gb0); }
+    html.theme-gameboy body > :not(.stack) :where(*):not(svg):not(svg *) {
+      color: var(--gb3) !important; border-color: var(--gb1) !important;
+      text-shadow: none !important; box-shadow: none !important; background-image: none !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    html.theme-gameboy body > :not(.stack) :is(button, .gl, .btn-gray, .panel, [id$="-modal-box"], #upginfo-box, #gearpick-box,
+      .core-card, .quest-card, .theme-card, .rt-card, .home-chip, #home-profile, .rb-inner, input, .tog, #mode-sel) {
+      background-color: var(--gb0) !important; border-color: var(--gb2) !important;
+    }
+    html.theme-gameboy body > :not(.stack) :is([id$="-modal"], #upginfo-modal) { background-color: rgba(15,56,15,.82) !important; }
+    /* Seçili / aktif / onay: açık zemin + koyu yazı (LCD'de "ters" piksel) */
+    html.theme-gameboy body > :not(.stack) .seg-ind { background-color: var(--gb2) !important; }
+    html.theme-gameboy body > :not(.stack) :is(.tog-btn.active-on, .mode-btn.active-normal, .mode-btn.active-extreme, .upg-tab.active,
+      #ps-confirm, #buy-confirm-btn, .core-buy:not(.empty):not(.maxed):not([disabled]), .core-buy.toggle.on, .theme-card.active) {
+      background-color: var(--gb2) !important; color: var(--gb0) !important;
+    }
+    html.theme-gameboy body > :not(.stack) .seg-ind ~ :is(.tog-btn.active-on, .mode-btn, .upg-tab.active) { background-color: transparent !important; }
+    /* Açık zeminli öğelerin içindeki yazılar (fiyat etiketi vb.) da koyu olsun */
+    html.theme-gameboy body > :not(.stack) :is(#ps-confirm, #buy-confirm-btn, .core-buy:not(.empty):not(.maxed):not([disabled]), .core-buy.toggle.on, .theme-card.active) :where(*):not(svg):not(svg *) { color: var(--gb0) !important; border-color: var(--gb0) !important; background-color: transparent !important; }
+    /* START / AGAIN: gökkuşağı çerçeve yerine açık yeşil çerçeve */
+    html.theme-gameboy body > :not(.stack) .rb-wrap { background-color: var(--gb2) !important; }
+    html.theme-gameboy body > :not(.stack) :is(button, .gl, .core-card):active { background-color: var(--gb1) !important; transform: none !important; }
+    html.theme-gameboy :is(.gl, .btn-gray) { --c: #8bac0f; --gg: #9bbc0f; }
+    html.theme-gameboy body > :not(.stack) :is(img, svg:not(#glow-defs), .av-img-opt) { filter: url(#fx-gb-ui) !important; }
+    /* LCD: nokta matrisi ızgarası (CRT'nin tarama çizgisi değil) — ekranın tamamında */
+    html.theme-gameboy body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2147483000;
+      background:
+        repeating-linear-gradient(0deg, rgba(15,56,15,.38) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(90deg, rgba(15,56,15,.38) 0 1px, transparent 1px 3px);
+    }
     html.theme-crt body::after, html.theme-noir body::after {
       content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2147483000;
     }
