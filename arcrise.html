@@ -5447,6 +5447,19 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     // opaklık zaman çizelgesi: vals "0;1;1;0" + keyTimes
     const fade = (vals, times, dur) => `<animate attributeName="opacity" values="${vals}" keyTimes="${times}" dur="${dur}s" repeatCount="indefinite"/>`;
     const move = (path, dur, extra = '') => `<animateMotion path="${path}" dur="${dur}s" repeatCount="indefinite" ${extra}/>`;
+    // Oyundaki gibi top yolu: sabit yarıçaplı daire yayları, her segmentte yön değişir.
+    // segs: [[dir, derece], …] — dir 1 = sağa (saat yönü), -1 = sola. heading derece (−90 = yukarı).
+    const arcPath = (x, y, r, segs, headingDeg = -90) => {
+      let h = headingDeg * Math.PI / 180, d = `M${x.toFixed(1)} ${y.toFixed(1)}`;
+      for (const [dir, deg] of segs) {
+        const cx = x + Math.cos(h + dir * Math.PI / 2) * r, cy = y + Math.sin(h + dir * Math.PI / 2) * r;
+        const a0 = Math.atan2(y - cy, x - cx), da = dir * deg * Math.PI / 180;
+        x = cx + Math.cos(a0 + da) * r; y = cy + Math.sin(a0 + da) * r; h += da;
+        d += ` A${r} ${r} 0 ${deg > 180 ? 1 : 0} ${dir > 0 ? 1 : 0} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      }
+      return { d, x, y, hDeg: h * 180 / Math.PI };
+    };
+    const guide = (d, op = 1) => `<path d="${d}" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5" opacity="${op}"/>`;
 
     const anims = {
       profit: () => scene(
@@ -5462,13 +5475,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          <g>${ball(0, 0, 6.5)}${move('M120 128a34 34 0 0 1 0-68', 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.5;1', 3)}</g>
          <g>${ball(0, 0, 6.5)}${move('M120 128a58 58 0 0 1 0-116', 3, 'keyPoints="0;0;1" keyTimes="0;.5;1" calcMode="linear"')}${fade('0;0;1;1', '0;.5;.52;1', 3)}</g>
          ${label(148, 98, 'TIGHT', C.dim, 10)}${label(196, 40, 'WIDE', C.purple, 10)}`),
-      speed: () => scene(
-        `${walls()}
-         <path d="M70 140C70 90 170 90 170 40" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
-         <path d="M40 140C40 90 140 90 140 40" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5" opacity=".6"/>
-         <g>${ball(0, 0, 6)}${move('M40 140C40 90 140 90 140 20', 2.6)}</g>
-         <g>${ball(0, 0, 6)}<circle r="10" fill="none" stroke="${C.green}" stroke-width="1.5" opacity=".6"/>${move('M70 140C70 90 170 90 170 20', 1.6)}</g>
-         ${label(52, 32, '×1.0', C.dim, 12)}${label(196, 128, '×1.4', C.green, 12)}`),
+      speed: () => {
+        const slow = arcPath(62, 152, 40, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d, fast = arcPath(142, 152, 40, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
+        return scene(
+          `${walls()}${guide(slow, .6)}${guide(fast)}
+           <g>${ball(0, 0, 6)}${move(slow, 3.2)}</g>
+           <g>${ball(0, 0, 6)}<circle r="10" fill="none" stroke="${C.green}" stroke-width="1.5" opacity=".6"/>${move(fast, 2)}</g>
+           ${label(44, 142, '×1.0', C.dim, 12)}${label(200, 142, '×1.4', C.green, 12)}`);
+      },
       timer: () => scene(
         `${walls()}
          <circle cx="120" cy="84" r="30" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
@@ -5494,13 +5508,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
            <g opacity="0">${label(120, 124, '+150', C.gold, 22)}${fade('0;0;1;1;0', '0;.8;.84;.95;1', 5)}</g>
            ${label(120, 30, 'CHAIN CAP ×5', C.txt, 12)}`);
       },
-      wallSoft: () => scene(
-        `<rect x="186" y="8" width="18" height="134" fill="${C.green}" opacity=".0"><animate attributeName="opacity" values="0;0;.18;.18;0" keyTimes="0;.3;.4;.8;1" dur="3.4s" repeatCount="indefinite"/></rect>
-         <path d="M204 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
-         <path d="M28 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
-         <path d="M80 142C140 120 200 100 196 75S120 30 80 8" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
-         <g>${ball(0, 0, 7)}${move('M80 142C140 120 200 100 196 75S120 30 80 8', 3.4)}</g>
-         ${label(150, 146, 'BRUSH PAST — NO CRASH', C.dim, 9)}`),
+      wallSoft: () => {
+        const path = arcPath(130, 152, 105, [[-1, 190]], -20).d;   // en sağda x≈199 → top duvara ~2px sürtünür
+        return scene(
+          `<rect x="186" y="8" width="18" height="134" fill="${C.green}" opacity="0"><animate attributeName="opacity" values="0;0;.18;.18;0;0" keyTimes="0;.25;.32;.5;.6;1" dur="3.4s" repeatCount="indefinite"/></rect>
+           <path d="M204 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
+           <path d="M28 8V142" stroke="${C.wall}" stroke-width="3" stroke-linecap="round"/>
+           ${guide(path)}
+           <g>${ball(0, 0, 7)}${move(path, 3.4)}</g>
+           ${label(116, 146, 'BRUSH PAST — NO CRASH', C.dim, 9)}`);
+      },
       magnetRange: () => scene(
         `${walls()}
          <g>${ball(120, 110, 7)}<circle cx="120" cy="110" fill="none" stroke="${C.purple}" stroke-width="1.5" stroke-dasharray="3 4"><animate attributeName="r" values="12;12;22;22;12" keyTimes="0;.1;.2;.9;1" dur="3.6s" repeatCount="indefinite"/></circle></g>
@@ -5512,10 +5529,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
          ${[[60, 0], [150, .3], [95, .6]].map(([x, d]) => `<rect x="${x}" y="-10" width="36" height="10" rx="5" fill="${C.red}" GLOW><animate attributeName="y" values="-10;50;70;150" keyTimes="0;.35;.9;1" dur="4s" begin="${d * -4}s" repeatCount="indefinite"/></rect>`).join('')}
          ${ball(120, 118, 7)}
          <g opacity="0">${label(120, 30, 'SLOW ×0.5', '#9fb3ff', 14)}${fade('0;0;1;1;0', '0;.35;.4;.9;1', 4)}</g>`),
-      phaseburst: () => scene(
-        `${walls()}<rect x="70" y="66" width="100" height="12" rx="6" fill="${C.red}" GLOW/>
-         <g>${ball(0, 0, 7)}<animate attributeName="opacity" values="1;1;.35;.35;1;1" keyTimes="0;.3;.35;.65;.7;1" dur="3s" repeatCount="indefinite"/>${move('M120 140V10', 3)}</g>
-         ${label(120, 108, 'PASS THROUGH', C.dim, 9)}`),
+      phaseburst: () => {
+        const path = arcPath(84, 152, 110, [[1, 70]]).d, mid = arcPath(84, 152, 110, [[1, 33]]);
+        return scene(
+          `${walls()}<rect x="${(mid.x - 50).toFixed(1)}" y="${(mid.y - 6).toFixed(1)}" width="100" height="12" rx="6" fill="${C.red}" GLOW/>
+           ${guide(path)}
+           <g>${ball(0, 0, 7)}<animate attributeName="opacity" values="1;1;.35;.35;1;1" keyTimes="0;.32;.38;.6;.66;1" dur="3s" repeatCount="indefinite"/>${move(path, 3)}</g>
+           ${label(120, 146, 'PASS THROUGH', C.dim, 9)}`);
+      },
       coinpull: () => scene(
         `${walls()}${ball(120, 112, 8)}
          ${[[50, 30, C.green], [190, 26, C.gold], [80, 60, C.purple], [168, 70, C.green], [120, 20, C.gold]].map(([x, y, col], i) =>
@@ -5525,35 +5546,50 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         `${walls()}${[0, 1, 2, 3].map(i => `<path d="M${60 + i * 40} 0v18" stroke="${C.dim}" stroke-width="2" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0 0;0 150" dur="${i % 2 ? .7 : .9}s" repeatCount="indefinite"/></path>`).join('')}
          ${ball(120, 100, 7)}
          <g opacity="0">${label(120, 138, 'SPEED ×0.5', C.gold, 12)}${fade('0;1;1;0', '0;.1;.9;1', 3)}</g>`),
-      mirror: () => scene(
-        `${walls()}<path d="M120 10V140" stroke="${C.dim}" stroke-width="1.5" stroke-dasharray="4 5"/>
-         <g>${ball(0, 0, 7)}${move('M60 140C60 110 70 90 70 75', 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.47;1', 3)}</g>
-         <g opacity="0">${ball(0, 0, 7)}${move('M170 75C170 60 180 40 180 10', 3, 'keyPoints="0;0;1" keyTimes="0;.47;1" calcMode="linear"')}${fade('0;0;1;1', '0;.46;.48;1', 3)}</g>
-         <path d="M76 75H164" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 4" opacity="0">${fade('0;0;1;0;0', '0;.44;.47;.6;1', 3)}</path>`),
+      mirror: () => {
+        const a = arcPath(66, 152, 44, [[1, 50], [-1, 60]]);
+        const b = arcPath(240 - a.x, a.y, 44, [[-1, 40], [1, 80]], 180 - a.hDeg);
+        return scene(
+          `${walls()}<path d="M120 10V140" stroke="${C.dim}" stroke-width="1.5" stroke-dasharray="4 5"/>
+           <g>${ball(0, 0, 7)}${move(a.d, 3, 'keyPoints="0;1;1" keyTimes="0;.45;1" calcMode="linear"')}${fade('1;1;0;0', '0;.45;.47;1', 3)}</g>
+           <g opacity="0">${ball(0, 0, 7)}${move(b.d, 3, 'keyPoints="0;0;1" keyTimes="0;.47;1" calcMode="linear"')}${fade('0;0;1;1', '0;.46;.48;1', 3)}</g>
+           <path d="M${(a.x + 8).toFixed(1)} ${a.y.toFixed(1)}H${(240 - a.x - 8).toFixed(1)}" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 4" opacity="0">${fade('0;0;1;0;0', '0;.44;.47;.6;1', 3)}</path>`);
+      },
       shock: () => scene(
         `${walls()}${[[80, 60], [165, 52], [70, 120], [175, 112]].map(([x, y]) => `<rect x="${x - 16}" y="${y - 5}" width="32" height="10" rx="5" fill="${C.red}" GLOW>${fade('1;1;0;0;1', '0;.3;.36;.95;1', 3)}</rect>`).join('')}
          ${ball(120, 86, 8)}
          <circle cx="120" cy="86" fill="none" stroke="${C.gold}" stroke-width="3" opacity="0"><animate attributeName="r" values="8;8;80" keyTimes="0;.28;.45" dur="3s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.28;.3;.48;1', 3)}</circle>`),
-      anchor: () => scene(
-        `${walls()}
-         <g opacity="0"><path d="M80 118v-12M74 111l6 6 6-6" stroke="${C.purple}" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="80" cy="118" r="10" fill="none" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 3"/>${fade('0;1;1;0;0', '0;.12;.75;.8;1', 4)}</g>
-         <g>${ball(0, 0, 7)}${move('M80 118C80 80 170 80 170 30L80 118', 4, 'keyPoints="0;0;.9;.9;1;1" keyTimes="0;.15;.62;.7;.72;1" calcMode="linear"')}</g>
-         <g opacity="0">${label(120, 26, 'TELEPORT BACK', C.purple, 11)}${fade('0;0;1;1;0', '0;.68;.72;.92;1', 4)}</g>`),
-      revive: () => scene(
-        `${walls()}<rect x="100" y="36" width="60" height="10" rx="5" fill="${C.red}" GLOW/>
-         <path d="M110 140C110 110 120 90 125 52" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
-         <g>${ball(0, 0, 7)}${move('M110 140C110 110 120 90 125 52L116 100', 4, 'keyPoints="0;.8;.8;1;1" keyTimes="0;.4;.6;.62;1" calcMode="linear"')}</g>
-         <g opacity="0"><path d="M125 74s-9-5.6-9-12.3A5 5 0 0 1 125 59a5 5 0 0 1 9 2.7c0 6.7-9 12.3-9 12.3z" fill="${C.red}" GLOW/>${fade('0;0;1;1;0;0', '0;.4;.45;.6;.65;1', 4)}</g>
-         <g opacity="0">${label(170, 104, 'SAFE SPOT', C.green, 10)}${fade('0;0;1;1;0', '0;.62;.66;.9;1', 4)}</g>`),
+      anchor: () => {
+        const a = arcPath(70, 128, 44, [[1, 60], [-1, 110]]);
+        return scene(
+          `${walls()}
+           <g opacity="0"><path d="M70 128v-12M64 121l6 6 6-6" stroke="${C.purple}" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="70" cy="128" r="10" fill="none" stroke="${C.purple}" stroke-width="2" stroke-dasharray="3 3"/>${fade('0;1;1;0;0', '0;.12;.75;.8;1', 4)}</g>
+           ${guide(a.d, .6)}
+           <g>${ball(0, 0, 7)}${move(a.d + ' L70 128', 4, 'keyPoints="0;0;.97;.97;1;1" keyTimes="0;.15;.62;.7;.71;1" calcMode="linear"')}</g>
+           <g opacity="0">${label(160, 70, 'TELEPORT BACK', C.purple, 11)}${fade('0;0;1;1;0', '0;.68;.72;.92;1', 4)}</g>`);
+      },
+      revive: () => {
+        const a = arcPath(96, 152, 60, [[1, 60], [-1, 40]]);
+        const hr = a.hDeg * Math.PI / 180, ox = a.x + Math.cos(hr) * 14, oy = a.y + Math.sin(hr) * 14;
+        return scene(
+          `${walls()}<rect x="${(ox - 30).toFixed(1)}" y="${(oy - 5).toFixed(1)}" width="60" height="10" rx="5" fill="${C.red}" GLOW/>
+           ${guide(a.d)}
+           <g>${ball(0, 0, 7)}${move(a.d, 4, 'keyPoints="0;1;1;.55;.55" keyTimes="0;.4;.6;.62;1" calcMode="linear"')}</g>
+           <g opacity="0"><path transform="translate(${(a.x - 125).toFixed(1)} ${(a.y + 12 - 74).toFixed(1)})" d="M125 74s-9-5.6-9-12.3A5 5 0 0 1 125 59a5 5 0 0 1 9 2.7c0 6.7-9 12.3-9 12.3z" fill="${C.red}" GLOW/>${fade('0;0;1;1;0;0', '0;.4;.45;.6;.65;1', 4)}</g>
+           <g opacity="0">${label(186, 118, 'SAFE SPOT', C.green, 10)}${fade('0;0;1;1;0', '0;.62;.66;.9;1', 4)}</g>`);
+      },
       doubler: () => scene(
         `<circle cx="120" cy="70" r="26" fill="${C.gold}" GLOW/><circle cx="120" cy="70" r="19" fill="none" stroke="#b8860b" stroke-width="3"/>
          <g>${label(120, 124, '+12 COINS', C.dim, 16)}${fade('1;1;0;0;1', '0;.4;.45;.95;1', 3.5)}</g>
          <g opacity="0">${label(120, 124, '+24 COINS', C.gold, 16)}${fade('0;0;1;1;0;0', '0;.45;.5;.9;.95;1', 3.5)}</g>
          <g opacity="0">${label(170, 50, '×2', C.gold, 18)}${fade('0;0;1;1;0;0', '0;.4;.45;.9;.95;1', 3.5)}</g>`),
-      headstart: () => scene(
-        `${walls()}<path d="M90 140C90 100 150 90 150 10" fill="none" stroke="${C.dim}" stroke-width="2" stroke-dasharray="3 5"/>
-         <g>${ball(0, 0, 7)}${move('M90 140C90 100 150 90 150 10', 4, 'keyPoints="0;.25;1" keyTimes="0;.6;1" calcMode="linear"')}</g>
-         <g>${label(60, 30, 'FIRST 5s: ×0.5', C.gold, 11)}${fade('1;1;0;0', '0;.6;.62;1', 4)}</g>`),
+      headstart: () => {
+        const path = arcPath(100, 152, 42, [[1, 45], [-1, 90], [1, 90], [-1, 90], [1, 90]]).d;
+        return scene(
+          `${walls()}${guide(path)}
+           <g>${ball(0, 0, 7)}${move(path, 4, 'keyPoints="0;.25;1" keyTimes="0;.6;1" calcMode="linear"')}</g>
+           <g>${label(64, 30, 'FIRST 5s: ×0.5', C.gold, 11)}${fade('1;1;0;0', '0;.6;.62;1', 4)}</g>`);
+      },
       coinrain: () => scene(
         `${walls()}${[50, 80, 110, 140, 170, 195, 65, 125, 185].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.6 + (i % 3) * .35}s" begin="${-i * .37}s" repeatCount="indefinite"/></circle>`).join('')}
          ${label(120, 142, '2× GOLD BALLS · 1 COIN EACH', C.dim, 9)}`),
