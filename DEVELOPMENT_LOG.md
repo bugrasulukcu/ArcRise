@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Küçük ekran düzeltmeleri — iPhone SE (2026-09-28)
+
+Bildirilen: iPhone SE'de ilk girişteki profil paneli ekrandan taşıyordu. Headless ölçüm (375×667, Safari çubuklarıyla 375×553, SE1 320×568 ve 320×460) — her ekran/pencere için taşma px:
+- **Profil oluşturma:** 639px panel, 553'te iki yandan 43px, 460'ta 75px kesiliyordu. Kök neden: `.screen` `justify-content: center` → sığmayınca üstten de taşıyor ve kaydırılamıyordu.
+- **Settings:** Backup/Restore/Delete/How-to-play `position: absolute; bottom` → kısa ekranda (Theme satırı eklenince) panelin üstüne biniyordu.
+- **Quests:** 460'ta başlık üstten kesiliyordu.
+- İlk girişte **Daily Login bildirimi** profil panelinin başlığını/isim kutusunu kapatıyordu.
+
+Düzeltme: `#profile-setup`, `#settings`, `#gameover` → `flex-start` + `overflow-y: auto` + ilk/son çocukta `margin: auto` (sığarsa ortada, sığmazsa üstten başlar ve kayar), safe-area padding. `max-height: 700px`'te profil paneli sıkışır (639 → 502px, SE'de Safari'yle tam sığar) ve Settings'in alt düğmeleri akışa girer. `max-height: 620px`'te tüm pencere kutuları ekranı aşmaz, içerik kutuda kayar. Ödül bildirimleri profil oluşturma sırasında da kuyrukta bekler (`_tutOn`).
+
 ### Temalar stile çevrildi (3 tema), tutorial yeniden yazıldı, renk rolleri (2026-09-28)
 
 **Temalar: filtre değil stil.** Dither, 1-Bit, Synthwave, Blueprint ve Thermal kaldırıldı; kalanlar **Game Boy, Noir, CRT Arcade**.

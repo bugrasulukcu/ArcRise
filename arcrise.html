@@ -3501,6 +3501,36 @@
     }
     .slot.cooling .slot-ring { opacity: 1; }
     .slot.cooling { opacity: 0.55; }
+    /* ══════════ KÜÇÜK EKRAN (iPhone SE: 667px, Safari çubuklarıyla ~550px; SE 1: 568/~460) ══════════
+       .screen içeriği justify-content:center ile ortalanıyordu → sığmayınca ÜSTTEN de taşıp
+       ulaşılamaz oluyordu (ilk girişteki profil paneli SE'de 43-75px iki yandan kesiliyordu).
+       Çözüm: flex-start + kaydırma + ilk/son çocukta margin:auto → sığarsa ortada, sığmazsa
+       üstten başlar ve kaydırılır. */
+    #profile-setup, #settings, #gameover {
+      justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding-block: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-bottom, 0px));
+    }
+    #profile-setup > :first-child, #settings > :first-child, #gameover > :first-child { margin-top: auto; }
+    #profile-setup > :last-child, #settings > :last-child, #gameover > :last-child { margin-bottom: auto; }
+    @media (max-height: 700px) {
+      #profile-setup .panel { padding: 18px 16px 16px; gap: 12px; }
+      #profile-setup h2 { font-size: 16px; }
+      #profile-setup .ps-sub { margin-top: -4px; }
+      #profile-setup .ps-or { padding-top: 0; }
+      #profile-setup .ps-upload { padding: 9px; }
+      #av-grid { gap: 6px; width: min(100%, 250px); }
+      #ps-name-input { padding: 10px 12px; }
+      #ps-confirm { padding: 12px; font-size: 14px; }
+      /* Settings'in alt düğmeleri ekranın dibine sabitti → kısa ekranda panelin üstüne biniyordu */
+      #backup-outer, #reset-outer { position: static; transform: none; margin-top: 14px; }
+    }
+    @media (max-height: 620px) {
+      /* Pencereler: kutu ekranı aşmasın, içerik kutunun içinde kaysın */
+      [id$="-modal-box"], #upginfo-box, #gearpick-box {
+        max-height: calc(100% - 20px); overflow-y: auto; -webkit-overflow-scrolling: touch;
+      }
+    }
+
     /* ══════════ GLOW DİLİ — avatar stilinin UI'a genellenmiş hâli ══════════
        Her öğe tek bir vurgu rengi (--c) taşır; zemin, halka, iç ışık ve parlama
        ondan color-mix ile türetilir. color-mix'i bilmeyen tarayıcı bu blokları
@@ -6033,9 +6063,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     _rtQueue.push(opts || {});
     if (!_rtBusy) _rtNext();
   }
-  // Tutorial sırasında ödül bildirimleri yazının üstüne binmesin → bitene kadar kuyrukta bekler.
-  // (tutActive bu noktada henüz tanımlanmamış olabilir → TDZ'ye karşı try.)
-  const _tutOn = () => { try { return tutActive; } catch(_) { return false; } };
+  // Tutorial ve ilk girişteki profil oluşturma sırasında ödül bildirimleri yazının/panelin
+  // üstüne binmesin → bitene kadar kuyrukta bekler. (tutActive henüz tanımsız olabilir → try.)
+  const _tutOn = () => {
+    if (document.getElementById('profile-setup')?.classList.contains('active')) return true;
+    try { return tutActive; } catch(_) { return false; }
+  };
   function _rtNext() {
     if (_tutOn()) { _rtBusy = true; setTimeout(() => { _rtBusy = false; _rtNext(); }, 700); return; }
     const host = document.getElementById('reward-toast');
