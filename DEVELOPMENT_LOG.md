@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Ses sistemi: tümü Web Audio, ilk dokunuşta hazır, kilit ekranı kartı yok (2026-09-28)
+
+- **Tutorial'da sesler gecikip toplu çalıyordu:** Web Audio bağlamı yalnız START'ta (`startGame → initAudio`) kuruluyordu; tutorial ilk girişte START'tan önce başladığı için dokunuşlar `<audio>` klonlarıyla çalınıyor, iOS bunları sıraya alıp sonradan birden çalıyordu. Artık bağlam **ilk dokunuşta** (`pointerdown/touchend/keydown`, capture) kurulur; tampon hazır değilse ses **atlanır** (`playSfx`). `<audio>` yalnız Web Audio hiç yoksa yedek.
+- **Kilit ekranında "Şimdi Çalıyor":** müzik `<audio>` öğesiyle çalıyordu → iOS medya oturumu. Müzik artık **AudioBuffer döngüsü** (`musicBuffer`, `_musicGain`; dosya ~12 sn/200 KB, çözülünce ~4 MB), kaldığı yerden devam (`_musicOffset`), ducking/fade gain üzerinden. Test: hiç `<audio>` öğesi oluşmuyor.
+- Uygulama arka plana gidince (`visibilitychange` / `pagehide`) bağlam askıya alınır, dönünce devam.
+- Düzeltme: `setSfx` silinen `touchAudioFallback`'e dokunuyordu.
+
 ### 🧭 Oturum devri — 2026-09-28 (buradan devam et)
 
 **Bugün yapılanlar (ayrıntılar aşağıdaki girişlerde):** canlı veri sıfırlandı (Firestore + `ARC_RESET_VERSION r-2026-09-28-2`); ekonomi ×1 ölçek (1 m = 1 coin, Extreme ×2, kesirli birikim, 3 yıllık katalog); "−" düğmesi/seviye kırpma düzeltmeleri; upgrade ikonları + info animasyonları (SMIL) + metinler; avatarlar ve glow UI dili (`.gl`); temalar stil olarak (Game Boy / Noir / CRT, canvas paleti `THEME_STYLE`); tutorial "yaparak öğren"; eşyalar (Shield, Gold Rush, Lucky Boost, Doubler 5 run), Mirror kaldırıldı, şok dalgası; küçük ekran (iPhone SE) düzeltmeleri; düşük efekt modu (`LOWFX`); rozetler (madalyon ikon + gerçekçi eşikler + DAREDEVIL / LAST SECOND); en uzun combo = seri sayısı; debug coin (Coins → sayıya 5 dokunuş, `?debug=1`).
@@ -403,7 +410,7 @@ App yüklenince:
 **Araçlar:** `tools/bot-econ.mjs` (Firebase engelli bot ölçümü, `PORT_BASE` ile paralel). Test için headless Chrome + CDP; oyun `python3 -m http.server 8765` ile servis edilir. `CODEX_REVIEW_v25.md` çapraz kontrol notu (v25 ekonomi için; sonrası kapsamda değil).
 
 **Sıradaki / açık işler:**
-1. **Sesler (şu an üzerinde):** tutorial'da dokunma sesleri gecikip toplu çalıyor; oyun kapatılınca iOS kilit ekranında "şarkı çalıyor" (Now Playing) görünüyor.
+1. ~~Sesler~~ — düzeltildi (aşağıdaki "Ses sistemi" girişi). Gerçek iPhone'da doğrulanmalı.
 2. Walls upgrade'i zayıf (maks 5 px). Combo Timer hayatta kalmada Timer'dan verimli.
 3. Extreme indirim şartı "5.000 skor" ×3 kalkınca çok zor. Günlük "3.50m tek run" görevi ortalama 2 m'ye göre zor olabilir.
 4. IAP paketleri (55/200/450/1100) fiyat noktaları; coin bakiyesi sunucuda doğrulanmıyor (IAP öncesi şart).

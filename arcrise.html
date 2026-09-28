@@ -7046,19 +7046,20 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   const goldBalls = [], purpleBalls = [], particles = [];
 
   // ── Audio ──────────────────────────────────────────────────
-  // new Audio() her protokolde (file://, http://) çalışır — fetch'in aksine.
-  const bgAudio    = new Audio('AUDIO/ArcRiseBGMusic.mp3');
-  bgAudio.loop     = true;
-  bgAudio.volume   = 0.7; // _bgBaseVol ile senkron tutulur
-
-  // HTMLAudioElement fallbacks (used only if AudioBuffer decode fails)
-  const touchAudioFallback = new Audio('AUDIO/ArcRiseTouch.wav');
-  touchAudioFallback.volume = 0.55;
-  const deadAudioFallback = new Audio('AUDIO/ArcRiseDead.wav');
-  deadAudioFallback.volume = 1.0;
-
-  // Low-latency SFX via AudioBuffer — separate context from bg-music analyser
-  let sfxCtx = null, touchBuffer = null, deadBuffer = null;
+  // Tüm sesler Web Audio (tek AudioContext) üzerinden:
+  //  • Müzik de AudioBuffer döngüsü — <audio> öğesi iOS'ta "Şimdi Çalıyor" kartı açıyordu
+  //    (oyun kapatılınca kilit ekranında şarkı çalıyor gibi görünüyordu). Dosya küçük (~12 sn
+  //    döngü, çözülünce ~4 MB) → belleğe açmak sorun değil, döngü de boşluksuz.
+  //  • Bağlam İLK dokunuşta kurulur (yalnız START'ta değil) → tutorial'dan önce hazır.
+  //  • Tampon henüz çözülmediyse ses ÇALINMAZ: <audio> klonları iOS'ta sıraya girip
+  //    sonradan toplu çalıyordu. <audio> yalnız Web Audio hiç yoksa yedek.
+  //  • Uygulama arka plana gidince bağlam askıya alınır.
+  const BG_SRC = 'AUDIO/ArcRiseBGMusic.mp3';
+  const _bgBaseVol = 0.7;
+  let bgAudio = null;                        // yalnız Web Audio yoksa kullanılan yedek
+  function _fallbackAudio(url, vol) { try { const a = new Audio(url); a.volume = vol; return a; } catch(_) { return null; } }
+  let sfxCtx = null, touchBuffer = null, deadBuffer = null, musicBuffer = null;
+  let _musicGain = null, _musicSrc = null, _musicStartAt = 0, _musicOffset = 0, _musicWanted = false;
 
   async function loadSfxBuffer(ctx, url) {
     try {
@@ -7079,16 +7080,17 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   function initAudio() {
     audioStarted = true;
-    // Create SFX AudioContext on first user gesture and pre-decode sounds.
-    // BufferSourceNode.start() has hardware-level latency (~1-5ms) vs
-    // cloneNode() which re-decodes on the fly and can lag 80-200ms on mobile.
-    if (sfxCtx) return;
+    if (sfxCtx) { if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {}); return; }
     try {
       sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+      _musicGain = sfxCtx.createGain(); _musicGain.gain.value = _bgBaseVol; _musicGain.connect(sfxCtx.destination);
       loadSfxBuffer(sfxCtx, 'AUDIO/ArcRiseTouch.wav').then(b => { touchBuffer = b; });
       loadSfxBuffer(sfxCtx, 'AUDIO/ArcRiseDead.wav').then(b  => { deadBuffer  = b; });
-    } catch(e) { console.warn('[SFX] ctx', e); }
+      loadSfxBuffer(sfxCtx, BG_SRC).then(b => { musicBuffer = b; if (_musicWanted) playBgMusic(); });
+    } catch(e) { console.warn('[SFX] ctx', e); sfxCtx = null; }
   }
+  // İlk dokunuşta (tutorial dahil her şeyden önce) ses bağlamını kur/aç — iOS gesture içinde ister.
+  ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, () => initAudio(), { capture: true, passive: true }));
 
   function playSfxBuffer(buffer, volume) {
     if (!sfxCtx || !buffer) return false;
@@ -7102,60 +7104,86 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     src.start(0);
     return true;
   }
+  // Web Audio var ama tampon hazır değilse: sessizce atla (geç + toplu çalmasın).
+  // Web Audio hiç yoksa: <audio> yedeği.
+  const _sfxFallbacks = {};
+  function playSfx(buffer, url, vol) {
+    if (playSfxBuffer(buffer, vol)) return;
+    if (sfxCtx) return;
+    const a = _sfxFallbacks[url] || (_sfxFallbacks[url] = _fallbackAudio(url, vol));
+    if (a) { const c = a.cloneNode(); c.volume = vol; c.play().catch(() => {}); }
+  }
 
-  // Synchronous + gesture-friendly. We deliberately don't await anything
-  // here — iOS Safari requires the .play() call to land inside the
-  // original click handler frame, and an await before it breaks the
-  // gesture chain.
+  function _musicPlaying() { return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
+  function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgBaseVol); }
+  function _setMusicVol(v) { if (_musicGain) _musicGain.gain.value = v; if (bgAudio) bgAudio.volume = v; }
+  // Senkron + gesture dostu (iOS'ta resume/play tıklama karesinde olmalı).
   function playBgMusic() {
     if (!musOn || !audioStarted) return;
     initAudioViz();
-    if (bgAudio.paused || bgAudio.ended) {
-      bgAudio.play().catch(e => console.warn('[Audio] BG play:', e));
+    if (sfxCtx) {
+      if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {});
+      if (!musicBuffer) { _musicWanted = true; return; }   // çözülünce başlar
+      if (_musicSrc) return;
+      _musicWanted = false;
+      const src = sfxCtx.createBufferSource();
+      src.buffer = musicBuffer; src.loop = true;
+      src.connect(_musicGain);
+      _musicGain.gain.value = _bgBaseVol;
+      src.start(0, _musicOffset % musicBuffer.duration);     // kaldığı yerden
+      _musicSrc = src; _musicStartAt = sfxCtx.currentTime;
+      return;
     }
+    if (!bgAudio) { bgAudio = _fallbackAudio(BG_SRC, _bgBaseVol); if (bgAudio) bgAudio.loop = true; }
+    if (bgAudio && (bgAudio.paused || bgAudio.ended)) bgAudio.play().catch(e => console.warn('[Audio] BG play:', e));
   }
 
   function stopBgMusic() {
-    bgAudio.pause();
-    bgAudio.volume = _bgBaseVol; // sıradaki çalış normal seviyeden başlasın
-    // Don't reset currentTime — resume from same position next game
+    _musicWanted = false;
+    if (_musicSrc) {
+      _musicOffset += sfxCtx.currentTime - _musicStartAt;    // sıradaki çalış aynı yerden
+      try { _musicSrc.stop(); } catch(_) {}
+      _musicSrc.disconnect(); _musicSrc = null;
+    }
+    if (bgAudio) bgAudio.pause();
+    _setMusicVol(_bgBaseVol);                                  // sıradaki çalış normal seviyeden
   }
 
   // ── Müzik dinamiği ──────────────────────────────────────
-  const _bgBaseVol = 0.7;
   let _duckRAF = null;
   // Hedef sese kısa rampla geç (boost ducking / ölüm fade)
   function _rampMusicTo(target, ms) {
     if (_duckRAF) cancelAnimationFrame(_duckRAF);
-    const from = bgAudio.volume, t0 = performance.now();
+    const from = _getMusicVol(), t0 = performance.now();
     const stepFn = () => {
       const t = Math.min(1, (performance.now() - t0) / ms);
-      bgAudio.volume = from + (target - from) * t;
+      _setMusicVol(from + (target - from) * t);
       if (t < 1) _duckRAF = requestAnimationFrame(stepFn);
       else _duckRAF = null;
     };
     stepFn();
   }
   function duckMusic(on) {
-    if (bgAudio.paused) return;
+    if (!_musicPlaying()) return;
     _rampMusicTo(on ? _bgBaseVol * 0.45 : _bgBaseVol, 250);
   }
   // Ölümde sert pause yerine 0.4s fade-out — dead SFX sting olarak öne çıkar
   function fadeOutMusic() {
-    if (bgAudio.paused) return;
+    if (!_musicPlaying()) return;
     _rampMusicTo(0, 400);
     setTimeout(() => { stopBgMusic(); }, 430);
   }
 
   function playTouchSound() {
     if (!sfxOn) return;
-    if (!playSfxBuffer(touchBuffer, 0.55)) {
-      // Fallback for before buffer is decoded
-      const s = touchAudioFallback.cloneNode();
-      s.volume = 0.55;
-      s.play().catch(() => {});
-    }
+    playSfx(touchBuffer, 'AUDIO/ArcRiseTouch.wav', 0.55);
   }
+  // Uygulama arka plana/kapanınca: tüm ses askıya alınır (arka planda çalmaz); dönünce devam.
+  function _audioPause() { try { if (sfxCtx && sfxCtx.state === 'running') sfxCtx.suspend(); } catch(_) {} if (bgAudio) bgAudio.pause(); }
+  function _audioResume() { try { if (sfxCtx && sfxCtx.state === 'suspended') sfxCtx.resume(); } catch(_) {} }
+  document.addEventListener('visibilitychange', () => { document.hidden ? _audioPause() : _audioResume(); });
+  window.addEventListener('pagehide', _audioPause);
+  try { if ('mediaSession' in navigator) { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; } } catch(_) {}
   let nextSpawnY, lastBonusY;
 
   // ── BG Arc animation ─────────────────────────────────────
@@ -8952,9 +8980,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
     fadeOutMusic();                               // müzik sönerken patlama sesi öne çıkar
     if (sfxOn) {
-      if (!playSfxBuffer(deadBuffer, 1.0)) {
-        const _d = deadAudioFallback.cloneNode(); _d.volume = 1.0; _d.play().catch(() => {});
-      }
+      playSfx(deadBuffer, 'AUDIO/ArcRiseDead.wav', 1.0);
     }
     haptic(120); // kısa darbe — uzun titreşim endGame'de
   }
@@ -9895,8 +9921,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
 
   // ── Settings UI — toggles ─────────────────────────────────
   function setSfx(v) {
-    sfxOn = v;
-    touchAudioFallback.volume = v ? 0.55 : 0;
+    sfxOn = v;   // playTouchSound / ölüm sesi sfxOn'a bakar
     document.getElementById('sfx-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('sfx-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
   }
@@ -9905,7 +9930,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     document.getElementById('mus-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('mus-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
     // If turned off mid-game, pause; if turned on mid-game, resume
-    if (scene === 'play') { v ? bgAudio.play().catch(() => {}) : bgAudio.pause(); }
+    if (scene === 'play') { v ? playBgMusic() : stopBgMusic(); }
   }
   applyAA();
   document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
