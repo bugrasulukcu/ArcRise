@@ -396,6 +396,23 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Temalar stile çevrildi (3 tema), tutorial yeniden yazıldı, renk rolleri (2026-09-28)
+
+**Temalar: filtre değil stil.** Dither, 1-Bit, Synthwave, Blueprint ve Thermal kaldırıldı; kalanlar **Game Boy, Noir, CRT Arcade**.
+- **Oyun alanı:** `CanvasRenderingContext2D.prototype`'taki `fillStyle` / `strokeStyle` / `shadowColor` setter'ları ve degrade `addColorStop` araya girilerek her renk çizim anında paletten seçiliyor (`THEME_STYLE`, `themeColor()`). Game Boy: parlaklık → 4 yeşil; Noir: kontrastlı gri. Alfa korunur → ışımalar yumuşak; sonuç önbellekte (`_tCache`); tema yoksa katman hiç kurulmaz. Kayıtlı tema `upg`'den önce ham localStorage'dan (yalnız bilinen stiller) okunur, ilk `getContext`'ten önce kurulur. Tema değişince sayfa bir kez yenilenir (önbellekli degrade/sprite'lar yeni paletle kurulsun).
+- **Arayüz:** yalnız `body > :not(.stack)` (menüler) — Noir `grayscale+contrast`, Game Boy yumuşak tablo eşlemesi (`#fx-gb-ui`, discrete değil → bantlaşma/titreme yok). Oyun alanına filtre uygulanmıyor → her kare tüm ekranı işleyen maliyet yok. CRT: yalnız tarama çizgisi + vinyet katmanı.
+- Önizlemeler de filtre değil aynı `themeColor` paletiyle çiziliyor.
+
+**Tutorial (yaparak öğren).** Eski hâlinde 4 sahnenin hepsi "oku → dokun" idi; oyuncu hiçbir şey yapmıyordu, **enerji geri sayımı ve duvarlar hiç anlatılmıyordu**. Yeni akış (pratik yavaş çekimde ×0.6, ölüm/enerji kaybı yok, duvarda seker):
+1. TURN — top durur, dokun → gerçekten döner
+2. GREEN — ileride yeşil, oyuncu kendi dokunuşlarıyla toplar; kaçırırsa yenisi + ipucu
+3. ENERGY — top durur, sayı nabız halkasıyla vurgulanır, geri sayım canlı gösterilir (8→3→dolar)
+4. RED — yolda engel + duvarlar yanıp söner; yanından geçmeli, çarparsa engel yeniden
+5. GO! — kesintisiz gerçek run
+Düzeltilenler: `#hud.tutorial` kuralı hiç yoktu (HUD tutorial'da görünüyordu); ödül bildirimleri tutorial bitene kadar kuyrukta bekliyor (`_tutOn`, TDZ güvenli); pratik sahnelerinde yazı altta (`#tut-text.bottom`). Otopilot artık tutorial'ın pratik sahnelerinde de oynuyor → uçtan uca test edilebilir.
+
+**Renk karışıklıkları.** Glow dili uygulanırken davet/challenge penceresine (`friends-modal`, iç öğeleri camgöbeği) yeşil verilmişti → karışıklığın kaynağı buydu. Challenge/Share/davet tümüyle **mavi** (`gl-blue`, `rgba(61,139,255)`, paylaşılan skor kartı dahil); oyun sonu "arkadaş ekle" Friends ile aynı yeşil; Extreme turuncu (orijinali ateş), Revive gül (orijinali pembe-kırmızı), Analysis lila. Renk rolleri `.gl` CSS'inin başına yorum olarak yazıldı. Davet rozeti "+5" diyordu (ödül 10) → düzeltildi.
+
 ### Glow UI dili, 8 satın alınabilir tema, eşyalar yeniden tasarlandı (2026-09-28)
 
 **Eşyalar — ölçümle karar verildi.** `tools/bot-econ.mjs` ile her eşya takılıyken 10–15 run (5 varyant paralel, Firebase engelli): hiçbirinin etkisi run'dan run'a dalgalanmayı aşmıyordu (ort. 1.3–1.8 m, 1.4–1.9 coin/run). Coin Rain altını *artırmadı* bile (0.13 vs 0.21 — altın zaten nadir). Yeniden tasarım (anahtarlar aynı, kayıtlar bozulmaz):
