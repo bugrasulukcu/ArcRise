@@ -8293,7 +8293,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     dyingT = -1; cancelRoulette();
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
-    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0;
+    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0;
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -8436,14 +8436,18 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   function addCombo(wx, wy, green) {
     if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
     runCombo++;
-    if (runCombo > _runMaxCombo) _runMaxCombo = runCombo;
+    // En uzun combo = art arda toplanan top SAYISI (tavanda bankalama sayımı kesmez; yalnız
+    // combo penceresinden çıkınca sıfırlanır) → ×7 tavanla sınırlı değil, gerçek beceriyi ölçer.
+    _comboStreak++;
+    if (_comboStreak > _runMaxCombo) _runMaxCombo = _comboStreak;
     _comboPot += 10 * runCombo;         // 10, 20, 30, … (cap 7'de zincir toplamı 280)
     if (runCombo >= 2) _comboPopT = 0.28; // kalıcı etikette kısa pop (drawComboLabel)
     // Tavana varıldı: pot hemen patlar ve zincir sıfırlanır. Oyuncu yeni zincire başlar.
-    if (runCombo >= comboCap()) comboBreak();
+    if (runCombo >= comboCap()) comboBreak(true);
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
-  function comboBreak() {
+  function comboBreak(capped) {
+    if (!capped) _comboStreak = 0;      // pencereden çıkış / ölüm → seri biter; tavanda bankalama seriyi sürdürür
     if (runCombo <= 0) return;
     if (_comboPot > 0) {
       scoreBonus += _comboPot;
@@ -8942,6 +8946,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     if (dyingT >= 0) return;
     // Bekleyen combo potunu skora ekle (ölümde kaybolmasın)
     if (_comboPot > 0) { scoreBonus += _comboPot; _comboPot = 0; runCombo = 0; }
+    _comboStreak = 0;
     dyingT = 0;
     running = false;                              // oyuncuyu dondur
     spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
@@ -8968,7 +8973,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   let _runCoinsRaw    = 0;        // son run'ın tavan ÖNCESİ ham coin kazancı
   let _runCoinsCapped = 0;        // günlük yumuşak tavanla kesilen miktar
   let runCombo        = 0;        // timer canlıyken art arda toplanan kazanım zinciri
-  let _runMaxCombo    = 0;        // bu run'da ulaşılan en uzun combo zinciri
+  let _runMaxCombo    = 0;        // bu run'daki en uzun combo serisi (art arda toplanan top sayısı)
+  let _comboStreak    = 0;        // şu anki seri (tavanda bankalama kesmez)
   let _comboPopT      = 0;        // combo etiketi pop animasyonu (sn)
   let _comboPot       = 0;        // biriken combo puanı — zincir kırılınca patlayıp skora eklenir
   function offerRevive() {
@@ -12190,10 +12196,11 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     { id: 'odometer', name: 'TRAVELLER', icon: 'rocket',
       stat: () => stats.distLifetimeCm || 0,    tiers: [5000, 25000, 100000, 300000, 1000000],
       desc: t => `Travel ${_fmtKm(t)} in total` },
-    // Zincir comboCap() ile tavanlı (×3 taban → ×7 tam yükseltmede).
+    // En uzun combo = art arda toplanan top sayısı (tavanda bankalama seriyi kesmez).
+    // Bot: upgrade'siz en iyi 3, tam upgrade'le (Timer/Combo Timer/Max Combo/Magnet) 77.
     { id: 'combo',    name: 'COMBO',     icon: 'fire',
-      stat: () => stats.maxCombo || 0,          tiers: [3, 4, 5, 6, 7],
-      desc: t => `Hit a ×${t} combo` },
+      stat: () => stats.maxCombo || 0,          tiers: [5, 15, 30, 60, 100],
+      desc: t => `Chain ${t} balls in a row` },
     { id: 'gold',     name: 'GOLD',      icon: 'coin',
       stat: () => stats.goldTotal || 0,         tiers: [10, 50, 200, 600, 1500],
       desc: t => `Collect ${_fmtN(t)} gold balls (total)` },
@@ -12465,6 +12472,20 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       addCell(s.id, s.icon, s.name, s.desc, !earnedBadges.has(s.id), undefined, '');
     });
   }
+  // Tek seferlik: COMBO rozeti çarpandan (×3–×7) seri SAYISINA geçti (5/15/30/60/100).
+  // Eski eşiklerle kazanılmış kademeler yeni eşiği karşılamıyorsa geri alınır.
+  try {
+    if (localStorage.getItem('arc_combo_badge_v2') !== '1') {
+      const fam = BADGE_FAMILIES.find(f => f.id === 'combo');
+      let changed = false;
+      fam.tiers.forEach((t, i) => {
+        const id = `combo-${i + 1}`;
+        if (earnedBadges.has(id) && (stats.maxCombo || 0) < t) { earnedBadges.delete(id); changed = true; }
+      });
+      if (changed) saveEarned();
+      localStorage.setItem('arc_combo_badge_v2', '1');
+    }
+  } catch(_) {}
   // Eski sürümden kalmış / artık var olmayan equip'leri temizle;
   // aile rozetlerini kazanılmış EN YÜKSEK kademeye terfi ettir.
   equippedBadges = equippedBadges.map(id => {
@@ -13049,7 +13070,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     skill: [
       { metric: 'score',  base: 1500, reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
       { metric: 'distCm', base: 350,  reward: QUEST_COIN, mk: t => `Reach ${fmtDist(t)} in a single run` },
-      { metric: 'combo',  base: 5,    reward: QUEST_COIN, mk: t => `Hit a ×${t} combo` },
+      { metric: 'combo',  base: 3,    reward: QUEST_COIN, mk: t => `Chain ${t} balls in a row` },
     ],
     grind: [
       { metric: 'scoreTotal', base: 6000, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
@@ -13090,8 +13111,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     ];
     const quests = axes.map(pool => {
       const def = pool[Math.floor(rng() * pool.length)];
-      // Combo zinciri comboCap()'te kırılır → hedef tavanı aşarsa görev imkânsızdır.
-      const target = def.metric === 'combo' ? Math.min(scaleTarget(def, s), comboCap()) : scaleTarget(def, s);
+      const target = scaleTarget(def, s);   // combo artık seri sayısı → tavanla sınırlı değil
       // goodRuns'ın mesafe eşiği de günle birlikte büyür (eskiden sabitti)
       const param = def.param ? Math.max(def.param, Math.round(def.param * s / 50) * 50) : 0;
       return { metric: def.metric, target, param, reward: def.reward, label: def.mk(target, param), progress: 0, claimed: false };

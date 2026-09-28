@@ -71,7 +71,7 @@ bu paleti veya istediğin varyasyonu kullanabilirsin — SABİT renk serbest
 | score-N.svg | SCORE — tek elde skor | 500 / 2.000 / 6.000 / 15.000 / 40.000 |
 | range-N.svg | DISTANCE — tek elde mesafe | 2m / 5m / 10m / 20m / 40m |
 | odometer-N.svg | TRAVELLER — toplam mesafe | 50m / 250m / 1km / 3km / 10km |
-| combo-N.svg | COMBO — en yüksek kombo | ×3 / ×4 / ×5 / ×6 / ×7 |
+| combo-N.svg | COMBO — art arda toplanan top (seri) | 5 / 15 / 30 / 60 / 100 |
 | gold-N.svg | GOLD — toplam altın top | 10 / 50 / 200 / 600 / 1.500 |
 | boost-N.svg | COLLECTOR — toplam booster | 10 / 50 / 200 / 600 / 1.500 |
 | veteran-N.svg | VETERAN — oynanan el | 10 / 50 / 250 / 1.000 / 3.000 |

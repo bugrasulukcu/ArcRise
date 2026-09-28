@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### En uzun combo artık sayı (seri), çarpan değil (2026-09-28)
+
+`stats.maxCombo` eskiden zincir uzunluğuydu — zincir tavanda (×3–×7) bankalanıp sıfırlandığı için 7'yi geçemiyordu ve rozet/görev "×N combo" diyordu. Artık **combo penceresinde art arda toplanan top sayısı** (`_comboStreak`): tavanda bankalama seriyi kesmez (`comboBreak(true)`), yalnız pencereden çıkış/ölüm sıfırlar.
+- Bot: upgrade'siz en iyi seri **3**, tam upgrade'le (Timer 12, Combo Timer 4 sn, Max Combo, Magnet) **77**.
+- COMBO rozeti: ×3/×4/×5/×6/×7 → **5 / 15 / 30 / 60 / 100** ("Chain N balls in a row"). Eski kademeler yeni eşiği karşılamıyorsa tek seferlik geri alınır (`arc_combo_badge_v2`).
+- Günlük combo görevi: "Hit a ×5 combo" (tavan kısıtlı) → "Chain N balls in a row", taban 3 (seriyle 9'a kadar).
+
 ### İki yeni özel rozet: DAREDEVIL, LAST SECOND (2026-09-28)
 
 Rozet ızgarası 4 sütun, 14 rozetle son satır yarımdı → 16. İkisi de mevcut mekaniklere dayalı beceri anı:
