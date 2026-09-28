@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Reset kapısı ↔ auth yarışı, iz deposu sınırı (2026-09-28)
+
+- **Reset sonrası eski hesap geri geliyordu (Codex #2):** ARC_DB IIFE'si kurulurken `ensureAuth()` refresh token'ı senkron okuyordu; tek seferlik reset kapısı bundan **sonra** çalıştığı için eski uid tazelenip silinen `arc_fb_rt` geri yazılıyordu. Kapı `<head>` script'ine (localStorage guard + debug bayrağından hemen sonra) taşındı → tüm okumalardan önce çalışır. Test (sahte auth): eski sürüm `refresh:OLD_RT → OLDUID`; yeni sürüm `signUp → NEWUID`, `arc_fb_rt = NEW_RT`.
+- **Hayalet iz deposu 1000 → 120:** çizim yalnız son 80 izi kullanıyor; 1000 iz localStorage kotasını doldurup coin/upgrade kaydını düşürebilir, her açılışta büyük `JSON.parse` yapardı. Eski büyük depolar ilk okumada bir kez kırpılır. Test: 300 iz → 120.
+
 ### Liderlik tablosu: PB güncellemesi, uid tabanlı doküman, asılı istekler, çevrimdışı durum (2026-09-28)
 
 - **PB güncellemesi hiç yazılmıyordu (Codex #1):** eski yol skoru isimle arıyor, güncellemeyi Authorization'sız düz `fetch` ile PATCH ediyordu; kurallar `isAuthed()` + `ownsOld()` istediği için 403. Artık doküman kimliği sabit **`scores/{uid}_{mode}`**: `fbFetch` ile GET (200/404) → varsa updateMask'li kimlikli PATCH, yoksa `currentDocument.exists=false` ile oluşturma. Aynı isimli farklı oyuncular birbirinin kaydına dokunamaz; `dedupeBest` artık `owner` ile gruplar (`parseRows` `owner` döndürür). Firestore bugün sıfırlandığı için taşıma gerekmedi. (Not: admin `dedupeScores` hâlâ isimle grupluyor — yalnız bakım aracı.)

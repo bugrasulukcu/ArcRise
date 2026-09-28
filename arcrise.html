@@ -38,6 +38,40 @@
       (() => { try { return localStorage.getItem('arc_debug') === '1'; } catch (_) { return false; } })();
     if (!window.ARC_DEBUG) console.log = function () {};
 
+    // ── One-shot data reset gate ──────────────────────────────
+    // Bump ARC_RESET_VERSION whenever you want every device that loads the
+    // page to wipe its local state once. On next load each device:
+    //   1) checks localStorage.arc_reset_v
+    //   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
+    //      sessionStorage
+    //   3) writes the new version so the wipe doesn't repeat
+    // Sayfanın EN BAŞINDA çalışır: ARC_DB açılışta ensureAuth() ile refresh token'ı
+    // okuyor — kapı ondan sonra çalışınca eski uid tazelenip silinen token geri yazılıyordu.
+    const ARC_RESET_VERSION = 'r-2026-09-28-2';
+    (() => {
+      try {
+        if (localStorage.getItem('arc_reset_v') === ARC_RESET_VERSION) return;
+        // Collect keys first (mutating localStorage while iterating is unsafe)
+        const local = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          // arc_debug korunur: ?debug ile açılan bayrak aynı yüklemede silinmesin (telefonda test)
+          if (k && k.startsWith('arc_') && k !== 'arc_reset_v' && k !== 'arc_debug') local.push(k);
+        }
+        local.forEach(k => localStorage.removeItem(k));
+        // Same for sessionStorage (Firestore read cache, etc.)
+        const sess = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith('arc_')) sess.push(k);
+        }
+        sess.forEach(k => sessionStorage.removeItem(k));
+        localStorage.setItem('arc_reset_v', ARC_RESET_VERSION);
+        console.log('[ArcRise] one-shot data reset →', ARC_RESET_VERSION,
+                    `(cleared ${local.length} local + ${sess.length} session keys)`);
+      } catch(e) { console.warn('[ArcRise] reset gate failed', e); }
+    })();
+
     // ── Global hata yakalama ── mobilde sessiz kırılmaları görünür kıl.
     window.addEventListener('error', e => {
       console.warn('[ArcRise error]', e.message, e.filename, e.lineno);
@@ -5519,38 +5553,6 @@ const ARC_DB = (() => {
   return api;
 })();
 
-// ── One-shot data reset gate ──────────────────────────────
-// Bump ARC_RESET_VERSION whenever you want every device that loads the
-// page to wipe its local state once. On next load each device:
-//   1) checks localStorage.arc_reset_v
-//   2) if it doesn't match → drops all arc_* keys + arc_topcache_* in
-//      sessionStorage
-//   3) writes the new version so the wipe doesn't repeat
-const ARC_RESET_VERSION = 'r-2026-09-28-2';
-(() => {
-  try {
-    if (localStorage.getItem('arc_reset_v') === ARC_RESET_VERSION) return;
-    // Collect keys first (mutating localStorage while iterating is unsafe)
-    const local = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      // arc_debug korunur: ?debug ile açılan bayrak aynı yüklemede silinmesin (telefonda test)
-      if (k && k.startsWith('arc_') && k !== 'arc_reset_v' && k !== 'arc_debug') local.push(k);
-    }
-    local.forEach(k => localStorage.removeItem(k));
-    // Same for sessionStorage (Firestore read cache, etc.)
-    const sess = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const k = sessionStorage.key(i);
-      if (k && k.startsWith('arc_')) sess.push(k);
-    }
-    sess.forEach(k => sessionStorage.removeItem(k));
-    localStorage.setItem('arc_reset_v', ARC_RESET_VERSION);
-    console.log('[ArcRise] one-shot data reset →', ARC_RESET_VERSION,
-                `(cleared ${local.length} local + ${sess.length} session keys)`);
-  } catch(e) { console.warn('[ArcRise] reset gate failed', e); }
-})();
-
 (() => {
   // ── Mobile zoom kilidi ───────────────────────────────────
   // viewport meta + touch-action yetmediği iOS Safari sürümleri için gesture event'lerini blokla.
@@ -6429,12 +6431,14 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // to capture a ghost at endGame. Sampling cadence ~every 20 world-px
   // upward — keeps each saved trace under ~150 points.
   const ghostSampled = [];
-  // allGhosts = up to 1000 traces from prior games, loaded at game start.
+  // allGhosts = up to GHOSTS_STORE_MAX traces from prior games, loaded at game start.
   let allGhosts = [];
   let crossPlayerGhosts = []; // others' best traces from Firestore, mode-filtered
   // Performance cap for the per-frame render — last N most-recent traces.
   const GHOSTS_RENDER_MAX = 80;
-  const GHOSTS_STORE_MAX  = 1000;
+  // Çizim yalnız son 80'i kullanır; 1000 iz ~1 MB+ localStorage (kota dolunca coin/upgrade
+  // kaydı da düşebilir) ve her açılışta pahalı JSON.parse demekti.
+  const GHOSTS_STORE_MAX  = 120;
   const GHOSTS_KEY        = 'arc_traces_v1';
 
   // ── Upgrade state (kalıcı upgrade & GEAR envanteri) ─────────────
@@ -6529,7 +6533,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   function loadGhostTraces() {
     try {
       const raw = localStorage.getItem(GHOSTS_KEY);
-      return raw ? (JSON.parse(raw) || []) : [];
+      const arr = raw ? (JSON.parse(raw) || []) : [];
+      if (arr.length > GHOSTS_STORE_MAX) {           // eski sürümden kalan büyük depo → bir kez kırp
+        arr.splice(0, arr.length - GHOSTS_STORE_MAX);
+        try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); } catch(_){}
+      }
+      return arr;
     } catch(_) { return []; }
   }
   function saveGhostTrace(trace) {
