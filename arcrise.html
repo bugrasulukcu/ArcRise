@@ -8324,7 +8324,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
-    shockWaves.length = 0; brakeT = 0;
+    shockWaves.length = 0; brakeT = 0; anchorPoint = null;
     // Load ghost traces fresh each game so the next save shows up next run.
     allGhosts = loadGhostTraces();
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
@@ -9036,9 +9036,12 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     _runUsedRevive = true;
     saveUpg();
     if (_lastSafePos) { player.x = _lastSafePos.x; player.y = _lastSafePos.y; }
-    // Kısa dokunulmazlık penceresi
+    // Enerji bitip ölündüyse enerji 0'da kalıyor ve bir sonraki karede tekrar ölünüyordu
+    // (bilet boşa gidiyordu). Reklamla devamdaki gibi toparla.
+    energy = Math.max(energy, 0.6); graceTimer = 0;
+    // Kısa dokunulmazlık penceresi (aktif Ghost booster'ını bitince kesmez)
     isGhost = true;
-    setTimeout(() => { if (scene === 'play') isGhost = false; }, 1200);
+    setTimeout(() => { if (scene === 'play' && boosterType !== 'ghost') isGhost = false; }, 1200);
     running = true;
     try { playBgMusic(); } catch(_){} // ölümde fade olan müziği geri başlat
     haptic(60);
@@ -12575,7 +12578,15 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   });
 
   // ── Nav buttons ───────────────────────────────────────────
+  // Hızlı çift dokunuşa karşı: 400 ms içindeki ikinci başlatma yok sayılır.
+  let _lastStartTs = 0;
+  function _startGate() {
+    const now = performance.now();
+    if (now - _lastStartTs < 400) return false;
+    _lastStartTs = now; return true;
+  }
   function startGame(withTutorial) {
+    if (withTutorial !== 'gated' && !_startGate() && scene === 'play') return;
     try { fitCanvas(); } catch(_){} // oyuna girerken canvas oranını taze ölç (sünme önlemi)
     initAudio(); // AudioContext unlock
     lastPurchase = null; try { updateRefundBtn(); } catch(_){} // run başladı → refund penceresi kapanır
@@ -12900,13 +12911,15 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // İlk START tıklamasında oyuncu hiç oynamadıysa tutorial gösterilir;
   // sonraki tıklamalarda normal oyuna geçer.
   function handleStartTap() {
+    if (!_startGate()) return;
     if (localStorage.getItem('arc_firstplay') !== '1') {
       startTutorial();
     } else {
-      startGame();
+      startGame('gated');
     }
   }
-  document.getElementById('btn-start').addEventListener('click', handleStartTap);
+  // Yalnız çerçeve dinler: iç düğme de dinlediğinde tıklama kabarcıklanıp run'ı İKİ kez
+  // başlatıyordu (eşyalar iki kez harcanıyordu, tutorial iki kez açılıyordu).
   document.getElementById('wrap-start').addEventListener('click', handleStartTap);
 
   document.getElementById('btn-credits').addEventListener('click', () => {
@@ -12925,8 +12938,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     showScene('home');
   });
 
-  document.getElementById('btn-again').addEventListener('click', () => startGame());
-  document.getElementById('wrap-again').addEventListener('click', () => startGame());
+  document.getElementById('wrap-again').addEventListener('click', () => startGame());   // iç düğme dinlemez (çift başlatma)
 
   // ── Rewarded ad stub ──────────────────────────────────────
   // v1'de ADS_ENABLED=false → "reklam izle · devam et" butonu hiç gösterilmez,
