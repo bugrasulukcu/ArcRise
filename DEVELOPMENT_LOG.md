@@ -396,6 +396,20 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### 🧭 Oturum devri — 2026-09-28 (buradan devam et)
+
+**Bugün yapılanlar (ayrıntılar aşağıdaki girişlerde):** canlı veri sıfırlandı (Firestore + `ARC_RESET_VERSION r-2026-09-28-2`); ekonomi ×1 ölçek (1 m = 1 coin, Extreme ×2, kesirli birikim, 3 yıllık katalog); "−" düğmesi/seviye kırpma düzeltmeleri; upgrade ikonları + info animasyonları (SMIL) + metinler; avatarlar ve glow UI dili (`.gl`); temalar stil olarak (Game Boy / Noir / CRT, canvas paleti `THEME_STYLE`); tutorial "yaparak öğren"; eşyalar (Shield, Gold Rush, Lucky Boost, Doubler 5 run), Mirror kaldırıldı, şok dalgası; küçük ekran (iPhone SE) düzeltmeleri; düşük efekt modu (`LOWFX`); rozetler (madalyon ikon + gerçekçi eşikler + DAREDEVIL / LAST SECOND); en uzun combo = seri sayısı; debug coin (Coins → sayıya 5 dokunuş, `?debug=1`).
+
+**Araçlar:** `tools/bot-econ.mjs` (Firebase engelli bot ölçümü, `PORT_BASE` ile paralel). Test için headless Chrome + CDP; oyun `python3 -m http.server 8765` ile servis edilir. `CODEX_REVIEW_v25.md` çapraz kontrol notu (v25 ekonomi için; sonrası kapsamda değil).
+
+**Sıradaki / açık işler:**
+1. **Sesler (şu an üzerinde):** tutorial'da dokunma sesleri gecikip toplu çalıyor; oyun kapatılınca iOS kilit ekranında "şarkı çalıyor" (Now Playing) görünüyor.
+2. Walls upgrade'i zayıf (maks 5 px). Combo Timer hayatta kalmada Timer'dan verimli.
+3. Extreme indirim şartı "5.000 skor" ×3 kalkınca çok zor. Günlük "3.50m tek run" görevi ortalama 2 m'ye göre zor olabilir.
+4. IAP paketleri (55/200/450/1100) fiyat noktaları; coin bakiyesi sunucuda doğrulanmıyor (IAP öncesi şart).
+5. Market öncesi (SECURITY_NOTES): Firestore okuma maliyeti, UGC moderasyonu, otopilotun release'ten çıkarılması, App Check Enforce (yeni APK sahaya çıktıktan sonra).
+6. Gerçek cihaz doğrulaması bekleyenler: Game Boy'da basınca "patlama" (iOS), düşük güç modu, tema geçişleri.
+
 ### En uzun combo artık sayı (seri), çarpan değil (2026-09-28)
 
 `stats.maxCombo` eskiden zincir uzunluğuydu — zincir tavanda (×3–×7) bankalanıp sıfırlandığı için 7'yi geçemiyordu ve rozet/görev "×N combo" diyordu. Artık **combo penceresinde art arda toplanan top sayısı** (`_comboStreak`): tavanda bankalama seriyi kesmez (`comboBreak(true)`), yalnız pencereden çıkış/ölüm sıfırlar.
