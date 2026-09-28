@@ -4178,7 +4178,7 @@
     <div id="coins-modal-progress">
       <div id="coins-progress-top">
         <span id="coins-progress-label">NEXT COIN</span>
-        <span id="coins-progress-val">0 / 150</span>
+        <span id="coins-progress-val"></span>
       </div>
       <div id="coins-progress-bar-wrap">
         <div id="coins-progress-bar"></div>
@@ -11757,14 +11757,16 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   document.getElementById('home-coin-pill').addEventListener('click', e => {
     e.stopPropagation();
     document.getElementById('coins-modal-count').textContent = String(coins);
-    // Artık "sonraki coin eşiği" yok — kazanç sabit oranlı. Bar bugünün
-    // yumuşak tavanını gösteriyor: eşiğe kadar tam oran, sonrası kısmi.
-    const today2 = coinsEarnedToday();
-    const pct    = Math.min(100, Math.max(0, (today2 / COIN_DAY_SOFT) * 100));
+    // Bir sonraki coin: run'lar arası biriken kesir (coinCarry). Kalan mesafe mod çarpanını
+    // (Extreme ×2) ve günlük yumuşak tavanı (aşıldıysa oran ×0.4) hesaba katar.
+    const capped = coinsEarnedToday() >= COIN_DAY_SOFT;
+    const perM   = COIN_PER_M * coinModeMul() * (capped ? COIN_SOFT_RATE : 1);
+    const leftCm = Math.max(0, (1 - coinCarry) / perM * 100);
+    const pct    = Math.min(100, Math.max(0, coinCarry * 100));
     const lb = document.getElementById('coins-progress-label');
-    if (lb) lb.textContent = today2 >= COIN_DAY_SOFT ? 'TODAY · REDUCED RATE' : 'TODAY';
+    if (lb) lb.textContent = capped ? 'NEXT COIN · REDUCED RATE' : 'NEXT COIN';
     const pv = document.getElementById('coins-progress-val');
-    if (pv) pv.textContent = `${today2} / ${COIN_DAY_SOFT}`;
+    if (pv) pv.textContent = `${fmtDist(leftCm)} TO GO`;
     const pb = document.getElementById('coins-progress-bar');
     if (pb) {
       // Reset so the transition replays each open
