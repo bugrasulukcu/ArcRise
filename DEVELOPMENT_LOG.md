@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### İki yeni özel rozet: DAREDEVIL, LAST SECOND (2026-09-28)
+
+Rozet ızgarası 4 sütun, 14 rozetle son satır yarımdı → 16. İkisi de mevcut mekaniklere dayalı beceri anı:
+- **DAREDEVIL** — tek run'da 10 "CLOSE!" yakın geçiş (`_runNearMiss`, `stats.daredevilDone`). 60 sn bot testinde kazanılmadı → gerçekten beceri istiyor.
+- **LAST SECOND** — geri sayım **0**'dayken (ölüm öncesi son şans penceresi) yeşil yakalamak (`stats.lastSecondDone`). İlk hâli "1 veya 0" idi; bot 60 sn'de kazandı → fazla kolay, 0'a daraltıldı. Tutorial ve Wife modunda sayılmaz.
+
 ### Rozetler yeniden (eşik + madalyon), iz animasyonları, hesap silmede tema (2026-09-28)
 
 **Rozet eşikleri** bot ölçümüne göre (iyi oyuncu ort. 2.1 m/run, en iyi ~7 m, ~2.5 altın/gün); eskilerin çoğu ilk kademede bile erişilemezdi:

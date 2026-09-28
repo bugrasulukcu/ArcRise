@@ -8293,7 +8293,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     dyingT = -1; cancelRoulette();
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
-    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboPopT = 0; _comboPot = 0;
+    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0;
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -8694,6 +8694,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
           if (d2 < (rr + 22) * (rr + 22)) ob._nmClose = true;
           else if (ob._nmClose && d2 > (rr + 46) * (rr + 46)) {
             ob._nm = true;
+            if (++_runNearMiss >= 10 && !stats.daredevilDone) stats.daredevilDone = true;   // DAREDEVIL rozeti
             const pts = Math.round(25 * getBoostScoreMul());
             scoreBonus += pts;
             energy = Math.min(1, energy + 0.10);
@@ -8720,6 +8721,8 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
         }
         // Base 10, süre katsayısı → booster katsayısı sırayla
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
+        // LAST SECOND rozeti: geri sayım 0'dayken (ölümden önceki son şans penceresinde) yeşil yakalamak
+        if (cd <= 0 && !tutActive && gameMode !== 'wife' && !stats.lastSecondDone) stats.lastSecondDone = true;
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         const afterTime = Math.round(10 * timeMul);
@@ -8958,6 +8961,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   let resumeCountdown = 0;        // reklamla dönünce top üzerinde 3→1 geri sayım (sn)
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
+  let _runNearMiss    = 0;        // bu run'daki "CLOSE!" sayısı (daredevil badge)
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
   let _runGoldBanked  = 0;        // bunlardan coin'e çevrilmiş olanlar
@@ -12218,6 +12222,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
       cond: () => !!stats.nightOwlDone },
     { id: 'survivor',  icon: 'shield',    name: 'SURVIVOR',  desc: '8.00m without revive, continue or shield',
       cond: () => !!stats.survivorDone },
+    { id: 'daredevil', icon: 'fire',      name: 'DAREDEVIL', desc: 'Get 10 CLOSE! near-misses in one run',
+      cond: () => !!stats.daredevilDone },
+    { id: 'last-second', icon: 'hourglass', name: 'LAST SECOND', desc: 'Grab a green with your countdown at 0',
+      cond: () => !!stats.lastSecondDone },
     { id: 'boss',      icon: 'crown',     name: 'BOSS',      desc: 'Own all 6 abilities',
       cond: () => ['timeslow','phaseburst','coinpull','brake','shock','anchor']
                     .every(k => upg.inv[k]?.owned) },
@@ -12234,7 +12242,7 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
   // ── Rozet madalyonları (avatar stili) ─────────────────────────
   // Koyu disk + kademe renginde iç ışık ve halka + üstten beyaza açılan parlayan glif + altta
   // kademe noktaları (I–V). Glifler 24×24; P = degrade boya, D = koyu detay çizgisi.
-  const BADGE_SPECIAL_COLORS = { speedrun: '#35e0ff', 'night-owl': '#9b8cff', survivor: '#ff5a8c', boss: '#ffcc33' };
+  const BADGE_SPECIAL_COLORS = { speedrun: '#35e0ff', 'night-owl': '#9b8cff', survivor: '#ff5a8c', boss: '#ffcc33', daredevil: '#ff7a28', 'last-second': '#7CFF7A' };
   const BADGE_GLYPHS = {
     score:    (P, D) => `<path d="M7 3h10v4a5 5 0 0 1-10 0z" fill="${P}"/><path d="M17 4.5h2.4a2.6 2.6 0 0 1-2.6 4.2M7 4.5H4.6a2.6 2.6 0 0 0 2.6 4.2" fill="none" stroke="${P}" stroke-width="1.8" stroke-linecap="round"/><path d="M10.5 12.5h3v4h-3zM7.5 17h9v3.5h-9z" fill="${P}"/>`,
     range:    (P, D) => `<path d="M6 21.5V2.5" stroke="${P}" stroke-width="2.2" stroke-linecap="round"/><path d="M7 3.5h12l-3 4 3 4H7z" fill="${P}"/><path d="M11 3.5v8M15 3.5v8" stroke="${D}" stroke-width="1.2" opacity=".5"/>`,
@@ -12250,6 +12258,10 @@ const ARC_RESET_VERSION = 'r-2026-09-28-2';
     'night-owl': (P, D) => `<path d="M15.5 3.5a8.5 8.5 0 1 0 5 13.9A7 7 0 0 1 15.5 3.5z" fill="${P}"/><path d="M19 3l.7 1.6 1.7.2-1.3 1.2.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.2 1.7-.2zM21.5 9.5l.4.9 1 .1-.8.7.2 1-.8-.5-.8.5.2-1-.8-.7 1-.1z" fill="#fff" opacity=".85"/>`,
     survivor: (P, D) => `<path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" fill="${P}"/><path d="M12 9.5v6M9 12.5h6" stroke="${D}" stroke-width="2" stroke-opacity=".55" stroke-linecap="round"/>`,
     boss:     (P, D) => `<path d="M3 18.5h18L19.5 7l-4.2 4L12 4.5 8.7 11 4.5 7z" fill="${P}" stroke-linejoin="round"/><path d="M3.5 21h17" stroke="${P}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="4.2" r="1.5" fill="#fff" opacity=".85"/>`,
+    // DAREDEVIL: top, engelin dibinden sıyırıp geçen yay
+    daredevil: (P, D) => `<circle cx="15" cy="13.5" r="5.5" fill="${P}" opacity=".45"/><path d="M3.5 21C5 13 7.5 8.5 13 6.5" fill="none" stroke="${P}" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="2.6 2.4"/><circle cx="7.5" cy="9.5" r="3.2" fill="${P}"/><path d="M18.5 3.5l1 2.6 2.6.3-2 1.7.7 2.6-2.3-1.5-2.3 1.5.7-2.6-2-1.7 2.6-.3z" fill="#fff" opacity=".85"/>`,
+    // LAST SECOND: neredeyse boş kum saati + son anda yakalanan yeşil
+    'last-second': (P, D) => `<path d="M6 2.5h12M6 21.5h12" stroke="${P}" stroke-width="2" stroke-linecap="round"/><path d="M7.5 2.5c0 5 4.5 6.2 4.5 9.5s-4.5 4.5-4.5 9.5h9c0-5-4.5-6.2-4.5-9.5s4.5-4.5 4.5-9.5z" fill="${P}" opacity=".35"/><path d="M8.6 21.5c.6-2.4 2.2-3.4 3.4-4.2 1.2.8 2.8 1.8 3.4 4.2z" fill="${P}"/><circle cx="18.5" cy="12" r="3.2" fill="#fff"/>`,
   };
   let _bdgUid = 0;
   function badgeHTML(b, size) {

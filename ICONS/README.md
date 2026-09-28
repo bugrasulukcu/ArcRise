@@ -87,3 +87,5 @@ bu paleti veya istediğin varyasyonu kullanabilirsin — SABİT renk serbest
 | night-owl.svg | NIGHT OWL | 00:00-04:00 arası bir el bitir |
 | survivor.svg | SURVIVOR | Revive/continue/Shield olmadan 8.00m |
 | boss.svg | BOSS | 7 yeteneğin hepsine sahip ol |
+| daredevil.svg | DAREDEVIL | Tek run'da 10 CLOSE! (yakın geçiş) |
+| last-second.svg | LAST SECOND | Geri sayım 0'dayken yeşil yakala |
