@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Geri butonları standart: ok + çerçeve = pencerenin çerçeve rengi (2026-09-29)
+
+- Pencere başına elle yazılmış renk kuralları (coins/quests/friends/lb/badges/gearpick) kaldırıldı; tek kural: `--mb = --mbc ?? --c` (pencerenin gl rengi) → ok %80 renk, buton çerçevesi %60, zemin %8, hover %90/%16, ok ışıması aynı renkte.
+- Ok artık panel gradyanını (`--gg`) almıyor (High Scores'ta altın ok + beyaz çerçeve buradan geliyordu).
+- Çerçevesi değişen pencereler `--mbc` verir: High Scores moda göre (Chill #5aa8ff, Extreme #ff7a28), Profil iz (trace) rengine göre.
+- Ölçüm (11 pencere): Ayarlar/Temalar/Upgrades/Credits/Profil'de ok beyaz, çerçeve mor/beyazdı → hepsi pencere rengiyle eşleşiyor.
+
 ### Çarpan hapı büyür + renk kademeleri, combo 3 topla başlar, toptaki zamanlayıcı içeride (2026-09-29)
 
 - **Hap:** toplam çarpan büyüdükçe yazı büyür (17 px × (1 + min(0.65, log2(M) × 0.13)) → ×9 ≈ 24 px), renk kademeli: ×1–2 yeşil, ×3–5 mavi, ×6–9 sarı, ×10–15 turuncu, ×16–27 pembe, ×28+ mor (`MUL_TIERS`, `--tc`). Combo aktifken yazı kalın (800) ve ışık kademe renginde, seviyeyle artar. Eski enerjiye bağlı ton (her kare inline renk) kaldırıldı.

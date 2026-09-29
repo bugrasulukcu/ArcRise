@@ -443,9 +443,9 @@
     }
     @keyframes lbSpin { to { --lbA: 360deg; } }
     /* İkon/ok rengi altın kalır (gl-gold); yalnız zemin tonu ve çerçeve moda göre */
-    html#arc #lb-modal-box.mode-normal { border-color: transparent; box-shadow: 0 0 30px rgba(70,140,255,.32);
+    html#arc #lb-modal-box.mode-normal { --mbc: #5aa8ff; border-color: transparent; box-shadow: 0 0 30px rgba(70,140,255,.32);
       background: radial-gradient(95% 70% at 50% 0%, rgba(90,168,255,.16), transparent 70%), rgba(9,11,18,.78); }
-    html#arc #lb-modal-box.mode-extreme { border-color: transparent;
+    html#arc #lb-modal-box.mode-extreme { --mbc: #ff7a28; border-color: transparent;
       background: radial-gradient(95% 70% at 50% 0%, rgba(255,122,40,.14), transparent 70%), rgba(12,9,10,.80);
       box-shadow: 0 0 34px rgba(255,90,30,.40), inset 0 -46px 50px -40px rgba(255,90,20,.45); }
     #lb-modal-box.mode-normal::before, #lb-modal-box.mode-extreme::after { opacity: 1; }
@@ -1805,20 +1805,19 @@
     .modal-back:active, #upg-back-arrow:active { transform: scale(0.92); }
     .modal-back svg, #upg-back-arrow svg { width: 20px; height: 20px; }
     /* Her modalın geri-oku, o sayfanın kendi stroke rengini alır */
-    #gearpick-box .modal-back { border-color: rgba(170,120,255,.5); color: #c0a3ff; }
-    #gearpick-box .modal-back:hover { background: rgba(170,120,255,.18); border-color: rgba(170,120,255,.85); }
-    #coins-modal-box .modal-back { border-color: rgba(255,210,80,.6); color: #ffd866; }
-    #coins-modal-box .modal-back:hover { background: rgba(255,210,80,.16); border-color: rgba(255,210,80,.9); }
-    #quests-modal-box .modal-back { border-color: rgba(255,200,90,.5); color: #ffce5a; }
-    #quests-modal-box .modal-back:hover { background: rgba(255,200,90,.16); border-color: rgba(255,200,90,.85); }
-    #friends-modal-box .modal-back { border-color: rgba(61,139,255,.5); color: #6fa8ff; }
-    #friends-modal-box .modal-back:hover { background: rgba(61,139,255,.16); border-color: rgba(61,139,255,.85); }
-    #friendslist-modal-box .modal-back { border-color: rgba(124,255,122,.5); color: #9fffa0; }
-    #friendslist-modal-box .modal-back:hover { background: rgba(124,255,122,.16); border-color: rgba(124,255,122,.85); }
-    #lb-modal-box .modal-back { border-color: rgba(255,255,255,.38); color: #fff; }
-    #lb-modal-box .modal-back:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.65); }
-    #badges-modal-box .modal-back { border-color: rgba(255,255,255,.38); color: #fff; }
-    #badges-modal-box .modal-back:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.65); }
+    /* Tek kural: ok + buton çerçevesi, bulunduğu pencerenin çerçeve renginden (--c, gl sınıfı).
+       Çerçevesi moda/ize göre değişen pencereler --mbc verir (High Scores: mod, Profil: iz rengi). */
+    html#arc .modal-back, html#arc #upg-back-arrow {
+      --mb: var(--mbc, var(--c, #b89bff));
+      color: color-mix(in srgb, var(--mb) 80%, #fff);
+      border-color: color-mix(in srgb, var(--mb) 60%, transparent);
+      background: color-mix(in srgb, var(--mb) 8%, transparent);
+    }
+    html#arc .modal-back:hover, html#arc #upg-back-arrow:hover {
+      border-color: color-mix(in srgb, var(--mb) 90%, transparent);
+      background: color-mix(in srgb, var(--mb) 16%, transparent);
+    }
+    html#arc .modal-back svg, html#arc #upg-back-arrow svg { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--mb) 70%, transparent)); }
     #settings-back { border-color: rgba(255,255,255,.4); color: #fff; }
     #settings-back:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.7); }
     /* Modal başlık satırı: [geri butonu] [başlık (ortalı)] [eş genişlik boşluk] */
@@ -3853,6 +3852,9 @@
     html#arc .gl svg, html#arc .btn-gray svg { filter: drop-shadow(0 0 3.5px color-mix(in srgb, var(--c) 85%, transparent)); }
     html#arc :is(.gl, .btn-gray) svg[stroke="currentColor"], html#arc :is(.gl, .btn-gray) svg [stroke="currentColor"] { stroke: var(--gg); }
     html#arc :is(.gl, .btn-gray) svg [fill="currentColor"] { fill: var(--gg); }
+    /* Geri oku panel gradyanını (--gg) almaz: butonun kendi rengi (pencere çerçevesinden --mb) */
+    html#arc :is(.modal-back, #upg-back-arrow) svg[stroke="currentColor"],
+    html#arc :is(.modal-back, #upg-back-arrow) svg [stroke="currentColor"] { stroke: currentColor; }
     html#arc .gl .gl-txt, html#arc .gl .chip-val, html#arc .gl .cl-label { text-shadow: 0 0 8px color-mix(in srgb, var(--c) 55%, transparent); }
     /* Yarı saydam (arkası bulanık) yüzeyler: zemin opak değil */
     /* ── Temalar (Settings → Theme). Filtre body'ye uygulanır: oyun alanı dahil tüm ekran. ── */
@@ -11414,6 +11416,7 @@ const ARC_DB = (() => {
     if (box) {
       box.style.setProperty('--prof-glow', m.glow);
       box.style.setProperty('--prof-glowS', m.glowStrong);
+      box.style.setProperty('--mbc', m.solid);   // geri butonu çerçeve (iz) renginde
       // Renk katmanı (statik): gradyen → m.css linear, düz → solid
       const colorLayer = m.isGrad ? m.css : `linear-gradient(${m.solid},${m.solid})`;
       const setStatic = () => {
