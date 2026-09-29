@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Kendi en iyi run'ının hayaleti (PB ghost) (2026-09-29)
+
+- Run boyunca 0.1 sn'de bir `[t×10, x, başlangıçtan yükseklik]` kaydı (`_pbRec`, en fazla 4000 nokta ≈ 6.5 dk). Yükseklik başlangıç noktasına göre tutulur (başlangıç `H−200` cihaza göre değişir; genişlik sabit 600).
+- Mesafe rekoru kırılınca (rekor güncellenmeden önce kıyaslanır) mod başına `arc_pb_ghost_normal/extreme` saklanır (~10 KB/dk).
+- Sonraki run'larda aynı zamanlamayla doğrusal ara değerle oynatılır: yarı saydam koyu top, kesikli açık mavi çember, "PB" etiketi; hayalet kendi run'ını bitirince kaybolur. Wife mode ve tutorial'da yok. `upg.pbGhost === false` ile kapatılabilir (UI yok). Delete data hayaletleri de siler.
+- Test 20/20 (yeni: rekor run kaydı + 2. run'da yükleme).
+
 ### Yeni hareketler için rozet + görev (2026-09-29)
 
 - Rozet ızgarası 16 → 20 (4 sütun, tam dolu): **THREADER I–V** (toplam THREAD 1/10/50/200/500), **GATEKEEPER I–V** (kapı 1/10/50/200/500), **CRYSTAL I–V** (kırılan kristal 1/10/40/150/400), özel **MAESTRO** (tek run'da THREAD + KAPI + TIMING + KORİDOR). Yeni glifler (iki top arasından yay, direk+hedef, çatlak altıgen, takımyıldız).

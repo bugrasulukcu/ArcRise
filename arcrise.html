@@ -6470,7 +6470,15 @@ const ARC_DB = (() => {
   let scene   = 'home';
   let running = false, started = false;
   let _lastRunInfo = {};
-  let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
+  let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur
+  // Kendi en iyi run'ının hayaleti: run boyunca 0.1 sn'de bir [t×10, x, başlangıçtan yükseklik];
+  // mesafe rekoru kırılınca mod başına saklanır, sonraki run'larda aynı zamanlamayla oynatılır.
+  const _pbRec = [];
+  let _pbT = 0, _pbStartY = 0, _pbGhost = null, _pbIdx = 0;
+  const PB_GHOST_KEY = m => 'arc_pb_ghost_' + m;
+  function loadPbGhost(m) {
+    try { const g = JSON.parse(localStorage.getItem(PB_GHOST_KEY(m)) || 'null'); return g && Array.isArray(g.p) && g.p.length > 3 ? g : null; } catch(_) { return null; }
+  }   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
   // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
@@ -8291,6 +8299,27 @@ const ARC_DB = (() => {
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
   // history without overpowering the live trail.
+  // PB hayaleti: yarı saydam top + "PB" etiketi, kayıttaki zamanlamayla (doğrusal ara değer)
+  function drawPbGhost() {
+    if (!_pbGhost || scene !== 'play' || tutActive) return;
+    const P = _pbGhost.p, tk = _pbT * 10;
+    if (tk > P[P.length - 1][0]) return;                       // hayalet run'ını bitirdi
+    while (_pbIdx < P.length - 2 && P[_pbIdx + 1][0] <= tk) _pbIdx++;
+    const a = P[_pbIdx], b = P[Math.min(P.length - 1, _pbIdx + 1)];
+    const f = b[0] > a[0] ? Math.max(0, Math.min(1, (tk - a[0]) / (b[0] - a[0]))) : 0;
+    const x = a[1] + (b[1] - a[1]) * f, y = _pbStartY - (a[2] + (b[2] - a[2]) * f), sy = W2S(y);
+    if (sy < -30 || sy > H + 30) return;
+    const r = player.r;
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    ctx.fillStyle = '#0b0e16'; ctx.beginPath(); ctx.arc(x, sy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#bfe8ff'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(x, sy, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.75; ctx.fillStyle = '#bfe8ff';
+    ctx.font = "bold 10px 'Press Start 2P', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('PB', x, sy + 1);
+    ctx.restore();
+  }
   function drawGhostTrail() {
     if (!allGhosts.length && !crossPlayerGhosts.length) return;
     ctx.save();
@@ -8665,6 +8694,8 @@ const ARC_DB = (() => {
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
+    _pbRec.length = 0; _pbT = 0; _pbIdx = 0; _pbStartY = player.y;
+    _pbGhost = (gameMode !== 'wife' && upg.pbGhost !== false) ? loadPbGhost(gameMode) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
     // Load ghost traces fresh each game so the next save shows up next run.
@@ -8966,6 +8997,13 @@ const ARC_DB = (() => {
     // No shift, so the trace keeps its true start at H - 200 (spawn).
     if (!ghostSampled.length || (ghostSampled.at(-1).y - player.y) > 20) {
       ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
+    }
+    // PB hayaleti kaydı (0.1 sn'de bir; en fazla ~6.5 dk)
+    if (!tutActive) {
+      _pbT += dt;
+      const tk = Math.round(_pbT * 10);
+      if ((!_pbRec.length || tk > _pbRec.at(-1)[0]) && _pbRec.length < 4000)
+        _pbRec.push([tk, Math.round(player.x), Math.round(_pbStartY - player.y)]);
     }
 
     // Yeşil bantta (üst 2 kademe) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
@@ -9648,6 +9686,11 @@ const ARC_DB = (() => {
           stats.lastPlayDate = todayStr;
         }
       }
+      // Mesafe rekoru → bu run PB hayaleti olur (rekor güncellenmeden ÖNCE kıyasla)
+      const _prevBestD = gameMode === 'extreme' ? (stats.bestDistExtreme || 0) : (stats.bestDistNormal || 0);
+      if (runDistCm > _prevBestD && _pbRec.length > 5) {
+        try { localStorage.setItem(PB_GHOST_KEY(gameMode), JSON.stringify({ d: Math.round(runDistCm), p: _pbRec })); } catch(_) {}
+      }
       if (gameMode === 'extreme') {
         if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
         if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
@@ -10014,7 +10057,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawPbGhost(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawComboLabel(); drawResumeCountdown(); }
@@ -10138,7 +10181,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
@@ -10391,6 +10434,7 @@ const ARC_DB = (() => {
     runCoinsRaw, applySoftCap, coinsEarnedToday,
     get audio() { return _audioDiag(); },
     get lastRun() { return _lastRunInfo; },
+    get pbGhost() { return _pbGhost ? { d: _pbGhost.d, n: _pbGhost.p.length } : null; },
     finishTutorial: () => { _tutWantsPlay = true; endTutorial(); },   // tutorial'ın "GO!" sonu
     get threads() { return _runThreads; },
     // oyuncunun bulunduğu yere dönen ikili koy (merkez oyuncuda → dışarı çıkınca THREAD)

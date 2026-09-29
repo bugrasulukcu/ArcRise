@@ -391,6 +391,16 @@ test('rozetler: THREADER / GATEKEEPER / CRYSTAL / MAESTRO açılır', async () =
     check(earned.includes(id), `${id} açılmadı (açılanlar: ${earned.join(',')})`);
 });
 
+test('PB hayaleti: rekor run kaydedilir, sonraki run\'da oynatılır', async () => {
+  await fresh();
+  await playRun(2500);
+  const g = await lsJSON('arc_pb_ghost_normal');
+  check(g && g.p.length > 5, 'rekor run hayaleti kaydedilmedi');
+  await ev(`document.getElementById('btn-again').click(); true`); await sleep(500);
+  const pg = await ev('ARC_TEST.pbGhost');
+  check(pg && pg.n === g.p.length, `2. run'da hayalet yüklenmedi: ${JSON.stringify(pg)}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
