@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yeni hareketler için rozet + görev (2026-09-29)
+
+- Rozet ızgarası 16 → 20 (4 sütun, tam dolu): **THREADER I–V** (toplam THREAD 1/10/50/200/500), **GATEKEEPER I–V** (kapı 1/10/50/200/500), **CRYSTAL I–V** (kırılan kristal 1/10/40/150/400), özel **MAESTRO** (tek run'da THREAD + KAPI + TIMING + KORİDOR). Yeni glifler (iki top arasından yay, direk+hedef, çatlak altıgen, takımyıldız).
+- İstatistikler olay anında: `stats.threadsTotal / gatesTotal / crystalsTotal / maestroDone` (kayıt endGame'de, altın gibi).
+- Görev havuzu (BONUS ekseni): "Thread between spinning twins N time(s) today" (taban 1), "Pass N gates dead centre today" (taban 2).
+- Test 19/19 (yeni: rozetler tek run'da açılıyor).
+
 ### Skorla birleşen nesneler: Kapı, ×2 Halkası, Kristal, Altın Koridor, TIMING + ölüm sebebi (2026-09-29)
 
 Hepsi `feats` dizisinde (kapı hedefi / halka / kıvılcım) ya da engel özelliği (kristal, TIMING). Spawn: engel slotlarının kapı %7 (0.4 m+), koridor %4 (0.6 m+), halka %3 (0.8 m+); kristal normal engellerin %8'i (0.5 m+; Shockwave/Phase takılıysa ya da Shield aktifse %16).

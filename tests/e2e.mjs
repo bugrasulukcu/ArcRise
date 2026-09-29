@@ -379,6 +379,18 @@ test('ölüm sebebi game over ekranında yazar', async () => {
   check(/HIT|OUT OF ENERGY/.test(txt), `sebep yazısı: "${txt}"`);
 });
 
+test('rozetler: THREADER / GATEKEEPER / CRYSTAL / MAESTRO açılır', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(600);
+  await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnOrbitHere(90); true`); await sleep(1500);
+  for (const k of ['gate', 'corridor', 'crystal', 'timing']) { await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('${k}'); true`); await sleep(900); }
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(800);
+  const earned = JSON.parse(await ls('arc_badges_earned_v1') || '[]');
+  for (const id of ['threader-1', 'gatekeeper-1', 'breaker-1', 'maestro'])
+    check(earned.includes(id), `${id} açılmadı (açılanlar: ${earned.join(',')})`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
