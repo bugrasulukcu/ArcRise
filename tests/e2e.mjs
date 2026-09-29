@@ -451,7 +451,9 @@ test('combo: seri çarpanı tüm kazançları çarpar (v27 tabanları)', async (
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
   const cap = (await ev('ARC_TEST.combo')).cap;
-  await ev(`ARC_TEST.setCombo(3); true`);
+  await ev(`ARC_TEST.setCombo(2); true`);
+  check((await ev('ARC_TEST.combo')).mul === 1, '2 topta combo başlamamalı');
+  await ev(`ARC_TEST.setCombo(4); true`);   // combo 3 topla ×2 başlar → 4 top = ×3
   check((await ev('ARC_TEST.combo')).mul === Math.min(3, cap), 'combo çarpanı 3 değil');
   const b0 = await ev('ARC_TEST.bonus');
   await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('gate'); true`); await sleep(400);

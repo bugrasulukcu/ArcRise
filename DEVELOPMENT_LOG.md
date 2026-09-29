@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Çarpan hapı büyür + renk kademeleri, combo 3 topla başlar, toptaki zamanlayıcı içeride (2026-09-29)
+
+- **Hap:** toplam çarpan büyüdükçe yazı büyür (17 px × (1 + min(0.65, log2(M) × 0.13)) → ×9 ≈ 24 px), renk kademeli: ×1–2 yeşil, ×3–5 mavi, ×6–9 sarı, ×10–15 turuncu, ×16–27 pembe, ×28+ mor (`MUL_TIERS`, `--tc`). Combo aktifken yazı kalın (800) ve ışık kademe renginde, seviyeyle artar. Eski enerjiye bağlı ton (her kare inline renk) kaldırıldı.
+- **Combo art arda 3 yeşille başlar** (`COMBO_START`): 3 → ×2, 4 → ×3 … tavana kadar; başlangıçta "COMBO!", tavanda "MAX COMBO ×n". "COMBO ×n" satırı + pencere çizgisi combo başlayana kadar gizli. Combo açıkken booster hapı 158 px'e kayar (çakışmasın).
+- **Toptaki combo zamanlayıcısı** kenar halkasının içinde (r − 5).
+
 ### High Scores: Chill / Extreme mod animasyonları yeniden (2026-09-29)
 
 - **Sorunlar:** Extreme'in alev katmanı (`::after`) kutunun tamamına yayılıp içeriği turuncu-kahverengi bulanıklaştırıyordu; titreme `box-shadow` animasyonuydu (her kare yeniden boyama, mobilde pahalı). Chill halkası çok soluktu, kutu `gl-gold` yüzünden sarımsı sisliydi; seçili "buz" sekmesinde rastgele lekeler (radyal noktalar + hue-rotate filtresi) vardı.

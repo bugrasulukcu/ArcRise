@@ -3561,13 +3561,18 @@
     /* v27: hapta yalnız TOPLAM çarpan; altında COMBO ×n + combo penceresi çizgisi.
        Combo açıkken hap parlar (--cg: 0 → 1 combo seviyesi) ve etrafına partikül saçar. */
     #combo-hud { flex-direction: column; gap: 5px; }
-    #combo-pill { position: relative; --cg: 0;
-      transition: box-shadow .25s ease, border-color .25s ease, color .25s ease; }
+    #combo-pill { position: relative; --cg: 0; --tc: #7CFF7A;
+      color: var(--tc); border-color: color-mix(in srgb, var(--tc) 60%, transparent);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--tc) 22%, transparent);
+      font-weight: 500;
+      transition: box-shadow .25s ease, border-color .25s ease, color .25s ease, font-size .25s cubic-bezier(.3,1.5,.5,1); }
+    /* Combo aktif: kalın yazı + seviyeye göre artan ışık (kademe renginde) */
     #combo-hud.on #combo-pill {
-      border-color: rgba(255,224,102, calc(.55 + .45 * var(--cg))) !important;
-      box-shadow: 0 0 calc(14px + 34px * var(--cg)) rgba(255,210,74, calc(.25 + .55 * var(--cg))),
-                  inset 0 0 calc(6px + 14px * var(--cg)) rgba(255,224,102, calc(.10 + .25 * var(--cg)));
-      color: #fff6c8 !important; text-shadow: 0 0 calc(4px + 10px * var(--cg)) rgba(255,210,74,.9);
+      font-weight: 800;
+      border-color: var(--tc);
+      box-shadow: 0 0 calc(14px + 34px * var(--cg)) color-mix(in srgb, var(--tc) calc(30% + 45% * var(--cg)), transparent),
+                  inset 0 0 calc(6px + 14px * var(--cg)) color-mix(in srgb, var(--tc) 25%, transparent);
+      text-shadow: 0 0 calc(4px + 10px * var(--cg)) var(--tc);
     }
     #combo-sub { display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: 0; transition: opacity .2s ease; }
     #combo-hud.win #combo-sub { opacity: 1; }
@@ -3644,6 +3649,8 @@
       display: none;
     }
     #booster-hud.active { display: block; }
+    #booster-hud { transition: top .25s ease; }
+    #combo-hud.on ~ #booster-hud { top: 158px; }   /* combo satırı + çizgi açıkken altına kay */
     #booster-pill {
       display: flex; align-items: center; gap: 10px;
       background: rgba(10,6,24,0.88);
@@ -6870,7 +6877,9 @@ const ARC_DB = (() => {
   // Süre çarpanı kademeli ve tam sayı (eskiden cd/2 → ×0.5, ×3.5 gibi küsuratlı, tavan ×6):
   // geri sayım 0–3 → ×1, 4–6 → ×2, 7–9 → ×3, 10–12 → ×4 (×4 yalnız Timer upgrade'iyle).
   function timeMulFor(cd) { return cd >= 10 ? 4 : cd >= 7 ? 3 : cd >= 4 ? 2 : 1; }
-  function comboMul() { return runCombo >= 2 ? Math.min(runCombo, comboCap()) : 1; }
+  // Combo art arda 3 yeşille başlar: 3 → ×2, 4 → ×3 … comboCap() tavanına kadar
+  const COMBO_START = 3;
+  function comboMul() { return runCombo >= COMBO_START ? Math.min(runCombo - (COMBO_START - 2), comboCap()) : 1; }
   // Combo penceresi (yeşil bant) açık mı, ne kadarı kaldı: 1 → yeni yeşil, 0 → kapandı
   function comboWindowFrac() {
     const mx = comboDisplayMax(), eg = (mx - 2) / mx;
@@ -8680,14 +8689,14 @@ const ARC_DB = (() => {
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
-    // Combo penceresi zamanlayıcısı: topun kenarında saat yönünde azalan altın yay
+    // Combo penceresi zamanlayıcısı: topun İÇİNDE, kenar halkasının hemen içinde saat yönünde azalan yay
     if (!tutActive && gameMode !== 'wife' && scene === 'play') {
       const wf = comboWindowFrac();
       if (wf > 0) {
-        const on = runCombo >= 2;
-        ctx.strokeStyle = on ? 'rgba(255,214,90,0.95)' : 'rgba(255,214,90,0.55)';
-        ctx.lineWidth = on ? 3.5 : 2.5; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.arc(px, py, r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * wf); ctx.stroke();
+        const on = comboMul() >= 2;
+        ctx.strokeStyle = on ? 'rgba(255,214,90,0.95)' : 'rgba(255,214,90,0.5)';
+        ctx.lineWidth = on ? 3 : 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(px, py, r - 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * wf); ctx.stroke();
         ctx.lineCap = 'butt';
       }
     }
@@ -9069,13 +9078,21 @@ const ARC_DB = (() => {
     // combo penceresinden çıkınca sıfırlanır) → ×7 tavanla sınırlı değil, gerçek beceriyi ölçer.
     _comboStreak++;
     if (_comboStreak > _runMaxCombo) _runMaxCombo = _comboStreak;
-    if (runCombo >= 2 && runCombo <= comboCap()) {   // çarpan yükseldi → etikette + HUD'da pop
+    const cmNow = comboMul();
+    if (cmNow >= 2 && runCombo - (COMBO_START - 2) <= comboCap()) {   // çarpan yükseldi → HUD'da pop
       _comboPopT = 0.28; _comboHudPop = true;
-      if (runCombo === comboCap()) spawnFloatText(player.x, player.y - player.r - 34, 'MAX COMBO ×' + runCombo, 48, 1.3);
+      if (runCombo === COMBO_START) spawnFloatText(player.x, player.y - player.r - 34, 'COMBO!', 48, 1.3);
+      else if (cmNow === comboCap()) spawnFloatText(player.x, player.y - player.r - 34, 'MAX COMBO ×' + cmNow, 48, 1.3);
     }
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
   // Seri bitti (yeşil banttan çıkış / ölüm): çarpan ×1'e döner.
+  // Toplam çarpan renk kademeleri (hap): yeşil → mavi → sarı → turuncu → pembe → mor
+  const MUL_TIERS = [
+    { max: 2, c: '#7CFF7A' }, { max: 5, c: '#5ad8ff' }, { max: 9, c: '#ffe066' },
+    { max: 15, c: '#ffb13b' }, { max: 27, c: '#ff5a8c' }, { max: 1e9, c: '#c07bff' },
+  ];
+  let _lastTotM = -1;
   // Çarpan hapından fırlayan partiküller (DOM; kendi kendini siler)
   function comboFx(n, cm) {
     const host = document.getElementById('combo-fx');
@@ -9090,7 +9107,7 @@ const ARC_DB = (() => {
   }
   function comboBreak() {
     _comboStreak = 0;
-    if (runCombo >= 2) _comboHudPop = true;
+    if (comboMul() >= 2) _comboHudPop = true;
     runCombo = 0; _comboPot = 0; _comboPopT = 0;
   }
   // Combo etiketi: topun ÜSTÜNDE sabit kalır (oyuncuyla birlikte hareket eder), her kare çizilir.
@@ -9235,10 +9252,19 @@ const ARC_DB = (() => {
       comboEl.classList.add('active');
       // Hapta TOPLAM çarpan (süre × combo × booster); altında COMBO ×n + pencere çizgisi
       const cm = comboMul(), win = comboWindowFrac(), cap = comboCap();
-      comboVal.textContent = String(timeMulHud * cm * getBoostScoreMul());
+      const totM = timeMulHud * cm * getBoostScoreMul();
+      comboVal.textContent = String(totM);
       comboEl.classList.toggle('on', cm >= 2);
       comboEl.classList.toggle('max', cm >= cap);
-      comboEl.classList.toggle('win', win > 0);
+      comboEl.classList.toggle('win', cm >= 2 && win > 0);   // COMBO satırı + çizgi yalnız combo başlayınca
+      // Çarpan büyüdükçe hap büyür ve rengi kademelenir
+      if (totM !== _lastTotM) {
+        _lastTotM = totM;
+        const tier = MUL_TIERS.find(t => totM <= t.max) || MUL_TIERS[MUL_TIERS.length - 1];
+        const pillS = document.getElementById('combo-pill').style;
+        pillS.setProperty('--tc', tier.c);
+        pillS.fontSize = (17 * (1 + Math.min(0.65, Math.log2(Math.max(1, totM)) * 0.13))).toFixed(1) + 'px';
+      }
       document.getElementById('combo-cm').textContent = '×' + cm + (cm >= cap ? ' MAX' : '');
       document.getElementById('combo-bar-fill').style.transform = `scaleX(${win.toFixed(3)})`;
       const pillEl = document.getElementById('combo-pill');
@@ -9256,9 +9282,7 @@ const ARC_DB = (() => {
       // olduğu için COMBO rozetinin 5 ve 9 kademeleri açılıyordu. Gerçek zincir uzunluğu
       // `_runMaxCombo`'da tutuluyor ve endGame'de stats'a yazılıyor; burası artık yazmıyor.
       // Color: cool (high) → warm (low)
-      const comboHue = 120 * (energy);
-      document.getElementById('combo-pill').style.borderColor = `hsl(${comboHue},100%,55%)`;
-      document.getElementById('combo-pill').style.color = `hsl(${comboHue},100%,70%)`;
+
     } else {
       comboEl.classList.remove('active');
     }
