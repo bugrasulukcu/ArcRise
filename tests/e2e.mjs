@@ -200,9 +200,13 @@ test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli 
   dbg('fresh'); await fresh(); dbg('sayfa hazır');
   const uid = await waitFor(`!!ARC_DB.getUid()`) && await ev(`ARC_DB.getUid()`);
   const myDoc = `scores/${uid}_normal`;
-  await playRun(5000);   // başlangıç çizgisini (20 cm) geçecek kadar
+  // 1. run başlangıç çizgisini kesin geçsin (bot bazen hemen ölüyordu → skor 0, yazım yok)
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(300);
+  await ev(`ARC_TEST.ghost(6); true`); await sleep(8000); await ev(`ARC_BOT.stop(); true`);   // skor > 0 olacak kadar (5 puan/m)
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '1. run bitmedi'); await sleep(2500);
   const w1 = fb.writes.filter(w => w.path === myDoc);
-  check(w1.length === 1 && w1[0].authed && w1[0].mustNotExist && w1[0].status === 200, `ilk yazım hatalı: ${JSON.stringify(w1)}`);
+  check(w1.length === 1 && w1[0].authed && w1[0].mustNotExist && w1[0].status === 200,
+    `ilk yazım hatalı: ${JSON.stringify(w1)} · uid=${uid} · tüm yazımlar=${JSON.stringify(fb.writes.map(w => w.path))} · run=${JSON.stringify(await ev('ARC_TEST.lastRun'))}`);
   const s1 = Number(fb.docs.get(myDoc).fields.score.integerValue);
   // 2. run kesin daha iyi olsun: 12 sn Ghost (engele çarpmaz) + bot → daha uzağa gider
   await ev(`document.getElementById('btn-again').click(); ARC_BOT.start(); true`); await sleep(400);
