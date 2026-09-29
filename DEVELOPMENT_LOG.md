@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yetenek slot ikonları: slot renginde ve tam ortada (2026-09-29)
+
+- **Oyun içi:** ikonlar `currentColor` kullanıyor, slotlar `<button>` olduğu için tarayıcının varsayılan metin rengini (siyah) alıyordu → koyu zeminde görünmüyordu. `.slot { color: rgb(var(--sc)) }` → pembe/mavi/yeşil/kırmızı slot renginde + aynı renkte hafif ışıma.
+- **Upgrades:** ikonlar panelin mor gradyanını (`--gg`) alıyordu → slot rengine muaf tutuldu.
+- **Ortalama:** ikon satır yüksekliği olan inline kutudaydı → SVG upgrades'te 1.7 px, oyunda 1 px aşağıdaydı. `.slot-icon` flex + `line-height: 0`, SVG `display: block` → ölçülen sapma 0/0.
+
 ### Geri butonları standart: ok + çerçeve = pencerenin çerçeve rengi (2026-09-29)
 
 - Pencere başına elle yazılmış renk kuralları (coins/quests/friends/lb/badges/gearpick) kaldırıldı; tek kural: `--mb = --mbc ?? --c` (pencerenin gl rengi) → ok %80 renk, buton çerçevesi %60, zemin %8, hover %90/%16, ok ışıması aynı renkte.

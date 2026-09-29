@@ -3719,7 +3719,11 @@
     }
     /* satın alınmış ama boş slot — soluk ama görünür (tap → equip) */
     .slot:not(.filled):not(.locked) { opacity: 0.6; }
-    .slot-icon { font-size: 28px; line-height: 1; }
+    /* İkon slotun kendi renginde (buton varsayılan metin rengi siyahtı → ikonlar görünmüyordu)
+       ve tam ortada (satır yüksekliği SVG'yi 1–2 px aşağı itiyordu) */
+    .slot { color: rgb(var(--sc, 255,255,255)); }
+    .slot-icon { display: flex; align-items: center; justify-content: center; line-height: 0; }
+    .slot-icon svg { display: block; filter: drop-shadow(0 0 4px rgba(var(--sc, 255,255,255), .6)); }
     .slot:not(.filled) .slot-icon { display: none; }
     /* boş (satın alınmış) slot → "+" ikonu: gear eklenebileceğini gösterir */
     .slot-plus { display: none; font-size: 30px; font-weight: 300; line-height: 1; color: rgba(var(--sc, 255,255,255), .85); }
@@ -3855,6 +3859,9 @@
     /* Geri oku panel gradyanını (--gg) almaz: butonun kendi rengi (pencere çerçevesinden --mb) */
     html#arc :is(.modal-back, #upg-back-arrow) svg[stroke="currentColor"],
     html#arc :is(.modal-back, #upg-back-arrow) svg [stroke="currentColor"] { stroke: currentColor; }
+    /* Slot ikonları da panel gradyanını almaz: slotun kendi rengi */
+    html#arc .slot svg[stroke="currentColor"], html#arc .slot svg [stroke="currentColor"] { stroke: currentColor; }
+    html#arc .slot svg [fill="currentColor"] { fill: currentColor; }
     html#arc .gl .gl-txt, html#arc .gl .chip-val, html#arc .gl .cl-label { text-shadow: 0 0 8px color-mix(in srgb, var(--c) 55%, transparent); }
     /* Yarı saydam (arkası bulanık) yüzeyler: zemin opak değil */
     /* ── Temalar (Settings → Theme). Filtre body'ye uygulanır: oyun alanı dahil tüm ekran. ── */
