@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v26 skor: combo çarpanı, kümülatif çarpan göstergesi, ×0.2, başlangıç çizgisi, sade engeller (2026-09-29)
+
+- **Combo artık gerçek çarpan:** seri (yeşil bantta art arda toplanan top) ×2, ×3 … `comboCap()` tavanına kadar yükselir (taban 3, Max Combo upgrade'iyle 7), **tavanda kalır** ve seri sürdükçe kazanılan HER skoru çarpar — mesafe dahil. Yeşil banttan çıkınca ×1. Eski "pot" (zincir puanı biriktirip tavanda tek seferde bankalama + sıfırlama) kaldırıldı. Toplanan top önce seriyi artırır, sonra yeni çarpanla sayılır. Tavanda "MAX COMBO ×n".
+- **Tek kazanç noktası:** `gainScore(raw)` = `round(raw × SCORE_SCALE × comboMul())` — yeşil, altın, mor, CLOSE, THREAD, kapı, kıvılcım/koridor, kristal, TIMING, PB çizgisi hepsi buradan. Mesafe skoru artık kare kare birikir (`distScore`, o anki combo ve booster çarpanıyla).
+- **Skor ×0.2** (`SCORE_SCALE`). Bot: upgrade'siz medyan run ≈ 52, 5 m'lik run ≈ 320; orta upgrade + 11'lik seri → 4.555 (combo uzun seriyi belirgin ödüllendirir). Eşikler: skor görevi 600→120, toplam skor görevi 3000→500, SCORE rozeti 100/400/1.5k/5k/15k, Extreme kilidi 5 m + 400 puan. Cihazdaki eski skorlar (`arc_best`, `arc_last`, stats en iyi/ömür boyu) bir kez ×0.2 (`arc_score_v26`).
+- **Kümülatif çarpan göstergesi:** üstteki süre çarpanı hapına combo ≥2 iken "× COMBO ×n = ×toplam" açılır (genişleyen geçiş), seri yükselince/bitince pop animasyonu, tavanda turuncu nabız.
+- **Başlangıç çizgisi (20 cm):** mesafe ve skor çizgiden itibaren 0'dan sayılır (`distOriginY`). Dama desenli şerit + "START" etiketi; çizgi ekranın üstündeyken "▲ START 20CM" işareti; geçince "GO!". PB/metre/en iyi mesafe çizgileri yeni orijine göre. Çizgiyi geçmeyen run oynanan oyun / seri / görev sayılmaz. Günlük pistte zorluk da aynı orijinden.
+- **Engeller sadeleşti:** düz kırmızı daire + ince açık kenar + yumuşak dış ışıma (hacim gradyeni, iç halka, parlama noktası kaldırıldı).
+- Test 24/24 (yeni: combo çarpanı + tavan, başlangıç çizgisi; PB testleri çizgiyi geçecek kadar oynar).
+
 ### Görevler: "N run oyna" açığı kapandı (2026-09-29)
 
 - **Sorun:** "Play N runs today" ve "Finish N Extreme runs today" her run'ı sayıyordu → START'a basıp duvara çarpmak görevi tamamlıyordu.

@@ -200,7 +200,7 @@ test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli 
   dbg('fresh'); await fresh(); dbg('sayfa hazır');
   const uid = await waitFor(`!!ARC_DB.getUid()`) && await ev(`ARC_DB.getUid()`);
   const myDoc = `scores/${uid}_normal`;
-  await playRun(1500);
+  await playRun(5000);   // başlangıç çizgisini (20 cm) geçecek kadar
   const w1 = fb.writes.filter(w => w.path === myDoc);
   check(w1.length === 1 && w1[0].authed && w1[0].mustNotExist && w1[0].status === 200, `ilk yazım hatalı: ${JSON.stringify(w1)}`);
   const s1 = Number(fb.docs.get(myDoc).fields.score.integerValue);
@@ -393,7 +393,7 @@ test('rozetler: THREADER / GATEKEEPER / CRYSTAL / MAESTRO açılır', async () =
 
 test('PB hayaleti: rekor run kaydedilir, sonraki run\'da oynatılır', async () => {
   await fresh();
-  await playRun(2500);
+  await playRun(5000);   // başlangıç çizgisini geçecek kadar
   const g = await lsJSON('arc_pb_ghost_normal');
   check(g && g.p.length > 5, 'rekor run hayaleti kaydedilmedi');
   await ev(`document.getElementById('btn-again').click(); true`); await sleep(500);
@@ -443,6 +443,31 @@ test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
   const pr = (await lsJSON('arc_quests_v1')).quests.map(x => x.metric + '=' + x.progress);
   check(dist < 50, `run beklenenden uzun sürdü (${dist} cm) — test geçersiz`);
   check(pr.every(x => x.endsWith('=0')), `hemen ölen run görev ilerletti: ${pr.join(', ')}`);
+});
+
+test('combo: seri çarpanı tüm kazançları çarpar, skor ×0.2', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  const cap = (await ev('ARC_TEST.combo')).cap;
+  await ev(`ARC_TEST.setCombo(3); true`);
+  check((await ev('ARC_TEST.combo')).mul === Math.min(3, cap), 'combo çarpanı 3 değil');
+  const b0 = await ev('ARC_TEST.bonus');
+  await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('gate'); true`); await sleep(400);
+  const got = (await ev('ARC_TEST.bonus')) - b0;
+  check(got === 60 * 0.2 * Math.min(3, cap), `kapı combo ×3'te ${got} verdi (beklenen ${60 * 0.2 * Math.min(3, cap)})`);
+  await ev(`ARC_TEST.setCombo(99); true`);
+  check((await ev('ARC_TEST.combo')).mul === cap, 'tavanda çarpan tavanı aşıyor');
+});
+
+test('başlangıç çizgisi: 20 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılmaz', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(800);
+  if (await ev('ARC_TEST.startCrossed')) return;   // top yayla çizgiyi geçtiyse test geçersiz (nadir)
+  const r = await ev('ARC_TEST.lastRun');
+  check(r.distCm === 0 && r.score === 0, `çizgi geçilmeden mesafe/skor: ${JSON.stringify(r)}`);
+  check(((await lsJSON('arc_stats_v1')) || {}).gamesTotal ? false : true, 'çizgiyi geçmeyen run oyun sayıldı');
 });
 
 // ── Koştur ───────────────────────────────────────────────────
