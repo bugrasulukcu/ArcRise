@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Görev ekranı kısaldı, geri butonları hizalandı, tema denemesi, epik sandıkta tema (2026-09-29)
+
+- **Görev ekranı:** "New quests every day" alt başlığı ve seri açıklama metni kaldırıldı; kartlarda ilerleme yazısı çubuğun yanına alındı. iPhone SE Safari (375×553) görünür alanında 464 px — kaydırma yok. `max-height: 520px` altında (SE1) ek sıkıştırma.
+- **Geri butonu** her pencerede kutu köşesinden aynı yerde (21 px sağ / 25 px aşağı). Sapanlar: profil (17/17, absolute), temalar (17/17, dolgu 16), coins (23/27, dolgu 26/22) → eşitlendi. Ölçüm: upgrades, coins, lb, quests, challenge, friends, profile, credits, settings, themes.
+- **Tema denemesi (TRY 1 RUN):** satın alınmamış her tema için bir kez. `upg.themesTried` işaretlenir, `sessionStorage.arc_theme_trial` ile sayfa o temada yenilenir ve run hemen başlar; kayıtlı tema değişmez (`effectiveTheme()`). Run bitip game over'dan ayrılınca (AGAIN / menü) ya da run ortasında oyundan çıkılınca eski temaya dönülür ve tema penceresi açılır. Deneme ortasında uygulama yeniden açılırsa da eski temaya döner. Kartta "TRY 1 RUN" / "TRIED".
+- **Epik sandık (60. gün)** sırayla iz ↔ tema verir (1. iz, 2. tema, …; `streakRw.epicN`); biri tükenince diğeri, ikisi de tükenince +30 coin. Tema, mağazadaki henüz sahip olunmayan ilk tema (Game Boy → Noir → CRT). Sandık ekranında tema önizlemesi.
+- Testler 15/15 (yeni: 2. epik sandık tema, tema denemesi uçtan uca).
+
 ### Giriş serisi ödülleri, yeni görev kartları, görev eşikleri, LOWFX ısınma, tutorial item'ları, credits (2026-09-29)
 
 **Giriş serisi (120 günlük tekrarlayan döngü)** — `stats.dayStreak` üzerinden; bir güne tek ödül, büyüğü geçerli:

@@ -332,6 +332,30 @@ test('credits: alert yerine oyun penceresi', async () => {
   check(await ev(`document.getElementById('credits-modal').classList.contains('open')`), 'credits penceresi açılmadı');
 });
 
+test('seri: 2. epik sandık tema verir', async () => {
+  const dayNum = (off = 0) => { const d = new Date(); d.setDate(d.getDate() + off); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); };
+  await fresh({ arc_stats_v1: { dayStreak: 179, lastDayNum: dayNum(-1) }, arc_streak_v1: { lastDay: 179, pending: [], epicN: 1 } });
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.st-open').click(); true`); await sleep(300);
+  const u = await lsJSON('arc_upg_v1');
+  check((u.themesOwned || []).length === 1, `tema verilmedi: ${JSON.stringify(u.themesOwned)}`);
+});
+
+test('tema denemesi: TRY → o temada tek run → çıkınca eski tema, hak bir kez', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-settings').click(); document.getElementById('theme-open').click(); true`); await sleep(400);
+  await ev(`document.querySelector('[data-try="noir"]').click(); true`);
+  check(await waitFor(`!!window.ARC_TEST && ARC_TEST.scene === 'play'`, 10000), 'deneme run\'ı başlamadı');
+  check(await ev(`document.documentElement.classList.contains('theme-noir')`), 'deneme sırasında tema uygulanmadı');
+  check((await lsJSON('arc_upg_v1')).theme === '', 'kayıtlı tema değişti');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(1200);
+  await ev(`document.getElementById('btn-again').click(); true`);
+  check(await waitFor(`!!window.ARC_TEST && document.getElementById('theme-modal').classList.contains('open')`, 10000), 'deneme sonrası tema penceresine dönülmedi');
+  check(!await ev(`document.documentElement.classList.contains('theme-noir')`), 'deneme bitince tema kalktı değil');
+  check(await ev(`!document.querySelector('[data-try="noir"]') && !!document.querySelector('[data-try="gameboy"]')`), 'deneme hakkı tüketilmedi');
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

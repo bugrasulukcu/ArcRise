@@ -1358,7 +1358,11 @@
       max-height: 92vh; overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
-    #prof-back-arrow { position: absolute; top: 16px; left: 16px; z-index: 2; }
+    /* Geri butonu her pencerede kutu köşesinden aynı yerde: 21px sağ / 25px aşağı
+       (standart kutu dolgusu 24/20 + çerçeve). Farklı dolgulu kutular burada eşitlenir. */
+    #prof-back-arrow { position: absolute; top: 24px; left: 20px; z-index: 2; }
+    #theme-back { position: relative; left: 4px; top: 8px; }
+    #coins-modal-close { position: relative; left: -2px; top: -2px; }
     #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
 
     /* Avatar + rozet slotları (dairenin sol/sağ alt köşelerinde) */
@@ -3103,7 +3107,19 @@
     .st-hint { font-size: 7.5px; letter-spacing: .6px; line-height: 1.5; color: rgba(255,255,255,.32); text-align: center; }
 
     /* ── Görev kartı: eksen ikonu/rengi + coin çipi ── */
-    .quest-card { --ax: #5ad8ff; border-left: 3px solid var(--ax); }
+    .quest-card { --ax: #5ad8ff; border-left: 3px solid var(--ax); padding: 10px 12px; gap: 7px; }
+    .quest-card .quest-bottom { gap: 10px; }
+    .quest-card .quest-bar-wrap { flex: 1; }
+    .quest-card .quest-progress-txt { white-space: nowrap; }
+    #quests-modal-box { gap: 10px; }
+    @media (max-height: 520px) {   /* SE1 Safari vb. — kaydırma çıkmasın */
+      #quests-modal-box { padding: 16px 16px 14px; gap: 8px; }
+      .streak-box { padding: 8px 10px; gap: 5px; }
+      .quest-card { padding: 7px 10px; gap: 5px; }
+      .quest-ic { width: 26px; height: 26px; }
+      .quest-label { font-size: 10px; }
+    }
+    #quests-list { gap: 8px; }
     .quest-card.ax-grind { --ax: #b48cff; }
     .quest-card.ax-spice { --ax: #ff7ab8; }
     .quest-top { align-items: center; }
@@ -3146,6 +3162,8 @@
     .cp-loot { display: flex; flex-direction: column; gap: 7px; opacity: 0; transform: translateY(8px); transition: all .35s ease .05s; }
     #chest-pop.revealed .cp-loot { opacity: 1; transform: none; }
     .cp-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; letter-spacing: 1px; color: #fff; }
+    .cp-theme { width: 46px; height: 31px; border-radius: 6px; overflow: hidden; display: inline-block; box-shadow: 0 0 10px rgba(255,255,255,.25); }
+    .cp-theme svg { width: 100%; height: 100%; display: block; }
     .cp-trail { width: 44px; height: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(255,255,255,.35); }
     .cp-ok {
       font-family: var(--font); font-size: 11px; letter-spacing: 1.6px; cursor: pointer; margin-top: 4px;
@@ -3863,6 +3881,13 @@
     .theme-desc { font-size: 11px; line-height: 1.4; color: rgba(236,230,255,.7); text-transform: none; }
     .theme-state { font-size: 10px; letter-spacing: 1.2px; color: #9fffa0; display: inline-flex; align-items: center; gap: 4px; }
     .theme-state.price { color: #ffd866; }
+    .theme-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .theme-try {
+      font-size: 9px; letter-spacing: 1.2px; padding: 4px 9px; border-radius: 8px; cursor: pointer;
+      color: #8fe6ff; border: 1px solid rgba(90,216,255,.55); background: rgba(90,216,255,.10);
+    }
+    .theme-try:active { transform: scale(.95); }
+    .theme-tried { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.35); }
     #theme-open { padding: 9px 14px; border-radius: 11px; font-family: var(--font); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; }
     html#arc .gl.gl-glass {
       background:
@@ -4476,7 +4501,6 @@
       <div class="qm-title modal-head-title">DAILY QUESTS</div>
       <span class="modal-head-spacer"></span>
     </div>
-    <div class="qm-sub">New quests every day</div>
     <div id="quests-list"></div>
     <div id="chest-pop"></div>
   </div>
@@ -5735,9 +5759,12 @@ const ARC_DB = (() => {
     return out;
   }
   let _tStyle = null;
+  // Tema denemesi (TRY): tek run boyunca geçici tema — sessionStorage'da, kayıtlı temaya dokunmaz.
+  let _themeTrial = null, _trialStarted = false, _trialRunDone = false;
+  try { _themeTrial = sessionStorage.getItem('arc_theme_trial') || null; } catch(_) {}
   try {   // upg henüz yüklenmedi → kayıtlı temayı doğrudan oku (yalnız bilinen stiller)
     const saved = (JSON.parse(localStorage.getItem('arc_upg_v1') || '{}') || {}).theme;
-    _tStyle = THEME_STYLE[saved] || null;
+    _tStyle = THEME_STYLE[_themeTrial != null ? _themeTrial : saved] || null;
   } catch(_) {}
   if (_tStyle) {
     for (const k in _tDesc) Object.defineProperty(_tProto, k, { configurable: true, enumerable: true,
@@ -9755,6 +9782,11 @@ const ARC_DB = (() => {
   })();
 
   function showScene(s) {
+    // Deneme run'ı başladıktan sonra oyundan çıkılan her ekran (game over hariç) denemeyi bitirir
+    if (_themeTrial && _trialStarted) {
+      if (s === 'over') _trialRunDone = true;
+      else if (s !== 'play') { endThemeTrial(); return; }
+    }
     scene = s;
     if (s !== 'play' && _musicPlaying() && !_fadeStopT) stopBgMusic();   // menü/ayar/profil: müzik yok
     profileSetupEl.classList.toggle('active', s === 'profile-setup');
@@ -11493,10 +11525,11 @@ const ARC_DB = (() => {
   ];
   const themeById = id => THEMES.find(t => t.id === id);
   function themeOwned(id) { return id === '' || (Array.isArray(upg.themesOwned) && upg.themesOwned.includes(id)); }
+  const effectiveTheme = () => (_themeTrial && themeById(_themeTrial)) ? _themeTrial : upg.theme;
   function applyTheme() {
     if (!themeById(upg.theme) || !themeOwned(upg.theme)) upg.theme = '';
     // Canvas paleti açılışta kurulur (THEME_STYLE). Farklı bir stile geçildiyse yeniden yükle.
-    if ((THEME_STYLE[upg.theme] || null) !== _tStyle) {
+    if ((THEME_STYLE[effectiveTheme()] || null) !== _tStyle) {
       saveUpg();
       // Yeniden yüklenince tema penceresi açık dönsün (ana ekrana atmasın)
       try { sessionStorage.setItem('arc_reopen_theme', '1'); } catch(_) {}
@@ -11506,7 +11539,7 @@ const ARC_DB = (() => {
     }
     const root = document.documentElement;
     [...root.classList].filter(c => c.startsWith('theme-')).forEach(c => root.classList.remove(c));
-    if (upg.theme) root.classList.add('theme-' + upg.theme);
+    if (effectiveTheme()) root.classList.add('theme-' + effectiveTheme());
     const cur = document.getElementById('theme-cur');
     if (cur) cur.textContent = themeById(upg.theme).name;
   }
@@ -11530,8 +11563,10 @@ const ARC_DB = (() => {
         + `<span class="theme-name">${t.name}</span><span class="theme-desc">${t.desc}</span>`
         + (active ? `<span class="theme-state">ACTIVE</span>`
            : owned ? `<span class="theme-state">TAP TO APPLY</span>`
-           : `<span class="theme-state price">${iconHTML('coin', { size: 12 })}${t.price}</span>`)
+           : `<span class="theme-row"><span class="theme-state price">${iconHTML('coin', { size: 12 })}${t.price}</span>`
+             + (themeTried(t.id) ? `<span class="theme-tried">TRIED</span>` : `<span class="theme-try" role="button" data-try="${t.id}">TRY 1 RUN</span>`) + `</span>`)
         + `</div>`;
+      b.querySelector('[data-try]')?.addEventListener('click', e => { e.stopPropagation(); startThemeTrial(t.id); });
       b.addEventListener('click', () => {
         if (active) return;
         const use = () => { upg.theme = t.id; saveUpg(); applyTheme(); renderThemes(); };
@@ -11546,11 +11581,36 @@ const ARC_DB = (() => {
       list.appendChild(b);
     }
   }
+  // ── Tema denemesi ─────────────────────────────────────────
+  // TRY → deneme işaretlenir (tema başına 1 kez), sayfa o temayla yenilenir ve run hemen başlar.
+  // Run bitip oyuncu game over'dan ayrılınca (AGAIN / menü) eski temaya dönülür ve tema
+  // penceresi yeniden açılır (satın alma kararı için).
+  const themeTried = id => Array.isArray(upg.themesTried) && upg.themesTried.includes(id);
+  function startThemeTrial(id) {
+    if (!themeById(id) || themeOwned(id) || themeTried(id)) return;
+    if (!Array.isArray(upg.themesTried)) upg.themesTried = [];
+    upg.themesTried.push(id); saveUpg();
+    try { sessionStorage.setItem('arc_theme_trial', id); sessionStorage.setItem('arc_theme_trial_go', '1'); } catch(_) {}
+    document.getElementById('theme-loader')?.classList.add('show');
+    setTimeout(() => location.reload(), 60);
+  }
+  function endThemeTrial() {
+    try { sessionStorage.removeItem('arc_theme_trial'); sessionStorage.removeItem('arc_theme_trial_go'); sessionStorage.setItem('arc_reopen_theme', '1'); } catch(_) {}
+    document.getElementById('theme-loader')?.classList.add('show');
+    setTimeout(() => location.reload(), 60);
+  }
   const themeModal = document.getElementById('theme-modal');
   document.getElementById('theme-open').addEventListener('click', () => { renderThemes(); themeModal.classList.add('open'); });
   document.getElementById('theme-back').addEventListener('click', () => themeModal.classList.remove('open'));
   themeModal.addEventListener('click', e => { if (e.target === themeModal) themeModal.classList.remove('open'); });
   applyTheme();
+  // Deneme yüklemesi: run'ı başlat (TRY'dan hemen sonra)
+  try {
+    if (_themeTrial && sessionStorage.getItem('arc_theme_trial_go') === '1') {
+      sessionStorage.removeItem('arc_theme_trial_go');
+      setTimeout(() => { try { startGame(); showToast(themeById(_themeTrial).name + ' trial — one run'); } catch(_) {} }, 250);
+    } else if (_themeTrial) endThemeTrial();   // deneme ortasında yeniden açılış → eski temaya dön
+  } catch(_) {}
   // Tema değişimi sonrası yeniden yükleme: kaldığı yere (Settings → Themes) dön
   try {
     if (sessionStorage.getItem('arc_reopen_theme') === '1') {
@@ -12796,6 +12856,8 @@ const ARC_DB = (() => {
   }
   function startGame(withTutorial) {
     if (withTutorial !== 'gated' && !_startGate() && scene === 'play') return;
+    if (_themeTrial && _trialRunDone) { endThemeTrial(); return; }   // deneme tek run
+    if (_themeTrial) _trialStarted = true;
     try { fitCanvas(); } catch(_){} // oyuna girerken canvas oranını taze ölç (sünme önlemi)
     initAudio(); // AudioContext unlock
     lastPurchase = null; try { updateRefundBtn(); } catch(_){} // run başladı → refund penceresi kapanır
@@ -13421,7 +13483,7 @@ const ARC_DB = (() => {
   // ödül düşer, en büyüğü geçerli:
   //   her 5. gün   → CHEST        : 10 coin YA DA rastgele 1 item (%55 / %45)
   //   her 15. gün  → BIG CHEST    : 25 coin + 1 item
-  //   her 60. gün  → EPIC CHEST   : 60 coin + sıradaki seri izi (hepsi alındıysa +30 coin)
+  //   her 60. gün  → EPIC CHEST   : 60 coin + sırayla seri izi / tema (ikisi de bittiyse +30 coin)
   //   her 120. gün → LEGEND CHEST : 100 coin + sıradaki efsane iz (hepsi alındıysa +60 coin)
   // Döngü başına ≈ 16×10 + 6×30 + 60 + 100 ≈ 500 coin ≈ günde +4 (normal gelirin ~%12'si)
   // + kozmetik. Açılmamış sandık kaybolmaz (seri bozulsa da); en fazla 12 bekler.
@@ -13477,9 +13539,16 @@ const ARC_DB = (() => {
       n = 25; if (!giveItem()) n += 5;
     } else {
       n = p.tier === 'legend' ? 100 : 60;
-      const id = STREAK_TRAIL_ORDER[p.tier].find(x => !traceColorOwned(x));
-      if (id) { _own('traceColorsOwned').push(id); loot.push({ kind: 'trail', id }); }
-      else n += p.tier === 'legend' ? 60 : 30;
+      // EPIC sırayla iz ↔ tema verir (1. iz, 2. tema, 3. iz…); biri tükenince diğeri, ikisi de
+      // tükenince ek coin. LEGEND yalnız efsane iz.
+      const giveTrail = () => { const id = STREAK_TRAIL_ORDER[p.tier].find(x => !traceColorOwned(x)); if (!id) return false; _own('traceColorsOwned').push(id); loot.push({ kind: 'trail', id }); return true; };
+      const giveTheme = () => { const t = THEMES.find(x => x.id && !themeOwned(x.id)); if (!t) return false; _own('themesOwned').push(t.id); loot.push({ kind: 'theme', id: t.id }); return true; };
+      let ok;
+      if (p.tier === 'epic') {
+        streakRw.epicN = (streakRw.epicN | 0) + 1;
+        ok = (streakRw.epicN % 2 === 0) ? (giveTheme() || giveTrail()) : (giveTrail() || giveTheme());
+      } else ok = giveTrail();
+      if (!ok) n += p.tier === 'legend' ? 60 : 30;
     }
     saveUpg();
     if (n) grantCoins(n);
@@ -13505,6 +13574,7 @@ const ARC_DB = (() => {
     if (coinsN) rows.push(`<div class="cp-row">${iconHTML('coin', { size: 22 })}<span>+${coinsN} COINS</span></div>`);
     for (const l of loot) {
       if (l.kind === 'item') { const m = itemMeta(l.key); rows.push(`<div class="cp-row">${iconHTML(m.icon, { size: 24 })}<span>${esc(m.title)} ×1</span></div>`); }
+      if (l.kind === 'theme') rows.push(`<div class="cp-row"><span class="cp-theme">${themePreview(l.id)}</span><span>${esc(themeById(l.id).name)} theme</span></div>`);
       if (l.kind === 'trail') rows.push(`<div class="cp-row"><span class="cp-trail" style="background:${traceColorCss(l.id)}"></span><span>${esc(STREAK_TRAIL_NAME[l.id] || '')} trail</span></div>`);
     }
     host.style.setProperty('--cc', t.color);
@@ -13550,7 +13620,6 @@ const ARC_DB = (() => {
       <div class="st-foot">${pendN
         ? `<button class="st-open" type="button">${chestSVG(streakTierById(streakRw.pending[0].tier).color, 16, false)} OPEN ${pendN > 1 ? pendN + ' CHESTS' : 'CHEST'}</button>`
         : `<span class="st-next-lbl">NEXT</span>${nextTxt}`}</div>
-      <div class="st-hint">Chest every 5 days · big every 15 · epic trail every 60 · legend every 120<br>Miss one day and you keep your streak; miss two in a row and it resets.</div>
     </div>`;
   }
   function saveQuests() { try { localStorage.setItem(QUESTS_KEY, JSON.stringify(questState)); } catch(_){} }
@@ -13612,8 +13681,7 @@ const ARC_DB = (() => {
       return `<div class="quest-card ax-${ax} ${done ? 'done' : ''} ${q.claimed ? 'claimed' : ''}"${anim(i + 1)}>
         <div class="quest-top"><span class="quest-ic">${QUEST_AXIS_ICON[ax]}</span>
           <span class="quest-txt"><span class="quest-axis">${ax === 'skill' ? 'SKILL' : ax === 'grind' ? 'GRIND' : 'BONUS'}</span><span class="quest-label">${esc(q.label)}</span></span>${claimBtn}</div>
-        <div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%"></div></div>
-        <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span></div>
+        <div class="quest-bottom"><div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%"></div></div><span class="quest-progress-txt">${progTxt}</span></div>
       </div>`;
     }).join('');
     list.innerHTML = loginCard + questCards;
