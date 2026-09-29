@@ -7096,8 +7096,13 @@ const ARC_DB = (() => {
     try { const v = localStorage.getItem('arc_avatar_custom'); return (v && SAFE_DATA_IMG.test(v)) ? v : null; } catch { return null; }
   })();
 
+  // iOS: Web Audio varsayılan olarak zil/sessiz anahtarına uyar (telefon sessizdeyse HİÇ ses yok).
+  // Eskiden müzik <audio> ile çaldığı için sessiz modda da duyuluyordu. 'playback' oturumu
+  // (Safari 16.4+) bunu eski davranışa döndürür; arka plana geçince bağlam zaten askıya alınır.
+  function _setAudioSession(type) { try { if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type; } catch(_) {} }
   function initAudio() {
     audioStarted = true;
+    _setAudioSession('playback');
     if (sfxCtx) { if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {}); return; }
     try {
       sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -7112,7 +7117,7 @@ const ARC_DB = (() => {
 
   function playSfxBuffer(buffer, volume) {
     if (!sfxCtx || !buffer) return false;
-    if (sfxCtx.state === 'suspended') sfxCtx.resume().catch(() => {});
+    if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {});   // iOS: 'interrupted' da olabilir (arama/bildirim sonrası)
     const src = sfxCtx.createBufferSource();
     src.buffer = buffer;
     const gain = sfxCtx.createGain();
@@ -7210,8 +7215,8 @@ const ARC_DB = (() => {
     playSfx(touchBuffer, 'AUDIO/ArcRiseTouch.wav', 0.55);
   }
   // Uygulama arka plana/kapanınca: tüm ses askıya alınır (arka planda çalmaz); dönünce devam.
-  function _audioPause() { try { if (sfxCtx && sfxCtx.state === 'running') sfxCtx.suspend(); } catch(_) {} if (bgAudio) bgAudio.pause(); }
-  function _audioResume() { try { if (sfxCtx && sfxCtx.state === 'suspended') sfxCtx.resume(); } catch(_) {} }
+  function _audioPause() { try { if (sfxCtx && sfxCtx.state === 'running') sfxCtx.suspend(); } catch(_) {} if (bgAudio) bgAudio.pause(); _setAudioSession('auto'); }
+  function _audioResume() { if (!audioStarted) return; _setAudioSession('playback'); try { if (sfxCtx && sfxCtx.state !== 'running') sfxCtx.resume(); } catch(_) {} }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { _audioPause(); }
     else { _audioResume(); if (scene === 'play' && running) playBgMusic(); }

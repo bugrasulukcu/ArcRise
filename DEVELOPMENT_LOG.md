@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### iPhone'da ses gelmiyordu: sessiz anahtarı + 'interrupted' bağlam (2026-09-29)
+
+- Tüm sesler Web Audio'ya geçince (29c21d8) iOS'ta **zil/sessiz anahtarına uymaya** başladı → telefon sessizdeyken hiç ses yok (eskiden müzik `<audio>` ile çaldığı için duyuluyordu). `navigator.audioSession.type = 'playback'` (Safari 16.4+) ilk dokunuşta ve ön plana dönüşte; arka planda `'auto'`.
+- iOS arama/bildirim/Siri sonrası bağlamı `'interrupted'` yapar; `playSfxBuffer` ve ön plana dönüş yalnız `'suspended'`ı açıyordu → artık `state !== 'running'` ise `resume()`.
+- `index.html` önbellek sürümü `20260929a`.
+- Telefonda doğrulanmalı: sessiz modda ses geliyor mu, kilit ekranında "Şimdi Çalıyor" kartı geri gelmedi mi.
+
 ### Otomatik testler: `npm test` (2026-09-29)
 
 `tests/e2e.mjs` — headless Chrome (CDP) + kendi statik sunucusu + **bellekte sahte Firebase** (Auth + Firestore, kural taklidi: kimliksiz yazma 403). Gerçek Firebase'e hiçbir istek gitmez; reCAPTCHA/gstatic engelli. ~50 sn, 10 test:
