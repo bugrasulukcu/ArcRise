@@ -3551,6 +3551,12 @@
     /* ══════════ GAME OVER EXTRAS ══════════ */
     #go-score-row { text-align: center; }
     /* Game-over twin row: SCORE + DISTANCE side by side, small BEST below each */
+    #go-cause { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-bottom: 2px; }
+    #go-cause:empty { display: none; }
+    #go-cause b { font-size: 11px; letter-spacing: 2px; color: #ff6a80; font-weight: 700; }
+    #go-cause[data-cause="energy"] b { color: #ffb13b; }
+    #go-cause[data-cause="crystal"] b { color: #8fe6ff; }
+    #go-cause span { font-size: 8.5px; letter-spacing: .8px; color: rgba(255,255,255,.45); text-align: center; }
     #go-twin-row {
       display: flex; gap: 14px; width: 100%;
       align-items: stretch;
@@ -4260,6 +4266,7 @@
 <!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
   <div class="panel gl gl-purple gl-glass">
+    <div id="go-cause"></div>
     <!-- Animated score + distance, with small best lines under each -->
     <div id="go-twin-row">
       <div class="go-twin-col">
@@ -6462,7 +6469,8 @@ const ARC_DB = (() => {
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
   let running = false, started = false;
-  let _lastRunInfo = {};   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
+  let _lastRunInfo = {};
+  let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
   // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
@@ -7677,6 +7685,85 @@ const ARC_DB = (() => {
       ctx.restore();
     }
   }
+  // Kristal: kırmızı çekirdek (hâlâ öldürür) + buzlu altıgen kabuk (kırılabilir olduğunu söyler)
+  function drawCrystal(ob, sx, sy) {
+    const spr = obstacleSprite(), k = ob.r * 0.72 / OB_SPR_R, half = spr.width / 2 * k;
+    ctx.drawImage(spr, sx - half, sy - half, half * 2, half * 2);
+    const rot = performance.now() / 2400, R = ob.r;
+    ctx.save();
+    ctx.translate(sx, sy); ctx.rotate(rot);
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * R, Math.sin(a) * R); }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(140,230,255,0.16)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(170,240,255,0.95)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = 'rgba(170,240,255,0.35)'; ctx.lineWidth = 1;          // yüzey çizgileri
+    ctx.beginPath();
+    for (let i = 0; i < 6; i += 2) { const a = i * Math.PI / 3; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R); }
+    ctx.stroke();
+    const tw = 0.5 + 0.5 * Math.sin(performance.now() / 300 + ob.x);         // parıltı
+    ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * tw})`;
+    ctx.beginPath(); ctx.arc(-R * 0.45, -R * 0.5, 2 + tw * 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function drawDeathMark(dt) {
+    if (!_deathInfo || dyingT < 0 && scene !== 'over') return;
+    const d = _deathInfo; d.t += dt;
+    if (d.t > 1.6) return;
+    const sy = W2S(d.y), k = (d.t % 0.8) / 0.8, col = d.cause === 'energy' ? '255,177,59' : d.cause === 'crystal' ? '143,230,255' : '255,70,100';
+    ctx.save();
+    ctx.strokeStyle = `rgba(${col},${0.9 * (1 - k)})`; ctx.lineWidth = 3;
+    if (d.cause === 'wall') { ctx.beginPath(); ctx.moveTo(d.x, sy - 40 - 30 * k); ctx.lineTo(d.x, sy + 40 + 30 * k); ctx.lineWidth = 6 * (1 - k) + 2; ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(d.x, sy, (d.r || 14) + 8 + 30 * k, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+  }
+  function drawFeats() {
+    if (!feats.length && _ringMulT <= 0) return;
+    const now = performance.now() / 1000;
+    ctx.save();
+    for (const f of feats) {
+      const sy = W2S(f.y);
+      if (sy < -80 || sy > H + 80) continue;
+      if (f.kind === 'gate') {
+        const a = f.done ? Math.max(0, 1 - f.doneT / 0.6) : 1;
+        const col = f.hit ? '124,255,122' : '255,210,74';
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = `rgba(${col},0.35)`; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]);   // kapı hizası
+        ctx.beginPath(); ctx.moveTo(f.x - f.gh, sy); ctx.lineTo(f.x + f.gh, sy); ctx.stroke(); ctx.setLineDash([]);
+        const pr = f.rr * (f.done ? 1 + (1 - a) * 1.5 : 1 + 0.08 * Math.sin(now * 5));
+        ctx.strokeStyle = `rgba(${col},0.95)`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(f.x, sy, pr, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = `rgba(${col},0.9)`; ctx.beginPath(); ctx.arc(f.x, sy, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (f.kind === 'ring') {
+        const a = f.done ? Math.max(0, 1 - f.doneT / 0.5) : 1, rr = f.r * (f.done ? 1 + (1 - a) : 1);
+        ctx.globalAlpha = a;
+        if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 16; }
+        ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(f.x, sy, rr, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(f.x, sy, rr, now * 3, now * 3 + 1.2); ctx.stroke();
+        ctx.fillStyle = '#ffe89a'; ctx.font = "bold 13px 'Press Start 2P', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('×2', f.x, sy + 1);
+        ctx.globalAlpha = 1;
+      } else if (f.kind === 'spark') {
+        const c = _corr[f.cid], tw = 0.7 + 0.3 * Math.sin(now * 8 + f.y);
+        if (c && c.fail) ctx.globalAlpha = 0.35;
+        if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 10; }
+        ctx.fillStyle = `rgba(255,214,90,${tw})`;
+        ctx.beginPath(); ctx.moveTo(f.x, sy - f.r * 1.4); ctx.lineTo(f.x + f.r, sy); ctx.lineTo(f.x, sy + f.r * 1.4); ctx.lineTo(f.x - f.r, sy); ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      }
+    }
+    // ×2 aktifken oyuncunun etrafında kalan süre halkası
+    if (_ringMulT > 0 && scene === 'play') {
+      const sy = W2S(player.y), k = _ringMulT / 5;
+      ctx.strokeStyle = 'rgba(255,210,74,0.9)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(player.x, sy, player.r + 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+    }
+    ctx.restore();
+  }
   function drawObstacles() {
     drawOrbitHints();
     ctx.save();
@@ -7723,6 +7810,8 @@ const ARC_DB = (() => {
           ctx.globalAlpha = 0.6 + 0.4 * p;
           ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
           ctx.restore();
+        } else if (ob.crystal) {
+          drawCrystal(ob, sx, sy);
         } else {
           const spr = obstacleSprite(), k = ob.r / OB_SPR_R, half = spr.width / 2 * k;
           ctx.drawImage(spr, sx - half, sy - half, half * 2, half * 2);
@@ -7814,10 +7903,11 @@ const ARC_DB = (() => {
 
   // Aktif booster skoru kaç ile çarpıyor (x2/x3/x4 → 2/3/4, diğerleri → 1)
   function getBoostScoreMul() {
-    if (boosterType === 'x2') return 2;
-    if (boosterType === 'x3') return 3;
-    if (boosterType === 'x4') return 4;
-    return 1;
+    const ring = _ringMulT > 0 ? 2 : 1;   // ×2 halkası booster'la çarpılır
+    if (boosterType === 'x2') return 2 * ring;
+    if (boosterType === 'x3') return 3 * ring;
+    if (boosterType === 'x4') return 4 * ring;
+    return ring;
   }
 
   function updateFloatTexts(dt) {
@@ -8587,10 +8677,11 @@ const ARC_DB = (() => {
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
     _reviveOffered = false; _lastSafePos = null;
-    dyingT = -1; cancelRoulette();
+    dyingT = -1; cancelRoulette(); _deathInfo = null;
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
+    _runGates = 0; _runCrystals = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -8662,6 +8753,12 @@ const ARC_DB = (() => {
 
         const ob = { x, y: nextSpawnY, r };
 
+        // ── Skorla birleşen nesneler (engel slotunun bir kısmı) ──
+        const featRoll = Math.random();
+        if (distCm >= 40 && featRoll < 0.07) { spawnGate(); nextSpawnY -= gap; continue; }
+        if (distCm >= 60 && featRoll < 0.11) { spawnCorridor(); nextSpawnY -= gap; continue; }
+        if (distCm >= 80 && featRoll < 0.14) { spawnRing(); nextSpawnY -= gap; continue; }
+
         // ── Yeni engel tipleri — mesafeyle açılır ──────────────
         // 10m+: PULSE (nefes alan), 20m+: SPIN (yörüngede ikiz), 30m+: SWEEP (süpürücü)
         const typeRoll = Math.random();
@@ -8717,9 +8814,58 @@ const ARC_DB = (() => {
           }
         }
 
+        // CRYSTAL: kırılabilir engel (Shockwave / Shield / Ghost-Phase ile) — kırınca puan + 1 coin.
+        // Kırıcı bir yeteneği/eşyası olan oyuncuda iki kat sık.
+        const hasBreaker = runShield || slotItems.some(it => it && (it.key === 'shock' || it.key === 'phaseburst'));
+        if (distCm >= 50 && Math.random() < (hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
+
         obstacles.push(ob);
       }
       nextSpawnY -= gap;
+    }
+  }
+  // KAPI: aynı hizada iki engel + arada altın hedef. Tam ortadan geçen bonus alır, combo sayacı dolar.
+  function spawnGate() {
+    const r = 24, gh = player.r + 36;
+    const lo = walls.left + gh + 2 * r + 12, hi = walls.right - gh - 2 * r - 12;
+    const gx = lo + Math.random() * Math.max(1, hi - lo), y = nextSpawnY;
+    obstacles.push({ x: gx - gh - r, y, r }); obstacles.push({ x: gx + gh + r, y, r });
+    feats.push({ kind: 'gate', id: ++_featId, x: gx, y, rr: 18, gh });
+  }
+  // ×2 HALKASI: koridoru sağa sola süpüren halka; içinden geçene 5 sn ×2 skor.
+  function spawnRing() {
+    const amp = (walls.right - walls.left) / 2 - 70;
+    feats.push({ kind: 'ring', id: ++_featId, x0: (walls.left + walls.right) / 2, x: 0, y: nextSpawnY, r: 28,
+      amp, f: 0.7 + Math.random() * 0.5, ph: Math.random() * Math.PI * 2, t: 0 });
+  }
+  // ALTIN KORİDOR: iki yanı engelli kıvrımlı hatta 5 kıvılcım; hepsini toplayana zincir bonusu.
+  function spawnCorridor() {
+    const n = 5, step = 80, amp = 38, side = player.r + 46, r = 18;
+    const lo = walls.left + amp + side + 2 * r + 8, hi = walls.right - amp - side - 2 * r - 8;
+    const cx = lo + Math.random() * Math.max(1, hi - lo), cid = ++_featId, ph = Math.random() * Math.PI * 2;
+    _corr[cid] = { n, got: 0, fail: false };
+    for (let i = 0; i < n; i++) {
+      const y = nextSpawnY - i * step, x = cx + Math.sin(ph + i * 0.9) * amp;
+      feats.push({ kind: 'spark', id: ++_featId, cid, x, y, r: 6 });
+      if (i % 2 === 0) { obstacles.push({ x: x - side - r, y, r }); obstacles.push({ x: x + side + r, y, r }); }
+    }
+    nextSpawnY -= (n - 1) * step;
+  }
+  // Kırılan engel: kristalse ödül (Shockwave / Shield / Ghost). Tüm kırılma yolları buradan geçer.
+  function onObstacleBroken(o) {
+    if (!o || !o.crystal || o._broken || tutActive) return;
+    o._broken = true;
+    const pts = Math.round(100 * getBoostScoreMul());
+    scoreBonus += pts; _runCrystals++; _runGolds++;          // _runGolds → run sonunda +1 coin
+    spawnFloatText(o._ox ?? o.x, (o._oy ?? o.y) - 20, 'CRYSTAL +' + pts, 190, 1.35);
+    spawnShards(o._ox ?? o.x, o._oy ?? o.y, 190);
+    haptic([15, 30, 15]);
+  }
+  function spawnShards(wx, wy, hue) {
+    for (let i = 0; i < 30; i++) {
+      const ang = Math.random() * Math.PI * 2, spd = 700 + Math.random() * 1300;
+      particles.push({ wx, wy, x: wx, y: wy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r: 2 + Math.random() * 4, life: 1, hue: hue + Math.random() * 20, sides: 3, rot: Math.random() * 6.28 });
     }
   }
 
@@ -8798,7 +8944,7 @@ const ARC_DB = (() => {
         // Grace window: countdown shows "0" for up to GRACE_S so the player
         // has a forgiving moment to grab a green and recover before death.
         graceTimer += dt;
-        if (graceTimer >= GRACE_S) { beginDeath(); return; }
+        if (graceTimer >= GRACE_S) { beginDeath('energy', player.x, player.y, player.r); return; }
       } else {
         graceTimer = 0;
       }
@@ -8915,6 +9061,7 @@ const ARC_DB = (() => {
     for (let i = bonuses.length   - 1; i >= 0; i--) if (bonuses[i].y   > cullY) bonuses.splice(i, 1);
     for (let i = goldBalls.length - 1; i >= 0; i--) if (goldBalls[i].y > cullY) goldBalls.splice(i, 1);
     for (let i = purpleBalls.length - 1; i >= 0; i--) if (purpleBalls[i].y > cullY) purpleBalls.splice(i, 1);
+    for (let i = feats.length - 1; i >= 0; i--) if (feats[i].y > cullY) feats.splice(i, 1);
 
     // Magnet: yeşil (bonuses), sarı (goldBalls) ve mor (purpleBalls) topları
     // oyuncuya doğru hızla çek. Magnet Range upgrade ile yarıçap büyür.
@@ -8962,6 +9109,69 @@ const ARC_DB = (() => {
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
+    // ── FEATS: kapı / ×2 halkası / koridor kıvılcımları
+    if (_ringMulT > 0) _ringMulT = Math.max(0, _ringMulT - dt);
+    if (dyingT < 0 && !tutActive) {
+      const magGrabF = (upg.magnetRange || 0) * MAG_PX_PER_LVL;
+      for (let i = feats.length - 1; i >= 0; i--) {
+        const f = feats[i];
+        if (f.kind === 'ring') {
+          f.t += dt; f.x = f.x0 + Math.sin(f.t * f.f + f.ph) * f.amp;
+          if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < f.r + player.r * 0.5) {
+            f.done = true; f.doneT = 0; _ringMulT = 5;
+            spawnFloatText(player.x, player.y - 26, '×2 SCORE · 5s', 48, 1.4); haptic([10, 30, 10]);
+          }
+          if (f.done && (f.doneT += dt) > 0.5) feats.splice(i, 1);
+        } else if (f.kind === 'gate') {
+          // kapı hizası bu karede geçildi (top yay çizdiği için iki yönde de sayılır)
+          const crossed = f._force || (f._py != null && (f._py - f.y) * (player.y - f.y) <= 0 && f._py !== player.y);
+          if (!f.done && crossed) {
+            f.done = true; f.doneT = 0;
+            const off = Math.abs(player.x - f.x);
+            if (off < f.rr + player.r * 0.6) {
+              const pts = Math.round(60 * getBoostScoreMul());
+              scoreBonus += pts; _runGates++; energy = 1;                 // combo sayacı tazelenir
+              f.hit = true;
+              spawnFloatText(player.x, player.y - 24, 'GATE +' + pts, 48, 1.3); spawnShards(f.x, f.y, 44); haptic(20);
+            }
+          }
+          f._py = player.y;
+          if (f.done && (f.doneT += dt) > 0.6) feats.splice(i, 1);
+        } else if (f.kind === 'spark') {
+          const c = _corr[f.cid];
+          if (Math.hypot(player.x - f.x, player.y - f.y) < player.r + 10 + magGrabF * 0.5) {
+            feats.splice(i, 1);
+            const pts = Math.round(15 * getBoostScoreMul());
+            scoreBonus += pts; spawnFloatText(f.x, f.y - 12, '+' + pts, 48, 0.9);
+            if (c && !c.fail && ++c.got === c.n) {
+              const bonus = Math.round(200 * getBoostScoreMul());
+              scoreBonus += bonus; _runCorridors++;
+              spawnFloatText(player.x, player.y - 30, 'CORRIDOR +' + bonus, 48, 1.5);
+              spawnGoldParticles(player.x, player.y); haptic([20, 40, 20]);
+            }
+          } else if (f.y > player.y + 70) { if (c) c.fail = true; feats.splice(i, 1); }   // kaçırıldı → zincir yandı
+        }
+      }
+      // TIMING: nabız atan engel küçülmüşken, büyükken kaplayacağı alandan geçip sağ çıkmak
+      for (const ob of obstacles) {
+        if (!ob.pk || ob._tim) continue;
+        const d = Math.hypot(player.x - ob._ox, player.y - ob._oy), outer = ob.r0 * 1.06 + player.r;
+        if (d < outer - 4 && ob.r < ob.r0 * 0.9) ob._tin = true;
+        else if (ob._tin && d > outer + 10) {
+          ob._tim = true;
+          const pts = Math.round(40 * getBoostScoreMul());
+          scoreBonus += pts; _runTimings++;
+          spawnFloatText(player.x, player.y - 22, 'TIMING +' + pts, 290, 1.2); haptic(15);
+        }
+      }
+      // Ghost (Phase Burst / ghost booster) kristalin içinden geçerken onu kırar
+      if (isGhost) for (let j = obstacles.length - 1; j >= 0; j--) {
+        const o = obstacles[j];
+        if (o.crystal && Math.hypot(player.x - o._ox, player.y - o._oy) < player.r + o.r) {
+          onObstacleBroken(o); obstacles.splice(j, 1);
+        }
+      }
+    }
     // ── THREAD: dönen ikilinin yörünge dairesine girip sağ çıkmak = iki topun arasından geçmek
     // (toplar hep karşılıklı → dairenin içinden geçen, ikisinin arasından geçmiştir).
     // Girerken topların oyuncuya en yakın mesafesi izlenir: çok yakın sıyırma → PERFECT.
@@ -9000,7 +9210,7 @@ const ARC_DB = (() => {
           runShield = false; spawnShieldPop(player.x, player.y);
           player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
           beginArc(-player.dir, getRadius());
-        } else if (hasShield) { clearBooster(); } else { beginDeath(); return; }
+        } else if (hasShield) { clearBooster(); } else { beginDeath('wall', player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y, 0); return; }
       }
       for (const ob of obstacles) {
         const dx = player.x - ob._ox, dy = player.y - ob._oy;
@@ -9009,10 +9219,11 @@ const ARC_DB = (() => {
         if (d2 < rr*rr) {
           if (runShield) {                    // Shield eşyası: engeli parçalar, kalkan gider
             runShield = false; spawnShieldPop(player.x, player.y);
+            onObstacleBroken(ob);
             spawnGoldParticles(ob._ox, ob._oy); obstacles.splice(obstacles.indexOf(ob), 1);
             break;
           }
-          if (hasShield) { clearBooster(); break; } else { beginDeath(); return; }
+          if (hasShield) { clearBooster(); break; } else { beginDeath(ob.crystal ? 'crystal' : 'obstacle', ob._ox, ob._oy, ob.r); return; }
         }
         // Near-miss: engelin dibinden sıyırınca bonus — engel başına bir kez.
         // Önce "yakın geçiş" bölgesine gir (≤22px), sonra uzaklaş (≥46px) → tetikle.
@@ -9270,8 +9481,16 @@ const ARC_DB = (() => {
 
   // ── Hit-stop: ölüm anında ~0.38s slow-motion, sonra gerçek endGame ──
   let dyingT = -1; // -1 = normal; >=0 = ölüm sonrası kısa patlama bekleme sayacı (loop'ta ilerler)
-  function beginDeath() {
+  // Ölüm sebebi: game over ekranında yazılır, çarpma noktası kısa süre halkayla gösterilir.
+  const DEATH_TXT = {
+    obstacle: ['HIT AN OBSTACLE', 'Tap earlier to curve around the red balls'],
+    crystal:  ['HIT A CRYSTAL', 'Break crystals with Shockwave, Shield or Ghost'],
+    wall:     ['HIT THE WALL', 'Switch direction before you reach the edge'],
+    energy:   ['OUT OF ENERGY', 'Grab green balls to refill the countdown'],
+  };
+  function beginDeath(cause, x, y, r) {
     if (dyingT >= 0) return;
+    _deathInfo = { cause: cause || 'obstacle', x: x ?? player.x, y: y ?? player.y, r: r || 0, t: 0 };
     // Bekleyen combo potunu skora ekle (ölümde kaybolmasın)
     if (_comboPot > 0) { scoreBonus += _comboPot; _comboPot = 0; runCombo = 0; }
     _comboStreak = 0;
@@ -9295,6 +9514,11 @@ const ARC_DB = (() => {
   let _runNearMiss    = 0;        // bu run'daki "CLOSE!" sayısı (daredevil badge)
   let _runThreads     = 0;        // bu run'da dönen ikilinin arasından geçiş sayısı
   let _orbitPid       = 0;
+  // Skorla birleşen nesneler (feats): kapı hedefi, ×2 halkası, koridor kıvılcımları
+  const feats = [];
+  let _featId = 0, _ringMulT = 0;  // ×2 halkası kalan süre (sn)
+  const _corr = {};               // koridor id → { n, got, fail }
+  let _runGates = 0, _runCrystals = 0, _runTimings = 0, _runCorridors = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
   let _runGoldBanked  = 0;        // bunlardan coin'e çevrilmiş olanlar
@@ -9457,6 +9681,11 @@ const ARC_DB = (() => {
     const adBtn = document.getElementById('btn-continue-ad');
     if (adBtn) adBtn.style.display =
       (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
+    // Ölüm sebebi satırı
+    try {
+      const c = DEATH_TXT[_deathInfo?.cause] || DEATH_TXT.obstacle, el = document.getElementById('go-cause');
+      if (el) { el.dataset.cause = _deathInfo?.cause || 'obstacle'; el.innerHTML = `<b>${c[0]}</b><span>${c[1]}</span>`; }
+    } catch(_) {}
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
@@ -9779,7 +10008,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawObstacles(); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawComboLabel(); drawResumeCountdown(); }
@@ -10163,6 +10392,21 @@ const ARC_DB = (() => {
       obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: 0, mt: 0, pid, lead: true });
       obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: Math.PI, mt: 0, pid }); },
     ghost: s => activateBooster('ghost', s || 4),
+    get feats() { return { gates: _runGates, crystals: _runCrystals, timings: _runTimings, corridors: _runCorridors, ringMul: _ringMulT, threads: _runThreads }; },
+    get score() { return Math.floor(score); },
+    // Test: nesneyi oyuncunun bulunduğu yere koy (hemen tetiklensin)
+    spawnFeatHere: (kind, ahead = 0, dx = 0) => {
+      const x = ahead ? (walls.left + walls.right) / 2 + dx : player.x, y = player.y - ahead;
+      if (kind === 'gate') { const gh = player.r + 36; feats.push({ kind: 'gate', id: ++_featId, x, y, rr: 18, gh, _force: !ahead });
+        if (ahead) { obstacles.push({ x: x - gh - 24, y, r: 24 }); obstacles.push({ x: x + gh + 24, y, r: 24 }); } }
+      if (kind === 'ring') feats.push({ kind: 'ring', id: ++_featId, x0: x, x, y, r: 28, amp: ahead ? 80 : 0, f: 1, ph: 0, t: 0 });
+      if (kind === 'corridor') { const cid = ++_featId, n = ahead ? 5 : 3; _corr[cid] = { n, got: 0, fail: false };
+        for (let i = 0; i < n; i++) { const sx = x + (ahead ? Math.sin(i * 0.9) * 38 : 0), sy = y - (ahead ? i * 80 : 0);
+          feats.push({ kind: 'spark', id: ++_featId, cid, x: sx, y: sy, r: 6 });
+          if (ahead && i % 2 === 0) { const side = player.r + 46; obstacles.push({ x: sx - side - 18, y: sy, r: 18 }); obstacles.push({ x: sx + side + 18, y: sy, r: 18 }); } } }
+      if (kind === 'crystal') obstacles.push({ x, y, r: 30, crystal: true, _ox: x, _oy: y });
+      if (kind === 'timing') obstacles.push({ x, y, r: 20, r0: 60, pk: true, pph: -Math.PI / 2, pt: 0, _ox: x, _oy: y });
+    },
   };
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
@@ -11144,7 +11388,7 @@ const ARC_DB = (() => {
       if (!w.pop) for (let j = obstacles.length - 1; j >= 0; j--) {   // kalkan kırılması (pop) engellere dokunmaz
         const o = obstacles[j], ox = o._ox ?? o.x, oy = o._oy ?? o.y;
         const d = Math.hypot(ox - w.x, oy - w.y);
-        if (d < w.r + o.r) { spawnGoldParticles(ox, oy); obstacles.splice(j, 1); }
+        if (d < w.r + o.r) { onObstacleBroken(o); spawnGoldParticles(ox, oy); obstacles.splice(j, 1); }
       }
       if (w.r >= w.maxR) shockWaves.splice(i, 1);
     }

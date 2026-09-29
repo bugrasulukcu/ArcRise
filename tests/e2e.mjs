@@ -363,6 +363,22 @@ test('thread: dönen ikilinin arasından geçmek bonus verir', async () => {
   check(await waitFor(`ARC_TEST.threads === 1`, 4000), 'THREAD bonusu verilmedi');
 });
 
+test('nesneler: kapı, ×2 halkası, koridor, kristal, timing bonus verir', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(600);
+  for (const k of ['ring', 'gate', 'corridor', 'crystal', 'timing']) { await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('${k}'); true`); await sleep(900); }
+  const f = await ev('ARC_TEST.feats');
+  check(f.gates === 1 && f.crystals === 1 && f.timings === 1 && f.corridors === 1, `sayaçlar: ${JSON.stringify(f)}`);
+});
+
+test('ölüm sebebi game over ekranında yazar', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  const txt = await ev(`document.getElementById('go-cause').textContent`);
+  check(/HIT|OUT OF ENERGY/.test(txt), `sebep yazısı: "${txt}"`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

@@ -396,6 +396,22 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Skorla birleşen nesneler: Kapı, ×2 Halkası, Kristal, Altın Koridor, TIMING + ölüm sebebi (2026-09-29)
+
+Hepsi `feats` dizisinde (kapı hedefi / halka / kıvılcım) ya da engel özelliği (kristal, TIMING). Spawn: engel slotlarının kapı %7 (0.4 m+), koridor %4 (0.6 m+), halka %3 (0.8 m+); kristal normal engellerin %8'i (0.5 m+; Shockwave/Phase takılıysa ya da Shield aktifse %16).
+
+| Nesne | Kural | Ödül |
+|---|---|---|
+| KAPI | aynı hizada iki engel + aradaki altın hedef; hizayı hedefin ortasından geç (iki yönde sayılır) | +60 × çarpan, combo sayacı dolar |
+| ×2 HALKASI | koridoru süpüren altın halka; içinden geç | 5 sn tüm bonuslar ×2 (booster'la çarpılır), oyuncu etrafında kalan süre yayı |
+| KRİSTAL | kırmızı çekirdek + buzlu altıgen kabuk; dokunursan ölürsün; Shockwave / Shield / Ghost-Phase ile kır | +100 × çarpan + 1 coin |
+| ALTIN KORİDOR | iki yanı engelli kıvrımlı hatta 5 kıvılcım (coin vermez) | her biri +15; hepsi → +200 × çarpan; biri kaçarsa zincir söner |
+| TIMING | nabız atan engel küçükken, büyükken kaplayacağı alandan geç | +40 × çarpan |
+
+- Kırılma yolları tek noktada: `onObstacleBroken()` (Shockwave, Shield, Ghost içinden geçme).
+- **Ölüm sebebi:** `beginDeath(cause, x, y, r)` — engel / kristal / duvar / enerji. Game over'ın üstünde sebep + ipucu ("Switch direction before you reach the edge" vb.); ölüm anında çarpma noktasında 1.6 sn genişleyen halka (duvarda dikey çizgi).
+- `ARC_TEST`: `feats` sayaçları, `spawnFeatHere(kind, ahead, dx)`, `score`. Testler 18/18.
+
 ### THREAD: dönen ikilinin arasından geçme bonusu + yeni engel görünümü (2026-09-29)
 
 - **THREAD** (arkadaş önerisi): SPIN engeli (ortak merkez etrafında karşılıklı dönen iki top) çiftinin yörünge dairesine girip sağ çıkmak = iki topun arasından geçmek. **+75 × booster çarpanı**, topları 26 px'ten yakın sıyırırsan **PERFECT +150**; ayrıca +%15 enerji, altın parçacık, titreşim. Çift `pid` ile bağlı, bonusu `lead` üye taşır (çift başına bir kez). Tutorial'da kapalı. Ölçek: CLOSE +25, yeşil ~10, PB +200. Sayaç `_runThreads` (ileride rozet/görev için).
