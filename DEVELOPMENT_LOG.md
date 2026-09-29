@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Görevler: "N run oyna" açığı kapandı (2026-09-29)
+
+- **Sorun:** "Play N runs today" ve "Finish N Extreme runs today" her run'ı sayıyordu → START'a basıp duvara çarpmak görevi tamamlıyordu.
+- "Play N runs" havuzdan çıktı → **"Get N CLOSE! near-misses today"** (taban 4; `_runNearMiss` run sonunda eklenir).
+- Extreme görevi → **"Reach 1.00m in N Extreme run(s) today"** (`param` 100 cm, yıl içinde 1.5 m'ye büyür).
+- Bugün zaten atanmış eski `runsToday` görevleri artık yalnız 0.5 m'yi geçen run'ları sayar.
+- Diğer görevler zaten performans istiyor (skor, mesafe, combo, toplam mesafe, 1.5 m+ run, coin, THREAD, kapı).
+- Test 22/22 (yeni: hemen ölen run hiçbir görevi ilerletmez).
+
 ### Günlük meydan okuma (DAILY RUN) (2026-09-29)
 
 - **Aynı pist:** `spawnAhead` + kapı/halka/koridor üreticileri `srand()` kullanır; günlük koşuda `mulberry32(FNV('arcrise-daily-YYYYMMDD'))`, normalde `Math.random`. Pistin herkes için aynı olması için günlükte: zorluk (`distCm`) oyuncunun anlık konumundan değil **slotun kendi yüksekliğinden**, ilk slot `H` yerine sabit `H_REF`'ten; kristal oranı yüklemeden bağımsız (%10). Doğrulama: 375×667, 430×932, 1280×800 ve büyük top upgrade'inde ilk 25 nesnenin koordinatları birebir aynı.

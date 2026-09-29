@@ -432,6 +432,19 @@ test('günlük meydan okuma: aynı pist, eşyasız, normal mod, skor günlük ta
   check(!d3.on && d3.mode === 'extreme', `menüde günlük mod kapanmadı / mod geri gelmedi: ${JSON.stringify(d3)}`);
 });
 
+test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
+  const q = (metric, target, param) => ({ metric, target, param: param || 0, reward: 2, label: metric, progress: 0, claimed: false });
+  await fresh({ arc_mode: 'extreme', arc_extreme_unlocked: '1', arc_login_day: today(),
+    arc_quests_v1: { date: today(), day: 1, quests: [q('runsToday', 3), q('extremeRuns', 1, 100), q('nearMissToday', 4)], allBonusClaimed: false } });
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(800);
+  const dist = (await ev('ARC_TEST.lastRun')).distCm;
+  const pr = (await lsJSON('arc_quests_v1')).quests.map(x => x.metric + '=' + x.progress);
+  check(dist < 50, `run beklenenden uzun sürdü (${dist} cm) — test geçersiz`);
+  check(pr.every(x => x.endsWith('=0')), `hemen ölen run görev ilerletti: ${pr.join(', ')}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
