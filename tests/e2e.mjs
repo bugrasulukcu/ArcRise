@@ -294,6 +294,44 @@ test('günlük: yeni gün → görevler yenilenir, seri ilerler, giriş +1 coin'
   check(Number(await ls('arc_coins_earned')) === 1, 'aynı gün ikinci açılışta giriş coini tekrar verildi');
 });
 
+test('seri: 5. gün sandık, 1 gün kaçırma serbest, 2 gün sıfırlar, 60. gün özel iz', async () => {
+  const dayNum = (off = 0) => { const d = new Date(); d.setDate(d.getDate() + off); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); };
+  const streakOf = async () => ({ s: (await lsJSON('arc_stats_v1')).dayStreak, p: ((await lsJSON('arc_streak_v1')) || { pending: [] }).pending.map(x => x.day + ':' + x.tier).join(',') });
+  await fresh({ arc_stats_v1: { dayStreak: 4, lastDayNum: dayNum(-1) }, arc_streak_v1: { lastDay: 4, pending: [] }, arc_coins_earned: '0' });
+  let r = await streakOf(); check(r.s === 5 && r.p === '5:small', `4→5: ${JSON.stringify(r)}`);
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  const inv0 = JSON.stringify((await lsJSON('arc_upg_v1'))?.inv || {});
+  await ev(`document.querySelector('.st-open').click(); true`); await sleep(300);
+  const coinsGot = Number(await ls('arc_coins_earned')) - 1;   // -1 = günlük giriş
+  const inv1 = JSON.stringify((await lsJSON('arc_upg_v1')).inv);
+  check(coinsGot === 10 || inv1 !== inv0, `sandık boş çıktı (coin +${coinsGot})`);
+  check(((await lsJSON('arc_streak_v1')).pending.length) === 0, 'sandık açıldıktan sonra beklemede kaldı');
+  await fresh({ arc_stats_v1: { dayStreak: 9, lastDayNum: dayNum(-2) }, arc_streak_v1: { lastDay: 9, pending: [] } });
+  r = await streakOf(); check(r.s === 10, `1 gün kaçırma sonrası seri ${r.s} (beklenen 10)`);
+  await fresh({ arc_stats_v1: { dayStreak: 9, lastDayNum: dayNum(-3) }, arc_streak_v1: { lastDay: 9, pending: [] } });
+  r = await streakOf(); check(r.s === 1, `2 gün kaçırma sonrası seri ${r.s} (beklenen 1)`);
+  await fresh({ arc_stats_v1: { dayStreak: 59, lastDayNum: dayNum(-1) }, arc_streak_v1: { lastDay: 59, pending: [] } });
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.st-open').click(); true`); await sleep(300);
+  check((await lsJSON('arc_upg_v1')).traceColorsOwned.includes('rb:ember'), '60. gün Ember izi verilmedi');
+});
+
+test('tutorial: gerçek run\'a geçişte takılı item harcanır', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true } } } }, { firstplay: false });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(800);
+  check((await lsJSON('arc_upg_v1')).inv.shield.count === 3, 'tutorial başlarken item harcandı');
+  await ev(`ARC_TEST.finishTutorial(); true`); await sleep(300);
+  const n = (await lsJSON('arc_upg_v1')).inv.shield.count;
+  check(n === 2, `tutorial sonrası run: shield 3 → ${n} (beklenen 2)`);
+});
+
+test('credits: alert yerine oyun penceresi', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-credits').click(); true`); await sleep(300);
+  check(dialogs.length === 0, 'alert açıldı');
+  check(await ev(`document.getElementById('credits-modal').classList.contains('open')`), 'credits penceresi açılmadı');
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

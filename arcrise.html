@@ -3003,7 +3003,7 @@
     }
 
     /* ══════════ QUESTS MODAL ══════════ */
-    #quests-modal, #friends-modal, #friendslist-modal, #gearpick-modal {
+    #quests-modal, #friends-modal, #friendslist-modal, #gearpick-modal, #credits-modal {
       position: fixed; inset: 0; z-index: 56;
       display: none; align-items: center; justify-content: center;
       background: rgba(6,8,14,0.30);
@@ -3011,8 +3011,8 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #gearpick-modal { z-index: 64; } /* upgrades modal'ın (58) üstünde açılır */
-    #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open { display: flex; }
-    #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box {
+    #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open, #credits-modal.open { display: flex; }
+    #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box, #credits-box {
       position: relative; width: min(92vw, 360px);
       border-radius: 22px; padding: 24px 20px 18px;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
@@ -3057,6 +3057,111 @@
       background: none; color: rgba(255,255,255,.3);
       border-color: rgba(255,255,255,.15); cursor: default;
     }
+    /* ── Giriş serisi şeridi ── */
+    .streak-box {
+      width: 100%; padding: 11px 12px 10px; border-radius: 13px;
+      border: 1px solid rgba(255,206,90,.35);
+      background: linear-gradient(180deg, rgba(255,206,90,.08), rgba(16,20,30,.6));
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .st-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .st-title { font-size: 10px; letter-spacing: 1.4px; color: rgba(255,255,255,.65); }
+    .st-title b { color: #ffce5a; font-size: 14px; font-weight: 700; margin: 0 2px; }
+    .st-login { font-size: 8.5px; letter-spacing: 1px; color: #9fffa0; display: inline-flex; align-items: center; gap: 3px; }
+    .st-track { position: relative; display: grid; grid-template-columns: repeat(10, 1fr); align-items: end; }
+    .st-track::before {  /* bağlantı çizgisi */
+      content: ''; position: absolute; left: 5%; right: 5%; top: 12px; height: 2px;
+      background: rgba(255,255,255,.12); border-radius: 1px;
+    }
+    .st-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .st-mark { height: 26px; display: flex; align-items: center; justify-content: center; }
+    .st-dot { width: 9px; height: 9px; border-radius: 50%; background: #1a1f2c; border: 1.5px solid rgba(255,255,255,.28); }
+    .st-cell.past .st-dot { background: #ffce5a; border-color: #ffce5a; }
+    .st-cell.today .st-dot { width: 13px; height: 13px; background: #ffce5a; border-color: #fff; box-shadow: 0 0 10px rgba(255,206,90,.9); }
+    .st-num { font-size: 7.5px; letter-spacing: .5px; color: rgba(255,255,255,.35); }
+    .st-cell.today .st-num { color: #ffce5a; }
+    .st-cell.future .chest-svg { opacity: .55; }
+    .st-cell.pending .chest-svg { animation: chestWiggle 1.4s ease-in-out infinite; filter: drop-shadow(0 0 5px currentColor); }
+    .chest-svg .chest-lid { transform-origin: 5px 13px; transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
+    .chest-svg.open .chest-lid { transform: rotate(-24deg) translate(-1px, -2px); }
+    @keyframes chestWiggle { 0%,70%,100% { transform: rotate(0); } 76% { transform: rotate(-9deg); } 84% { transform: rotate(8deg); } 92% { transform: rotate(-4deg); } }
+    .st-foot { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 26px; }
+    .st-next-lbl { font-size: 8px; letter-spacing: 1.4px; color: rgba(255,255,255,.35); }
+    .st-next { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; letter-spacing: .6px; color: var(--cc); }
+    .st-open {
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.3px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 10px;
+      border: 1px solid rgba(255,206,90,.7); color: #2a1a02;
+      background: linear-gradient(180deg, #ffe07a, #f5a623); box-shadow: 0 0 14px rgba(255,190,60,.45);
+      animation: stOpenPulse 1.6s ease-in-out infinite;
+    }
+    .st-open .chest-svg { filter: brightness(.35); }
+    .st-open:active { transform: scale(.95); }
+    @keyframes stOpenPulse { 50% { box-shadow: 0 0 22px rgba(255,190,60,.8); } }
+    .st-title, .st-login { white-space: nowrap; }
+    @media (max-width: 360px) { .st-title { font-size: 8.5px; letter-spacing: 1px; } .st-title b { font-size: 12px; } .st-login { font-size: 7.5px; } }
+    .st-hint { font-size: 7.5px; letter-spacing: .6px; line-height: 1.5; color: rgba(255,255,255,.32); text-align: center; }
+
+    /* ── Görev kartı: eksen ikonu/rengi + coin çipi ── */
+    .quest-card { --ax: #5ad8ff; border-left: 3px solid var(--ax); }
+    .quest-card.ax-grind { --ax: #b48cff; }
+    .quest-card.ax-spice { --ax: #ff7ab8; }
+    .quest-top { align-items: center; }
+    .quest-ic {
+      flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; color: var(--ax);
+      display: inline-flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--ax) 14%, transparent); border: 1px solid color-mix(in srgb, var(--ax) 45%, transparent);
+    }
+    .quest-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .quest-axis { font-size: 7.5px; letter-spacing: 1.6px; color: var(--ax); }
+    .quest-chip, .quest-claim { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .quest-chip { font-size: 10px; letter-spacing: .5px; color: #ffce5a; padding: 5px 9px; border-radius: 9px; border: 1px solid rgba(255,206,90,.3); background: rgba(255,206,90,.07); }
+    .quest-bar { background: linear-gradient(90deg, color-mix(in srgb, var(--ax) 55%, #fff), var(--ax)); }
+    .quest-claim.ready { animation: stOpenPulse 1.6s ease-in-out infinite; box-shadow: 0 0 12px rgba(124,255,122,.4); }
+    .quest-card.claimed { opacity: .55; }
+
+    /* ── Sandık açma katmanı ── */
+    #chest-pop {   /* #quests-modal'ın backdrop-filter'ı fixed'i modal alanına bağlar */
+      position: fixed; inset: 0; z-index: 5;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(6,8,14,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    #chest-pop.open { display: flex; animation: questIn .25s ease both; }
+    .cp-card {
+      width: 82%; padding: 18px 16px 16px; border-radius: 18px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      border: 2px solid var(--cc); box-shadow: 0 0 30px color-mix(in srgb, var(--cc) 35%, transparent);
+      background: linear-gradient(180deg, rgba(20,24,36,.97), rgba(10,12,20,.97));
+    }
+    .cp-day { font-size: 10px; letter-spacing: 1.8px; color: var(--cc); }
+    .cp-chest { position: relative; height: 92px; display: flex; align-items: center; justify-content: center; }
+    #chest-pop.open .cp-chest .chest-svg { animation: chestShake .6s ease-in-out; }
+    @keyframes chestShake { 20% { transform: rotate(-10deg) scale(1.05); } 40% { transform: rotate(9deg) scale(1.08); } 60% { transform: rotate(-6deg) scale(1.1); } 80% { transform: rotate(3deg) scale(1.05); } }
+    .cp-burst {
+      position: absolute; left: 50%; top: 45%; width: 20px; height: 20px; margin: -10px; border-radius: 50%;
+      background: radial-gradient(circle, var(--cc), transparent 70%); opacity: 0; pointer-events: none;
+    }
+    #chest-pop.revealed .cp-burst { animation: cpBurst .7s ease-out both; }
+    @keyframes cpBurst { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(9); } }
+    .cp-loot { display: flex; flex-direction: column; gap: 7px; opacity: 0; transform: translateY(8px); transition: all .35s ease .05s; }
+    #chest-pop.revealed .cp-loot { opacity: 1; transform: none; }
+    .cp-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; letter-spacing: 1px; color: #fff; }
+    .cp-trail { width: 44px; height: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(255,255,255,.35); }
+    .cp-ok {
+      font-family: var(--font); font-size: 11px; letter-spacing: 1.6px; cursor: pointer; margin-top: 4px;
+      padding: 8px 26px; border-radius: 11px; color: #062a08; border: 1px solid rgba(124,255,122,.5);
+      background: linear-gradient(180deg, #7CFF7A, #3ad055); opacity: 0; transition: opacity .3s ease .35s;
+    }
+    #chest-pop.revealed .cp-ok { opacity: 1; }
+    .tr-sw.streak { box-shadow: inset 0 0 0 2px rgba(255,170,60,.55); }
+    #quests-modal-box { max-height: 92vh; max-height: 92dvh; overflow-y: auto; }
+    #credits-box { border-color: rgba(90,216,255,.45); text-align: center; }
+    #credits-box .fm-title { color: #8fe6ff; }
+    .cr-logo { font-size: 30px; letter-spacing: 6px; color: #fff; text-shadow: 0 0 18px rgba(90,216,255,.55); }
+    .cr-ver { font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,.4); margin-top: -8px; }
+    .cr-row { display: flex; flex-direction: column; gap: 3px; }
+    .cr-lbl { font-size: 8.5px; letter-spacing: 1.8px; color: rgba(143,230,255,.7); }
+    .cr-val { font-size: 13px; letter-spacing: 1px; color: #fff; }
     #gearpick-box { border-color: rgba(170,120,255,.5); }
     #gearpick-box .fm-title { color: #c0a3ff; }
     #gearpick-content { width: 100%; }
@@ -4373,6 +4478,22 @@
     </div>
     <div class="qm-sub">New quests every day</div>
     <div id="quests-list"></div>
+    <div id="chest-pop"></div>
+  </div>
+</div>
+
+<!-- ══ CREDITS ══ -->
+<div id="credits-modal">
+  <div id="credits-box" class="gl gl-blue gl-glass">
+    <div class="modal-head">
+      <button id="credits-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <div class="fm-title modal-head-title">CREDITS</div>
+      <span class="modal-head-spacer"></span>
+    </div>
+    <div class="cr-logo">ARCRISE</div>
+    <div class="cr-ver">v1.0 — 2025</div>
+    <div class="cr-row"><span class="cr-lbl">DESIGN &amp; CODE</span><span class="cr-val">Buğra Sulukcu</span></div>
+    <div class="cr-row"><span class="cr-lbl">FONT</span><span class="cr-val">Sarpanch</span></div>
   </div>
 </div>
 
@@ -5647,12 +5768,22 @@ const ARC_DB = (() => {
     if (d && d.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', { configurable: true, enumerable: true,
       get() { return d.get.call(this); }, set(v) { d.set.call(this, LOWFX ? 0 : v); } });
   })();
-  let _fpsT = 0, _fpsN = 0;
+  // Açılışın ilk 4 saniyesi sayılmaz (font/ses çözme, ilk çizimler ortalamayı düşürüp iyi
+  // telefonu da oturum boyu düşük moda sokabiliyordu). Açılması için ART ARDA iki düşük
+  // 3 sn'lik ölçüm gerekir; tek bir takılma yetmez.
+  let _fpsT = 0, _fpsN = 0, _fpsLow = 0, _fpsWarm = 4;
   function trackFps(dtReal) {      // loop'tan her kare; sekme gizliyken büyük dt'ler atlanır
     if (LOWFX || dtReal <= 0 || dtReal > 0.25) return;
+    if (_fpsWarm > 0) { _fpsWarm -= dtReal; return; }
     _fpsT += dtReal; _fpsN++;
-    if (_fpsT >= 3) { if (_fpsN / _fpsT < 42) enableLowFx(); _fpsT = 0; _fpsN = 0; }
+    if (_fpsT >= 3) {
+      _fpsLow = (_fpsN / _fpsT < 42) ? _fpsLow + 1 : 0;
+      if (_fpsLow >= 2) enableLowFx();
+      _fpsT = 0; _fpsN = 0;
+    }
   }
+  // Uygulama arka plandan dönünce ısınma yeniden (dönüşteki ilk kareler de takılır)
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { _fpsWarm = 2; _fpsT = 0; _fpsN = 0; _fpsLow = 0; } });
   const gc = document.getElementById('gc');
   const bg = document.getElementById('bg');
   const ctx = gc.getContext('2d');
@@ -6304,6 +6435,7 @@ const ARC_DB = (() => {
   // ── State ────────────────────────────────────────────────
   let scene   = 'home';
   let running = false, started = false;
+  let _lastRunInfo = {};   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
   // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
@@ -6721,6 +6853,8 @@ const ARC_DB = (() => {
     else pushWallet();   // bulutta yoksa/geride ise yerel durumu yükle
   }
 
+  // Yerel takvim günü numarası (yaz/kış saatinden etkilenmez)
+  const localDayNum = (d = new Date()) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
   // Günlük yumuşak tavan defteri (tarih değişince sıfırlanır).
   const coinDayStr = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
   function coinsEarnedToday() {
@@ -8162,6 +8296,9 @@ const ARC_DB = (() => {
   const RB_HUE = {
     'rainbow': [0, 360], 'rb:warm': [0, 55], 'rb:cool': [185, 115],
     'rb:candy': [290, 70], 'rb:aqua': [140, 80],
+    // giriş serisi izleri
+    'rb:ember': [0, 42], 'rb:aurora': [140, 140], 'rb:nebula': [262, 70], 'rb:abyss': [195, 55],
+    'rb:solar': [36, 24], 'rb:legend': [0, 720],
   };
 
   // ── Player ───────────────────────────────────────────────
@@ -9001,9 +9138,15 @@ const ARC_DB = (() => {
       // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     nextSpawnY = player.y - H; lastBonusY = player.y - H;
+      // Gerçek run başlıyor → takılı item'lar START'taki gibi devreye girer (eskiden atlanıyordu)
+      consumeArmedConsumables();
       beginArc(-player.dir || 1, getRadius());
       spawnAhead(); // buffer'ı hemen doldur
       started = true; running = true;
+      if (_runPreboostPending) {
+        activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
+        _runPreboostPending = null;
+      }
       try { playBgMusic(); } catch(_) {}
     } else {
       // SKIP butonu veya manuel kapama: home'a dön
@@ -9179,6 +9322,7 @@ const ARC_DB = (() => {
       checkBadgeUnlocks(); // yeni badge açıldıysa toast gösterir
       // Günlük görev ilerlemesi (wife mode hariç)
       try { questOnRunEnd({ distCm: runDistCm, score: lastScore, coinsEarned: earned, countRun: firstDeathThisRun, maxCombo: _runMaxCombo, mode: gameMode }); } catch(_){}
+      _lastRunInfo = { distCm: runDistCm, score: lastScore, maxCombo: _runMaxCombo, mode: gameMode, n: (_lastRunInfo.n || 0) + 1 };
       // Arkadaş listesi için profil (en iyi skor/mesafe) güncelle
       try { publishPlayerProfile(); } catch(_){}
     }
@@ -9640,7 +9784,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
@@ -9892,6 +10036,8 @@ const ARC_DB = (() => {
     get scene() { return scene; }, get mode() { return gameMode; }, setMode: m => { gameMode = m; },
     runCoinsRaw, applySoftCap, coinsEarnedToday,
     get audio() { return _audioDiag(); },
+    get lastRun() { return _lastRunInfo; },
+    finishTutorial: () => { _tutWantsPlay = true; endTutorial(); },   // tutorial'ın "GO!" sonu
   };
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
@@ -10361,6 +10507,17 @@ const ARC_DB = (() => {
     ['rb:candy','linear-gradient(90deg,#ff5bd1,#ff8bf0,#c45bff)'],
     ['rb:aqua', 'linear-gradient(90deg,#3bffd1,#3bff8b,#8bffce)'],
   ];
+  // Yalnız GİRİŞ SERİSİ sandıklarından çıkan izler — mağazada satılmaz (sırayla verilir).
+  const STREAK_RAINBOWS = [
+    ['rb:ember',  'linear-gradient(90deg,#ff2a1a,#ff6a1a,#ffb02a)'],
+    ['rb:aurora', 'linear-gradient(90deg,#3bff9a,#3bd1ff,#8a5bff)'],
+    ['rb:nebula', 'linear-gradient(90deg,#7a3bff,#c43bff,#ff5bb0)'],
+    ['rb:abyss',  'linear-gradient(90deg,#1a4bff,#1aa8ff,#1affe0)'],
+    ['rb:solar',  'linear-gradient(90deg,#fff1a0,#ffd24a,#ffa21a)'],
+    ['rb:legend', 'linear-gradient(90deg,#ffd24a,#ff3b3b,#c45bff,#3bd1ff,#5bff7a,#ffd24a)'],
+  ];
+  const ALL_RAINBOWS = RAINBOWS.concat(STREAK_RAINBOWS);
+  const isStreakTrail = id => STREAK_RAINBOWS.some(r => r[0] === id);
   const _own = name => (upg[name] || (upg[name] = []));
   const _has = (name, id) => _own(name).indexOf(id) !== -1;
   function _buyOwn(name, id, price, label, after) {
@@ -10372,7 +10529,7 @@ const ARC_DB = (() => {
     if (typeof id !== 'string') id = '#ffffff';   // bozuk localStorage -> TypeError guard
     if (id === 'custom') return upg.customGrad || 'linear-gradient(90deg,#ff3b3b,#3bd1ff,#c45bff)';
     if (id.charAt(0) === '#') return id;
-    return (RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
+    return (ALL_RAINBOWS.find(r => r[0] === id) || RAINBOWS[0])[1];
   }
   // ── Trace önizlemesi: menü açıkken rAF ile çizilir, kapanınca durur ──
   let _tpvRaf = 0;
@@ -10481,6 +10638,9 @@ const ARC_DB = (() => {
     cg.innerHTML = swatch('#ffffff', '#ffffff')
       + solids.map(c => swatch(c, c)).join('')
       + RAINBOWS.map(([id, css]) => swatch(id, css)).join('')
+      + STREAK_RAINBOWS.map(([id, css]) => traceColorOwned(id)
+          ? swatch(id, css)
+          : `<button class="tr-sw locked streak" data-col="${id}" style="background:${css}"><span class="tr-lock">🔥</span></button>`).join('')
       + customSw;
     cg.querySelectorAll('[data-col]').forEach(s => s.addEventListener('click', () => {
       const id = s.dataset.col;
@@ -10493,6 +10653,7 @@ const ARC_DB = (() => {
       }
       const sel = () => { upg.traceColor = id; saveUpg(); renderTrace(); };
       if (traceColorOwned(id)) sel();
+      else if (isStreakTrail(id)) showToast('Login streak reward — see Daily Quests');
       else _buyOwn('traceColorsOwned', id, traceColorPrice(id), 'Trace colour', sel);
     }));
     // Animasyon
@@ -10588,7 +10749,7 @@ const ARC_DB = (() => {
       return { solid: tc, css: tc, isGrad: false, glow: `rgba(${r.r},${r.g},${r.b},.32)`, glowStrong: `rgba(${r.r},${r.g},${r.b},.6)` };
     }
     // Gökkuşağı / rainbow varyantı → dönen konik gradyen (settings/avatar halkası gibi)
-    const rb = RAINBOWS.find(r => r[0] === tc);
+    const rb = ALL_RAINBOWS.find(r => r[0] === tc);
     const hh = (tc === 'rainbow') ? 275 : ((RB_HUE[tc] || RB_HUE.rainbow)[0] + (RB_HUE[tc] || RB_HUE.rainbow)[1] / 2);
     if (rb) {
       const cols = rb[1].match(/#[0-9a-fA-F]{3,8}/g) || ['#fff'];
@@ -12429,7 +12590,7 @@ const ARC_DB = (() => {
     _setDot('#mode-fx-wrap', extNew);                      // settings: mod satırı
     // Quests: toplanmamış ödül var mı
     let questNew = false;
-    try { questNew = questClaimableCount() > 0; } catch(_) { questNew = false; }
+    try { questNew = questClaimableCount() > 0 || streakRw.pending.length > 0; } catch(_) { questNew = false; }
     _setDot('#btn-quests', questNew);
     // Upgrades: son ziyaretten beri coin arttı mı (harcanacak yeni coin)
     let upgNew = false;
@@ -12479,15 +12640,21 @@ const ARC_DB = (() => {
     return dirty;
   }
 
-  // Günlük login streak — açılışta bir kez güncellenir (streak-5 badge'i besler)
+  // Günlük giriş serisi — açılışta bir kez (streak rozeti + giriş ödül şeridi).
+  // Gün farkı TAKVİM günüyle: eskiden 24 saat karşılaştırılıyordu → yaz/kış saati
+  // geçişinde (23/25 saatlik gün) seri sıfırlanıyordu.
+  // Tek bir günü kaçırmak seriyi bozmaz (o gün sayılmaz); iki gün üst üste kaçırılırsa 1'e döner.
   (function trackDayStreak() {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const t = today.getTime();
-    const last = stats.lastDayTs || 0;
-    if (last === t) return; // bugün zaten sayıldı
-    const oneDay = 86400000;
-    stats.dayStreak = (last === t - oneDay) ? (stats.dayStreak || 0) + 1 : 1;
-    stats.lastDayTs = t;
+    const t = localDayNum();
+    let last = stats.lastDayNum;
+    if (last == null && stats.lastDayTs) last = localDayNum(new Date(stats.lastDayTs));   // eski kayıt
+    if (last === t) return;                         // bugün zaten sayıldı
+    const gap = t - (last || 0);
+    if (last && gap < 0) { stats.lastDayNum = t; saveStats(); return; }   // saat geri alındı → dokunma
+    stats.dayStreak = (last && gap <= 2) ? (stats.dayStreak || 0) + 1 : 1;
+    stats.bestDayStreak = Math.max(stats.bestDayStreak || 0, stats.dayStreak);
+    stats.lastDayNum = t;
+    delete stats.lastDayTs;
     saveStats();
   })();
 
@@ -12963,9 +13130,11 @@ const ARC_DB = (() => {
   // Yalnız çerçeve dinler: iç düğme de dinlediğinde tıklama kabarcıklanıp run'ı İKİ kez
   // başlatıyordu (eşyalar iki kez harcanıyordu, tutorial iki kez açılıyordu).
   document.getElementById('wrap-start').addEventListener('click', handleStartTap);
+  document.getElementById('credits-close').addEventListener('click', () => document.getElementById('credits-modal').classList.remove('open'));
+  document.getElementById('credits-modal').addEventListener('click', e => { if (e.target.id === 'credits-modal') e.target.classList.remove('open'); });
 
   document.getElementById('btn-credits').addEventListener('click', () => {
-    alert('ArcRise\nv1.0 — 2025\nDesign & Code: Buğra Sulukcu');
+    document.getElementById('credits-modal').classList.add('open');
   });
   document.getElementById('btn-privacy').addEventListener('click', () => {
     try { openSub('privacy-modal'); } catch(_){}
@@ -13165,14 +13334,14 @@ const ARC_DB = (() => {
   //   SPICE — çeşni (coin kazan / N el oyna / Extreme el bitir)
   const QUEST_AXES = {
     skill: [
-      { metric: 'score',  base: 1500, reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
-      { metric: 'distCm', base: 350,  reward: QUEST_COIN, mk: t => `Reach ${fmtDist(t)} in a single run` },
+      { metric: 'score',  base: 600,  reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
+      { metric: 'distCm', base: 250,  reward: QUEST_COIN, mk: t => `Reach ${fmtDist(t)} in a single run` },
       { metric: 'combo',  base: 3,    reward: QUEST_COIN, mk: t => `Chain ${t} balls in a row` },
     ],
     grind: [
-      { metric: 'scoreTotal', base: 6000, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
-      { metric: 'distTotal',  base: 2500, reward: QUEST_COIN, mk: t => `Travel ${fmtDist(t)} today in total` },
-      { metric: 'goodRuns',   base: 3, param: 400, reward: QUEST_COIN, mk: (t, p) => `Finish ${t} runs past ${fmtDist(p)}` },
+      { metric: 'scoreTotal', base: 3000, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
+      { metric: 'distTotal',  base: 1500, reward: QUEST_COIN, mk: t => `Travel ${fmtDist(t)} today in total` },
+      { metric: 'goodRuns',   base: 3, param: 150, reward: QUEST_COIN, mk: (t, p) => `Finish ${t} runs past ${fmtDist(p)}` },
     ],
     spice: [
       { metric: 'coinsToday',  base: 3, reward: QUEST_COIN, mk: t => `Earn ${t} coin${t === 1 ? '' : 's'} today` },
@@ -13181,11 +13350,20 @@ const ARC_DB = (() => {
     ],
   };
   const QUEST_DEFS = [...QUEST_AXES.skill, ...QUEST_AXES.grind, ...QUEST_AXES.spice];
+  const QUEST_AXIS_OF = {};
+  for (const ax in QUEST_AXES) for (const d of QUEST_AXES[ax]) QUEST_AXIS_OF[d.metric] = ax;
+  const QUEST_AXIS_ICON = {
+    skill: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+    grind: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 19 V13"/><path d="M12 19 V9"/><path d="M19 19 V5"/></svg>',
+    spice: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 L14 10 L21 12 L14 14 L12 21 L10 14 L3 12 L10 10 Z"/></svg>',
+  };
   const SERIES_LEN = 365; // 1 yıllık ilerleyen kişisel seri
   function questTodayStr() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
   function currentSeriesDay() { try { return Math.max(1, Math.min(SERIES_LEN, parseInt(localStorage.getItem('arc_series_day')||'1',10) || 1)); } catch(_) { return 1; } }
-  // Zorluk çarpanı: gün 1 → 1.0×, gün 365 → 3.0× (yumuşak doğrusal artış).
-  function seriesScale(d) { return 1 + (Math.min(SERIES_LEN, Math.max(1, d)) - 1) / (SERIES_LEN - 1) * 2.0; }
+  // Zorluk çarpanı: gün 1 → 1.0×, gün 365 → 1.6×. (Eskiden 3.0× — upgrade'ler oyuncuyu zaten
+  // güçlendiriyor; bot ölçümü: upgrade'siz medyan run ≈ 1 m / 126 skor, iyi run ≈ 2.7 m / 1000,
+  // orta upgrade'le medyan ≈ 2.7 m / 2100. Taban hedefler "yeni oyuncunun iyi run'ı" seviyesinde.)
+  function seriesScale(d) { return 1 + (Math.min(SERIES_LEN, Math.max(1, d)) - 1) / (SERIES_LEN - 1) * 0.6; }
   // Deterministik PRNG — aynı seri gününde herkese AYNI questler (standart liste).
   function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   // Adet bazlı metrikler tam sayı kalır; skor/mesafe 50'ye yuvarlanır.
@@ -13231,12 +13409,150 @@ const ARC_DB = (() => {
         const d = (parseInt(localStorage.getItem('arc_series_day')||'0',10) || 0) + 1;
         localStorage.setItem('arc_series_day', String(Math.min(SERIES_LEN, d)));
         grantCoins(LOGIN_COIN);
-        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Day ' + Math.min(SERIES_LEN, d), coins: LOGIN_COIN }); } catch(_){}
+        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Streak day ' + (stats.dayStreak || 1), coins: LOGIN_COIN }); } catch(_){}
       }
     } catch(_){}
   }
   advanceDayIfNeeded();
   let questState = loadQuests();
+
+  // ══════════ GİRİŞ SERİSİ ÖDÜLLERİ ══════════
+  // stats.dayStreak (trackDayStreak) üzerinden 120 günlük TEKRARLAYAN döngü. Bir güne tek
+  // ödül düşer, en büyüğü geçerli:
+  //   her 5. gün   → CHEST        : 10 coin YA DA rastgele 1 item (%55 / %45)
+  //   her 15. gün  → BIG CHEST    : 25 coin + 1 item
+  //   her 60. gün  → EPIC CHEST   : 60 coin + sıradaki seri izi (hepsi alındıysa +30 coin)
+  //   her 120. gün → LEGEND CHEST : 100 coin + sıradaki efsane iz (hepsi alındıysa +60 coin)
+  // Döngü başına ≈ 16×10 + 6×30 + 60 + 100 ≈ 500 coin ≈ günde +4 (normal gelirin ~%12'si)
+  // + kozmetik. Açılmamış sandık kaybolmaz (seri bozulsa da); en fazla 12 bekler.
+  const STREAK_KEY = 'arc_streak_v1';
+  const STREAK_TIERS = [
+    { every: 120, id: 'legend', name: 'LEGEND CHEST', color: '#ffd24a' },
+    { every: 60,  id: 'epic',   name: 'EPIC CHEST',   color: '#c07bff' },
+    { every: 15,  id: 'big',    name: 'BIG CHEST',    color: '#5ab8ff' },
+    { every: 5,   id: 'small',  name: 'CHEST',        color: '#ffb13b' },
+  ];
+  const STREAK_TRAIL_ORDER = { epic: ['rb:ember', 'rb:aurora', 'rb:nebula', 'rb:abyss'], legend: ['rb:solar', 'rb:legend'] };
+  const STREAK_TRAIL_NAME  = { 'rb:ember': 'Ember', 'rb:aurora': 'Aurora', 'rb:nebula': 'Nebula', 'rb:abyss': 'Abyss', 'rb:solar': 'Solar', 'rb:legend': 'Legend' };
+  const streakTierFor  = d => d > 0 ? (STREAK_TIERS.find(t => d % t.every === 0) || null) : null;
+  const streakTierById = id => STREAK_TIERS.find(t => t.id === id) || STREAK_TIERS[3];
+  function loadStreakRw() {
+    try { const o = JSON.parse(localStorage.getItem(STREAK_KEY)); if (o && Array.isArray(o.pending)) return o; } catch(_){}
+    // İlk kurulum: geçmiş günler için geriye dönük sandık verme — yalnız bundan sonrası
+    return { lastDay: Math.max(0, (stats.dayStreak || 0) - 1), pending: [] };
+  }
+  let streakRw = loadStreakRw();
+  function saveStreakRw() { try { localStorage.setItem(STREAK_KEY, JSON.stringify(streakRw)); } catch(_){} }
+  function evalStreakRewards() {
+    const d = stats.dayStreak || 0;
+    if (d < streakRw.lastDay) streakRw.lastDay = 0;               // seri bozuldu → döngü baştan
+    for (let x = streakRw.lastDay + 1; x <= d; x++) {
+      const t = streakTierFor(x);
+      if (t && streakRw.pending.length < 12) streakRw.pending.push({ day: x, tier: t.id });
+    }
+    if (d !== streakRw.lastDay) { streakRw.lastDay = d; saveStreakRw(); }
+  }
+  evalStreakRewards();
+  // Sandık item'ı: ucuz item daha sık (ağırlık = 1/fiyat); stok doluysa null
+  function rollChestItem() {
+    const pool = Object.keys(CONSUMABLE_CFG).filter(k => upg.inv[k] && (upg.inv[k].count | 0) < CONSUMABLE_CFG[k].max);
+    if (!pool.length) return null;
+    const w = pool.map(k => 1 / CONSUMABLE_CFG[k].price), sum = w.reduce((a, b) => a + b, 0);
+    let r = Math.random() * sum;
+    for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return pool[i]; }
+    return pool[pool.length - 1];
+  }
+  function itemMeta(k) {
+    for (const g of GEAR_GROUPS) { const it = g.items.find(x => x.key === k); if (it) return it; }
+    return { key: k, title: k, icon: 'coin' };
+  }
+  function openStreakChest() {
+    const p = streakRw.pending.shift();
+    if (!p) return;
+    const loot = []; let n = 0;
+    const giveItem = () => { const k = rollChestItem(); if (!k) return false; upg.inv[k].count = (upg.inv[k].count | 0) + 1; loot.push({ kind: 'item', key: k }); return true; };
+    if (p.tier === 'small') {
+      if (Math.random() < 0.55 || !giveItem()) n = 10;
+    } else if (p.tier === 'big') {
+      n = 25; if (!giveItem()) n += 5;
+    } else {
+      n = p.tier === 'legend' ? 100 : 60;
+      const id = STREAK_TRAIL_ORDER[p.tier].find(x => !traceColorOwned(x));
+      if (id) { _own('traceColorsOwned').push(id); loot.push({ kind: 'trail', id }); }
+      else n += p.tier === 'legend' ? 60 : 30;
+    }
+    saveUpg();
+    if (n) grantCoins(n);
+    saveStreakRw();
+    haptic(60);
+    showChestPop(p, n, loot);
+    renderQuests(); updateQuestButton();
+  }
+  // Sandık SVG'si (renk = kademe); open → kapak kalkık
+  function chestSVG(color, size, open) {
+    return `<svg class="chest-svg${open ? ' open' : ''}" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+      <g class="chest-lid"><path d="M5 13 V10 Q5 5 10 5 H22 Q27 5 27 10 V13 Z" fill="${color}" fill-opacity=".28" stroke="${color}" stroke-width="2" stroke-linejoin="round"/></g>
+      <rect x="4" y="13" width="24" height="14" rx="2.5" fill="${color}" fill-opacity=".16" stroke="${color}" stroke-width="2"/>
+      <path d="M4 18 H28" stroke="${color}" stroke-width="1.6" opacity=".7"/>
+      <rect x="13.5" y="15.5" width="5" height="6" rx="1.2" fill="${color}"/>
+    </svg>`;
+  }
+  function showChestPop(p, coinsN, loot) {
+    const t = streakTierById(p.tier);
+    const host = document.getElementById('chest-pop');
+    if (!host) return;
+    const rows = [];
+    if (coinsN) rows.push(`<div class="cp-row">${iconHTML('coin', { size: 22 })}<span>+${coinsN} COINS</span></div>`);
+    for (const l of loot) {
+      if (l.kind === 'item') { const m = itemMeta(l.key); rows.push(`<div class="cp-row">${iconHTML(m.icon, { size: 24 })}<span>${esc(m.title)} ×1</span></div>`); }
+      if (l.kind === 'trail') rows.push(`<div class="cp-row"><span class="cp-trail" style="background:${traceColorCss(l.id)}"></span><span>${esc(STREAK_TRAIL_NAME[l.id] || '')} trail</span></div>`);
+    }
+    host.style.setProperty('--cc', t.color);
+    host.innerHTML = `<div class="cp-card">
+      <div class="cp-day">DAY ${p.day} · ${t.name}</div>
+      <div class="cp-chest">${chestSVG(t.color, 84, false)}<div class="cp-burst"></div></div>
+      <div class="cp-loot">${rows.join('')}</div>
+      <button class="cp-ok" type="button">COLLECT</button>
+    </div>`;
+    host.classList.add('open');
+    // sallan → aç → ödül
+    setTimeout(() => host.querySelector('.chest-svg')?.classList.add('open'), 650);
+    setTimeout(() => host.classList.add('revealed'), 800);
+    host.querySelector('.cp-ok').addEventListener('click', () => { host.classList.remove('open', 'revealed'); });
+  }
+  // Şerit: 10 günlük pencere (1–10, 11–20 …); geçilen günler dolu, bugün parlar, ödül günleri sandık
+  function renderStreakTrack(anim) {
+    const d = Math.max(1, stats.dayStreak || 1);
+    const start = Math.floor((d - 1) / 10) * 10 + 1;
+    const cells = [];
+    for (let x = start; x < start + 10; x++) {
+      const t = streakTierFor(x);
+      const cls = x < d ? 'past' : (x === d ? 'today' : 'future');
+      const pend = streakRw.pending.some(q => q.day === x);
+      // geçilmiş/bugünkü ve açılmış sandık → kapak kalkık; bekleyen → kapalı + parlar
+      const mark = t ? chestSVG(t.color, t.id === 'small' ? 20 : 24, x <= d && !pend) : '<span class="st-dot"></span>';
+      cells.push(`<div class="st-cell ${cls}${t ? ' chest ' + t.id : ''}${pend ? ' pending' : ''}"><div class="st-mark">${mark}</div><div class="st-num">${x}</div></div>`);
+    }
+    // Sıradaki ödüller: her kademenin bir sonraki günü
+    const nexts = STREAK_TIERS.slice().reverse().map(t => {
+      let x = d + 1; while (streakTierFor(x) !== t) x++;
+      return { t, x };
+    }).filter((o, i, a) => a.findIndex(q => q.x === o.x) === i).slice(0, 3);
+    const nextTxt = nexts.map(o => `<span class="st-next" style="--cc:${o.t.color}">${chestSVG(o.t.color, 13, false)}${o.x - d}d</span>`).join('');
+    const pendN = streakRw.pending.length;
+    const loginGot = (() => { try { return localStorage.getItem('arc_login_day') === questTodayStr(); } catch(_) { return false; } })();
+    return `<div class="streak-box"${anim}>
+      <div class="st-head">
+        <span class="st-title">LOGIN STREAK <b>${d}</b> DAY${d === 1 ? '' : 'S'}</span>
+        <span class="st-login">${loginGot ? '✓' : ''} ${iconHTML('coin', { size: 10 })}+${LOGIN_COIN} TODAY</span>
+      </div>
+      <div class="st-track">${cells.join('')}</div>
+      <div class="st-foot">${pendN
+        ? `<button class="st-open" type="button">${chestSVG(streakTierById(streakRw.pending[0].tier).color, 16, false)} OPEN ${pendN > 1 ? pendN + ' CHESTS' : 'CHEST'}</button>`
+        : `<span class="st-next-lbl">NEXT</span>${nextTxt}`}</div>
+      <div class="st-hint">Chest every 5 days · big every 15 · epic trail every 60 · legend every 120<br>Miss one day and you keep your streak; miss two in a row and it resets.</div>
+    </div>`;
+  }
   function saveQuests() { try { localStorage.setItem(QUESTS_KEY, JSON.stringify(questState)); } catch(_){} }
   function questDone(q) { return q.progress >= q.target; }
   function questClaimableCount() { return questState.quests.filter(q => questDone(q) && !q.claimed).length; }
@@ -13266,7 +13582,7 @@ const ARC_DB = (() => {
     if (questState.date !== questTodayStr()) questState = rollDailyQuests();
     const sub = document.getElementById('btn-quests-sub');
     const btn = document.getElementById('btn-quests');
-    const claimable = questClaimableCount();
+    const claimable = questClaimableCount() + (streakRw ? streakRw.pending.length : 0);
     const doneCount = questState.quests.filter(q => q.claimed).length;
     if (sub) sub.textContent = claimable > 0 ? `${claimable} reward${claimable>1?'s':''} ready!` : `${doneCount}/${questState.quests.length} done`;
     if (btn) btn.classList.toggle('has-reward', claimable > 0);
@@ -13277,15 +13593,8 @@ const ARC_DB = (() => {
     if (!list) return;
     if (questState.date !== questTodayStr()) questState = rollDailyQuests();
     const anim = n => animate ? ` style="animation: questIn .34s cubic-bezier(.2,.8,.2,1) ${n * 60}ms both"` : '';
-    // Günlük giriş kartı — açılışta otomatik alınır; burada "toplandı" olarak gösterilir.
-    let loginGot = false;
-    try { loginGot = localStorage.getItem('arc_login_day') === questTodayStr(); } catch(_){}
-    const loginCard = `<div class="quest-card done"${anim(0)}>
-        <div class="quest-top"><span class="quest-label">Daily login</span></div>
-        <div class="quest-bar-wrap"><div class="quest-bar" style="width:${loginGot ? 100 : 0}%"></div></div>
-        <div class="quest-bottom"><span class="quest-progress-txt">${loginGot ? 'Collected today' : 'Opens automatically'}</span>
-          <button class="quest-claim claimed" disabled>+${LOGIN_COIN}${loginGot ? ' ✓' : ''}</button></div>
-      </div>`;
+    // Günlük giriş artık seri şeridinde gösterilir (üstte).
+    const loginCard = renderStreakTrack(anim(0));
     const questCards = questState.quests.map((q, i) => {
       const done = questDone(q);
       const pct  = Math.min(100, Math.round(q.progress / q.target * 100));
@@ -13293,19 +13602,23 @@ const ARC_DB = (() => {
       const progTxt = isDist
         ? `${fmtDist(Math.min(q.progress, q.target))} / ${fmtDist(q.target)}`
         : `${Math.min(q.progress, q.target)} / ${q.target}`;
+      const coinChip = `${iconHTML('coin', { size: 11 })}+${q.reward}`;
       const claimBtn = q.claimed
-        ? `<button class="quest-claim claimed" disabled>CLAIMED</button>`
+        ? `<button class="quest-claim claimed" disabled>✓ DONE</button>`
         : done
-          ? `<button class="quest-claim" data-qi="${i}">CLAIM +${q.reward}</button>`
-          : `<button class="quest-claim" disabled>+${q.reward}</button>`;
-      return `<div class="quest-card ${done?'done':''}"${anim(i + 1)}>
-        <div class="quest-top"><span class="quest-label">${esc(q.label)}</span></div>
+          ? `<button class="quest-claim ready" data-qi="${i}">CLAIM ${coinChip}</button>`
+          : `<span class="quest-chip">${coinChip}</span>`;
+      const ax = QUEST_AXIS_OF[q.metric] || 'skill';
+      return `<div class="quest-card ax-${ax} ${done ? 'done' : ''} ${q.claimed ? 'claimed' : ''}"${anim(i + 1)}>
+        <div class="quest-top"><span class="quest-ic">${QUEST_AXIS_ICON[ax]}</span>
+          <span class="quest-txt"><span class="quest-axis">${ax === 'skill' ? 'SKILL' : ax === 'grind' ? 'GRIND' : 'BONUS'}</span><span class="quest-label">${esc(q.label)}</span></span>${claimBtn}</div>
         <div class="quest-bar-wrap"><div class="quest-bar" style="width:${pct}%"></div></div>
-        <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span>${claimBtn}</div>
+        <div class="quest-bottom"><span class="quest-progress-txt">${progTxt}</span></div>
       </div>`;
     }).join('');
     list.innerHTML = loginCard + questCards;
     list.querySelectorAll('.quest-claim[data-qi]').forEach(b => b.addEventListener('click', () => claimQuest(Number(b.dataset.qi))));
+    list.querySelector('.st-open')?.addEventListener('click', openStreakChest);
   }
   function claimQuest(i) {
     const q = questState.quests[i];

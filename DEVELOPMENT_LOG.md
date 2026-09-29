@@ -396,6 +396,27 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Giriş serisi ödülleri, yeni görev kartları, görev eşikleri, LOWFX ısınma, tutorial item'ları, credits (2026-09-29)
+
+**Giriş serisi (120 günlük tekrarlayan döngü)** — `stats.dayStreak` üzerinden; bir güne tek ödül, büyüğü geçerli:
+
+| Gün | Sandık | İçerik |
+|---|---|---|
+| her 5. | CHEST | %55 10 coin / %45 rastgele 1 item (ağırlık 1/fiyat; stok doluysa 10 coin) |
+| her 15. | BIG | 25 coin + 1 item (stok doluysa +5 coin) |
+| her 60. | EPIC | 60 coin + sıradaki seri izi: Ember → Aurora → Nebula → Abyss (hepsi varsa +30) |
+| her 120. | LEGEND | 100 coin + Solar → Legend izi (hepsi varsa +60) |
+
+Döngü başına ≈ 500 coin ≈ günde +4 (normal oyuncu gelirinin ~%12'si) + kozmetik. Seri izleri mağazada satılmaz (🔥 kilitli görünür, dokununca "Login streak reward"). Açılmamış sandık kaybolmaz (en fazla 12). İlk kurulumda geriye dönük sandık verilmez.
+- **Seri kuralı:** tek gün kaçırmak seriyi bozmaz (o gün sayılmaz), iki gün üst üste kaçırılırsa 1'e döner. Gün farkı artık **takvim günüyle** (`localDayNum`) — eskiden 24 saat karşılaştırıldığı için yaz/kış saati geçişinde seri sıfırlanıyordu. Eski `lastDayTs` kaydı otomatik taşınır; `bestDayStreak` tutulur.
+- **UI:** Görevler penceresinin üstünde 10 günlük nokta şeridi (geçilen dolu, bugün parlar, ödül günleri kademe renginde sandık; bekleyen sandık sallanır), "OPEN CHEST" düğmesi, sıradaki ödüllere kalan gün. Sandık açma katmanı: sallanma → kapak açılır → ışık patlaması → ödül satırları → COLLECT. Görevler düğmesinin "ödül hazır" noktası bekleyen sandığı da sayar. Giriş bildirimi artık seri gününü yazar ("Streak day N").
+- **Görev kartları:** eksen ikonu + rengi (SKILL mavi / GRIND mor / BONUS pembe), sol renk şeridi, coin çipi, parlayan CLAIM, alınmış kart soluk.
+- **Görev eşikleri (bot ölçümü: upgrade'siz medyan run ≈ 1 m / 126 skor, iyi run ≈ 2.7 m / 1000; orta upgrade medyan ≈ 2.7 m / 2100):** tek run skor 1500→**600**, tek run mesafe 3.5→**2.5 m**, toplam skor 6000→**3000**, toplam mesafe 25→**15 m**, "iyi run" eşiği 4→**1.5 m**. Yıllık büyüme ×3.0 → **×1.6**.
+- **LOWFX:** açılışın ilk 4 sn'si (ön plana dönüşte 2 sn) sayılmaz; art arda **iki** düşük 3 sn'lik ölçüm gerekir.
+- **Tutorial → gerçek run** kesintisiz geçişinde takılı item'lar artık harcanır/devreye girer (Pre-Booster dahil).
+- **Credits:** `alert()` yerine oyunun pencere stili (`#credits-modal`).
+- Testler: 13/13 (yeni: seri sandıkları + kaçırma kuralı + 60. gün izi, tutorial item'ı, credits). `ARC_TEST`'e `lastRun`, `audio`, `finishTutorial` eklendi.
+
 ### iPhone'da ses gelmiyordu: sessiz anahtarı + 'interrupted' bağlam (2026-09-29)
 
 - Tüm sesler Web Audio'ya geçince (29c21d8) iOS'ta **zil/sessiz anahtarına uymaya** başladı → telefon sessizdeyken hiç ses yok (eskiden müzik `<audio>` ile çaldığı için duyuluyordu). `navigator.audioSession.type = 'playback'` (Safari 16.4+) ilk dokunuşta ve ön plana dönüşte; arka planda `'auto'`.
