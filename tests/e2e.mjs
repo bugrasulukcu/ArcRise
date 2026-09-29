@@ -356,6 +356,13 @@ test('tema denemesi: TRY → o temada tek run → çıkınca eski tema, hak bir 
   check(await ev(`!document.querySelector('[data-try="noir"]') && !!document.querySelector('[data-try="gameboy"]')`), 'deneme hakkı tüketilmedi');
 });
 
+test('thread: dönen ikilinin arasından geçmek bonus verir', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  await ev(`ARC_TEST.ghost(5); ARC_TEST.spawnOrbitHere(90); true`);
+  check(await waitFor(`ARC_TEST.threads === 1`, 4000), 'THREAD bonusu verilmedi');
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

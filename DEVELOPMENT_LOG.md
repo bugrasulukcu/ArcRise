@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### THREAD: dönen ikilinin arasından geçme bonusu + yeni engel görünümü (2026-09-29)
+
+- **THREAD** (arkadaş önerisi): SPIN engeli (ortak merkez etrafında karşılıklı dönen iki top) çiftinin yörünge dairesine girip sağ çıkmak = iki topun arasından geçmek. **+75 × booster çarpanı**, topları 26 px'ten yakın sıyırırsan **PERFECT +150**; ayrıca +%15 enerji, altın parçacık, titreşim. Çift `pid` ile bağlı, bonusu `lead` üye taşır (çift başına bir kez). Tutorial'da kapalı. Ölçek: CLOSE +25, yeşil ~10, PB +200. Sayaç `_runThreads` (ileride rozet/görev için).
+- **İpucu görseli:** çiftin etrafında altın kesikli, dönüş yönünde akan yörünge halkası + topları bağlayan nabız atan ince ışın + merkez noktası; geçilince halka yeşil genişleyip söner.
+- **Engeller:** düz kırmızı daire → hacimli küre (ışık gradyeni, parlak kenar, iç derinlik halkası, parlama noktası, dış ışıma). Bir kez offscreen'e çizilip her karede ölçeklenir (kare başına gradyen yok); tema paleti sprite'a da uygulanır; LOWFX'te dış ışımasız ayrı sprite. Extreme alev görünümü ve tutorial yanıp sönmesi aynı.
+- `ARC_TEST`: `threads`, `spawnOrbitHere(orbR, ahead)`, `ghost(s)`. Test 16/16.
+
 ### Görev ekranı kısaldı, geri butonları hizalandı, tema denemesi, epik sandıkta tema (2026-09-29)
 
 - **Görev ekranı:** "New quests every day" alt başlığı ve seri açıklama metni kaldırıldı; kartlarda ilerleme yazısı çubuğun yanına alındı. iPhone SE Safari (375×553) görünür alanında 464 px — kaydırma yok. `max-height: 520px` altında (SE1) ek sıkıştırma.

@@ -7618,7 +7618,67 @@ const ARC_DB = (() => {
   }
 
   // ── Obstacles ────────────────────────────────────────────
+  // Engel küresi: bir kez offscreen'e çizilir, her karede r'ye ölçeklenip basılır (gradyen maliyeti yok).
+  // Tema paleti çizim anında uygulandığı için sprite da temaya uyar. LOWFX'te dış ışıma yok.
+  const OB_SPR_R = 64;
+  let _obSpr = null, _obSprLow = null;
+  function obstacleSprite() {
+    if (LOWFX ? _obSprLow : _obSpr) return LOWFX ? _obSprLow : _obSpr;
+    const R = OB_SPR_R, G = LOWFX ? 1.04 : 1.7, S = Math.ceil(R * G * 2), c = document.createElement('canvas');
+    c.width = c.height = S;
+    const x = c.getContext('2d'), m = S / 2;
+    if (!LOWFX) {   // dış ışıma
+      const g0 = x.createRadialGradient(m, m, R * 0.8, m, m, R * G);
+      g0.addColorStop(0, 'rgba(255,40,80,0.45)'); g0.addColorStop(1, 'rgba(255,40,80,0)');
+      x.fillStyle = g0; x.beginPath(); x.arc(m, m, R * G, 0, Math.PI * 2); x.fill();
+    }
+    const g1 = x.createRadialGradient(m - R * 0.32, m - R * 0.36, R * 0.05, m, m, R);   // hacim
+    g1.addColorStop(0, '#ff8c9c'); g1.addColorStop(0.45, '#ff3355'); g1.addColorStop(1, '#a5102b');
+    x.fillStyle = g1; x.beginPath(); x.arc(m, m, R, 0, Math.PI * 2); x.fill();
+    x.strokeStyle = 'rgba(255,170,185,0.85)'; x.lineWidth = R * 0.06;                    // parlak kenar
+    x.beginPath(); x.arc(m, m, R * 0.97, 0, Math.PI * 2); x.stroke();
+    x.strokeStyle = 'rgba(80,0,20,0.35)'; x.lineWidth = R * 0.05;                        // iç halka (derinlik)
+    x.beginPath(); x.arc(m, m, R * 0.62, 0, Math.PI * 2); x.stroke();
+    const g2 = x.createRadialGradient(m - R * 0.38, m - R * 0.42, 0, m - R * 0.38, m - R * 0.42, R * 0.3);   // parlama
+    g2.addColorStop(0, 'rgba(255,255,255,0.55)'); g2.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g2; x.beginPath(); x.arc(m - R * 0.38, m - R * 0.42, R * 0.3, 0, Math.PI * 2); x.fill();
+    if (LOWFX) _obSprLow = c; else _obSpr = c;
+    return c;
+  }
+  // Dönen ikili: altın kesikli yörünge halkası + topları bağlayan ince ışın → "arasından geç, puan al".
+  // Geçildikten sonra halka yeşil yanıp söner.
+  function drawOrbitHints() {
+    const now = performance.now() / 1000;
+    for (const ob of obstacles) {
+      if (!ob.lead) continue;
+      const sy = W2S(ob.y);
+      if (sy < -ob.orbR - 60 || sy > H + ob.orbR + 60) continue;
+      const mate = obstacles.find(o => o.pid === ob.pid && o !== ob);
+      ctx.save();
+      if (ob._thr) {
+        ob._thrT = (ob._thrT || 0) + 1 / 60;
+        const a = Math.max(0, 1 - ob._thrT / 0.8);
+        if (a <= 0) { ctx.restore(); continue; }
+        ctx.strokeStyle = `rgba(124,255,122,${0.8 * a})`; ctx.lineWidth = 3 + 6 * (1 - a);
+        ctx.beginPath(); ctx.arc(ob.x, sy, ob.orbR * (1 + 0.25 * (1 - a)), 0, Math.PI * 2); ctx.stroke();
+        ctx.restore(); continue;
+      }
+      ctx.setLineDash([6, 9]); ctx.lineDashOffset = -now * 18 * Math.sign(ob.ow || 1);
+      ctx.strokeStyle = 'rgba(255,210,74,0.5)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(ob.x, sy, ob.orbR, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      if (mate) {
+        const pulse = 0.35 + 0.25 * Math.sin(now * 6);
+        ctx.strokeStyle = `rgba(255,210,74,${pulse})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(ob._ox, W2S(ob._oy)); ctx.lineTo(mate._ox, W2S(mate._oy)); ctx.stroke();
+        ctx.fillStyle = `rgba(255,210,74,${0.5 + pulse * 0.5})`;
+        ctx.beginPath(); ctx.arc(ob.x, sy, 3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
   function drawObstacles() {
+    drawOrbitHints();
     ctx.save();
     // Duvarın dışına taşan kısmı kırp — siyah duvar görünsün
     ctx.beginPath();
@@ -7664,8 +7724,8 @@ const ARC_DB = (() => {
           ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
           ctx.restore();
         } else {
-          ctx.fillStyle = '#ff3355';
-          ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
+          const spr = obstacleSprite(), k = ob.r / OB_SPR_R, half = spr.width / 2 * k;
+          ctx.drawImage(spr, sx - half, sy - half, half * 2, half * 2);
         }
       }
     }
@@ -8530,7 +8590,7 @@ const ARC_DB = (() => {
     dyingT = -1; cancelRoulette();
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
-    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0;
+    _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -8611,8 +8671,10 @@ const ARC_DB = (() => {
           const ow   = (0.9 + Math.random() * 0.7) * (Math.random() < 0.5 ? -1 : 1);
           const oph  = Math.random() * Math.PI * 2;
           const rr   = Math.max(20, r * 0.5);
-          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph, mt: 0 });
-          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph: oph + Math.PI, mt: 0 });
+          // lead: çiftin "arasından geçme" bonusunu ve yörünge halkasını taşıyan üye
+          const pid = ++_orbitPid;
+          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph, mt: 0, pid, lead: true });
+          obstacles.push({ x, y: nextSpawnY, r: rr, mk: 'orbit', orbR, ow, oph: oph + Math.PI, mt: 0, pid });
           nextSpawnY -= gap;
           continue;
         }
@@ -8900,6 +8962,29 @@ const ARC_DB = (() => {
       } else { ob._ox = ob.x; ob._oy = ob.y; }
     }
 
+    // ── THREAD: dönen ikilinin yörünge dairesine girip sağ çıkmak = iki topun arasından geçmek
+    // (toplar hep karşılıklı → dairenin içinden geçen, ikisinin arasından geçmiştir).
+    // Girerken topların oyuncuya en yakın mesafesi izlenir: çok yakın sıyırma → PERFECT.
+    if (dyingT < 0 && !tutActive) {
+      for (const ob of obstacles) {
+        if (!ob.lead || ob._thr) continue;
+        const dx = player.x - ob.x, dy = player.y - ob.y, d = Math.hypot(dx, dy);
+        if (d < ob.orbR - ob.r * 0.25) {
+          ob._in = true;
+          const close = Math.min(...obstacles.filter(o => o.pid === ob.pid).map(o => Math.hypot(player.x - o._ox, player.y - o._oy) - o.r - player.r));
+          ob._minGap = Math.min(ob._minGap ?? 1e9, close);
+        } else if (ob._in && d > ob.orbR + ob.r) {
+          ob._thr = true; ob._thrT = 0;
+          const perfect = (ob._minGap ?? 1e9) < 26;
+          const pts = Math.round((perfect ? 150 : 75) * getBoostScoreMul());
+          scoreBonus += pts; _runThreads++;
+          energy = Math.min(1, energy + 0.15);
+          spawnFloatText(player.x, player.y - 24, (perfect ? 'PERFECT THREAD +' : 'THREAD +') + pts, 48, perfect ? 1.5 : 1.25);
+          spawnGoldParticles(ob.x, ob.y);
+          haptic(perfect ? [20, 40, 20] : 25);
+        }
+      }
+    }
     if (dyingT < 0) updateShockWaves(dt);
     // Ghost (Phase Burst / booster) engellerden geçer ama oyun alanından çıkamaz → duvardan seker
     if (isGhost && !tutActive && dyingT < 0 &&
@@ -9208,6 +9293,8 @@ const ARC_DB = (() => {
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
   let _runNearMiss    = 0;        // bu run'daki "CLOSE!" sayısı (daredevil badge)
+  let _runThreads     = 0;        // bu run'da dönen ikilinin arasından geçiş sayısı
+  let _orbitPid       = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
   let _runGoldBanked  = 0;        // bunlardan coin'e çevrilmiş olanlar
@@ -10070,6 +10157,12 @@ const ARC_DB = (() => {
     get audio() { return _audioDiag(); },
     get lastRun() { return _lastRunInfo; },
     finishTutorial: () => { _tutWantsPlay = true; endTutorial(); },   // tutorial'ın "GO!" sonu
+    get threads() { return _runThreads; },
+    // oyuncunun bulunduğu yere dönen ikili koy (merkez oyuncuda → dışarı çıkınca THREAD)
+    spawnOrbitHere: (orbR = 90, ahead = 0) => { const pid = ++_orbitPid;
+      obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: 0, mt: 0, pid, lead: true });
+      obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: Math.PI, mt: 0, pid }); },
+    ghost: s => activateBooster('ghost', s || 4),
   };
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
