@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### High Scores: Chill / Extreme mod animasyonları yeniden (2026-09-29)
+
+- **Sorunlar:** Extreme'in alev katmanı (`::after`) kutunun tamamına yayılıp içeriği turuncu-kahverengi bulanıklaştırıyordu; titreme `box-shadow` animasyonuydu (her kare yeniden boyama, mobilde pahalı). Chill halkası çok soluktu, kutu `gl-gold` yüzünden sarımsı sisliydi; seçili "buz" sekmesinde rastgele lekeler (radyal noktalar + hue-rotate filtresi) vardı.
+- **Yeni:** çerçeve yalnız kenarda dönen ince konik gradyan halka (mask ile içi boş, `@property --lbA`): Chill buz mavisi-beyaz 7 sn, Extreme kırmızı-turuncu-sarı 3.2 sn; modlar arası 0.5 sn geçiş. Zemin temiz koyu cam + üstte mod tonu; Extreme'de altta hafif kor (inset). İçerik arkasında (`isolation` + `z-index:-1`) 10 parçacık: Chill düşen kar, Extreme yükselen kıvılcım. İkon/ok rengi altın kaldı.
+- Seçili Chill sekmesi: lekesiz mavi gradyan + üzerinden kayan parıltı. LOWFX'te halka dönüşü, parıltı ve parçacıklar kapalı.
+- `lbFlameFlicker` artık yalnız Extreme kilit penceresinde (tanım oraya taşındı).
+
 ### Süre çarpanı kademeli ve tam sayı (2026-09-29)
 
 - Eskiden `cd / 2` (×0.5, ×3.5 gibi küsuratlı, tavan ×6). Şimdi `timeMulFor(cd)`: geri sayım 0–3 → ×1, 4–6 → ×2, 7–9 → ×3, 10–12 → ×4. Upgrade'siz tavan ×3 (sayaç 8), ×4 yalnız Timer upgrade'iyle. Toplam çarpan tavanı ×42 → ×28 (combo ×7 ile); HUD'da tam sayı ("×12").

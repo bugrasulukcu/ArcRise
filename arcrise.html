@@ -421,76 +421,49 @@
       max-height: 88vh; overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
     }
-    /* Themed frame layers — fade in/out per mode, no rotation, no blur */
+    /* ── Mod çerçevesi (v27 yeniden): yalnız kenarda dönen ince gradyan halka (mask ile içi boş),
+       kutu rengi moda göre (--c), içerik arkasında hafif kar / kıvılcım. Kutuyu kaplayan eski alev
+       katmanı ve box-shadow titremesi (her kare yeniden boyama) kaldırıldı. */
+    @property --lbA { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    #lb-modal-box { isolation: isolate; }
     #lb-modal-box::before,
     #lb-modal-box::after {
-      content: ""; position: absolute; inset: -3px;
-      border-radius: 25px; pointer-events: none;
-      opacity: 0; transition: opacity .55s ease;
-      z-index: -1;
+      content: ""; position: absolute; inset: -2px; border-radius: 24px; padding: 2px;
+      pointer-events: none; opacity: 0; transition: opacity .5s ease; z-index: 2;
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      animation: lbSpin 7s linear infinite;
     }
-    /* Blue ring for Normal — static, soft glow */
-    #lb-modal-box::before {
-      border: 2px solid rgba(110,170,255,.55);
-      box-shadow:
-        0 0 0 1px rgba(110,170,255,.18),
-        0 0 22px 2px rgba(80,140,255,.35),
-        inset 0 0 16px rgba(120,180,255,.18);
-      background: linear-gradient(140deg,
-        rgba(60,120,255,.10) 0%,
-        rgba(40,80,200,.04) 50%,
-        rgba(80,160,255,.10) 100%);
+    #lb-modal-box::before {   /* Chill: buz */
+      background: conic-gradient(from var(--lbA), #1f5fc8, #7cc4ff 12%, #ffffff 16%, #7cc4ff 20%, #1f5fc8 45%, #5aa8ff 62%, #d8f0ff 66%, #5aa8ff 70%, #1f5fc8);
     }
-    /* Flame ring for Extreme — flickering rising-flame gradients, no rotation */
-    #lb-modal-box::after {
-      border: 2px solid rgba(255,120,40,.7);
-      background:
-        radial-gradient(60% 70% at 15% 110%, rgba(255,80,20,.65), transparent 65%),
-        radial-gradient(70% 80% at 50% 115%, rgba(255,140,40,.75), transparent 60%),
-        radial-gradient(60% 70% at 85% 110%, rgba(255,60,10,.70), transparent 65%),
-        radial-gradient(40% 50% at 50% -10%, rgba(255,160,60,.35), transparent 70%),
-        linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
+    #lb-modal-box::after {    /* Extreme: alev */
+      background: conic-gradient(from var(--lbA), #c8140a, #ff5a1a 14%, #ffe066 18%, #ff8a1a 24%, #c8140a 48%, #ff4a14 64%, #ffcc44 68%, #ff6a1a 74%, #c8140a);
+      animation-duration: 3.2s;
     }
-    /* Flicker animates ONLY box-shadow — opacity stays class-controlled */
-    @keyframes lbFlameFlicker {
-      0%, 100% {
-        box-shadow:
-          0 0 0 1px rgba(255,90,30,.45),
-          0 0 28px 4px rgba(255,90,30,.65),
-          0 0 70px 10px rgba(255,40,10,.40),
-          inset 0 -18px 26px rgba(255,140,40,.40);
-      }
-      35% {
-        box-shadow:
-          0 0 0 1px rgba(255,120,40,.55),
-          0 0 36px 6px rgba(255,120,40,.80),
-          0 0 80px 14px rgba(255,60,20,.50),
-          inset 0 -22px 30px rgba(255,170,60,.55);
-      }
-      70% {
-        box-shadow:
-          0 0 0 1px rgba(255,70,20,.50),
-          0 0 24px 3px rgba(255,80,20,.70),
-          0 0 60px 8px rgba(255,40,10,.45),
-          inset 0 -14px 22px rgba(255,120,40,.45);
-      }
+    @keyframes lbSpin { to { --lbA: 360deg; } }
+    /* İkon/ok rengi altın kalır (gl-gold); yalnız zemin tonu ve çerçeve moda göre */
+    html#arc #lb-modal-box.mode-normal { border-color: transparent; box-shadow: 0 0 30px rgba(70,140,255,.32);
+      background: radial-gradient(95% 70% at 50% 0%, rgba(90,168,255,.16), transparent 70%), rgba(9,11,18,.78); }
+    html#arc #lb-modal-box.mode-extreme { border-color: transparent;
+      background: radial-gradient(95% 70% at 50% 0%, rgba(255,122,40,.14), transparent 70%), rgba(12,9,10,.80);
+      box-shadow: 0 0 34px rgba(255,90,30,.40), inset 0 -46px 50px -40px rgba(255,90,20,.45); }
+    #lb-modal-box.mode-normal::before, #lb-modal-box.mode-extreme::after { opacity: 1; }
+    /* İçerik arkası parçacıklar: kar (Chill) / kıvılcım (Extreme) */
+    .lb-fx { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; pointer-events: none; z-index: -1; }
+    .lb-fx i { position: absolute; border-radius: 50%; opacity: 0; }
+    #lb-modal-box.mode-normal .lb-fx i {
+      top: -6px; width: 3px; height: 3px; background: rgba(210,236,255,.75); box-shadow: 0 0 4px rgba(170,215,255,.8);
+      animation: lbSnow var(--d) linear var(--dl) infinite;
     }
-    /* Mode toggles — fade rings in/out */
-    #lb-modal-box.mode-normal {
-      border-color: transparent;   /* tek stroke: sadece ::before halkası görünsün */
-      box-shadow: 0 0 24px rgba(80,140,255,.35);
+    #lb-modal-box.mode-extreme .lb-fx i {
+      bottom: -6px; width: 3px; height: 3px; background: #ffb13b; box-shadow: 0 0 6px #ff7a28;
+      animation: lbEmber calc(var(--d) * .55) ease-out var(--dl) infinite;
     }
-    #lb-modal-box.mode-normal::before { opacity: 1; }
-    #lb-modal-box.mode-extreme {
-      border-color: rgba(255,120,40,.0);
-      background:
-        radial-gradient(140% 90% at 50% 100%, rgba(255,80,20,.14), transparent 65%),
-        rgba(14,10,12,0.97);
-    }
-    #lb-modal-box.mode-extreme::after {
-      opacity: 1;
-      animation: lbFlameFlicker 1.6s ease-in-out infinite;
-    }
+    @keyframes lbSnow  { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: .9; } 100% { transform: translate(var(--sx), 560px); opacity: 0; } }
+    @keyframes lbEmber { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(var(--sx), -320px) scale(.3); opacity: 0; } }
+    html.lowfx #lb-modal-box::before, html.lowfx #lb-modal-box::after { animation: none; }
+    html.lowfx .lb-fx { display: none; }
     #lb-modal-title {
       font-size: 21px; letter-spacing: 3px; text-align: center;
       color: #fff; margin-bottom: 2px;
@@ -1916,10 +1889,14 @@
     .seg-ind.th-green  { background: radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.40), transparent 65%), linear-gradient(180deg, #7CFF7A, #3ad055); box-shadow: 0 0 16px rgba(124,255,122,.55), inset 0 1px 0 rgba(255,255,255,.35); }
     .seg-ind.th-red    { background: radial-gradient(120% 80% at 50% 0%, rgba(255,150,150,.40), transparent 65%), linear-gradient(180deg, #ff5566, #c92135); box-shadow: 0 0 16px rgba(255,85,102,.5), inset 0 1px 0 rgba(255,255,255,.3); }
     .seg-ind.th-ice {
-      background: radial-gradient(circle 14px at 20% 30%, rgba(220,240,255,.45), transparent 60%), radial-gradient(circle 10px at 70% 70%, rgba(180,220,255,.40), transparent 60%), linear-gradient(135deg, #2255bb 0%, #4499ee 50%, #66ccff 100%);
-      box-shadow: 0 0 14px rgba(100,180,255,.45), inset 0 -6px 12px rgba(255,255,255,.18), inset 0 4px 8px rgba(20,60,140,.35);
-      animation: iceShimmer 2.2s ease-in-out infinite alternate;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.32) 45%, transparent 60%) no-repeat,
+                  linear-gradient(180deg, #5aaeff 0%, #2f78dd 55%, #2462c4 100%);
+      background-size: 220% 100%, 100% 100%;
+      box-shadow: 0 0 14px rgba(90,170,255,.5), inset 0 1px 0 rgba(255,255,255,.35);
+      animation: segSheen 3.2s ease-in-out infinite;
     }
+    @keyframes segSheen { 0% { background-position: 120% 0, 0 0; } 60%, 100% { background-position: -120% 0, 0 0; } }
+    html.lowfx .seg-ind.th-ice { animation: none; }
     .seg-ind.th-flame {
       background: linear-gradient(180deg, #881122 0%, #dd2211 50%, #ff5522 80%, #ff8833 100%);
       box-shadow: 0 0 20px rgba(255,80,30,.7), inset 0 -10px 18px rgba(255,210,80,.45), inset 0 5px 10px rgba(140,0,20,.55);
@@ -2773,6 +2750,12 @@
         radial-gradient(40% 50% at 50% -10%, rgba(255,160,60,.35), transparent 70%),
         linear-gradient(180deg, rgba(255,90,20,.18) 0%, transparent 40%, transparent 60%, rgba(255,60,10,.30) 100%);
       animation: lbFlameFlicker 1.6s ease-in-out infinite;
+    }
+    /* Extreme kilit penceresinin alev halkası (liderlik tablosu artık kullanmıyor) */
+    @keyframes lbFlameFlicker {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,90,30,.45), 0 0 28px 4px rgba(255,90,30,.65), 0 0 70px 10px rgba(255,40,10,.40), inset 0 -18px 26px rgba(255,140,40,.40); }
+      35%      { box-shadow: 0 0 0 1px rgba(255,120,40,.55), 0 0 36px 6px rgba(255,120,40,.80), 0 0 80px 14px rgba(255,60,20,.50), inset 0 -22px 30px rgba(255,170,60,.55); }
+      70%      { box-shadow: 0 0 0 1px rgba(255,70,20,.50), 0 0 24px 3px rgba(255,80,20,.70), 0 0 60px 8px rgba(255,40,10,.45), inset 0 -14px 22px rgba(255,120,40,.45); }
     }
     #extreme-icon { font-size: 41.5px; line-height: 1; }
     #extreme-title { font-size: 18px; letter-spacing: 3px; color: #ff3355; }
@@ -4640,6 +4623,7 @@
 <!-- ══ HIGH SCORES MODAL ══ -->
 <div id="lb-modal">
   <div id="lb-modal-box" class="gl gl-gold gl-glass">
+    <div class="lb-fx" aria-hidden="true"><i style="left:8%;--d:9s;--dl:0s;--sx:14px"></i><i style="left:19%;--d:11s;--dl:-4s;--sx:-10px"></i><i style="left:31%;--d:8s;--dl:-2s;--sx:8px"></i><i style="left:44%;--d:12s;--dl:-7s;--sx:-16px"></i><i style="left:56%;--d:10s;--dl:-1s;--sx:12px"></i><i style="left:67%;--d:9s;--dl:-5s;--sx:-8px"></i><i style="left:78%;--d:13s;--dl:-3s;--sx:18px"></i><i style="left:89%;--d:10s;--dl:-8s;--sx:-12px"></i><i style="left:25%;--d:14s;--dl:-10s;--sx:6px"></i><i style="left:72%;--d:12s;--dl:-6s;--sx:-6px"></i></div>
     <div class="modal-head">
       <button id="lb-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
       <div id="lb-modal-title" class="modal-head-title">High Scores</div>
