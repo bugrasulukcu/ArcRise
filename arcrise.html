@@ -3575,17 +3575,30 @@
       box-shadow: 0 0 12px rgba(124,255,122,.18);
       display: flex; align-items: center; white-space: nowrap;
     }
-    /* Kümülatif çarpan: süre × COMBO ×n = toplam — combo ≥2 iken açılır */
-    #combo-extra { display: inline-flex; align-items: center; gap: 4px; max-width: 0; opacity: 0; overflow: hidden;
-      transition: max-width .3s ease, opacity .25s ease, margin .3s ease; }
-    #combo-extra.on { max-width: 200px; opacity: 1; margin-left: 6px; }
-    #combo-hud:has(#combo-extra.on) #combo-pill { padding: 7px 12px; font-size: 15px; }
-    #combo-extra .cp-op { font-size: 13px; opacity: .6; }
-    #combo-extra .cp-combo { font-size: 9px; letter-spacing: .6px; color: #ffe066; }
-    #combo-extra .cp-combo b { font-size: 15px; letter-spacing: 1px; }
-    #combo-extra #combo-total { color: #fff; font-size: 16px; text-shadow: 0 0 8px rgba(255,224,102,.7); }
-    #combo-extra.max .cp-combo { color: #ffb13b; animation: cmMax 0.9s ease-in-out infinite; }
-    @keyframes cmMax { 50% { text-shadow: 0 0 10px rgba(255,177,59,.9); } }
+    /* v27: hapta yalnız TOPLAM çarpan; altında COMBO ×n + combo penceresi çizgisi.
+       Combo açıkken hap parlar (--cg: 0 → 1 combo seviyesi) ve etrafına partikül saçar. */
+    #combo-hud { flex-direction: column; gap: 5px; }
+    #combo-pill { position: relative; --cg: 0;
+      transition: box-shadow .25s ease, border-color .25s ease, color .25s ease; }
+    #combo-hud.on #combo-pill {
+      border-color: rgba(255,224,102, calc(.55 + .45 * var(--cg))) !important;
+      box-shadow: 0 0 calc(14px + 34px * var(--cg)) rgba(255,210,74, calc(.25 + .55 * var(--cg))),
+                  inset 0 0 calc(6px + 14px * var(--cg)) rgba(255,224,102, calc(.10 + .25 * var(--cg)));
+      color: #fff6c8 !important; text-shadow: 0 0 calc(4px + 10px * var(--cg)) rgba(255,210,74,.9);
+    }
+    #combo-sub { display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: 0; transition: opacity .2s ease; }
+    #combo-hud.win #combo-sub { opacity: 1; }
+    #combo-lbl { font-size: 9px; letter-spacing: 1.6px; color: rgba(255,224,102,.8); visibility: hidden; }
+    #combo-lbl b { font-size: 12px; color: #ffe066; }
+    #combo-hud.on #combo-lbl { visibility: visible; }
+    #combo-hud.max #combo-lbl b { color: #ffb13b; }
+    #combo-bar { width: 84px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); overflow: hidden; }
+    #combo-bar-fill { display: block; height: 100%; width: 100%; border-radius: 2px; transform-origin: left center;
+      background: linear-gradient(90deg, #ffb13b, #ffe066); }
+    #combo-fx { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+    #combo-fx i { position: absolute; left: 0; top: 0; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
+      background: #ffe066; box-shadow: 0 0 6px #ffcc33; animation: cfxFly var(--t) ease-out forwards; }
+    @keyframes cfxFly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
     #combo-pill.pop { animation: comboPop .35s cubic-bezier(.3,1.6,.5,1); }
     @keyframes comboPop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
@@ -3642,8 +3655,8 @@
 
     /* ══════════ BOOSTER HUD ══════════ */
     /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
-    #booster-hud {
-      position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+    #booster-hud {   /* v27: çarpan hapının altında COMBO etiketi + pencere çizgisi var → biraz aşağıda */
+      position: absolute; top: 124px; left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none;
     }
@@ -4003,7 +4016,8 @@
       <div id="lb"></div>
       <!-- Combo indicator -->
       <div id="combo-hud">
-        <div id="combo-pill"><span class="cp-time">&times;<span id="combo-val">1.0</span></span><span id="combo-extra"><span class="cp-op">&times;</span><span class="cp-combo">COMBO <b id="combo-cm">2</b></span><span class="cp-op">=</span><b id="combo-total">2.0</b></span></div>
+        <div id="combo-pill">&times;<span id="combo-val">1.0</span><div id="combo-fx"></div></div>
+        <div id="combo-sub"><span id="combo-lbl">COMBO <b id="combo-cm">×2</b></span><div id="combo-bar"><i id="combo-bar-fill"></i></div></div>
       </div>
       <!-- Booster indicator (active mid-game purple pickup) -->
       <div id="booster-hud">
@@ -4400,7 +4414,7 @@
       </div>
       <div class="ex-req-row unmet" id="ex-req-score">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">400 score</span>
+        <span class="ex-req-label">120 score</span>
         <span class="ex-req-val" id="ex-req-score-val"></span>
       </div>
       <div class="ex-req-row" id="ex-req-coin" style="display:none">
@@ -6865,8 +6879,16 @@ const ARC_DB = (() => {
   // v26 SKOR: tüm kazançlar ×0.2 (skorlar çok hızlı büyüyordu, 6 hane çabuk doluyordu) ve
   // COMBO ÇARPANI — seri yaptıkça ×2, ×3 … tavana kadar yükselir, tavanda kalır ve seri
   // sürdükçe kazanılan HER skoru (mesafe dahil) çarpar. Yeşil banttan çıkınca ×1'e döner.
-  const SCORE_SCALE = 0.2;
+  // v27: çarpanlar (süre × combo × booster) üst üste bindiği için tabanlar küçük tutulur:
+  // yeşil 1, altın 20, mor 10, … (bkz. çağrılar). Mesafe metre başına 5 (combo × booster).
+  const SCORE_SCALE = 1;
+  const DIST_PTS_PER_M = 5;
   function comboMul() { return runCombo >= 2 ? Math.min(runCombo, comboCap()) : 1; }
+  // Combo penceresi (yeşil bant) açık mı, ne kadarı kaldı: 1 → yeni yeşil, 0 → kapandı
+  function comboWindowFrac() {
+    const mx = comboDisplayMax(), eg = (mx - 2) / mx;
+    return energy > eg ? Math.min(1, (energy - eg) / (1 - eg)) : 0;
+  }
   function gainScore(raw) {
     const pts = Math.max(1, Math.round(raw * SCORE_SCALE * comboMul()));
     scoreBonus += pts;
@@ -6896,9 +6918,9 @@ const ARC_DB = (() => {
   // 1 ekran yüksekliği = 15 cm (sabit referans). Mesafe metre cinsinden,
   // 0.00 formatında gösteriliyor. fmtDist girdisi cm, çıktısı "X.XXm".
   const CM_PER_SCREEN = 15;
-  // Başlangıç çizgisi: ilk 20 cm ısınma — mesafe ve skor bu çizgiden itibaren 0'dan sayılır.
+  // Başlangıç çizgisi: ilk 10 cm ısınma — mesafe ve skor bu çizgiden itibaren 0'dan sayılır.
   // (START'a basıp hemen duvara çarpan run 0 m / 0 puan kalır.) distOriginY = mesafe 0'ın dünya y'si.
-  const START_CM = 20, START_PX = START_CM / CM_PER_SCREEN * H_REF;
+  const START_CM = 10, START_PX = START_CM / CM_PER_SCREEN * H_REF;
   const distOriginY = () => (H - 200) - START_PX;
   let _startCrossed = false;
   // Magnet: seviye başı +1 mm toplama yarıçapı, oyunun mesafe metriğiyle (1066px = 15cm → ~7px).
@@ -8671,6 +8693,17 @@ const ARC_DB = (() => {
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
+    // Combo penceresi zamanlayıcısı: topun kenarında saat yönünde azalan altın yay
+    if (!tutActive && gameMode !== 'wife' && scene === 'play') {
+      const wf = comboWindowFrac();
+      if (wf > 0) {
+        const on = runCombo >= 2;
+        ctx.strokeStyle = on ? 'rgba(255,214,90,0.95)' : 'rgba(255,214,90,0.55)';
+        ctx.lineWidth = on ? 3.5 : 2.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(px, py, r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * wf); ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+    }
     // Countdown — bold + 2× larger than before, in the main brand font.
     const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
@@ -8894,7 +8927,7 @@ const ARC_DB = (() => {
           const gx = walls.left + 55 + srand() * (walls.right - walls.left - 110);
           const gr = 1 + srand();
           goldBalls.push({ x: gx, y: nextSpawnY - 80 - srand() * 60, r: gr,
-            pts: 100 });
+            pts: 20 });   // v27 taban (× süre × combo × booster)
         }
         if (spawnPurple && !spawnGold) {
           const px2 = walls.left + 55 + srand() * (walls.right - walls.left - 110);
@@ -9018,7 +9051,7 @@ const ARC_DB = (() => {
   function onObstacleBroken(o) {
     if (!o || !o.crystal || o._broken || tutActive) return;
     o._broken = true;
-    const pts = gainScore(100 * getBoostScoreMul());
+    const pts = gainScore(20 * getBoostScoreMul());
     _runCrystals++; _runGolds++;          // _runGolds → run sonunda +1 coin
     stats.crystalsTotal = (stats.crystalsTotal || 0) + 1;
     spawnFloatText(o._ox ?? o.x, (o._oy ?? o.y) - 20, 'CRYSTAL +' + pts, 190, 1.35);
@@ -9056,6 +9089,18 @@ const ARC_DB = (() => {
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
   // Seri bitti (yeşil banttan çıkış / ölüm): çarpan ×1'e döner.
+  // Çarpan hapından fırlayan partiküller (DOM; kendi kendini siler)
+  function comboFx(n, cm) {
+    const host = document.getElementById('combo-fx');
+    if (!host) return;
+    for (let k = 0; k < n; k++) {
+      if (host.childElementCount > 40) return;
+      const el = document.createElement('i'), a = Math.random() * Math.PI * 2, d = 38 + Math.random() * (30 + cm * 8);
+      el.style.cssText = `--dx:${(Math.cos(a) * d * 1.6).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px;--s:${(2 + Math.random() * 3).toFixed(1)}px;--t:${(0.5 + Math.random() * 0.5).toFixed(2)}s`;
+      el.addEventListener('animationend', () => el.remove());
+      host.appendChild(el);
+    }
+  }
   function comboBreak() {
     _comboStreak = 0;
     if (runCombo >= 2) _comboHudPop = true;
@@ -9171,7 +9216,7 @@ const ARC_DB = (() => {
         if (player.y <= pbWorldY) {
           pbCrossed = true;
           pbFadeT = 0;
-          const pbPts = gainScore(200);
+          const pbPts = gainScore(25);
           spawnRainbowParticles(pbWorldY, walls.left, walls.right);
           spawnFloatText(player.x, pbWorldY, '+' + pbPts + ' PB', 60, 1.4);
         }
@@ -9191,7 +9236,7 @@ const ARC_DB = (() => {
     // which only goes above 0 once player.y < 0 (~866 px climb). Short
     // Extreme runs that died early ended with score=0 and skipped Firestore.
     const dd = distancePx - _prevDistPx;
-    if (dd > 0) distScore += dd / 200 * getScoreMul() * getBoostScoreMul() * comboMul() * SCORE_SCALE;
+    if (dd > 0) distScore += dd / (H_REF / CM_PER_SCREEN * 100) * DIST_PTS_PER_M * getBoostScoreMul() * comboMul();
     _prevDistPx = distancePx;
     score = Math.floor((distScore + scoreBonus) * profitMul);
     // Combo HUD: show current multiplier
@@ -9201,16 +9246,20 @@ const ARC_DB = (() => {
     const comboVal = document.getElementById('combo-val');
     if (energy > 0.01) {
       comboEl.classList.add('active');
-      comboVal.textContent = timeMulHud.toFixed(1);
-      // Combo aktifken kümülatif çarpan: süre × combo = toplam (seri yükselince / bitince pop)
-      const cm = comboMul(), extra = document.getElementById('combo-extra');
-      extra.classList.toggle('on', cm >= 2);
-      extra.classList.toggle('max', cm >= comboCap());
-      if (cm >= 2) {
-        document.getElementById('combo-cm').textContent = '×' + cm;
-        document.getElementById('combo-total').textContent = '×' + (Math.max(0.5, timeMulHud) * cm).toFixed(1);
-      }
+      // Hapta TOPLAM çarpan (süre × combo × booster); altında COMBO ×n + pencere çizgisi
+      const cm = comboMul(), win = comboWindowFrac(), cap = comboCap();
+      comboVal.textContent = (Math.max(0.5, timeMulHud) * cm * getBoostScoreMul()).toFixed(1);
+      comboEl.classList.toggle('on', cm >= 2);
+      comboEl.classList.toggle('max', cm >= cap);
+      comboEl.classList.toggle('win', win > 0);
+      document.getElementById('combo-cm').textContent = '×' + cm + (cm >= cap ? ' MAX' : '');
+      document.getElementById('combo-bar-fill').style.transform = `scaleX(${win.toFixed(3)})`;
+      const pillEl = document.getElementById('combo-pill');
+      pillEl.style.setProperty('--cg', cm >= 2 ? ((cm - 1) / Math.max(1, cap - 1)).toFixed(2) : 0);
+      // Partiküller: combo seviyesine göre sıklık; seri yükselince patlama (LOWFX'te yok)
+      if (!LOWFX && cm >= 2 && Math.random() < dt * (3 + cm * 3)) comboFx(1, cm);
       if (_comboHudPop) {
+        if (cm >= 2 && !LOWFX) comboFx(8 + cm * 3, cm);
         _comboHudPop = false;
         const pill = document.getElementById('combo-pill');
         pill.classList.remove('pop'); void pill.offsetWidth; pill.classList.add('pop');
@@ -9314,7 +9363,7 @@ const ARC_DB = (() => {
             f.done = true; f.doneT = 0;
             const off = Math.abs(player.x - f.x);
             if (off < f.rr + player.r * 0.6) {
-              const pts = gainScore(60 * getBoostScoreMul());
+              const pts = gainScore(10 * getBoostScoreMul());
               _runGates++; energy = 1;                 // combo sayacı tazelenir
               stats.gatesTotal = (stats.gatesTotal || 0) + 1; checkMaestro();
               f.hit = true;
@@ -9327,10 +9376,10 @@ const ARC_DB = (() => {
           const c = _corr[f.cid];
           if (Math.hypot(player.x - f.x, player.y - f.y) < player.r + 10 + magGrabF * 0.5) {
             feats.splice(i, 1);
-            const pts = gainScore(15 * getBoostScoreMul());
+            const pts = gainScore(2 * getBoostScoreMul());
             spawnFloatText(f.x, f.y - 12, '+' + pts, 48, 0.9);
             if (c && !c.fail && ++c.got === c.n) {
-              const bonus = gainScore(200 * getBoostScoreMul());
+              const bonus = gainScore(30 * getBoostScoreMul());
               _runCorridors++; checkMaestro();
               spawnFloatText(player.x, player.y - 30, 'CORRIDOR +' + bonus, 48, 1.5);
               spawnGoldParticles(player.x, player.y); haptic([20, 40, 20]);
@@ -9345,7 +9394,7 @@ const ARC_DB = (() => {
         if (d < outer - 4 && ob.r < ob.r0 * 0.9) ob._tin = true;
         else if (ob._tin && d > outer + 10) {
           ob._tim = true;
-          const pts = gainScore(40 * getBoostScoreMul());
+          const pts = gainScore(5 * getBoostScoreMul());
           _runTimings++; checkMaestro();
           spawnFloatText(player.x, player.y - 22, 'TIMING +' + pts, 290, 1.2); haptic(15);
         }
@@ -9372,7 +9421,7 @@ const ARC_DB = (() => {
         } else if (ob._in && d > ob.orbR + ob.r) {
           ob._thr = true; ob._thrT = 0;
           const perfect = (ob._minGap ?? 1e9) < 26;
-          const pts = gainScore((perfect ? 150 : 75) * getBoostScoreMul());
+          const pts = gainScore((perfect ? 30 : 15) * getBoostScoreMul());
           _runThreads++; stats.threadsTotal = (stats.threadsTotal || 0) + 1; checkMaestro();
           energy = Math.min(1, energy + 0.15);
           spawnFloatText(player.x, player.y - 24, (perfect ? 'PERFECT THREAD +' : 'THREAD +') + pts, 48, perfect ? 1.5 : 1.25);
@@ -9418,7 +9467,7 @@ const ARC_DB = (() => {
           else if (ob._nmClose && d2 > (rr + 46) * (rr + 46)) {
             ob._nm = true;
             if (++_runNearMiss >= 10 && !stats.daredevilDone) stats.daredevilDone = true;   // DAREDEVIL rozeti
-            const pts = gainScore(25 * getBoostScoreMul());
+            const pts = gainScore(3 * getBoostScoreMul());
             energy = Math.min(1, energy + 0.10);
             spawnFloatText(player.x, player.y - 20, 'CLOSE! +' + pts, 200, 1.1);
             haptic(15);
@@ -9448,7 +9497,7 @@ const ARC_DB = (() => {
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);   // önce seri → bu top yeni çarpanla sayılır
-        const finalPts = gainScore(10 * timeMul * boostMul);
+        const finalPts = gainScore(1 * timeMul * boostMul);
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
         spawnGreenParticles(b.x, b.y);
@@ -9469,7 +9518,7 @@ const ARC_DB = (() => {
         // Sarı flash sahne kenarlarında (puana göre intensity)
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 160));
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×çarpan → HUD'a uç
-        spawnFlyScore(b.x, W2S(b.y), Math.round(b.pts * SCORE_SCALE), totalMul * comboMul(), finalPts);
+        spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul * comboMul(), finalPts);
         spawnGoldParticles(b.x, b.y);
         goldBalls.splice(i, 1);
         stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
@@ -9484,7 +9533,7 @@ const ARC_DB = (() => {
         const timeMul  = Math.max(0.5, cd / 2);
         const boostMul = getBoostScoreMul();
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);
-        const finalPts = gainScore(100 * timeMul * boostMul);
+        const finalPts = gainScore(10 * timeMul * boostMul);
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
         purpleBalls.splice(i, 1);
@@ -10206,7 +10255,7 @@ const ARC_DB = (() => {
       drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawPbGhost(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
-      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawComboLabel(); drawResumeCountdown(); }
+      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown();   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
     }
 
     // Reklamla dönüşte top üzerinde 3→1 geri sayım; biter bitmez oyun akmaya başlar.
@@ -13040,7 +13089,7 @@ const ARC_DB = (() => {
     // Eskiler çoğu ailede ilk kademede bile erişilemezdi (DISTANCE I = 10 m, GOLD V ≈ 5+ yıl).
     // I–II ilk haftalarda, III–IV aylar içinde, V ancak ustalık/uzun oyunla.
     { id: 'score',    name: 'SCORE',     icon: 'medal',
-      stat: () => bestAny(),                    tiers: [100, 400, 1500, 5000, 15000],   // v26 skor ölçeği
+      stat: () => bestAny(),                    tiers: [50, 200, 800, 3000, 10000],   // v27 skor tabanları (bot: yeni oyuncu iyi run ≈ 90, orta ≈ 900, tam upgrade ≈ 15k)
       desc: t => `Score ${_fmtN(t)}+ in one run` },
     { id: 'range',    name: 'DISTANCE',  icon: 'ruler',
       stat: () => bestDistAny(),                tiers: [200, 500, 1000, 2000, 4000],
@@ -13672,12 +13721,12 @@ const ARC_DB = (() => {
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
-  // Extreme: ya 45 coin direkt, ya 5m + 400 puan + 6 coin (indirim).
+  // Extreme: ya 45 coin direkt, ya 5m + 120 puan + 6 coin (indirim).
   // İlk satın alma sonrası unlock kalıcı.
   const EX_DIRECT_PRICE   = 45;
   const EX_DISCOUNT_PRICE = 6;
   const EX_DIST_REQ_CM    = 500;   // 5.00 m
-  const EX_SCORE_REQ      = 400;    // v26 skor ölçeği (×0.2 + combo çarpanı): 5 m'lik iyi run ≈ 300-500
+  const EX_SCORE_REQ      = 120;    // v27 skor tabanları: 5 m'lik iyi run ≈ 100-200
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
   function refreshExtremeReqs() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
@@ -13982,12 +14031,12 @@ const ARC_DB = (() => {
   //   SPICE — çeşni (coin kazan / N el oyna / Extreme el bitir)
   const QUEST_AXES = {
     skill: [
-      { metric: 'score',  base: 120,  reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
+      { metric: 'score',  base: 40,  reward: QUEST_COIN, mk: t => `Score ${t} in one run` },
       { metric: 'distCm', base: 250,  reward: QUEST_COIN, mk: t => `Reach ${fmtDist(t)} in a single run` },
       { metric: 'combo',  base: 3,    reward: QUEST_COIN, mk: t => `Chain ${t} balls in a row` },
     ],
     grind: [
-      { metric: 'scoreTotal', base: 500, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
+      { metric: 'scoreTotal', base: 150, reward: QUEST_COIN, mk: t => `Rack up ${t} total score today` },
       { metric: 'distTotal',  base: 1500, reward: QUEST_COIN, mk: t => `Travel ${fmtDist(t)} today in total` },
       { metric: 'goodRuns',   base: 3, param: 150, reward: QUEST_COIN, mk: (t, p) => `Finish ${t} runs past ${fmtDist(p)}` },
     ],
@@ -14022,7 +14071,8 @@ const ARC_DB = (() => {
   function scaleTarget(def, s) {
     const v = def.base * s;
     if (QUEST_COUNT_METRICS.includes(def.metric)) return Math.max(def.base, Math.round(v));
-    return Math.max(def.base, Math.round(v / 50) * 50); // skor/mesafe 50'ye yuvarla
+    const q = def.metric === 'score' || def.metric === 'scoreTotal' ? 10 : 50;   // v27 küçük skorlar 10'a
+    return Math.max(def.base, Math.round(v / q) * q); // skor/mesafe yuvarla
   }
   function rollDailyQuests() {
     const D = currentSeriesDay();

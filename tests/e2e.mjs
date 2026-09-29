@@ -445,7 +445,7 @@ test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
   check(pr.every(x => x.endsWith('=0')), `hemen ölen run görev ilerletti: ${pr.join(', ')}`);
 });
 
-test('combo: seri çarpanı tüm kazançları çarpar, skor ×0.2', async () => {
+test('combo: seri çarpanı tüm kazançları çarpar (v27 tabanları)', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
   const cap = (await ev('ARC_TEST.combo')).cap;
@@ -454,12 +454,12 @@ test('combo: seri çarpanı tüm kazançları çarpar, skor ×0.2', async () => 
   const b0 = await ev('ARC_TEST.bonus');
   await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('gate'); true`); await sleep(400);
   const got = (await ev('ARC_TEST.bonus')) - b0;
-  check(got === 60 * 0.2 * Math.min(3, cap), `kapı combo ×3'te ${got} verdi (beklenen ${60 * 0.2 * Math.min(3, cap)})`);
+  check(got === 10 * Math.min(3, cap), `kapı combo ×3'te ${got} verdi (beklenen ${10 * Math.min(3, cap)})`);
   await ev(`ARC_TEST.setCombo(99); true`);
   check((await ev('ARC_TEST.combo')).mul === cap, 'tavanda çarpan tavanı aşıyor');
 });
 
-test('başlangıç çizgisi: 20 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılmaz', async () => {
+test('başlangıç çizgisi: 10 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılmaz', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');

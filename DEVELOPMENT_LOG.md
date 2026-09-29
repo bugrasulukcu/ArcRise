@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### v27: yeni skor tabanları, çarpan HUD'ı sadeleşti, combo penceresi göstergeleri, başlangıç 10 cm (2026-09-29)
+
+- **Skor tabanları** (sonra süre × combo × booster ile çarpılır): yeşil 1, altın 20, mor 10, THREAD 15 / PERFECT 30, kristal 20, koridor 30 (kıvılcım 2), kapı 10, TIMING 5, CLOSE 3, PB çizgisi 25; mesafe metre başına 5 (combo × booster). `SCORE_SCALE` = 1, `DIST_PTS_PER_M` = 5.
+- **Bot ölçümü (3 dk):** upgrade'siz medyan 1.0 m → 16, iyi run 3.6 m → 91; orta upgrade 4.1 m → 885 (seri 9); tam upgrade 5.1 m → 15.019 (seri 43). Tam upgrade'de hâlâ yüksek: çarpanlar üst üste (süre ×6 × combo ×7 × Profit ×2) — açık karar.
+- Eşikler: skor görevi 40, toplam skor görevi 150 (10'a yuvarlanır), SCORE rozeti 50/200/800/3k/10k, Extreme kilidi 5 m + 120.
+- **HUD:** hapta yalnız TOPLAM çarpan (süre × combo × booster). Altında "COMBO ×n" (tavanda "MAX") + combo penceresinin kalan süresi çizgisi (yeşil bant eşiğinden hesaplanır: `comboWindowFrac`). Combo ≥2'de hap altın parlar (`--cg` seviyeye göre artan ışık), combo seviyesine göre partikül saçar, seri yükselince patlama (LOWFX'te partikül yok). Booster hapı 124 px'e indi.
+- **Topta dairesel zamanlayıcı:** combo penceresi açıkken topun kenarında saat yönünde azalan altın yay (combo ≥2'de daha kalın). Topun üstündeki "COMBO ×n/cap" yazısı kaldırıldı (HUD'da).
+- **Başlangıç çizgisi 20 → 10 cm.**
+
 ### v26 skor: combo çarpanı, kümülatif çarpan göstergesi, ×0.2, başlangıç çizgisi, sade engeller (2026-09-29)
 
 - **Combo artık gerçek çarpan:** seri (yeşil bantta art arda toplanan top) ×2, ×3 … `comboCap()` tavanına kadar yükselir (taban 3, Max Combo upgrade'iyle 7), **tavanda kalır** ve seri sürdükçe kazanılan HER skoru çarpar — mesafe dahil. Yeşil banttan çıkınca ×1. Eski "pot" (zincir puanı biriktirip tavanda tek seferde bankalama + sıfırlama) kaldırıldı. Toplanan top önce seriyi artırır, sonra yeni çarpanla sayılır. Tavanda "MAX COMBO ×n".
