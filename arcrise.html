@@ -7137,6 +7137,12 @@ const ARC_DB = (() => {
     if (a) { const c = a.cloneNode(); c.volume = vol; c.play().catch(() => {}); }
   }
 
+  // Tanı: debug panelinde ve testlerde ses durumu (telefonda "müzik yok" gibi sorunlar için)
+  function _audioDiag() {
+    return { ctx: sfxCtx ? sfxCtx.state : 'none', music: musicBuffer ? 'ok' : (sfxCtx ? 'loading/fail' : '-'),
+      playing: !!_musicSrc, gain: _musicGain ? +_musicGain.gain.value.toFixed(2) : null, musOn, wanted: _musicWanted,
+      session: (navigator.audioSession && navigator.audioSession.type) || '-' };
+  }
   function _musicPlaying() { return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
   function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgBaseVol); }
   function _setMusicVol(v) { if (_musicGain) _musicGain.gain.value = v; if (bgAudio) bgAudio.volume = v; }
@@ -9479,6 +9485,7 @@ const ARC_DB = (() => {
           ['combo',     Math.max(0, Math.ceil(energy * comboDisplayMax()))],
           ['trail',     trail.length],
           ['ghosts',    allGhosts.length],
+          ['audio',     (a => `${a.ctx} m:${a.music} ${a.playing ? '▶' : '■'} g${a.gain} ${a.musOn ? 'on' : 'off'} ${a.session}`)(_audioDiag())],
           ['obstacles', obstacles.length],
           ['particles', particles.length],
           ['cam y',     Math.round(camY)],
@@ -9884,6 +9891,7 @@ const ARC_DB = (() => {
   if (window.ARC_DEBUG) window.ARC_TEST = {
     get scene() { return scene; }, get mode() { return gameMode; }, setMode: m => { gameMode = m; },
     runCoinsRaw, applySoftCap, coinsEarnedToday,
+    get audio() { return _audioDiag(); },
   };
   try { if (new URLSearchParams(location.search).get('bot') === '1') setTimeout(() => ARC_BOT.start(), 600); } catch(_){}
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─

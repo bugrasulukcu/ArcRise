@@ -257,6 +257,9 @@ test('müzik: yalnız oyun ekranında çalar', async () => {
   check(await ev('window.__music') === 0, 'ana ekranda müzik çalıyor');
   await ev(`document.getElementById('btn-start').click(); true`);
   check(await waitFor(`window.__music > 0`, 8000), 'oyunda müzik başlamadı');
+  await sleep(800);
+  const a = await ev(`ARC_TEST.audio`);
+  check(a.ctx === 'running' && a.playing && a.gain > 0.3, `müzik duyulmuyor: ${JSON.stringify(a)}`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'game over gelmedi');
   check(await waitFor(`window.__music === 0`, 3000), 'game over ekranında müzik sürüyor');
 });
