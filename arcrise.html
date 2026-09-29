@@ -4016,7 +4016,7 @@
       <div id="lb"></div>
       <!-- Combo indicator -->
       <div id="combo-hud">
-        <div id="combo-pill">&times;<span id="combo-val">1.0</span><div id="combo-fx"></div></div>
+        <div id="combo-pill">&times;<span id="combo-val">1</span><div id="combo-fx"></div></div>
         <div id="combo-sub"><span id="combo-lbl">COMBO <b id="combo-cm">×2</b></span><div id="combo-bar"><i id="combo-bar-fill"></i></div></div>
       </div>
       <!-- Booster indicator (active mid-game purple pickup) -->
@@ -6883,6 +6883,9 @@ const ARC_DB = (() => {
   // yeşil 1, altın 20, mor 10, … (bkz. çağrılar). Mesafe metre başına 5 (combo × booster).
   const SCORE_SCALE = 1;
   const DIST_PTS_PER_M = 5;
+  // Süre çarpanı kademeli ve tam sayı (eskiden cd/2 → ×0.5, ×3.5 gibi küsuratlı, tavan ×6):
+  // geri sayım 0–3 → ×1, 4–6 → ×2, 7–9 → ×3, 10–12 → ×4 (×4 yalnız Timer upgrade'iyle).
+  function timeMulFor(cd) { return cd >= 10 ? 4 : cd >= 7 ? 3 : cd >= 4 ? 2 : 1; }
   function comboMul() { return runCombo >= 2 ? Math.min(runCombo, comboCap()) : 1; }
   // Combo penceresi (yeşil bant) açık mı, ne kadarı kaldı: 1 → yeni yeşil, 0 → kapandı
   function comboWindowFrac() {
@@ -9241,14 +9244,14 @@ const ARC_DB = (() => {
     score = Math.floor((distScore + scoreBonus) * profitMul);
     // Combo HUD: show current multiplier
     const countdown = Math.max(0, Math.ceil(energy * comboDisplayMax()));
-    const timeMulHud = countdown / 2;
+    const timeMulHud = timeMulFor(countdown);
     const comboEl  = document.getElementById('combo-hud');
     const comboVal = document.getElementById('combo-val');
     if (energy > 0.01) {
       comboEl.classList.add('active');
       // Hapta TOPLAM çarpan (süre × combo × booster); altında COMBO ×n + pencere çizgisi
       const cm = comboMul(), win = comboWindowFrac(), cap = comboCap();
-      comboVal.textContent = (Math.max(0.5, timeMulHud) * cm * getBoostScoreMul()).toFixed(1);
+      comboVal.textContent = String(timeMulHud * cm * getBoostScoreMul());
       comboEl.classList.toggle('on', cm >= 2);
       comboEl.classList.toggle('max', cm >= cap);
       comboEl.classList.toggle('win', win > 0);
@@ -9494,7 +9497,7 @@ const ARC_DB = (() => {
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         // LAST SECOND rozeti: geri sayım 0'dayken (ölümden önceki son şans penceresinde) yeşil yakalamak
         if (cd <= 0 && !tutActive && gameMode !== 'wife' && !stats.lastSecondDone) stats.lastSecondDone = true;
-        const timeMul  = Math.max(0.5, cd / 2);
+        const timeMul  = timeMulFor(cd);
         const boostMul = getBoostScoreMul();
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);   // önce seri → bu top yeni çarpanla sayılır
         const finalPts = gainScore(1 * timeMul * boostMul);
@@ -9510,7 +9513,7 @@ const ARC_DB = (() => {
       if (dx*dx + dy*dy < hitR * hitR) {
         // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
-        const timeMul  = Math.max(0.5, cd / 2);
+        const timeMul  = timeMulFor(cd);
         const boostMul = getBoostScoreMul();
         const totalMul = timeMul * boostMul;
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);
@@ -9530,7 +9533,7 @@ const ARC_DB = (() => {
       const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
-        const timeMul  = Math.max(0.5, cd / 2);
+        const timeMul  = timeMulFor(cd);
         const boostMul = getBoostScoreMul();
         addCombo(b.x, b.y, cd >= comboDisplayMax() - 1);
         const finalPts = gainScore(10 * timeMul * boostMul);

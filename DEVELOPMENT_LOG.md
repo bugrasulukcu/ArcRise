@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Süre çarpanı kademeli ve tam sayı (2026-09-29)
+
+- Eskiden `cd / 2` (×0.5, ×3.5 gibi küsuratlı, tavan ×6). Şimdi `timeMulFor(cd)`: geri sayım 0–3 → ×1, 4–6 → ×2, 7–9 → ×3, 10–12 → ×4. Upgrade'siz tavan ×3 (sayaç 8), ×4 yalnız Timer upgrade'iyle. Toplam çarpan tavanı ×42 → ×28 (combo ×7 ile); HUD'da tam sayı ("×12").
+- Bot (3 dk): upgrade'siz 18–56 (değişmedi); orta 4.5 m → 1.568 (seri 15); tam 6.4 m → 9.904 (önce 5.1 m → 15.019) — tam upgrade'de metre başına skor ≈ yarıya indi.
+
 ### v27: yeni skor tabanları, çarpan HUD'ı sadeleşti, combo penceresi göstergeleri, başlangıç 10 cm (2026-09-29)
 
 - **Skor tabanları** (sonra süre × combo × booster ile çarpılır): yeşil 1, altın 20, mor 10, THREAD 15 / PERFECT 30, kristal 20, koridor 30 (kıvılcım 2), kapı 10, TIMING 5, CLOSE 3, PB çizgisi 25; mesafe metre başına 5 (combo × booster). `SCORE_SCALE` = 1, `DIST_PTS_PER_M` = 5.
