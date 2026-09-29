@@ -401,7 +401,8 @@ App yüklenince:
 - Tüm sesler Web Audio'ya geçince (29c21d8) iOS'ta **zil/sessiz anahtarına uymaya** başladı → telefon sessizdeyken hiç ses yok (eskiden müzik `<audio>` ile çaldığı için duyuluyordu). `navigator.audioSession.type = 'playback'` (Safari 16.4+) ilk dokunuşta ve ön plana dönüşte; arka planda `'auto'`.
 - iOS arama/bildirim/Siri sonrası bağlamı `'interrupted'` yapar; `playSfxBuffer` ve ön plana dönüş yalnız `'suspended'`ı açıyordu → artık `state !== 'running'` ise `resume()`.
 - `index.html` önbellek sürümü `20260929a`.
-- Telefonda doğrulanmalı: sessiz modda ses geliyor mu, kilit ekranında "Şimdi Çalıyor" kartı geri gelmedi mi.
+- Telefonda doğrulandı (2026-09-29): SFX ve müzik çalıyor. İlk denemede müzik gelmedi, bir sonraki sürümde (önbellek `20260929b`) geldi; büyük olasılıkla telefon eski sürümü önbellekten açıyordu.
+- Tanı için: debug panelinde (`?debug=1`, oyunda sağdan sola kaydır) `audio` satırı → bağlam durumu, müzik tamponu, çalıyor mu, gain, müzik ayarı, audioSession. `ARC_TEST.audio` aynısını testlere verir; müzik testi artık gain > 0.3 de denetler.
 
 ### Otomatik testler: `npm test` (2026-09-29)
 
