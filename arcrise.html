@@ -3106,9 +3106,28 @@
     @media (max-width: 360px) { .st-title { font-size: 8.5px; letter-spacing: 1px; } .st-title b { font-size: 12px; } .st-login { font-size: 7.5px; } }
     .st-hint { font-size: 7.5px; letter-spacing: .6px; line-height: 1.5; color: rgba(255,255,255,.32); text-align: center; }
 
+    /* ── Günlük meydan okuma kartı ── */
+    .daily-box {
+      width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 13px;
+      border: 1px solid rgba(90,216,255,.4); background: linear-gradient(180deg, rgba(90,216,255,.10), rgba(16,20,30,.6));
+    }
+    .dl-ic { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
+      color: #8fe6ff; background: rgba(90,216,255,.12); border: 1px solid rgba(90,216,255,.45); }
+    .dl-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .dl-title { font-size: 10px; letter-spacing: 1.6px; color: #8fe6ff; }
+    .dl-sub { font-size: 8.5px; letter-spacing: .6px; color: rgba(255,255,255,.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dl-sub b { color: #fff; font-weight: 700; }
+    .dl-play { font-family: var(--font); font-size: 10px; letter-spacing: 1.4px; padding: 7px 14px; border-radius: 10px; cursor: pointer;
+      color: #04202a; border: 1px solid rgba(90,216,255,.7); background: linear-gradient(180deg, #8fe6ff, #3bb8e0); }
+    .dl-play:active { transform: scale(.95); }
     /* ── Görev kartı: eksen ikonu/rengi + coin çipi ── */
     .quest-card { --ax: #5ad8ff; border-left: 3px solid var(--ax); padding: 10px 12px; gap: 7px; }
     .quest-card .quest-bottom { gap: 10px; }
+    /* Görev penceresi SE Safari'ye (≈553 px) kaydırmasız sığsın — dolgu değil iç boşluklar sıkışır */
+    #quests-modal-box .streak-box { padding: 9px 12px 8px; gap: 6px; }
+    #quests-modal-box .st-mark { height: 22px; }
+    #quests-modal-box .quest-card { padding: 8px 12px; gap: 6px; }
+    #quests-modal-box .daily-box { padding: 7px 12px; }
     .quest-card .quest-bar-wrap { flex: 1; }
     .quest-card .quest-progress-txt { white-space: nowrap; }
     #quests-modal-box { gap: 10px; }
@@ -5697,7 +5716,46 @@ const ARC_DB = (() => {
     } catch(_) { return false; }
   }
 
-  const api = { submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  // ── Günlük meydan okuma: daily/{YYYYMMDD}/scores/{uid} — oyuncu başına günün en iyisi ──
+  async function submitDaily(day, name, avatar, score, badges, tag) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    score = Number(score) || 0; if (score <= 0 || score > MAX_SUBMIT_SCORE || !/^[0-9]{8}$/.test(day)) return false;
+    await ensureAuth(); const uid = getUid();
+    if (!uid) return false;
+    const url = `${BASE}/daily/${day}/scores/${uid}?key=${apiKey}`;
+    try {
+      const g = await fbFetch(url);
+      if (g.status !== 200 && g.status !== 404) return false;
+      if (g.status === 200) { const d = await g.json(); if (parseInt(d.fields?.score?.integerValue ?? 0) >= score) return true; }
+      const fields = { name: { stringValue: String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16) || 'PLAYER' },
+        avatar: { integerValue: String(Number(avatar) || 0) }, score: { integerValue: String(Math.round(score)) },
+        ts: { integerValue: String(Date.now()) }, badges: { stringValue: String(badges || '').slice(0, 64) } };
+      if (/^[0-9]{4}$/.test(tag || '')) fields.tag = { stringValue: tag };
+      const mask = Object.keys(fields).map(k => 'updateMask.fieldPaths=' + k).join('&');
+      const w = await fbFetch(g.status === 200 ? `${url}&${mask}` : `${url}&currentDocument.exists=false`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) });
+      if (!w.ok) console.warn('[ArcDB] daily write', w.status);
+      return w.ok;
+    } catch (e) { console.warn('[ArcDB] daily submit failed', e); return false; }
+  }
+  async function getDailyTop(day, n = 20) {
+    if (!projectId || projectId.startsWith('BURAYA') || !/^[0-9]{8}$/.test(day)) return null;
+    try {
+      const res = await fbFetch(`${BASE}/daily/${day}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'scores' }],
+          orderBy: [{ field: { fieldPath: 'score' }, direction: 'DESCENDING' }], limit: n } }),
+      });
+      if (!res.ok) return null;
+      return (await res.json()).filter(r => r.document?.fields?.name?.stringValue).map(r => {
+        const f = r.document.fields;
+        return { name: f.name.stringValue, avatar: parseInt(f.avatar?.integerValue ?? 3), score: parseInt(f.score?.integerValue ?? 0) || 0,
+          badges: f.badges?.stringValue || '', tag: f.tag?.stringValue || '', owner: r.document.name.split('/').pop() };
+      });
+    } catch (_) { return null; }
+  }
+
+  const api = { submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -6471,6 +6529,11 @@ const ARC_DB = (() => {
   let running = false, started = false;
   let _lastRunInfo = {};
   let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur
+  // Günlük meydan okuma: aynı gün herkese aynı pist. spawnAhead tohumlu rastgele (srand) kullanır.
+  let _dailyRun = false, _dailyRng = null, _dailyPrevMode = null;
+  const srand = () => _dailyRng ? _dailyRng() : Math.random();
+  const dailyDay = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
+  const dailySeed = day => { let h = 2166136261; for (const c of 'arcrise-daily-' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
   // Kendi en iyi run'ının hayaleti: run boyunca 0.1 sn'de bir [t×10, x, başlangıçtan yükseklik];
   // mesafe rekoru kırılınca mod başına saklanır, sonraki run'larda aynı zamanlamayla oynatılır.
   const _pbRec = [];
@@ -8695,6 +8758,7 @@ const ARC_DB = (() => {
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
     _pbRec.length = 0; _pbT = 0; _pbIdx = 0; _pbStartY = player.y;
+    _dailyRng = _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _pbGhost = (gameMode !== 'wife' && upg.pbGhost !== false) ? loadPbGhost(gameMode) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
@@ -8703,7 +8767,9 @@ const ARC_DB = (() => {
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
-    nextSpawnY = player.y - H; lastBonusY = player.y - H;
+    // Günlük koşu: ilk slot sabit referans yüksekliğinden (H cihaza göre değişir → pist kayardı)
+    const firstSlot = _dailyRun ? H_REF : H;
+    nextSpawnY = player.y - firstSlot; lastBonusY = player.y - firstSlot;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
@@ -8736,17 +8802,19 @@ const ARC_DB = (() => {
       // Difficulty driver — linear in distance. Eşikler gerçek oynanan aralığa
       // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
       // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
-      const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
+      const distCm = _dailyRun
+        ? Math.max(0, _pbStartY - nextSpawnY - 2200) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
+        : (distancePx / H_REF) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 500));
       const tMove = Math.max(0, (distCm - 100) / 400); // movement after ~1m
       const tMoveC = Math.max(0, Math.min(1, tMove));
 
-      const x  = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+      const x  = walls.left + 55 + srand() * (walls.right - walls.left - 110);
 
       // Gap (vertical spacing) shrinks linearly: 430..200 (min), +100 random
       const gMin = 430 - 230 * t;
       const gMax = gMin + 100;
-      const gap = gMin + Math.random() * (gMax - gMin);
+      const gap = gMin + srand() * (gMax - gMin);
 
       // Wife Mode: 2× green-bonus density (tighter threshold + boosted probability)
       const wife = gameMode === 'wife';
@@ -8755,24 +8823,24 @@ const ARC_DB = (() => {
       const bonusGap = 460 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
-      const spawnGold   = (runCoinRainActive || distCm >= 30) && Math.random() < (runCoinRainActive ? 0.48 : 0.12);  // Gold Rush: ×4, baştan
-      const spawnPurple = distCm >= 75 && Math.random() < 0.08;
+      const spawnGold   = (runCoinRainActive || distCm >= 30) && srand() < (runCoinRainActive ? 0.48 : 0.12);  // Gold Rush: ×4, baştan
+      const spawnPurple = distCm >= 75 && srand() < 0.08;
 
       const bonusProb = (t < 0.15 ? .42 : .58) * (wife ? 1.7 : 1.0);
-      if (needBonus || Math.random() < bonusProb) {
-        bonuses.push({ x, y: nextSpawnY, r: 11 + Math.random() * 7 });
+      if (needBonus || srand() < bonusProb) {
+        bonuses.push({ x, y: nextSpawnY, r: 11 + srand() * 7 });
         lastBonusY = nextSpawnY;
         if (spawnGold) {
-          const gx = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
-          const gr = 1 + Math.random();
-          goldBalls.push({ x: gx, y: nextSpawnY - 80 - Math.random() * 60, r: gr,
+          const gx = walls.left + 55 + srand() * (walls.right - walls.left - 110);
+          const gr = 1 + srand();
+          goldBalls.push({ x: gx, y: nextSpawnY - 80 - srand() * 60, r: gr,
             pts: 100 });
         }
         if (spawnPurple && !spawnGold) {
-          const px2 = walls.left + 55 + Math.random() * (walls.right - walls.left - 110);
+          const px2 = walls.left + 55 + srand() * (walls.right - walls.left - 110);
           const PURPLE_TYPES = ['wide','narrow','magnet','xmult','ghost','speed','mystery'];
-          const ptype = PURPLE_TYPES[Math.floor(Math.random() * PURPLE_TYPES.length)];
-          purpleBalls.push({ x: px2, y: nextSpawnY - 80 - Math.random() * 60, r: 12, type: ptype });
+          const ptype = PURPLE_TYPES[Math.floor(srand() * PURPLE_TYPES.length)];
+          purpleBalls.push({ x: px2, y: nextSpawnY - 80 - srand() * 60, r: 12, type: ptype });
         }
       } else {
         // Obstacle radius scales linearly with distance.
@@ -8780,24 +8848,24 @@ const ARC_DB = (() => {
         const R_MAX = W / 8;             // hard cap
         const rMin = 30 + (R_MAX * 0.55 - 30) * t;  // 30 → ~0.55·R_MAX
         const rMax = 50 + (R_MAX        - 50) * t;  // 50 → R_MAX
-        const r = rMin + Math.random() * (rMax - rMin);
+        const r = rMin + srand() * (rMax - rMin);
 
         const ob = { x, y: nextSpawnY, r };
 
         // ── Skorla birleşen nesneler (engel slotunun bir kısmı) ──
-        const featRoll = Math.random();
+        const featRoll = srand();
         if (distCm >= 40 && featRoll < 0.07) { spawnGate(); nextSpawnY -= gap; continue; }
         if (distCm >= 60 && featRoll < 0.11) { spawnCorridor(); nextSpawnY -= gap; continue; }
         if (distCm >= 80 && featRoll < 0.14) { spawnRing(); nextSpawnY -= gap; continue; }
 
         // ── Yeni engel tipleri — mesafeyle açılır ──────────────
         // 10m+: PULSE (nefes alan), 20m+: SPIN (yörüngede ikiz), 30m+: SWEEP (süpürücü)
-        const typeRoll = Math.random();
+        const typeRoll = srand();
         if (distCm >= 133 && typeRoll < 0.14) {
           // SPIN — ortak pivot etrafında dönen iki küçük top (~1.3m+)
-          const orbR = 58 + Math.random() * 42;
-          const ow   = (0.9 + Math.random() * 0.7) * (Math.random() < 0.5 ? -1 : 1);
-          const oph  = Math.random() * Math.PI * 2;
+          const orbR = 58 + srand() * 42;
+          const ow   = (0.9 + srand() * 0.7) * (srand() < 0.5 ? -1 : 1);
+          const oph  = srand() * Math.PI * 2;
           const rr   = Math.max(20, r * 0.5);
           // lead: çiftin "arasından geçme" bonusunu ve yörünge halkasını taşıyan üye
           const pid = ++_orbitPid;
@@ -8812,8 +8880,8 @@ const ARC_DB = (() => {
           ob.x  = (walls.left + walls.right) / 2;
           ob.mk = 'h';
           ob.ma = (walls.right - walls.left) / 2 - 55 - ob.r;
-          ob.mf = 0.5 + Math.random() * 0.3;
-          ob.mt = Math.random() * Math.PI * 2;
+          ob.mf = 0.5 + srand() * 0.3;
+          ob.mt = srand() * Math.PI * 2;
           obstacles.push(ob);
           nextSpawnY -= gap;
           continue;
@@ -8822,7 +8890,7 @@ const ARC_DB = (() => {
           // PULSE — yarıçapı nefes alır gibi büyüyüp küçülen engel (~0.7m+)
           ob.pk  = true;
           ob.r0  = r;
-          ob.pph = Math.random() * Math.PI * 2;
+          ob.pph = srand() * Math.PI * 2;
           ob.pt  = 0;
         }
 
@@ -8830,25 +8898,25 @@ const ARC_DB = (() => {
         if (tMove > 0) {
           // Max amplitude = obstacle radius (= 50% of diameter, per spec).
           ob.ma  = tMoveC * r;
-          ob.mf  = 0.6 + Math.random() * 0.8;
-          ob.mt  = Math.random() * Math.PI * 2;
+          ob.mf  = 0.6 + srand() * 0.8;
+          ob.mt  = srand() * Math.PI * 2;
           // Movement kind progresses with distance: h/v early, diag mid, rand late
           if      (distCm >= 450) ob.mk = 'rand';   // ~4.5m+
           else if (distCm >= 300) ob.mk = 'diag';   // ~3m+
-          else                   ob.mk = Math.random() < 0.5 ? 'h' : 'v';
+          else                   ob.mk = srand() < 0.5 ? 'h' : 'v';
           if (ob.mk === 'rand') {
-            ob.mang  = Math.random() * Math.PI * 2;
-            ob.mnext = 1.5 + Math.random() * 2;
+            ob.mang  = srand() * Math.PI * 2;
+            ob.mnext = 1.5 + srand() * 2;
             ob.mct   = 0;
           } else if (ob.mk === 'diag') {
-            ob.mang = Math.random() * Math.PI * 2;
+            ob.mang = srand() * Math.PI * 2;
           }
         }
 
         // CRYSTAL: kırılabilir engel (Shockwave / Shield / Ghost-Phase ile) — kırınca puan + 1 coin.
         // Kırıcı bir yeteneği/eşyası olan oyuncuda iki kat sık.
         const hasBreaker = runShield || slotItems.some(it => it && (it.key === 'shock' || it.key === 'phaseburst'));
-        if (distCm >= 50 && Math.random() < (hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
+        if (distCm >= 50 && srand() < (_dailyRun ? 0.1 : hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
 
         obstacles.push(ob);
       }
@@ -8859,7 +8927,7 @@ const ARC_DB = (() => {
   function spawnGate() {
     const r = 24, gh = player.r + 36;
     const lo = walls.left + gh + 2 * r + 12, hi = walls.right - gh - 2 * r - 12;
-    const gx = lo + Math.random() * Math.max(1, hi - lo), y = nextSpawnY;
+    const gx = lo + srand() * Math.max(1, hi - lo), y = nextSpawnY;
     obstacles.push({ x: gx - gh - r, y, r }); obstacles.push({ x: gx + gh + r, y, r });
     feats.push({ kind: 'gate', id: ++_featId, x: gx, y, rr: 18, gh });
   }
@@ -8867,13 +8935,13 @@ const ARC_DB = (() => {
   function spawnRing() {
     const amp = (walls.right - walls.left) / 2 - 70;
     feats.push({ kind: 'ring', id: ++_featId, x0: (walls.left + walls.right) / 2, x: 0, y: nextSpawnY, r: 28,
-      amp, f: 0.7 + Math.random() * 0.5, ph: Math.random() * Math.PI * 2, t: 0 });
+      amp, f: 0.7 + srand() * 0.5, ph: srand() * Math.PI * 2, t: 0 });
   }
   // ALTIN KORİDOR: iki yanı engelli kıvrımlı hatta 5 kıvılcım; hepsini toplayana zincir bonusu.
   function spawnCorridor() {
     const n = 5, step = 80, amp = 38, side = player.r + 46, r = 18;
     const lo = walls.left + amp + side + 2 * r + 8, hi = walls.right - amp - side - 2 * r - 8;
-    const cx = lo + Math.random() * Math.max(1, hi - lo), cid = ++_featId, ph = Math.random() * Math.PI * 2;
+    const cx = lo + srand() * Math.max(1, hi - lo), cid = ++_featId, ph = srand() * Math.PI * 2;
     _corr[cid] = { n, got: 0, fail: false };
     for (let i = 0; i < n; i++) {
       const y = nextSpawnY - i * step, x = cx + Math.sin(ph + i * 0.9) * amp;
@@ -9608,6 +9676,9 @@ const ARC_DB = (() => {
     _proceedEndGame();
   }
   async function _proceedEndGame() {
+    // Bu run günlük müydü? Aşağıda await'ler var: oyuncu bu sırada yeni (günlük/normal) bir run
+    // başlatırsa bayrak değişir → normal skorun günlük tabloya yazılması gibi karışmalar olmasın.
+    const wasDaily = _dailyRun;
     // Müzik fade + ölüm SFX'i artık beginDeath'te patlama anında tetikleniyor.
     haptic(2000); // çarpışma titreşimi — 2 saniye
     // Ghost: save this run's sparse sample into the persistent ring buffer
@@ -9730,6 +9801,7 @@ const ARC_DB = (() => {
     const adBtn = document.getElementById('btn-continue-ad');
     if (adBtn) adBtn.style.display =
       (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
+    try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
     // Ölüm sebebi satırı
     try {
       const c = DEATH_TXT[_deathInfo?.cause] || DEATH_TXT.obstacle, el = document.getElementById('go-cause');
@@ -9843,15 +9915,19 @@ const ARC_DB = (() => {
       if (traceData.pts.length > 19000) delete traceData.pts;
     }
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
-    if (gameMode !== 'wife') {
+    if (wasDaily) {
+      const eqB = (equippedBadges || []).filter(Boolean).join(',');
+      dailyLocalRecord(sc);
+      await ARC_DB.submitDaily(dailyDay(), playerName, avatarIdx, sc, eqB, myTag());
+    } else if (gameMode !== 'wife') {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
       const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
       await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData, eqBadges, myTag());
       if (sc > 0) ARC_DB.invalidateTopCache();
     }
 
-    // Yeterli satır çek — 20 yeter, sıralama görmek için.
-    const topRows = await ARC_DB.getTopScores(20, gameMode);
+    // Yeterli satır çek — 20 yeter, sıralama görmek için. Günlük koşuda günün tablosu.
+    const topRows = wasDaily ? ((await ARC_DB.getDailyTop(dailyDay(), 20)) || []) : await ARC_DB.getTopScores(20, gameMode);
 
     let lbFallback = false; // sahte NPC satırları → arkadaş ekleme butonu gösterme
     if (topRows.length === 0) {
@@ -10147,6 +10223,7 @@ const ARC_DB = (() => {
   })();
 
   function showScene(s) {
+    if (_dailyRun && s !== 'play' && s !== 'over') endDailyMode();   // günlükten çıkış → normal mod geri
     // Deneme run'ı başladıktan sonra oyundan çıkılan her ekran (game over hariç) denemeyi bitirir
     if (_themeTrial && _trialStarted) {
       if (s === 'over') _trialRunDone = true;
@@ -10181,7 +10258,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
@@ -10434,6 +10511,11 @@ const ARC_DB = (() => {
     runCoinsRaw, applySoftCap, coinsEarnedToday,
     get audio() { return _audioDiag(); },
     get lastRun() { return _lastRunInfo; },
+    get daily() { return { on: _dailyRun, mode: gameMode, local: dailyLocal() }; },
+    // Test: pistin ilk N engelinin konumu (tohum eşitliği için)
+    // Test: pistin engel konumları (tohum eşitliği için) — başlangıca göre, yukarıdan sıralı
+    layoutSig: n => [...obstacles.map(o => ['o', o]), ...bonuses.map(o => ['b', o]), ...goldBalls.map(o => ['g', o])]
+      .map(([k, o]) => [k, Math.round(o.x), Math.round(_pbStartY - o.y)]).sort((a, b) => a[2] - b[2] || a[1] - b[1]).slice(0, n || 12).map(q => q.join(':')).join(','),
     get pbGhost() { return _pbGhost ? { d: _pbGhost.d, n: _pbGhost.p.length } : null; },
     finishTutorial: () => { _tutWantsPlay = true; endTutorial(); },   // tutorial'ın "GO!" sonu
     get threads() { return _runThreads; },
@@ -13261,6 +13343,29 @@ const ARC_DB = (() => {
     if (now - _lastStartTs < 400) return false;
     _lastStartTs = now; return true;
   }
+  // Günlük: yerel "bugünkü en iyi" + koşu sayısı (gün değişince sıfırlanır)
+  const DAILY_KEY = 'arc_daily_v1';
+  function dailyLocal() {
+    try { const o = JSON.parse(localStorage.getItem(DAILY_KEY)); if (o && o.day === dailyDay()) return o; } catch(_) {}
+    return { day: dailyDay(), best: 0, runs: 0 };
+  }
+  function dailyLocalRecord(sc) {
+    const o = dailyLocal(); o.runs++; if (sc > o.best) o.best = sc;
+    try { localStorage.setItem(DAILY_KEY, JSON.stringify(o)); } catch(_) {}
+  }
+  function startDailyRun() {
+    if (!_dailyRun) { _dailyPrevMode = gameMode; _dailyRun = true; }
+    gameMode = 'normal';
+    try { document.getElementById('quests-modal').classList.remove('open'); } catch(_) {}
+    startGame('gated');
+    try { showToast('Daily run — same course for everyone today'); } catch(_) {}
+  }
+  function endDailyMode() {
+    if (!_dailyRun) return;
+    _dailyRun = false; _dailyRng = null;
+    if (_dailyPrevMode) gameMode = _dailyPrevMode;
+    _dailyPrevMode = null;
+  }
   function startGame(withTutorial) {
     if (withTutorial !== 'gated' && !_startGate() && scene === 'play') return;
     if (_themeTrial && _trialRunDone) { endThemeTrial(); return; }   // deneme tek run
@@ -13303,7 +13408,7 @@ const ARC_DB = (() => {
     runCoinRainActive = false;
     runLuckyBoost = false;
     _runPreboostPending = null;
-    if (gameMode === 'wife') return; // Wife mode coin/etki yok
+    if (gameMode === 'wife' || _dailyRun) return; // Wife mode coin/etki yok; günlükte eşya yok (adil)
     const inv = upg.inv;
     const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
     // Coin Doubler: bir adet DOUBLER_RUNS run boyunca ×2 verir (runsLeft sayacı; kurcalamaya karşı kırpılır).
@@ -14073,8 +14178,13 @@ const ARC_DB = (() => {
     if (!list) return;
     if (questState.date !== questTodayStr()) questState = rollDailyQuests();
     const anim = n => animate ? ` style="animation: questIn .34s cubic-bezier(.2,.8,.2,1) ${n * 60}ms both"` : '';
-    // Günlük giriş artık seri şeridinde gösterilir (üstte).
-    const loginCard = renderStreakTrack(anim(0));
+    // Günlük giriş artık seri şeridinde gösterilir (üstte). Altında günlük meydan okuma kartı.
+    const dl = dailyLocal();
+    const loginCard = renderStreakTrack(anim(0)) + `<div class="daily-box"${anim(1)}>
+        <span class="dl-ic">${iconHTML('target', { size: 18 })}</span>
+        <span class="dl-txt"><span class="dl-title">DAILY RUN</span><span class="dl-sub">Best <b>${dl.best ? pad(dl.best) : '—'}</b> · <span id="dl-rank">same course for all</span></span></span>
+        <button class="dl-play" type="button">PLAY</button>
+      </div>`;
     const questCards = questState.quests.map((q, i) => {
       const done = questDone(q);
       const pct  = Math.min(100, Math.round(q.progress / q.target * 100));
@@ -14098,6 +14208,13 @@ const ARC_DB = (() => {
     list.innerHTML = loginCard + questCards;
     list.querySelectorAll('.quest-claim[data-qi]').forEach(b => b.addEventListener('click', () => claimQuest(Number(b.dataset.qi))));
     list.querySelector('.st-open')?.addEventListener('click', openStreakChest);
+    list.querySelector('.dl-play')?.addEventListener('click', startDailyRun);
+    // Sıra: günün tablosundan (arka planda)
+    if (dl.best) ARC_DB.getDailyTop(dailyDay(), 100).then(rows => {
+      const el = document.getElementById('dl-rank'); if (!el || !rows) return;
+      const uid = ARC_DB.getUid(), i = rows.findIndex(r => r.owner === uid);
+      el.textContent = i >= 0 ? `#${i + 1} of ${rows.length}` : `${rows.length} player${rows.length === 1 ? '' : 's'} today`;
+    }).catch(() => {});
   }
   function claimQuest(i) {
     const q = questState.quests[i];

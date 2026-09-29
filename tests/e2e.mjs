@@ -401,6 +401,37 @@ test('PB hayaleti: rekor run kaydedilir, sonraki run\'da oynatılır', async () 
   check(pg && pg.n === g.p.length, `2. run'da hayalet yüklenmedi: ${JSON.stringify(pg)}`);
 });
 
+test('günlük meydan okuma: aynı pist, eşyasız, normal mod, skor günlük tabloya', async () => {
+  fbReset();
+  await fresh({ arc_mode: 'extreme', arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true } } } });
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
+  const d1 = await ev('ARC_TEST.daily');
+  check(d1.on && d1.mode === 'normal', `günlük mod açılmadı: ${JSON.stringify(d1)}`);
+  check((await lsJSON('arc_upg_v1')).inv.shield.count === 3, 'günlük koşuda eşya harcandı');
+  const sig1 = await ev('ARC_TEST.layoutSig(10)');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(2500);
+  const day = await ev(`(() => { const d = new Date(); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); })()`);
+  const uid = await ev('ARC_DB.getUid()');
+  const w = fb.writes.filter(x => x.path === `daily/${day}/scores/${uid}`);
+  const sc = (await ev('ARC_TEST.daily')).local.best;
+  check(sc === 0 ? w.length === 0 : (w.length === 1 && w[0].authed && w[0].status === 200), `günlük yazım: ${JSON.stringify(w)} (skor ${sc})`);
+  check(!fb.writes.some(x => x.path.startsWith('scores/')), 'günlük skor normal tabloya da yazıldı');
+  // AGAIN → yine günlük, aynı pist
+  await ev(`document.getElementById('btn-again').click(); true`); await sleep(900);
+  check((await ev('ARC_TEST.daily')).on, 'AGAIN günlükten çıktı');
+  const sig2 = await ev('ARC_TEST.layoutSig(10)');
+  check(sig1 === sig2, `pist farklı:\n${sig1}\n${sig2}`);
+  // menüye dön → mod geri gelir
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '2. run bitmedi'); await sleep(1200);
+  await ev(`document.getElementById('btn-menu').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(900);
+  await ev(`document.getElementById('btn-menu').dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); true`); await sleep(500);
+  check(await ev('ARC_TEST.scene') === 'home', 'menüye dönülmedi');
+  const d3 = await ev('ARC_TEST.daily');
+  check(!d3.on && d3.mode === 'extreme', `menüde günlük mod kapanmadı / mod geri gelmedi: ${JSON.stringify(d3)}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

@@ -66,6 +66,26 @@ service cloud.firestore {
       allow delete: if isAuthed() && 'owner' in resource.data && resource.data.owner == request.auth.uid;
     }
 
+    // Günlük meydan okuma: daily/{YYYYMMDD}/scores/{uid} — oyuncu başına günün en iyisi.
+    // Doküman kimliği = yazanın uid'i (başkasının kaydına yazılamaz); güncelleme yalnız skoru artırır.
+    function validDaily(d) {
+      return d.keys().hasOnly(['name', 'avatar', 'score', 'ts', 'badges', 'tag'])
+        && d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
+        && d.score is int && d.score > 0 && d.score <= 50000000
+        && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
+        && d.ts is int
+        && (!('badges' in d) || (d.badges is string && d.badges.matches('^[A-Za-z0-9_,-]{0,64}$')))
+        && (!('tag' in d) || (d.tag is string && d.tag.matches('^[0-9]{4}$')));
+    }
+    match /daily/{day}/scores/{uid} {
+      allow read: if true;
+      allow create: if isAuthed() && request.auth.uid == uid && day.matches('^[0-9]{8}$')
+        && validDaily(request.resource.data);
+      allow update: if isAuthed() && request.auth.uid == uid && validDaily(request.resource.data)
+        && request.resource.data.score > resource.data.score;
+      allow delete: if isAuthed() && request.auth.uid == uid;
+    }
+
     // Referral (davet) tıklama sayacı: her yazma clicks'i tam +1 artırabilir.
     // Authed gerektirir; coin client-side olduğundan self-increment koruması
     // pratik fayda sağlamaz (cheater zaten kendine coin verebilir).

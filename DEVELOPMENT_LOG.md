@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Günlük meydan okuma (DAILY RUN) (2026-09-29)
+
+- **Aynı pist:** `spawnAhead` + kapı/halka/koridor üreticileri `srand()` kullanır; günlük koşuda `mulberry32(FNV('arcrise-daily-YYYYMMDD'))`, normalde `Math.random`. Pistin herkes için aynı olması için günlükte: zorluk (`distCm`) oyuncunun anlık konumundan değil **slotun kendi yüksekliğinden**, ilk slot `H` yerine sabit `H_REF`'ten; kristal oranı yüklemeden bağımsız (%10). Doğrulama: 375×667, 430×932, 1280×800 ve büyük top upgrade'inde ilk 25 nesnenin koordinatları birebir aynı.
+- **Kurallar:** her zaman Normal mod (oyuncunun modu saklanıp çıkışta geri yüklenir), eşyalar kullanılmaz/harcanmaz, sınırsız deneme, günün en iyisi sayılır. AGAIN günlükte kalır; menüye dönüş günlükten çıkar.
+- **Giriş:** Görevler penceresinde "DAILY RUN" kartı (bugünkü en iyi + günün tablosundaki sıra / oyuncu sayısı, PLAY). Game over'da "DAILY SCORE" başlığı ve günün tablosu. Günlük skor normal liderlik tablosuna **yazılmaz**.
+- **Sunucu:** `daily/{YYYYMMDD}/scores/{uid}` (oyuncu başına tek doküman, yalnız skor artarsa güncellenir). `ARC_DB.submitDaily / getDailyTop`. `firestore.rules`'a `validDaily` + `match /daily/{day}/scores/{uid}` eklendi — **henüz deploy edilmedi** (deploy edilene kadar yazma 403, okuma boş; oyun etkilenmez).
+- **Yarış hatası (bulunup düzeltildi):** `_proceedEndGame` asenkron; önceki run'ın kaydı sürerken günlük mod açılırsa normal skor günlük tabloya yazılıyordu → bayrak fonksiyon başında sabitlenir (`wasDaily`).
+- Görev penceresi günlük kartla SE Safari'de 491 px (kaydırmasız). Test 21/21 (yeni: günlük akış uçtan uca + pist eşitliği).
+
 ### Kendi en iyi run'ının hayaleti (PB ghost) (2026-09-29)
 
 - Run boyunca 0.1 sn'de bir `[t×10, x, başlangıçtan yükseklik]` kaydı (`_pbRec`, en fazla 4000 nokta ≈ 6.5 dk). Yükseklik başlangıç noktasına göre tutulur (başlangıç `H−200` cihaza göre değişir; genişlik sabit 600).
