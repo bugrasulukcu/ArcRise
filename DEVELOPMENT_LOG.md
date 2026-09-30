@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Arkadaşlık bildirimleri + meydan okuma (⚔), kesintisiz arka plan yayları ve iz (2026-09-30)
+
+- **Bildirimler:** yeni gelen istek → "FRIEND REQUEST — X#1234 wants to be friends"; gönderdiğim istek kabul edilince → "FRIEND ADDED". Aynı olay bir kez (`arc_social_seen`, id:durum). Tazeleme 60 → 20 sn (yalnız ön planda ve oyun dışında) + uygulamaya dönünce hemen. Friends rozeti: istekler + açık meydan okumalar.
+- **Meydan okuma (challenges/{from__to__ts}):** arkadaş satırında ⚔ → o moddaki en iyi skorunla "bunu geç" (aynı kişiye tek açık). Alıcıya "CHALLENGE! — X dares you to beat N" bildirimi; Friends penceresinde CHALLENGES bölümü (gelen: PLAY; gönderilen: WAITING / BEATEN · skor / HELD · skor, ×). PLAY → meydan okumanın modunda tek deneme, HUD'da "⚔ TARGET" (geçilince yeşil); run sonunda won/lost + skor yazılır, oyuncuya "CHALLENGE WON / LOST", gönderene "CHALLENGE BEATEN / HELD". Oyuncunun modu sonra geri yüklenir. `ARC_DB.sendChallenge / getMyChallenges / resolveChallenge / deleteChallenge`.
+- **Kurallar:** `challenges` — yalnız ARKADAŞLAR arasında (`areFriends`: friendreqs accepted, iki yön), id = from__to__ts, toUid gerçek sahip, alan listesi sabit, alıcı yalnız bir kez sonuçlar (status/result/rts). Dry-run derleme temiz — **deploy bekliyor** (friendreqs `via` ile birlikte).
+- **Hata (çevrimdışı arkadaş listesi siliniyordu):** `getMySocial` hata / oturumsuz durumda `[]` dönüyordu → çağıran önbelleği boşla eziyordu. Artık `null` → önbellek korunur.
+- **Arka plan yayları kesikliydi:** her yay 20 ayrı, yuvarlak uçlu, yarı saydam parçaydı → birleşimlerde uçlar üst üste binip boncuk/kesik görüntüsü. Artık tek yol + konik gradyan (`createConicGradient`, renk/saydamlık açıya göre); desteklenmezse düz uçlu parçalar.
+- **Oyundaki iz boncukluydu (aynı sebep):** çekirdek artık OPAK "önceden çarpılmış" renkle (renk × alfa; zemin siyaha yakın → aynı soluklaşma), opak parçalar üst üste binince görünmez; ışıltı 10 noktalık kesintisiz yollar. Düz uç denemesi dikiş çizgileri bıraktığı için bırakıldı. Upgrades'teki iz önizlemesi de aynı çizimle.
+- Test 28/28 (yeni: iki oyunculu istek/kabul bildirimi + meydan okuma gönder → bildirim → oyna → sonuç iki tarafa).
+
 ### Görev çubukları eşit, ölüm yazısı kaldırıldı, isim yanı rozet ikonları, davetle otomatik arkadaş, cam bildirimler, coin kırılımı (2026-09-30)
 
 - **Görev çubukları:** ilerleme yazısı sabit genişlik (108 px, sağa hizalı) → üç çubuk eşit.

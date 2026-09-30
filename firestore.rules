@@ -164,6 +164,42 @@ service cloud.firestore {
       allow delete: if ownsPlayer(resource.data.from) || ownsPlayer(resource.data.to);
     }
 
+    // Meydan okumalar (challenges/{from__to__ts}): yalnız ARKADAŞLAR arasında; gönderen hedef skoru
+    // koyar (status open), alıcı tek kez sonuçlar (won/lost + result). Yalnız taraflar okur/siler.
+    function areFriends(a, b) {
+      let p1 = /databases/$(database)/documents/friendreqs/$(a + '__' + b);
+      let p2 = /databases/$(database)/documents/friendreqs/$(b + '__' + a);
+      return (exists(p1) && get(p1).data.status == 'accepted') || (exists(p2) && get(p2).data.status == 'accepted');
+    }
+    match /challenges/{id} {
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['from', 'to', 'fromUid', 'toUid', 'fromName', 'fromTag', 'mode', 'target', 'status', 'result', 'ts', 'rts'])
+        && request.resource.data.from is string && request.resource.data.from.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')
+        && request.resource.data.to is string && request.resource.data.to.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')
+        && request.resource.data.from != request.resource.data.to
+        && request.resource.data.ts is int
+        && id == request.resource.data.from + '__' + request.resource.data.to + '__' + string(request.resource.data.ts)
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid == get(/databases/$(database)/documents/players/$(request.resource.data.to)).data.owner
+        && request.resource.data.mode in ['normal', 'extreme']
+        && request.resource.data.target is int && request.resource.data.target >= 0 && request.resource.data.target <= 50000000
+        && request.resource.data.status == 'open' && request.resource.data.result == 0
+        && (!('fromName' in request.resource.data) || (request.resource.data.fromName is string && request.resource.data.fromName.matches('^[A-Z0-9]{0,16}$')))
+        && (!('fromTag' in request.resource.data) || (request.resource.data.fromTag is string && request.resource.data.fromTag.matches('^([0-9]{4})?$')))
+        && ownsPlayer(request.resource.data.from)
+        && areFriends(request.resource.data.from, request.resource.data.to);
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.toUid
+        && resource.data.status == 'open'
+        && request.resource.data.status in ['won', 'lost']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'result', 'rts'])
+        && request.resource.data.result is int && request.resource.data.result >= 0 && request.resource.data.result <= 50000000;
+      allow delete: if request.auth != null
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+    }
+
     // ── Cüzdan: wallets/{uid} ────────────────────────────────────────
     // Doc id = uid → sahiplik için ayrı "owner" alanına gerek yok.
     // purchased alanı client tarafından NE yazılabilir NE değiştirilebilir;

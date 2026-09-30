@@ -541,6 +541,58 @@ test('davet: linkle kaydolan oyuncu davet edenin arkadaş listesine otomatik dü
   check(accepted, `istek otomatik kabul edilmedi: ${JSON.stringify(fb.docs.get(reqKey)?.fields.status)}`);
 });
 
+// İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
+async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
+async function asUser(snap) {
+  await send('Page.navigate', { url: `${ORIGIN}/__blank` }); await sleep(200);
+  await ev(`localStorage.clear(); sessionStorage.clear(); Object.entries(${snap}).forEach(([k, v]) => localStorage.setItem(k, v)); true`);
+  await send('Page.navigate', { url: PAGE });
+  if (!await waitFor(`!!window.ARC_TEST`, 10000)) throw new Error('sayfa açılmadı');
+}
+const toastHas = (txt, ms = 15000) => waitFor(`(document.getElementById('reward-toast')?.textContent || '').includes(${JSON.stringify(txt)})`, ms, 200);
+
+test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → sonuç iki tarafa', async () => {
+  fbReset();
+  await fresh({}, { name: 'HOST' });
+  check(await waitFor(`!!localStorage.getItem('arc_tag') && !!ARC_DB.getUid()`, 8000), 'HOST hesabı yok'); await sleep(600);
+  const H = await snapshotUser(), hostTag = JSON.parse(H).arc_tag, hostId = 'HOST#' + hostTag;
+  // ALICE (en iyi skoru 100) hesap açar
+  await asUser(JSON.stringify({ arc_reset_v: JSON.parse(H).arc_reset_v, arc_debug: '1', arc_name: 'ALICE', arc_firstplay: '1', arc_score_v26: '1', arc_denom_v23: '1', arc_dist_reset_v2: '1', arc_combo_reset_v24: '1', arc_stats_v1: JSON.stringify({ bestNormal: 100 }) }));
+  check(await waitFor(`!!localStorage.getItem('arc_tag') && !!ARC_DB.getUid()`, 8000), 'ALICE hesabı yok'); await sleep(600);
+  // 1) ALICE → HOST istek
+  await ev(`document.getElementById('btn-friends').click(); document.getElementById('fl-add-input').value = ${JSON.stringify(hostId)}; document.getElementById('fl-add-btn').click(); true`);
+  check(await waitFor(`/Request sent/.test(document.getElementById('fl-add-msg').textContent)`, 8000), 'istek gönderilemedi: ' + await ev(`document.getElementById('fl-add-msg').textContent`));
+  const A = await snapshotUser();
+  // 2) HOST: bildirim + kabul
+  await asUser(H);
+  check(await toastHas('FRIEND REQUEST'), 'HOST\'a istek bildirimi düşmedi');
+  await ev(`document.getElementById('btn-friends').click(); true`); await sleep(600);
+  await ev(`document.querySelector('.fl-inv-acc').click(); true`);
+  const reqKey = [...fb.docs.keys()].find(k => k.startsWith('friendreqs/'));
+  check(await (async () => { for (let k = 0; k < 30; k++) { if (fb.docs.get(reqKey)?.fields.status?.stringValue === 'accepted') return true; await sleep(200); } })(), 'kabul yazılmadı');
+  const H2 = await snapshotUser();
+  // 3) ALICE: kabul bildirimi + meydan okuma
+  await asUser(A);
+  check(await toastHas('FRIEND ADDED'), 'ALICE\'e kabul bildirimi düşmedi');
+  await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
+  await ev(`document.querySelector('.fl-chal').click(); true`);
+  const chKey = await (async () => { for (let k = 0; k < 30; k++) { const c = [...fb.docs.keys()].find(x => x.startsWith('challenges/')); if (c) return c; await sleep(200); } })();
+  check(chKey && fb.docs.get(chKey).fields.target.integerValue === '100', `meydan okuma dokümanı yok / hedef yanlış: ${chKey && fb.docs.get(chKey).fields.target.integerValue} · toast="${await ev(`document.getElementById('toast').textContent`)}" · butonlar=${await ev(`document.querySelectorAll('.fl-chal').length`)} · best=${await ev(`JSON.parse(localStorage.getItem('arc_stats_v1')).bestNormal`)} · yazımlar=${JSON.stringify(fb.writes.slice(-4).map(w => w.path + ':' + w.status))}`);
+  const A2 = await snapshotUser();
+  // 4) HOST: bildirim → PLAY → sonuç
+  await asUser(H2);
+  check(await toastHas('CHALLENGE!'), 'HOST\'a meydan okuma bildirimi düşmedi');
+  await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
+  await ev(`document.querySelector('.fl-ch-play').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('chal-num').hidden`, 5000), 'meydan okuma run\'ı / hedef HUD yok');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  const st = fb.docs.get(chKey).fields.status?.stringValue;
+  check(st === 'won' || st === 'lost', `sonuç yazılmadı: ${st}`);
+  // 5) ALICE: sonuç bildirimi
+  await asUser(A2);
+  check(await toastHas(st === 'won' ? 'CHALLENGE BEATEN' : 'CHALLENGE HELD'), 'ALICE\'e sonuç bildirimi düşmedi');
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
