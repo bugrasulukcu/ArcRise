@@ -3591,6 +3591,9 @@
     /* v27: hapta yalnız TOPLAM çarpan; altında COMBO ×n + combo penceresi çizgisi.
        Combo açıkken hap parlar (--cg: 0 → 1 combo seviyesi) ve etrafına partikül saçar. */
     #combo-hud { flex-direction: column; gap: 5px; }
+    /* İsim yanı rozet: satırdaki yazının yüksekliğinde (SVG width/height özniteliğini CSS ezer) */
+    .bdg-in-name { display: inline-block; vertical-align: -0.12em; margin-left: .35em; line-height: 0; }
+    .bdg-in-name .bdg-glyph { width: 1em; height: 1em; vertical-align: top; }
     #combo-pill { position: relative; --cg: 0; --tc: #7CFF7A;
       color: var(--tc); border-color: color-mix(in srgb, var(--tc) 60%, transparent);
       box-shadow: 0 0 12px color-mix(in srgb, var(--tc) 22%, transparent);
@@ -7044,7 +7047,7 @@ const ARC_DB = (() => {
   // (START'a basıp hemen duvara çarpan run 0 m / 0 puan kalır.) distOriginY = mesafe 0'ın dünya y'si.
   const START_CM = 10, START_PX = START_CM / CM_PER_SCREEN * H_REF;
   const distOriginY = () => (H - 200) - START_PX;
-  let _startCrossed = false;
+  let _startCrossed = false, _startFlashAt = 0;
   // Magnet: seviye başı +1 mm toplama yarıçapı, oyunun mesafe metriğiyle (1066px = 15cm → ~7px).
   const MAG_PX_PER_LVL = H_REF / CM_PER_SCREEN / 10;
   const fmtDist = (cm) => (cm / 100).toFixed(2) + 'm';
@@ -7981,6 +7984,22 @@ const ARC_DB = (() => {
       ctx.fillText('▲ START ' + START_CM + 'CM', (walls.left + walls.right) / 2, H * 0.42);
       ctx.restore();
     }
+    // Geçiş flaşı (0.7 sn): ekran kenarlarında kısa yeşil parlama + şerit boyunca genişleyip sönen ışık bandı
+    const fk = _startFlashAt ? (performance.now() - _startFlashAt) / 700 : 1;
+    if (fk < 1) {
+      const e = 1 - fk;
+      ctx.save();
+      const vg = ctx.createRadialGradient(W / 2, H / 2, W * 0.3, W / 2, H / 2, W * 0.95);
+      vg.addColorStop(0, 'rgba(124,255,122,0)'); vg.addColorStop(1, `rgba(124,255,122,${0.28 * e * e})`);
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+      if (sy > -80 && sy < H + 80) {
+        const hh = 10 + 60 * fk;
+        const bg = ctx.createLinearGradient(0, sy - hh, 0, sy + hh);
+        bg.addColorStop(0, 'rgba(160,255,160,0)'); bg.addColorStop(.5, `rgba(235,255,235,${0.85 * e})`); bg.addColorStop(1, 'rgba(160,255,160,0)');
+        ctx.fillStyle = bg; ctx.fillRect(walls.left, sy - hh, walls.right - walls.left, hh * 2);
+      }
+      ctx.restore();
+    }
     if (sy < -30 || sy > H + 30) return;
     const L = walls.left, R = walls.right, sq = 10;
     ctx.save();
@@ -8729,34 +8748,27 @@ const ARC_DB = (() => {
       else { gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`); gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`); }
       return gr;
     };
-    // Eskiden her iki katman da yüzlerce ayrı, yarı saydam, yuvarlak uçlu parçaydı → her birleşimde uçlar
-    // üst üste binip iz boncuklu/kesikli görünüyordu.
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // 1) IŞILTI — toplamsal (lighter), geniş & soluk. 10 noktalık KESİNTİSİZ yollar halinde: tek stroke
-    // içinde üst üste binen kısımlar bir kez boyanır (yalnız yol sınırlarında çok soluk bir birleşim kalır).
+    // Katmanlı parça çizimi (her parça kendi rengi/genişliği/saydamlığıyla) — izin karakteristik
+    // görünümü bu. (Opak çekirdek / tek-yol ışıltı denendi: iz düzleşip grafik hatası gibi durdu → geri alındı.)
+    ctx.lineCap = 'round';
+    // 1) IŞILTI — toplamsal (lighter), geniş & soluk: yalnız hafif hale, beyazlaştırmaz.
     ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'butt';   // yol sınırlarında uçlar üst üste binmesin (kalın izde şişkinlik yapıyordu)
-    const GCH = 24;
-    for (let i0 = 0; i0 < trail.length - 1; i0 += GCH) {
-      const i1 = Math.min(trail.length - 1, i0 + GCH), im = (i0 + i1) >> 1, t = im / (trail.length - 1);
-      const a = trail[i0], b = trail[i1];
-      const mul = animBright * waveAt(W2S(trail[im].y));
+    for (let i = 1; i < trail.length; i++) {
+      const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
+      const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.16 + 0.12 * comboT) * mul * glowBoost;
       const w  = (1 + t * 3.8) * thickMul * 1.9 * (animType === 'glow' ? 0.9 + 0.35 * glowBoost : 1);
-      ctx.strokeStyle = strokeFor(im, a, b, al); ctx.lineWidth = w;
-      ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y));
-      for (let k = i0 + 1; k <= i1; k++) ctx.lineTo(trail[k].x, W2S(trail[k].y));
-      ctx.stroke();
+      ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
     // 2) ÇEKİRDEK — normal harman (source-over): üst üste binince TOPLANMAZ → beyazlaşma yok.
     ctx.globalCompositeOperation = 'source-over';
-    ctx.lineCap = 'round';
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
       const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.85 + 0.15 * comboT) * mul;
       const w  = (1 + t * 3.8) * thickMul;
-      ctx.strokeStyle = strokeFor(i, a, b, al, true); ctx.lineWidth = w;   // opak → birleşimler görünmez
+      ctx.strokeStyle = strokeFor(i, a, b, al); ctx.lineWidth = w;
       ctx.beginPath(); ctx.moveTo(a.x, W2S(a.y)); ctx.lineTo(b.x, W2S(b.y)); ctx.stroke();
     }
     // 3) GLITTER — iz boyunca yanıp sönen parıltı yıldızcıkları (her 3. noktada, noktaya özgü faz)
@@ -9049,7 +9061,7 @@ const ARC_DB = (() => {
     // Günlük koşu: ilk slot sabit referans yüksekliğinden (H cihaza göre değişir → pist kayardı)
     const firstSlot = _dailyRun ? H_REF : H;
     nextSpawnY = player.y - firstSlot; lastBonusY = player.y - firstSlot;
-    score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0; distScore = 0; _prevDistPx = 0; _startCrossed = false;
+    score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0; distScore = 0; _prevDistPx = 0; _startCrossed = false; _startFlashAt = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
     started = false; running = false; lbFrame = 0;
     _reviveOffered = false; _lastSafePos = null;
@@ -9395,8 +9407,13 @@ const ARC_DB = (() => {
     // Distance from spawn — immediate, even before player has cleared y=0
     distancePx = Math.max(distancePx, distOriginY() - player.y);
     if (!_startCrossed && !tutActive && player.y <= distOriginY()) {
-      _startCrossed = true;
+      _startCrossed = true; _startFlashAt = performance.now();
       spawnFloatText(player.x, player.y - 30, 'GO!', 120, 1.6); haptic(25);
+      // Çizgi boyunca yukarı fırlayan yeşil-beyaz kıvılcımlar
+      for (let k = 0; k < 26; k++) {
+        const wx = walls.left + (k + Math.random()) / 26 * (walls.right - walls.left), ang = -Math.PI / 2 + (Math.random() - .5) * 1.2, spd = 500 + Math.random() * 900;
+        particles.push({ wx, wy: distOriginY(), x: wx, y: distOriginY(), vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 2 + Math.random() * 3, life: 1, hue: 110 + Math.random() * 40, sides: 4, rot: Math.random() * 6.28 });
+      }
     }
 
     // PB fade-out timer ilerle
@@ -11121,7 +11138,7 @@ const ARC_DB = (() => {
       const b = findBadge(id.trim());
       if (!b) return '';
       // Yalnız ikon (madalyon dairesi yok), kademe renginde, isim satırında okunur boyda
-      return `<span style="display:inline-block;vertical-align:middle;margin-left:5px">${badgeGlyphHTML(b, 20)}</span>`;
+      return `<span class="bdg-in-name">${badgeGlyphHTML(b, 20)}</span>`;
     }).join('');
   }
 
@@ -11439,23 +11456,15 @@ const ARC_DB = (() => {
     const thick = 1 + (upg.traceThickness | 0) * 0.1;
     const glowBoost = anim === 'glow' ? 1.1 + 1.9 * (0.5 + 0.5 * Math.sin(time * 2.4)) : 1;
     const waveAt = x => anim === 'wave' ? 0.32 + 0.68 * (0.5 + 0.5 * Math.sin(x * 0.06 - time * 2.6)) : 1;
-    c.lineCap = 'round'; c.lineJoin = 'round';
-    // 0: ışıltı (lighter) — 6 noktalık kesintisiz yollar; 1: çekirdek — opak parçalar (boncuksuz)
-    c.globalCompositeOperation = 'lighter';
-    for (let i0 = 0; i0 < N - 1; i0 += 6) {
-      const i1 = Math.min(N - 1, i0 + 6), im = (i0 + i1) >> 1, t = im / (N - 1), m = waveAt(pts[im].x);
-      c.strokeStyle = colAt(im, (0.18 + 0.1 * t) * m * glowBoost);
-      c.lineWidth = (1.5 + t * 2.5) * thick * 2.4 * (anim === 'glow' ? 0.9 + 0.35 * glowBoost : 1);
-      c.beginPath(); c.moveTo(pts[i0].x, pts[i0].y);
-      for (let k = i0 + 1; k <= i1; k++) c.lineTo(pts[k].x, pts[k].y);
-      c.stroke();
-    }
-    c.globalCompositeOperation = 'source-over';
-    for (let i = 1; i < N; i++) {
-      const a = pts[i - 1], b = pts[i], t = i / (N - 1), m = waveAt(a.x);
-      c.strokeStyle = colAt(i, (0.35 + 0.65 * t) * m, true);
-      c.lineWidth = (1.5 + t * 2.5) * thick;
-      c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+    c.lineCap = 'round';
+    for (const pass of [0, 1]) {                       // 0: ışıltı (lighter), 1: çekirdek
+      c.globalCompositeOperation = pass ? 'source-over' : 'lighter';
+      for (let i = 1; i < N; i++) {
+        const a = pts[i - 1], b = pts[i], t = i / (N - 1), m = waveAt(a.x);
+        c.strokeStyle = colAt(i, pass ? (0.35 + 0.65 * t) * m : (0.18 + 0.1 * t) * m * glowBoost);
+        c.lineWidth = pass ? (1.5 + t * 2.5) * thick : (1.5 + t * 2.5) * thick * 2.4 * (anim === 'glow' ? 0.9 + 0.35 * glowBoost : 1);
+        c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+      }
     }
     if (anim === 'glitter') drawGlitter(c, N, i => pts[i], time, thick);
     c.globalCompositeOperation = 'source-over';

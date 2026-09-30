@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### İz eski görünümüne döndü, rozetler yazı boyunda, başlangıç çizgisi flaşı (2026-09-30)
+
+- **İz:** opak çekirdek + tek-yol ışıltı denemesi izi düzleştirip "grafik hatası" gibi gösterdi (kullanıcı geri bildirimi) → katmanlı parça çizimi (ışıltı lighter + çekirdek alfa, yuvarlak uç) geri geldi; upgrades önizlemesi de. **Korunan:** renk evresinin yol uzunluğuna (`d`) bağlanması — iz dolunca desen topa yapışmaz, hep aşağı akar. Arka plan yaylarının tek-yol konik gradyanı da korundu (asıl "kesikli çizgi" şikâyeti oydu).
+- **İsim yanı rozetler** satırdaki yazı yüksekliğinde (`.bdg-in-name .bdg-glyph { width/height: 1em }`) — game over tablosu, High Scores, arkadaş listesi.
+- **Başlangıç çizgisi geçiş animasyonu (0.7 sn):** dama şeridi boyunca genişleyip sönen beyaz-yeşil ışık bandı, ekran kenarlarında kısa yeşil parlama, çizgi boyunca yukarı fırlayan 26 kıvılcım (+ mevcut "GO!").
+
 ### Kurallar yayında (meydan okuma + davet `via`), iz renkleri hep aşağı akar (2026-09-30)
 
 - **Firestore kuralları deploy edildi** (challenges + friendreqs `via`): meydan okuma ve davetle otomatik arkadaşlık canlıda çalışır.
