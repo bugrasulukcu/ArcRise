@@ -211,7 +211,9 @@ test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli 
   // 2. run kesin daha iyi olsun: 12 sn Ghost (engele çarpmaz) + bot → daha uzağa gider
   await ev(`document.getElementById('btn-again').click(); ARC_BOT.start(); true`); await sleep(400);
   await ev(`ARC_TEST.ghost(12); true`);
-  dbg('2. run'); await sleep(14000); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu, sahne=' + await scene());
+  // skor artık küçük (5 puan/m) → iyileşmeyi garanti et: 3 kapı (her biri +10 × çarpan)
+  for (let g = 0; g < 3; g++) { await sleep(700); await ev(`ARC_TEST.spawnFeatHere('gate'); true`); }
+  dbg('2. run'); await sleep(12000); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu, sahne=' + await scene());
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'ikinci run bitmedi'); dbg('2. game over');
   await sleep(2500);
   const best = Number(await ls('arc_best'));
