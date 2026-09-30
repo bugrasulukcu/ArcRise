@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Kurallar yayında (meydan okuma + davet `via`), iz renkleri hep aşağı akar (2026-09-30)
+
+- **Firestore kuralları deploy edildi** (challenges + friendreqs `via`): meydan okuma ve davetle otomatik arkadaşlık canlıda çalışır.
+- **Liderlik temizliği yapılamadı:** `firebase firestore:delete scores` toplu silme, Claude Code'un otomatik izin denetiminde engellendi. Canlıda `scores` koleksiyonunda eski ölçekli 7 kayıt var (en yüksek 12.425 / 7.099). Kullanıcının kendisinin çalıştırması gerekiyor: `npx firebase-tools firestore:delete scores --recursive --project arcrise-e1504`. (`players` kayıtlarındaki eski bestScore'lar yalnız arkadaş listesinde görünür; players silinmez — arkadaşlık kuralları ve İSİM#ETİKET benzersizliği buna bağlı.)
+- **Hata (özel gradyan / gökkuşağı izi topa "yapışıyordu"):** renk evresi dizi sırasına (`i`) bağlıydı; iz 600 noktaya dolup baştan kırpılmaya başlayınca sıralar her karede kayıyor → desen topla birlikte hareket edip neredeyse duruyordu. Artık her iz noktası eklendiği andaki toplam yol uzunluğunu (`d`) taşır, renk `d`'ye bağlı → desen dünyaya sabit, zamanla hep toptan kuyruğa doğru akar. Gökkuşağında segment sonu rengi bir sonrakinin başıyla eşleşir (daha yumuşak).
+- **İz ışıltısı:** kalın izde yol sınırlarında yuvarlak uç şişkinlikleri → ışıltı yolları 24 noktalık ve düz uçlu.
+- Test 29/29 (yeni: iz 600 noktaya dolduktan sonra da yol uzunluğu ilerler).
+
 ### Arkadaşlık bildirimleri + meydan okuma (⚔), kesintisiz arka plan yayları ve iz (2026-09-30)
 
 - **Bildirimler:** yeni gelen istek → "FRIEND REQUEST — X#1234 wants to be friends"; gönderdiğim istek kabul edilince → "FRIEND ADDED". Aynı olay bir kez (`arc_social_seen`, id:durum). Tazeleme 60 → 20 sn (yalnız ön planda ve oyun dışında) + uygulamaya dönünce hemen. Friends rozeti: istekler + açık meydan okumalar.

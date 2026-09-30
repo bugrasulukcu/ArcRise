@@ -541,6 +541,17 @@ test('davet: linkle kaydolan oyuncu davet edenin arkadaş listesine otomatik dü
   check(accepted, `istek otomatik kabul edilmedi: ${JSON.stringify(fb.docs.get(reqKey)?.fields.status)}`);
 });
 
+test('iz renkleri: iz dolduktan sonra da yol uzunluğuyla akar (topa yapışmaz)', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, traceColor: 'custom', customOwned: true, customStops: ['#ff3b3b', '#3bd1ff', '#c45bff'] } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(300);
+  await ev(`ARC_TEST.ghost(20); true`);
+  check(await waitFor(`ARC_TEST.trailInfo.n >= 600`, 25000), 'iz 600 noktaya dolmadı');
+  const t1 = await ev('ARC_TEST.trailInfo'); await sleep(600); const t2 = await ev('ARC_TEST.trailInfo');
+  check(t2.n === 600, 'iz uzunluğu sabit değil');
+  check(t2.headD - t1.headD > 80, `iz dolunca tepe yol uzunluğu ilerlemiyor: ${t1.headD} → ${t2.headD}`);
+  check(t2.tailD > t1.tailD, 'kuyruk kırpılmıyor');
+});
+
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
 async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
 async function asUser(snap) {

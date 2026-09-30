@@ -8706,7 +8706,10 @@ const ARC_DB = (() => {
       if (isCustom) {
         // Custom palet: duraklar arası yumuşak geçiş, sürekli akar (yılan görünümü yok)
         const n = customCols.length;
-        const p = time * 0.5 + i * 0.07;
+        // Renk evresi yol uzunluğuna bağlı (eskiden dizi sırası i: iz 600 noktaya dolup baştan
+        // kırpılmaya başlayınca sıralar kayıyor → desen topa "yapışıp" neredeyse duruyordu).
+        // Evre zamanla artar → desen her zaman topdan kuyruğa doğru (aşağı) akar.
+        const p = time * 0.5 + (a.d ?? i * 6) * 0.011;
         const fp = (((p % n) + n) % n);
         const k = Math.floor(fp), k2 = (k + 1) % n, frac = fp - k;
         const A = customCols[k] === 'transparent' ? null : hexToRgb(customCols[k]);
@@ -8718,8 +8721,9 @@ const ARC_DB = (() => {
         return `rgba(${r},${g},${bb},${al * aMul})`;
       }
       const base = rb[0], span = rb[1];
-      const h1 = base + (((time * 80) + i * 3) % span);
-      const h2 = base + (((time * 80) + i * 3 + 35) % span);
+      const dd = (a.d ?? i * 6) * 0.45, db = (b.d ?? i * 6) * 0.45;   // yol uzunluğuna bağlı (bkz. custom)
+      const h1 = base + (((time * 80) + dd) % span);
+      const h2 = base + (((time * 80) + db) % span);
       const gr = ctx.createLinearGradient(a.x, W2S(a.y), b.x, W2S(b.y));
       if (op) { gr.addColorStop(0, `hsl(${h1},100%,${(65 * al).toFixed(1)}%)`); gr.addColorStop(1, `hsl(${h2},100%,${(65 * al).toFixed(1)}%)`); }
       else { gr.addColorStop(0, `hsla(${h1},100%,65%,${al})`); gr.addColorStop(1, `hsla(${h2},100%,65%,${al})`); }
@@ -8731,7 +8735,8 @@ const ARC_DB = (() => {
     // 1) IŞILTI — toplamsal (lighter), geniş & soluk. 10 noktalık KESİNTİSİZ yollar halinde: tek stroke
     // içinde üst üste binen kısımlar bir kez boyanır (yalnız yol sınırlarında çok soluk bir birleşim kalır).
     ctx.globalCompositeOperation = 'lighter';
-    const GCH = 10;
+    ctx.lineCap = 'butt';   // yol sınırlarında uçlar üst üste binmesin (kalın izde şişkinlik yapıyordu)
+    const GCH = 24;
     for (let i0 = 0; i0 < trail.length - 1; i0 += GCH) {
       const i1 = Math.min(trail.length - 1, i0 + GCH), im = (i0 + i1) >> 1, t = im / (trail.length - 1);
       const a = trail[i0], b = trail[i1];
@@ -8745,6 +8750,7 @@ const ARC_DB = (() => {
     }
     // 2) ÇEKİRDEK — normal harman (source-over): üst üste binince TOPLANMAZ → beyazlaşma yok.
     ctx.globalCompositeOperation = 'source-over';
+    ctx.lineCap = 'round';
     for (let i = 1; i < trail.length; i++) {
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
       const mul = animBright * waveAt(W2S(a.y));
@@ -9346,7 +9352,9 @@ const ARC_DB = (() => {
 
     if (!trail.length || Math.hypot(player.x - trail.at(-1).x, player.y - trail.at(-1).y) > 2) {
       const th = (now * 80 + trail.length * 3) % 360; // anlık ton rengi
-      trail.push({ x: player.x, y: player.y, h: th });
+      // d: noktaya kadarki toplam yol uzunluğu — iz renkleri buna bağlı (dizi sırasına değil)
+      const lp = trail.at(-1);
+      trail.push({ x: player.x, y: player.y, h: th, d: lp ? (lp.d || 0) + Math.hypot(player.x - lp.x, player.y - lp.y) : 0 });
       if (trail.length > 600) trail.shift();
     }
     // Sparse sample for ghost capture — every ~20 world-px upward.
@@ -10875,6 +10883,7 @@ const ARC_DB = (() => {
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
     get bounces() { return runBounces; },
+    get trailInfo() { return { n: trail.length, headD: Math.round(trail.at(-1)?.d || 0), tailD: Math.round(trail[0]?.d || 0) }; },
     // Test: topun gidiş yönünde, çarpacağı mesafeye engel koy
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
