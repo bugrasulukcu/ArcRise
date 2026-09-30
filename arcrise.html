@@ -3195,6 +3195,17 @@
     #gearpick-box { border-color: rgba(170,120,255,.5); }
     #gearpick-box .fm-title { color: #c0a3ff; }
     #gearpick-content { width: 100%; }
+    .gp-upg { margin-top: 12px; padding: 10px 10px 4px; border-radius: 12px; border: 1px solid rgba(170,120,255,.28); background: rgba(170,120,255,.06); display: flex; flex-direction: column; gap: 8px; }
+    .gp-upg-head { font-size: 8.5px; letter-spacing: 1.6px; color: #c0a3ff; text-align: center; }
+    .gp-upg-row { display: flex; align-items: center; gap: 8px; }
+    .gp-upg-txt { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-size: 9.5px; letter-spacing: .8px; color: rgba(255,255,255,.7); }
+    .gp-upg-txt b { color: #fff; font-weight: 600; }
+    .gp-upg-val { color: #c0a3ff; }
+    .gp-upg-hint { width: 100%; font-size: 7.5px; color: rgba(255,255,255,.4); }
+    .gp-upg-pips { display: inline-flex; gap: 3px; }
+    .gp-upg-pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.15); }
+    .gp-upg-pips i.on { background: #c0a3ff; box-shadow: 0 0 5px #a066ff; }
+    .gp-upg-row .core-buy { flex: 0 0 64px; }
 
     /* ══════════ FRIENDS MODAL ══════════ */
     #friends-modal-box { border-color: rgba(61,139,255,.45); }
@@ -10898,6 +10909,9 @@ const ARC_DB = (() => {
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
     get bounces() { return runBounces; },
+    abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
+    get slotCD() { return [...slotCD]; },
+    trigger: i => triggerAbility(i),
     get trailInfo() { return { n: trail.length, headD: Math.round(trail.at(-1)?.d || 0), tailD: Math.round(trail[0]?.d || 0) }; },
     // Test: topun gidiş yönünde, çarpacağı mesafeye engel koy
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
@@ -11885,7 +11899,7 @@ const ARC_DB = (() => {
         ring.setAttribute('stroke-dashoffset', '289');
         return;
       }
-      const baseCD = abilityCooldown(item.key);
+      const baseCD = slotAbilityCooldown(i, item.key);
       const cd = slotCD[i];
       if (cd <= 0) {
         el.classList.remove('cooling');
@@ -11928,8 +11942,8 @@ const ARC_DB = (() => {
       ctx.save();
       ctx.globalAlpha = 1 - k * 0.85;
       ctx.lineWidth = 10 * (1 - k) + 2;
-      const col = w.pop ? '#9fd0ff' : '#ffe27a';
-      ctx.strokeStyle = col; ctx.shadowColor = w.pop ? '#5aa8ff' : '#ffcc00'; ctx.shadowBlur = 24;
+      const col = w.pull ? '#7CFF7A' : w.pop ? '#9fd0ff' : '#ffe27a';
+      ctx.strokeStyle = col; ctx.shadowColor = w.pull ? '#3ad055' : w.pop ? '#5aa8ff' : '#ffcc00'; ctx.shadowBlur = 24;
       ctx.beginPath(); ctx.arc(w.x, sy, w.r, 0, Math.PI * 2); ctx.stroke();
       ctx.globalAlpha = (1 - k) * 0.18; ctx.fillStyle = col;
       ctx.beginPath(); ctx.arc(w.x, sy, w.r, 0, Math.PI * 2); ctx.fill();
@@ -11943,8 +11957,8 @@ const ARC_DB = (() => {
     if (slotCD[slotIdx] > 0) return;
     if (scene !== 'play' || !running) return;
     const key = item.key;
-    const dur = abilityDuration(key);
-    const cd  = abilityCooldown(key);
+    const dur = slotAbilityDuration(slotIdx, key);
+    const cd  = slotAbilityCooldown(slotIdx, key);
     applyAbilityEffect(key, dur);
     if (dur > 0) activeAbility = { key, t: dur };
     slotCD[slotIdx] = cd;
@@ -11957,14 +11971,16 @@ const ARC_DB = (() => {
       isGhost = true;
       setTimeout(() => { if (scene === 'play' && boosterType !== 'ghost') isGhost = false; }, dur * 1000);
     } else if (key === 'coinpull') {
-      // Tek-shot: ekrandaki gold/purple/bonuses'u oyuncuya snap
-      const snap = (arr) => { for (const o of arr) { o.x = player.x; o.y = player.y; } };
+      // Tek-shot: ÇAP içindeki yeşil/altın/mor topları oyuncuya çeker (çap yükseltmeyle büyür)
+      const R = abilityRadius('coinpull');
+      const snap = (arr) => { for (const o of arr) if (Math.hypot(o.x - player.x, o.y - player.y) <= R) { o.x = player.x; o.y = player.y; } };
       snap(bonuses); snap(goldBalls); snap(purpleBalls);
+      shockWaves.push({ x: player.x, y: player.y, r: player.r, maxR: R, pop: true, pull: true });   // çapı gösteren halka
     } else if (key === 'brake') {
       brakeT = dur;
     } else if (key === 'shock') {
       // Genişleyen şok dalgası: değdiği her engeli patlatır (bkz. updateShockWaves)
-      shockWaves.push({ x: player.x, y: player.y, r: player.r, maxR: SHOCK_MAX_R });
+      shockWaves.push({ x: player.x, y: player.y, r: player.r, maxR: abilityRadius('shock') || SHOCK_MAX_R });
       haptic(80);
     } else if (key === 'anchor') {
       if (!anchorPoint) {
@@ -12618,13 +12634,15 @@ const ARC_DB = (() => {
       return card;
     }
     const eq = slotItems.findIndex(s => s && s.key === key) !== -1;
-    // Anlık (süresiz) yetenekler: açıldıktan sonra yükseltilecek bir şey yok.
-    if (cfg.noDur || !cfg.durPrices.length) {
+    // Yükseltmesiz yetenekler (Anchor): açıldıktan sonra yükseltilecek bir şey yok.
+    if (!cfg.durPrices.length) {
       return gearCardShell(meta, '<span style="color:#9fffa0">✓</span>', '', { desc, eq });
     }
-    // Süreli yetenekler: değer = saniye, − ücretsiz (tabana doğru) · + ücretli (uzat).
+    // Süreli → değer saniye; çaplı (Coin Pull, Shockwave) → değer etki çapı (cm).
+    // − ücretsiz (tabana doğru) · + ücretli (uzat / genişlet).
+    const isRad = !!cfg.radBase;
     const durLvl = inv.durLvl || 0, max = cfg.durPrices.length;
-    const val = secStr(abilityDuration(key));
+    const val = isRad ? radStr(abilityRadius(key)) : secStr(abilityDuration(key));
     const minus = durLvl > 0 ? { mode: 'free' } : { mode: 'empty' };
     const plus  = durLvl < (inv.durOwn | 0) ? { mode: 'free' }
                 : durLvl < max ? { mode: 'buy', price: cfg.durPrices[durLvl] } : { mode: 'max' };
@@ -12635,7 +12653,8 @@ const ARC_DB = (() => {
     gearWire(card, 'plus-buy', () => {
       const p = cfg.durPrices[inv.durLvl || 0];
       const nextDur = cfg.durBase + ((inv.durLvl || 0) + 1) * cfg.durStep;
-      confirmPurchase(meta.title + ' ' + secStr(nextDur), p, () => {
+      const nextLbl = isRad ? radStr(cfg.radBase + ((inv.durLvl || 0) + 1) * cfg.radStep) + ' radius' : secStr(nextDur);
+      confirmPurchase(meta.title + ' ' + nextLbl, p, () => {
         if (!spendCoins(p)) return; inv.durLvl = (inv.durLvl || 0) + 1;
         inv.durOwn = Math.max(inv.durOwn | 0, inv.durLvl); saveUpg(); renderUpgrades();
       });
@@ -12736,10 +12755,32 @@ const ARC_DB = (() => {
       }
     }
     inner += `</div>`;
+    // Slot geliştirmeleri (süre / cooldown) — slota bağlı, takılı yetenek değişse de kalır
+    {
+      const su = slotUpgOf(slotIdx), N = SLOT_UPG_PRICES.length, it = slotItems[slotIdx];
+      const timed = it && !ABILITY_CFG[it.key]?.noDur;
+      const row = (kind, lvl, lbl, val, hint) => `<div class="gp-upg-row">
+          <span class="gp-upg-txt"><b>${lbl}</b> <span class="gp-upg-val">${val}</span>${hint ? `<span class="gp-upg-hint">${hint}</span>` : ''}</span>
+          <span class="gp-upg-pips">${Array.from({ length: N }, (_, k) => `<i class="${k < lvl ? 'on' : ''}"></i>`).join('')}</span>
+          ${lvl >= N ? `<button class="core-buy maxed" type="button">MAX</button>` : gearBuyBtn('slot-' + kind, SLOT_UPG_PRICES[lvl], '+')}
+        </div>`;
+      inner += `<div class="gp-upg"><div class="gp-upg-head">SLOT ${slotIdx + 1} UPGRADES</div>`
+        + row('dur', su.dur, 'DURATION', '+' + Math.round(su.dur * SLOT_DUR_STEP * 100) + '%', it && !timed ? 'timed abilities only' : '')
+        + row('cd', su.cd, 'COOLDOWN', (20 - su.cd * SLOT_CD_STEP) + 's', '')
+        + `</div>`;
+    }
     if (slotItems[slotIdx]) {
       inner += `<button class="gp-item gp-remove" data-k="__remove__" style="width:auto;flex-direction:row;gap:6px;align-self:center;margin:10px auto 0;padding:8px 18px"><span class="gp-item-name" style="color:#ff6a7a;font-size:10px">REMOVE GEAR</span></button>`;
     }
     host.innerHTML = inner;
+    for (const kind of ['dur', 'cd']) host.querySelector(`[data-act="slot-${kind}"]`)?.addEventListener('click', () => {
+      const su = slotUpgOf(slotIdx), p = SLOT_UPG_PRICES[su[kind]];
+      if (p == null) return;
+      confirmPurchase(`Slot ${slotIdx + 1} ${kind === 'dur' ? 'duration' : 'cooldown'}`, p, () => {
+        if (!spendCoins(p)) return; su[kind] = Math.min(SLOT_UPG_PRICES.length, su[kind] + 1);
+        saveUpg(); fillGearPicker(slotIdx); renderUpgrades();
+      });
+    });
     host.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k;
       if (k === '__remove__') { slotItems[slotIdx] = null; }
@@ -12848,8 +12889,8 @@ const ARC_DB = (() => {
     revive:    { price: 7, max: 5, autoArm: true,  desc: 'When you crash, you can continue from your last safe spot instead of ending the run. You are asked when it happens; one revive per run.' },
     doubler:   { price: 6, max: 5, autoArm: false, desc: 'Arm it before a run: every coin you earn is doubled for your next 5 runs.' },
     shield:    { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: a shield absorbs your first crash. The obstacle shatters (or the wall bounces you back) and you keep going.' },
-    // Bounce: Shield 1 çarpışma / 4 coin → Bounce 3 çarpışma / 8 coin (engel kırılmaz, top seker)
-    bounce:    { price: 8, max: 3, autoArm: false, desc: 'Arm it before a run: your first 3 crashes — walls or obstacles — bounce you off at the mirrored angle instead of ending the run.' },
+    // Bounce: Shield 1 çarpışma / 4 coin, Revive 1 kurtarma / 7 → Bounce 3 çarpışma / 11 coin (engel kırılmaz, top seker)
+    bounce:    { price: 11, max: 3, autoArm: false, desc: 'Arm it before a run: your first 3 crashes — walls or obstacles — bounce you off at the mirrored angle instead of ending the run.' },
     coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each is worth 1 coin and lots of points.' },
     preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random useful booster (no Tight Arc) that lasts twice as long.' },
     filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
@@ -12862,9 +12903,10 @@ const ARC_DB = (() => {
     // Açma fiyatı yeteneğe değil KAÇINCI açılış olduğuna bağlı: ABILITY_UNLOCK_PRICES.
     timeslow:   { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
     phaseburst: { durBase: 1, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 1→5s
-    coinpull:   { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    // Anlık yetenekler: yükseltme ekseni ETKİ ÇAPI (radBase + lvl×radStep, dünya px) — aynı merdiven fiyatı
+    coinpull:   { durBase: 0, durStep: 0, cdBase: 20, noDur: true, radBase: 560, radStep: 160, durPrices: [7,40,230,1350] },  // ~7.9→16.9cm
     brake:      { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
-    shock:      { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
+    shock:      { durBase: 0, durStep: 0, cdBase: 20, noDur: true, radBase: 260, radStep: 60,  durPrices: [7,40,230,1350] },  // ~3.7→7.0cm
     anchor:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
   };
   // Yetenek açma — n'inci açılış bu fiyattan (ilk yetenek ucuz, altıncısı pahalı). 1.900 toplam.
@@ -12892,6 +12934,25 @@ const ARC_DB = (() => {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 1;
     return cfg.durBase + (upg.inv[key]?.durLvl || 0) * cfg.durStep;
   }
+  // Çaplı yeteneklerde etki yarıçapı (dünya px) — Coin Pull toplama, Shockwave dalga
+  function abilityRadius(key) {
+    const cfg = ABILITY_CFG[key]; if (!cfg || !cfg.radBase) return 0;
+    return cfg.radBase + (upg.inv[key]?.durLvl || 0) * cfg.radStep;
+  }
+  const radStr = px => Math.round(px / H_REF * CM_PER_SCREEN) + 'cm';   // kart başlığına sığsın (tam cm)
+  // ── Slot geliştirmeleri: her slotun kendi SÜRE (+%20/sv) ve COOLDOWN (−2 sn/sv) seviyesi (0..3).
+  // Slota hangi yetenek takılırsa ona uygulanır. Süre yalnız süreli yeteneklerde (Time Slow,
+  // Phase Burst, Brake) etkilidir; cooldown hepsinde.
+  const SLOT_UPG_PRICES = [12, 70, 350];
+  const SLOT_DUR_STEP = 0.2, SLOT_CD_STEP = 2;
+  function slotUpgOf(i) {
+    if (!Array.isArray(upg.slotUpg)) upg.slotUpg = [];
+    const u = upg.slotUpg[i] || (upg.slotUpg[i] = { dur: 0, cd: 0 });
+    u.dur = Math.max(0, Math.min(SLOT_UPG_PRICES.length, u.dur | 0)); u.cd = Math.max(0, Math.min(SLOT_UPG_PRICES.length, u.cd | 0));
+    return u;
+  }
+  function slotAbilityDuration(i, key) { return abilityDuration(key) * (1 + slotUpgOf(i).dur * SLOT_DUR_STEP); }
+  function slotAbilityCooldown(i, key) { return Math.max(1, abilityCooldown(key) - slotUpgOf(i).cd * SLOT_CD_STEP); }
 
   // Consumable card — stock + ARM toggle + Buy +1
   function consumableCard(key) {
@@ -13004,9 +13065,9 @@ const ARC_DB = (() => {
   const ABILITY_DESC = {
     timeslow:   'Slows the whole game to half speed for a few seconds, so you can line up tight gaps.',
     phaseburst: 'Makes you untouchable for a moment: you fly straight through red obstacles. The side walls still bounce you back.',
-    coinpull:   'Instantly pulls every green, gold and purple ball ahead of you into your ball.',
+    coinpull:   'Instantly pulls every green, gold and purple ball within its radius into your ball. Upgrade to widen the radius.',
     brake:      'Halves your speed for a few seconds. Handy when things get tight.',
-    shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes.',
+    shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes. Upgrade to widen its reach.',
     anchor:     'First use drops a marker where you are. Use it again after it recharges to teleport back to the marker.',
   };
 

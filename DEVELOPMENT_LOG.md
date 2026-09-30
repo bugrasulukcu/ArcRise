@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Coin Pull / Shockwave çap geliştirmesi, slot geliştirmeleri (süre + cooldown), Bounce 11 coin (2026-09-30)
+
+- **Çaplı yetenekler:** Coin Pull ve Shockwave artık diğerleri gibi 4 kademe yükseltilir (aynı merdiven: 7 / 40 / 230 / 1350; − ücretsiz geri al). Yükseltme ekseni ETKİ ÇAPI (`radBase + lvl × radStep`, `abilityRadius`): Coin Pull 560 → 1200 px (≈8 → 17 cm) — **artık yalnız çaptaki yeşil/altın/mor topları çeker** (eskiden ilerideki HEPSİNİ çekiyordu; taban çap ≈ ekranın yarısı); Shockwave 260 → 500 px (≈4 → 7 cm). Kartta değer "10cm"; Coin Pull tetiklenince çapı gösteren yeşil halka.
+- **Slot geliştirmeleri** (slota bağlı, takılı yetenek değişse de kalır; `upg.slotUpg[i] = { dur, cd }`): SÜRE +%20/sv (yalnız süreli yetenekler: Time Slow, Phase Burst, Brake), COOLDOWN −2 sn/sv (20 → 14 sn), her biri 3 kademe, fiyat 12 / 70 / 350. Arayüz: slot seçim penceresinde "SLOT n UPGRADES" (seviye noktaları, +/MAX). Katalog etkisi: 4 slot × 2 × 432 ≈ 3.5k coin (~%10).
+- **Bounce 8 → 11 coin** (Revive 7 = 1 kurtarma; Bounce 3 sekme).
+- Test 30/30 (yeni: çap değerleri, slot süre/cooldown hesabı ve tetik sonrası cooldown).
+
 ### Rozet dikey hizası, Upgrades coin kutusu = ana sayfa çipi, 4+ hanede küçük yazı (2026-09-30)
 
 - İsim yanı rozet yazının ortasında (`vertical-align: middle` + −0.1em; ölçülen sapma 0.3 px).

@@ -552,6 +552,20 @@ test('iz renkleri: iz dolduktan sonra da yol uzunluğuyla akar (topa yapışmaz)
   check(t2.tailD > t1.tailD, 'kuyruk kırpılmıyor');
 });
 
+test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldown slot seviyesine göre', async () => {
+  await fresh({ arc_slots_owned: '2', arc_slots_v1: [{ type: 'ability', key: 'coinpull', icon: 'u-coinpull' }, { type: 'ability', key: 'timeslow', icon: 'u-timeslow' }, null, null],
+    arc_upg_v1: { comboSplitV22: true, slotUpg: [{ dur: 0, cd: 2 }, { dur: 3, cd: 0 }], inv: { coinpull: { owned: true, durLvl: 2, durOwn: 2 }, timeslow: { owned: true, durLvl: 0 }, shock: { owned: true, durLvl: 4, durOwn: 4 } } } });
+  const a = await ev(`ARC_TEST.abil('coinpull', 0)`), t = await ev(`ARC_TEST.abil('timeslow', 1)`), sh = await ev(`ARC_TEST.abil('shock', 0)`);
+  check(a.R === 560 + 2 * 160, `Coin Pull çapı ${a.R}`);
+  check(sh.R === 260 + 4 * 60, `Shockwave çapı ${sh.R}`);
+  check(a.cd === 16, `slot 1 cooldown ${a.cd} (beklenen 16)`);
+  check(Math.abs(t.dur - 2 * 1.6) < 1e-6, `slot 2 süre ${t.dur} (beklenen 3.2)`);
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  await ev(`ARC_TEST.trigger(0); true`);
+  const cd = (await ev('ARC_TEST.slotCD'))[0];
+  check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
+});
+
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
 async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
 async function asUser(snap) {
