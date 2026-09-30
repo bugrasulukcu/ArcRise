@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Rozet dikey hizası, Upgrades coin kutusu = ana sayfa çipi, 4+ hanede küçük yazı (2026-09-30)
+
+- İsim yanı rozet yazının ortasında (`vertical-align: middle` + −0.1em; ölçülen sapma 0.3 px).
+- Upgrades bakiye kutusu ana sayfadaki coin çipinin aynısı (`home-chip chip-coin gl gl-gold`, `.chip-ic` + `.chip-val`); eski ayrı CSS kaldırıldı, simge ortada (ölçülen 0 px). Yalnız yükseklik başlığa göre 38 px ve tıklanamaz.
+- Coin sayısı 4 hanede 11 px, 5+ hanede 9.5 px (`setChipVal`, ana sayfa + upgrades).
+
 ### Game over: sonraki coine kalan mesafe (2026-09-30)
 
 - "NEXT COIN 48%" yerine coins penceresindeki gibi "NEXT COIN · 0.64M TO GO". Hesap ortak fonksiyonda (`nextCoinLeft()`: kalan kesir ÷ metre başına coin; Extreme ×2 ve günlük yumuşak tavan dahil) — coins penceresi ve game over aynı sayıyı gösterir.

@@ -1109,6 +1109,8 @@
       font-size: 12.5px; font-weight: 800; letter-spacing: .8px;
       color: #fff; flex: 1; text-align: center;
     }
+    .chip-val.len4 { font-size: 11px; letter-spacing: .4px; }
+    .chip-val.len5 { font-size: 9.5px; letter-spacing: .2px; }
     /* Coin variant — mirrors .coins-buy in the coins popup */
     .chip-coin {
       border: 1.5px solid rgba(255,210,80,.5);
@@ -1838,24 +1840,10 @@
       text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
     /* Coin rozeti — geri okuyla aynı kare form + radius (sadece daha geniş) */
-    #upgrades-modal-sub {
-      flex-shrink: 0;
-      height: 38px; padding: 0 12px; border-radius: 11px;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      border: 1.5px solid rgba(255,210,80,.5);
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
-        linear-gradient(180deg, rgba(60,40,8,.82), rgba(28,18,4,.88));
-      box-shadow:
-        0 0 12px rgba(255,170,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.16);
-    }
-    #upgrades-modal-sub .upg-bal-num {
-      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent;
-      font-size: 15px; font-weight: 700; letter-spacing: 1px;
-    }
+    /* Upgrades bakiye kutusu = ana sayfadaki coin çipi (.home-chip.chip-coin) — yalnız başlık hizası için
+       yükseklik ve tıklanamazlık farklı */
+    #upgrades-modal-sub { flex-shrink: 0; height: 38px; cursor: default; }
+    #upgrades-modal-sub:active { transform: none; }
     /* Tab strip — sade segmented control */
     #upg-tabs {
       display: flex; width: 100%; gap: 4px;
@@ -3596,7 +3584,7 @@
        Combo açıkken hap parlar (--cg: 0 → 1 combo seviyesi) ve etrafına partikül saçar. */
     #combo-hud { flex-direction: column; gap: 5px; }
     /* İsim yanı rozet: satırdaki yazının yüksekliğinde (SVG width/height özniteliğini CSS ezer) */
-    .bdg-in-name { display: inline-block; vertical-align: -0.12em; margin-left: .35em; line-height: 0; }
+    .bdg-in-name { display: inline-block; vertical-align: middle; margin-left: .35em; line-height: 0; position: relative; top: -0.1em; }
     .bdg-in-name .bdg-glyph { width: 1em; height: 1em; vertical-align: top; }
     #combo-pill { position: relative; --cg: 0; --tc: #7CFF7A;
       color: var(--tc); border-color: color-mix(in srgb, var(--tc) 60%, transparent);
@@ -4514,9 +4502,9 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg>
       </button>
       <div id="upgrades-modal-title">UPGRADES</div>
-      <div id="upgrades-modal-sub">
-        <span class="upg-bal-icon ic-coin"></span>
-        <span class="upg-bal-num" id="upg-balance">0</span>
+      <div id="upgrades-modal-sub" class="home-chip chip-coin gl gl-gold">
+        <span class="chip-ic">C</span>
+        <span class="chip-val upg-bal-num" id="upg-balance">0</span>
       </div>
     </div>
     <button id="upg-refund" type="button" hidden></button>
@@ -6514,9 +6502,14 @@ const ARC_DB = (() => {
       hBestDistEl.textContent = fmtDist(md);
     }
     const hCoinsEl = document.getElementById('home-pcoins');
-    if (hCoinsEl) hCoinsEl.textContent = String(coins);
+    if (hCoinsEl) setChipVal(hCoinsEl, coins);
     try { renderSlots(); } catch(_){} // home gear slotlarını tazele (satın alma/equip durumu)
     try { applyHomeProfileStroke(); } catch(_){} // kart çerçevesi = trace rengi
+  }
+  // Coin çipi sayısı: 4+ hanede yazı küçülür (ana sayfa + upgrades aynı)
+  function setChipVal(el, n) {
+    const t = String(n); el.textContent = t;
+    el.classList.toggle('len4', t.length === 4); el.classList.toggle('len5', t.length >= 5);
   }
   // Ana sayfa profil RESMİNİN çerçevesi (avatar halkası) trace rengiyle eşlenik.
   function applyHomeProfileStroke() {
@@ -12185,7 +12178,7 @@ const ARC_DB = (() => {
   // ── Render: Passive tab is either the tile grid or a single detail view ──
   function renderUpgrades() {
     const el = document.getElementById('upg-balance');
-    if (el) el.textContent = String(coins);
+    if (el) setChipVal(el, coins);
     const host = document.getElementById('upg-tab-passive');
     if (!host) return;
     host.innerHTML = '';
