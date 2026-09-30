@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Game over: sonraki coine kalan mesafe (2026-09-30)
+
+- "NEXT COIN 48%" yerine coins penceresindeki gibi "NEXT COIN · 0.64M TO GO". Hesap ortak fonksiyonda (`nextCoinLeft()`: kalan kesir ÷ metre başına coin; Extreme ×2 ve günlük yumuşak tavan dahil) — coins penceresi ve game over aynı sayıyı gösterir.
+
 ### High Scores Chill/Extreme sekmeleri Settings mod seçicisiyle aynı (2026-09-30)
 
 - Seçili sekme dolgusu Settings'teki gibi (`th-blue` / `th-orange`; eski `th-ice` / `th-flame` bırakıldı), sekme kabına seçili moda göre kenar ışıması (`#lb-tabs.glow-normal / glow-extreme`, Settings'teki `#mode-sel` değerleri), seçili sekmenin üstünde buz (süzülen) / alev (yükselen) parçacıkları.

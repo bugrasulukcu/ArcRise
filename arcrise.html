@@ -10244,7 +10244,8 @@ const ARC_DB = (() => {
         if (gameMode !== 'wife') {   // bar → bir sonraki coin'e biriken kısım
           barEl.style.transition = 'width .5s ease-out';
           barEl.style.width = Math.floor(coinCarry * 100) + '%';
-          progEl.innerHTML = `NEXT COIN <b>${Math.floor(coinCarry * 100)}%</b>`;
+          const nc = nextCoinLeft();   // coins penceresiyle aynı: "NEXT COIN · 0.60M TO GO"
+          progEl.innerHTML = `NEXT COIN · <b>${fmtDist(nc.leftCm)} TO GO</b>`;
         }
       }
     }
@@ -13230,6 +13231,13 @@ const ARC_DB = (() => {
   document.getElementById('gearpick-close').addEventListener('click', closeGearPicker);
   document.getElementById('gearpick-modal').addEventListener('click', e => { if (e.target.id === 'gearpick-modal') closeGearPicker(); });
 
+  // Bir sonraki coine kalan mesafe (coins penceresi + game over ortak). Mod çarpanı (Extreme ×2)
+  // ve günlük yumuşak tavan (aşıldıysa oran ×0.4) hesaba katılır.
+  function nextCoinLeft() {
+    const capped = coinsEarnedToday() >= COIN_DAY_SOFT;
+    const perM   = COIN_PER_M * coinModeMul() * (capped ? COIN_SOFT_RATE : 1);
+    return { leftCm: Math.max(0, (1 - coinCarry) / perM * 100), capped };
+  }
   // Coins popup
   const coinsModal = document.getElementById('coins-modal');
   // pointerdown: iOS'ta çift-dokunma zoom engeli (touchend preventDefault, ≤350ms) hızlı
@@ -13242,9 +13250,7 @@ const ARC_DB = (() => {
     document.getElementById('coins-modal-count').textContent = String(coins);
     // Bir sonraki coin: run'lar arası biriken kesir (coinCarry). Kalan mesafe mod çarpanını
     // (Extreme ×2) ve günlük yumuşak tavanı (aşıldıysa oran ×0.4) hesaba katar.
-    const capped = coinsEarnedToday() >= COIN_DAY_SOFT;
-    const perM   = COIN_PER_M * coinModeMul() * (capped ? COIN_SOFT_RATE : 1);
-    const leftCm = Math.max(0, (1 - coinCarry) / perM * 100);
+    const { leftCm, capped } = nextCoinLeft();
     const pct    = Math.min(100, Math.max(0, coinCarry * 100));
     const lb = document.getElementById('coins-progress-label');
     if (lb) lb.textContent = capped ? 'NEXT COIN · REDUCED RATE' : 'NEXT COIN';
