@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Koyu iz renginde profil geri butonu ve rekor değerleri görünür (2026-09-30)
+
+- Profil penceresinin geri butonu ve "Highest Score / Distance" değerleri iz (trace) rengini alıyor; siyah/çok koyu izde görünmüyordu. `visibleOnDark(renk)`: parlaklık 0.35'in altındaysa tonu koruyarak #808080'e doğru griye çekilir (siyah → açık-koyu gri, #333344 → gri-mavi); parlak renkler ve gradyanlar değişmez.
+
 ### Coin Pull / Shockwave çap geliştirmesi, slot geliştirmeleri (süre + cooldown), Bounce 11 coin (2026-09-30)
 
 - **Çaplı yetenekler:** Coin Pull ve Shockwave artık diğerleri gibi 4 kademe yükseltilir (aynı merdiven: 7 / 40 / 230 / 1350; − ücretsiz geri al). Yükseltme ekseni ETKİ ÇAPI (`radBase + lvl × radStep`, `abilityRadius`): Coin Pull 560 → 1200 px (≈8 → 17 cm) — **artık yalnız çaptaki yeşil/altın/mor topları çeker** (eskiden ilerideki HEPSİNİ çekiyordu; taban çap ≈ ekranın yarısı); Shockwave 260 → 500 px (≈4 → 7 cm). Kartta değer "10cm"; Coin Pull tetiklenince çapı gösteren yeşil halka.

@@ -11670,6 +11670,16 @@ const ARC_DB = (() => {
     return { solid: `hsl(${hh},85%,64%)`, css: `hsl(${hh},85%,64%)`, isGrad: false,
              glow: `hsla(${hh},85%,60%,.30)`, glowStrong: `hsla(${hh},90%,62%,.6)` };
   }
+  // Koyu zeminde görünmeyecek kadar koyu renk (siyah vb.) → koyu gri tona çek (geri butonu gibi öğeler için)
+  function visibleOnDark(col) {
+    const r = hexToRgb(col);
+    if (!/^#?[0-9a-f]{6}$/i.test(col || '')) return col;          // hsl / gradyen renkleri zaten parlak
+    const L = (0.2126 * r.r + 0.7152 * r.g + 0.0722 * r.b) / 255;
+    if (L >= 0.35) return col;
+    const k = Math.min(1, (0.35 - L) / 0.2), g = 128;              // koyu → #808080'e doğru gri (tonu korur)
+    const mix = v => Math.round(v + (g - v) * k);
+    return `rgb(${mix(r.r)},${mix(r.g)},${mix(r.b)})`;
+  }
   // Profil kutusu padding-box temel zemini (gradyen border trick için).
   const PROF_BOX_BG = 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.06), transparent 60%) padding-box, linear-gradient(180deg, rgba(12,16,26,0.92) 0%, rgba(8,10,18,0.95) 100%) padding-box';
   function renderProfButtons() {
@@ -11690,7 +11700,7 @@ const ARC_DB = (() => {
     if (box) {
       box.style.setProperty('--prof-glow', m.glow);
       box.style.setProperty('--prof-glowS', m.glowStrong);
-      box.style.setProperty('--mbc', m.solid);   // geri butonu çerçeve (iz) renginde
+      box.style.setProperty('--mbc', visibleOnDark(m.solid));   // geri butonu çerçeve (iz) renginde — çok koyuysa gri
       // Renk katmanı (statik): gradyen → m.css linear, düz → solid
       const colorLayer = m.isGrad ? m.css : `linear-gradient(${m.solid},${m.solid})`;
       const setStatic = () => {
@@ -11747,7 +11757,7 @@ const ARC_DB = (() => {
         e.style.webkitBackgroundClip = 'text';
         e.style.backgroundClip = 'text';
       } else {
-        e.style.color = m.solid;
+        e.style.color = visibleOnDark(m.solid);   // siyah iz → gri yazı (okunur)
         e.style.backgroundImage = '';
         e.style.webkitBackgroundClip = '';
         e.style.backgroundClip = '';
