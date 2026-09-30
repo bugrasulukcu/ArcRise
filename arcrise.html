@@ -8061,6 +8061,24 @@ const ARC_DB = (() => {
         ctx.fillStyle = '#ffe89a'; ctx.font = "bold 13px 'Press Start 2P', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('×2', f.x, sy + 1);
         ctx.globalAlpha = 1;
+      } else if (f.kind === 'bigcoin') {
+        const a = f.done ? Math.max(0, 1 - f.doneT / 0.5) : 1, sc = f.done ? 1 + (1 - a) * 1.2 : 1;
+        const spin = Math.abs(Math.cos(now * 2.6)) * 0.75 + 0.25, R = f.r * sc;
+        ctx.globalAlpha = a;
+        if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 22; }
+        ctx.save(); ctx.translate(f.x, sy); ctx.scale(spin, 1);
+        const g = ctx.createRadialGradient(-R * .3, -R * .35, R * .1, 0, 0, R);
+        g.addColorStop(0, '#fff6b3'); g.addColorStop(.5, '#ffd24a'); g.addColorStop(1, '#b8860b');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0; ctx.strokeStyle = '#7a5205'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#6a4505'; ctx.font = `bold ${Math.round(R * 1.15)}px Sarpanch, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('C', 0, 1);
+        ctx.restore();
+        if (!f.done) {   // "×2" etiketi
+          ctx.fillStyle = 'rgba(255,224,102,.9)'; ctx.font = "bold 10px 'Press Start 2P', monospace"; ctx.textAlign = 'center';
+          ctx.fillText('×' + BIG_COIN_VALUE, f.x, sy - f.r - 12);
+        }
+        ctx.globalAlpha = 1;
       } else if (f.kind === 'spark') {
         const c = _corr[f.cid], tw = 0.7 + 0.3 * Math.sin(now * 8 + f.y);
         if (c && c.fail) ctx.globalAlpha = 0.35;
@@ -9085,6 +9103,7 @@ const ARC_DB = (() => {
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
+    _nextBigCoinCm = BIG_COIN_EVERY_CM; _runBigCoins = 0; _runBigBanked = 0;
     _runGates = 0; _runCrystals = 0; _runCrystalClose = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
@@ -9159,6 +9178,9 @@ const ARC_DB = (() => {
 
         const ob = { x, y: nextSpawnY, r };
 
+        // ── Büyük coin: slotun kendi mesafesi (başlangıç çizgisinden) 5 m işaretini geçti mi ──
+        const slotCm = (distOriginY() - nextSpawnY) / H_REF * CM_PER_SCREEN;
+        if (!_dailyRun && slotCm >= _nextBigCoinCm) { _nextBigCoinCm += BIG_COIN_EVERY_CM; spawnBigCoin(); nextSpawnY -= gap; continue; }
         // ── Skorla birleşen nesneler (engel slotunun bir kısmı) ──
         const featRoll = srand();
         if (distCm >= 40 && featRoll < 0.07) { spawnGate(); nextSpawnY -= gap; continue; }
@@ -9237,6 +9259,14 @@ const ARC_DB = (() => {
     const gx = lo + srand() * Math.max(1, hi - lo), y = nextSpawnY;
     obstacles.push({ x: gx - gh - r, y, r }); obstacles.push({ x: gx + gh + r, y, r });
     feats.push({ kind: 'gate', id: ++_featId, x: gx, y, rr: 18, gh });
+  }
+  // BÜYÜK COIN: iki engelin arasında dar boşluk (oyuncu yalnız ±12 px sapabilir)
+  function spawnBigCoin() {
+    const r = 24, gh = player.r + 14;
+    const lo = walls.left + gh + 2 * r + 20, hi = walls.right - gh - 2 * r - 20;
+    const x = lo + srand() * Math.max(1, hi - lo), y = nextSpawnY;
+    obstacles.push({ x: x - gh - r, y, r }); obstacles.push({ x: x + gh + r, y, r });
+    feats.push({ kind: 'bigcoin', id: ++_featId, x, y, r: 13 });
   }
   // ×2 HALKASI: koridoru sağa sola süpüren halka; içinden geçene 5 sn ×2 skor.
   function spawnRing() {
@@ -9608,6 +9638,14 @@ const ARC_DB = (() => {
           }
           f._py = player.y;
           if (f.done && (f.doneT += dt) > 0.6) feats.splice(i, 1);
+        } else if (f.kind === 'bigcoin') {
+          if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < player.r + f.r + magGrabF * 0.5) {
+            f.done = true; f.doneT = 0; _runBigCoins++;
+            spawnFloatText(f.x, f.y - 24, '+' + BIG_COIN_VALUE + ' COINS', 48, 1.5);
+            spawnGoldParticles(f.x, f.y); triggerGoldFlash(0.35); haptic([15, 30, 15]);
+            try { playTouchSound(); } catch(_) {}
+          }
+          if (f.done && (f.doneT += dt) > 0.5) feats.splice(i, 1);
         } else if (f.kind === 'spark') {
           const c = _corr[f.cid];
           if (Math.hypot(player.x - f.x, player.y - f.y) < player.r + 10 + magGrabF * 0.5) {
@@ -10002,6 +10040,9 @@ const ARC_DB = (() => {
   let _featId = 0, _ringMulT = 0;  // ×2 halkası kalan süre (sn)
   const _corr = {};               // koridor id → { n, got, fail }
   let _runCrystalClose = 0;
+  // BÜYÜK COIN: run mesafesinde her 5 m'de bir, iki engelin arasına sıkıştırılmış, 2 coin
+  const BIG_COIN_EVERY_CM = 500, BIG_COIN_VALUE = 2;
+  let _nextBigCoinCm = BIG_COIN_EVERY_CM, _runBigCoins = 0, _runBigBanked = 0;
   let _runGates = 0, _runCrystals = 0, _runTimings = 0, _runCorridors = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
@@ -10084,7 +10125,8 @@ const ARC_DB = (() => {
       // Mesafe odometresi artık coin'i BESLEMİYOR — sadece istatistik olarak sürüyor.
       distTotal += deltaCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
-      const rawCoins = runCoinsRaw(deltaCm, deltaGold) * doublerMul;
+      const deltaBig   = Math.max(0, _runBigCoins - _runBigBanked); _runBigBanked = _runBigCoins;
+      const rawCoins = (runCoinsRaw(deltaCm, deltaGold) + deltaBig * BIG_COIN_VALUE) * doublerMul;
       const capped   = applySoftCap(rawCoins);
       const total    = capped + coinCarry;
       _coinAnimFrom = coinCarry; _coinAnimTo = total;   // game over dolum animasyonu: önceki kesirden başlar
@@ -10155,7 +10197,7 @@ const ARC_DB = (() => {
       checkBadgeUnlocks(); // yeni badge açıldıysa toast gösterir
       // Günlük görev ilerlemesi (wife mode hariç)
       try { questOnRunEnd({ distCm: runDistCm, score: lastScore, coinsEarned: earned, countRun: firstDeathThisRun, maxCombo: _runMaxCombo, mode: gameMode, threads: _runThreads, gates: _runGates, nearMiss: _runNearMiss }); } catch(_){}
-      _lastRunInfo = { distCm: runDistCm, score: lastScore, maxCombo: _runMaxCombo, mode: gameMode, n: (_lastRunInfo.n || 0) + 1 };
+      _lastRunInfo = { distCm: runDistCm, score: lastScore, maxCombo: _runMaxCombo, mode: gameMode, golds: _runGolds, n: (_lastRunInfo.n || 0) + 1 };
       // Arkadaş listesi için profil (en iyi skor/mesafe) güncelle
       try { publishPlayerProfile(); } catch(_){}
     }
@@ -10222,6 +10264,7 @@ const ARC_DB = (() => {
     else breakEl.innerHTML = [
         `${coinModeMul() > 1 ? '2 COINS' : '1 COIN'} PER METER`,
         `<b>+${f1(fromDist)}</b> FROM ${fmtDist(runDistCm)}`,
+        _runBigCoins ? `<b>+${_runBigCoins * BIG_COIN_VALUE}</b> FROM ${_runBigCoins} BIG COIN${_runBigCoins > 1 ? 'S' : ''}` : '',
 
         runDoublerActive ? `<b>×2</b> DOUBLER` : '',
         _runCoinsCapped >= 0.05 ? `<span class="neg">−${f1(_runCoinsCapped)} DAILY CAP</span>` : '',
@@ -10945,7 +10988,7 @@ const ARC_DB = (() => {
     // Test: kristali topun DIŞ yanına (yay merkezinin tersi), kenarlar arası 12 px koy → çarpmadan sıyırır
     spawnCrystalBeside: () => { const d = player.dir || 1, nx = -Math.sin(player.heading) * d, ny = Math.cos(player.heading) * d, r = 30, g = player.r + r + 12;
       const x = player.x - nx * g, y = player.y - ny * g; obstacles.push({ x, y, r, crystal: true, _ox: x, _oy: y }); },
-    get feats() { return { crystalClose: _runCrystalClose, booster: boosterType, gates: _runGates, crystals: _runCrystals, timings: _runTimings, corridors: _runCorridors, ringMul: _ringMulT, threads: _runThreads }; },
+    get feats() { return { bigCoins: _runBigCoins, crystalClose: _runCrystalClose, booster: boosterType, gates: _runGates, crystals: _runCrystals, timings: _runTimings, corridors: _runCorridors, ringMul: _ringMulT, threads: _runThreads }; },
     get score() { return Math.floor(score); },
     get bonus() { return scoreBonus; },
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },
@@ -10962,6 +11005,7 @@ const ARC_DB = (() => {
           feats.push({ kind: 'spark', id: ++_featId, cid, x: sx, y: sy, r: 6 });
           if (ahead && i % 2 === 0) { const side = player.r + 46; obstacles.push({ x: sx - side - 18, y: sy, r: 18 }); obstacles.push({ x: sx + side + 18, y: sy, r: 18 }); } } }
       if (kind === 'crystal') obstacles.push({ x, y, r: 30, crystal: true, _ox: x, _oy: y });
+      if (kind === 'bigcoin') { if (ahead) { const ny = nextSpawnY; nextSpawnY = y; spawnBigCoin(); nextSpawnY = ny; const f = feats.at(-1); f.x = x; obstacles.at(-2).x = x - player.r - 14 - 24; obstacles.at(-1).x = x + player.r + 14 + 24; } else feats.push({ kind: 'bigcoin', id: ++_featId, x, y, r: 13 }); }
       if (kind === 'timing') obstacles.push({ x, y, r: 20, r0: 60, pk: true, pph: -Math.PI / 2, pt: 0, _ox: x, _oy: y });
     },
   };

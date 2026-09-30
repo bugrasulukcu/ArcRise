@@ -576,6 +576,16 @@ test('coin yalnız mesafeden: altın ve kristal coin vermez, dolum önceki kesir
   check(Math.abs((c.to - c.from) - r.distCm / 100) < 0.02, `coin kazancı mesafeden farklı: ${c.to - c.from} vs ${r.distCm / 100} m (altın/kristal coin vermemeli)`);
 });
 
+test('büyük coin: 5 m\'de oluşur, toplanınca 2 coin', async () => {
+  await fresh({ arc_coin_carry: '0', arc_login_day: today(), arc_coins_earned: '0' });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('bigcoin'); true`); await sleep(600);
+  check((await ev('ARC_TEST.feats')).bigCoins === 1, 'büyük coin toplanmadı');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(2500);
+  const c = await ev('ARC_TEST.coinAnim'), r = await ev('ARC_TEST.lastRun');
+  check(Math.abs((c.to - c.from) - (r.distCm / 100 + 2)) < 0.02, `kazanç ${c.to - c.from} (beklenen mesafe + 2)`);
+});
+
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
 async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
 async function asUser(snap) {

@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Büyük coin: her 5 m'de iki engel arasında, 2 coin (2026-09-30)
+
+- **Hesap (bot, 4'er dk):** altın ≈ 0.30–0.33 adet/m → eskiden 1 coin/adet ile run gelirinin ~%23'ü (günde ~25 m → ~7.5 coin). Altın coin'den çıkınca bu gelir düştü.
+- **Telafi:** run mesafesinde her 5 m'de (5, 10, 15 … m; slotun kendi mesafesine göre, başlangıç çizgisinden) bir BÜYÜK COIN — iki engelin arasında dar boşlukta (oyuncu merkezden yalnız ~±12 px sapabilir), dönen altın para + "×2" etiketi, **2 coin** (Doubler ×2, günlük yumuşak tavandan geçer). Hepsini alan 0.4 coin/m, yarısını alan ~0.2 coin/m → ortalamada eski seviyeye yakın ama beceri ister. Günlük koşuda yok. Game over açıklamasında "+2 FROM 1 BIG COIN". Magnet menzili yarı oranda etkiler.
+- Not: yeni oyuncular çoğunlukla 1–3 m'de ölüyor → ilk başta bu gelire ulaşamıyor (ilk coin 2.5 m'ye çekilebilir — açık karar).
+- Test 32/32 (yeni: büyük coin toplanır, kazanç = mesafe + 2).
+
 ### Game over coin satırı: sade açıklama + önceki birikimden dolan çubuk + fırlayan coinler; altın/kristal artık coin vermez (2026-09-30)
 
 - **Açıklama:** kutulu etiketler yerine düz cümle — "1 COIN PER METER · +0.4 FROM 0.40M" (Extreme'de "2 COINS PER METER"; varsa "×2 DOUBLER", "−x DAILY CAP"). Çubuk bitince "NEXT COIN · 0.64M TO GO".
