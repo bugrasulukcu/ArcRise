@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### High Scores Chill/Extreme sekmeleri Settings mod seçicisiyle aynı (2026-09-30)
+
+- Seçili sekme dolgusu Settings'teki gibi (`th-blue` / `th-orange`; eski `th-ice` / `th-flame` bırakıldı), sekme kabına seçili moda göre kenar ışıması (`#lb-tabs.glow-normal / glow-extreme`, Settings'teki `#mode-sel` değerleri), seçili sekmenin üstünde buz (süzülen) / alev (yükselen) parçacıkları.
+- Parçacık üretimi ortak fonksiyonda (`spawnModeDecoInto(kap, mod, xFrom, xTo)`) — Settings mod seçicisi ve High Scores sekmeleri kullanır; `tickModeDeco` artık her karede çağrılır ve kendisi denetler (Settings ekranı ya da High Scores açık). Mod değişince eski parçacıklar silinir; `#lb-tabs` taşmaya izin verir. LOWFX'te parçacık yok (mevcut `.mode-deco` kuralı).
+
 ### İz eski görünümüne döndü, rozetler yazı boyunda, başlangıç çizgisi flaşı (2026-09-30)
 
 - **İz:** opak çekirdek + tek-yol ışıltı denemesi izi düzleştirip "grafik hatası" gibi gösterdi (kullanıcı geri bildirimi) → katmanlı parça çizimi (ışıltı lighter + çekirdek alfa, yuvarlak uç) geri geldi; upgrades önizlemesi de. **Korunan:** renk evresinin yol uzunluğuna (`d`) bağlanması — iz dolunca desen topa yapışmaz, hep aşağı akar. Arka plan yaylarının tek-yol konik gradyanı da korundu (asıl "kesikli çizgi" şikâyeti oydu).

@@ -472,11 +472,15 @@
     /* Mode sekmeleri (Chill / Extreme) — upgrade'deki segmented control yapısı */
     #lb-tabs {
       display: flex; gap: 4px; width: 100%;
-      padding: 4px; border-radius: 13px; overflow: hidden;
+      padding: 4px; border-radius: 13px; overflow: visible;   /* buz/alev parçacıkları dışarı taşsın */
+      transition: border-color .3s ease, box-shadow .3s ease;
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.18);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
     }
+    /* Seçili mod kenar ışıması — Settings'teki #mode-sel ile aynı */
+    #lb-tabs.glow-normal { border-color: rgba(110,170,255,.55); box-shadow: 0 0 20px rgba(80,140,255,.55), inset 0 1px 0 rgba(255,255,255,.12); }
+    #lb-tabs.glow-extreme { border-color: rgba(255,120,40,.6); box-shadow: 0 0 20px rgba(255,120,40,.55), inset 0 1px 0 rgba(255,255,255,.12); }
     /* Metric sub-tabs (Score / Distance) — aynı segmented yapı */
     #lb-metric-tabs {
       display: flex; gap: 4px; width: 100%; margin-top: 2px;
@@ -10488,7 +10492,7 @@ const ARC_DB = (() => {
       drawGrid(bctx, time * 22, 0.13);
     }
     if (scene === 'home' || scene === 'settings') { tickBgArcs(dt); drawBgArcs(bctx); }
-    if (scene === 'settings') tickModeDeco(dt);
+    tickModeDeco(dt);   // Settings mod seçicisi + açık High Scores sekmeleri (fonksiyon kendi denetler)
     tickPopupDeco(dt);
     tickWifeDeco(dt);
     if (scene === 'play') { drawBgFlash(); } // gold flash vignette
@@ -10551,7 +10555,7 @@ const ARC_DB = (() => {
   function _segTheme(kind, btn) {
     if (kind === 'upg')      return 'th-purple';
     if (kind === 'lbmetric') return 'th-white';
-    if (kind === 'lbmode')   return /extreme/.test(btn.className) ? 'th-flame' : 'th-ice';
+    if (kind === 'lbmode')   return /extreme/.test(btn.className) ? 'th-orange' : 'th-blue';   // Settings mod seçicisiyle aynı
     if (kind === 'mode')     return /extreme/.test(btn.className) ? 'th-orange' : 'th-blue';
     if (kind === 'tog')      return /-off$/.test(btn.id) ? 'th-red' : 'th-green';
     return '';
@@ -11199,6 +11203,12 @@ const ARC_DB = (() => {
     const mode = lbCurrentMode;
     document.getElementById('lb-tab-normal').className  = 'lb-tab' + (mode === 'normal'  ? ' active-normal'  : '');
     document.getElementById('lb-tab-extreme').className = 'lb-tab' + (mode === 'extreme' ? ' active-extreme' : '');
+    const lbTabs = document.getElementById('lb-tabs');
+    if (lbTabs) {
+      lbTabs.classList.toggle('glow-normal', mode === 'normal');
+      lbTabs.classList.toggle('glow-extreme', mode === 'extreme');
+      lbTabs.querySelectorAll('.mode-deco').forEach(el => el.remove());   // mod değişti → eski parçacıklar gitsin
+    }
     // Mode-themed frame (animated transition)
     const box = document.getElementById('lb-modal-box');
     if (box) {
@@ -13839,50 +13849,56 @@ const ARC_DB = (() => {
   const ICE_GLYPHS    = ['snowflake', 'sparkle'];
   const FLAME_GLYPHS  = ['fire', 'sparkle'];
   let modeDecoTimer = 0;
+  // Buz (Chill) / alev (Extreme) parçacığı — Settings mod seçicisi ve High Scores sekmeleri ortak.
+  // xFrom..xTo: yatay üretim aralığı (0..1, kabın genişliğine oranla)
+  function spawnModeDecoInto(wrap, mode, xFrom = 0, xTo = 1) {
+    const w = wrap.offsetWidth, h = wrap.offsetHeight;
+    if (w < 10) return;
+    const el = document.createElement('span');
+    const x0 = w * xFrom, span = Math.max(10, w * (xTo - xFrom) - 10);
+    if (mode === 'extreme') {
+      el.className = 'mode-deco flame-deco';
+      el.innerHTML = iconHTML(FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)], { size: 16 });
+      el.style.left = (x0 + Math.random() * span) + 'px';
+      el.style.top  = (h * 0.95) + 'px';
+      el.style.setProperty('--dx', (Math.random() * 16 - 8) + 'px');
+      el.style.animation = `flameRise ${0.9 + Math.random() * 0.6}s ease-out forwards`;
+      el.style.fontSize = (12 + Math.random() * 6) + 'px';
+      wrap.appendChild(el); setTimeout(() => el.remove(), 2000);
+    } else {
+      el.className = 'mode-deco ice-deco';
+      el.innerHTML = iconHTML(ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)], { size: 16 });
+      el.style.left = (x0 + Math.random() * span) + 'px';
+      el.style.top  = (h * 0.5 + (Math.random() - 0.5) * h * 0.85) + 'px';
+      el.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
+      el.style.setProperty('--dy',  -(20 + Math.random() * 30) + 'px');
+      el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      el.style.animation = `iceFloat ${1.6 + Math.random()}s linear forwards`;
+      el.style.fontSize = (10 + Math.random() * 6) + 'px';
+      wrap.appendChild(el); setTimeout(() => el.remove(), 3000);
+    }
+  }
   function tickModeDeco(dt) {
     if (LOWFX) return;
-    // Mod seçici Settings ekranında → efektler orada üretilmeli (eskiden yalnız 'home'da
-    // çalışıyordu, seçici görünmediği için hiç görünmüyordu).
-    if (scene !== 'settings') return;
+    const lbOpen = document.getElementById('lb-modal')?.classList.contains('open');
+    // Mod seçici Settings ekranında; High Scores açıkken sekmeleri de aynı parçacıkları alır
+    if (scene !== 'settings' && !lbOpen) return;
     modeDecoTimer += dt;
     if (modeDecoTimer < 0.18) return;
     modeDecoTimer = 0;
+    if (lbOpen) {   // yalnız seçili sekmenin üstünde
+      const tabs = document.getElementById('lb-tabs');
+      if (tabs && tabs.offsetParent !== null) spawnModeDecoInto(tabs, lbCurrentMode, lbCurrentMode === 'extreme' ? 0.5 : 0, lbCurrentMode === 'extreme' ? 1 : 0.5);
+      if (scene !== 'settings') return;
+    }
     const wrap = document.getElementById('mode-fx-wrap');
     if (!wrap || wrap.offsetParent === null) return;
     const w = wrap.offsetWidth, h = wrap.offsetHeight;
     if (w < 10) return;
 
     // Only spawn deco for the SELECTED mode — keeps ice off in Extreme and flames off in Normal.
-    if (gameMode === 'normal') {
-      // ICE deco — spread across full width above the mode selector
-      const el = document.createElement('span');
-      el.className = 'mode-deco ice-deco';
-      el.innerHTML = iconHTML(ICE_GLYPHS[Math.floor(Math.random() * ICE_GLYPHS.length)], { size: 16 });
-      const startX = Math.random() * (w - 10);
-      const startY = h * 0.5 + (Math.random() - 0.5) * h * 0.85;
-      el.style.left = startX + 'px';
-      el.style.top  = startY + 'px';
-      el.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
-      el.style.setProperty('--dy',  -(20 + Math.random() * 30) + 'px');
-      el.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
-      el.style.animation = `iceFloat ${1.6 + Math.random()}s linear forwards`;
-      el.style.fontSize = (10 + Math.random() * 6) + 'px';
-      wrap.appendChild(el);
-      setTimeout(() => el.remove(), 3000);
-    } else if (gameMode === 'extreme') {
-      // FLAME deco — spread across full width rising from the bottom
-      const el = document.createElement('span');
-      el.className = 'mode-deco flame-deco';
-      el.innerHTML = iconHTML(FLAME_GLYPHS[Math.floor(Math.random() * FLAME_GLYPHS.length)], { size: 16 });
-      const startX = Math.random() * (w - 10);
-      const startY = h * 0.95;
-      el.style.left = startX + 'px';
-      el.style.top  = startY + 'px';
-      el.style.setProperty('--dx', (Math.random() * 16 - 8) + 'px');
-      el.style.animation = `flameRise ${0.9 + Math.random() * 0.6}s ease-out forwards`;
-      el.style.fontSize = (12 + Math.random() * 6) + 'px';
-      wrap.appendChild(el);
-      setTimeout(() => el.remove(), 2000);
+    if (gameMode === 'normal' || gameMode === 'extreme') {
+      spawnModeDecoInto(wrap, gameMode);
     } else if (gameMode === 'wife') {
       // FLOWER deco — clustered ONLY around the wife button (left: -42px, 36px wide)
       const wifeBtn = document.getElementById('mode-btn-wife');
