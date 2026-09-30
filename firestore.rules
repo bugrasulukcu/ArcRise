@@ -137,7 +137,9 @@ service cloud.firestore {
       // Sıkılaştırma: alan listesi sabit (keys().hasOnly), doc id == from__to,
       // from/to/fromName/fromTag charset'e bağlı (XSS + çöp veri engeli).
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['parties', 'from', 'to', 'fromUid', 'toUid', 'fromName', 'fromTag', 'fromAvatar', 'status', 'ts'])
+        && request.resource.data.keys().hasOnly(['parties', 'from', 'to', 'fromUid', 'toUid', 'fromName', 'fromTag', 'fromAvatar', 'status', 'ts', 'via'])
+        // via: davet linkiyle gelen isteklerde davet edenin 6 haneli kodu (alıcı istemci otomatik kabul eder)
+        && (!('via' in request.resource.data) || (request.resource.data.via is string && request.resource.data.via.matches('^[A-Z0-9]{6}$')))
         && request.resource.data.status == 'pending'
         && request.resource.data.from is string && request.resource.data.from.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')
         && request.resource.data.to is string && request.resource.data.to.matches('^[A-Z0-9]{1,16}#[0-9]{4}$')

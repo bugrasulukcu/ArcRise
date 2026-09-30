@@ -2441,6 +2441,14 @@
       z-index: 90;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* Bildirimler: cam (glassmorphism) — arkası bulanık + daha opak zemin; alttaki yazılar içinden okunmasın */
+    #toast { background: rgba(14,20,30,.78); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
+    html#arc .rt-card.gl {
+      background: radial-gradient(95% 80% at 50% 0%, rgba(255,204,0,.14), transparent 70%), rgba(12,14,22,.80);
+      backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
+      box-shadow: 0 10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    html.lowfx #toast, html.lowfx .rt-card.gl { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: rgba(12,14,22,.96); }
     /* ── Ödül kartı (rozet / coin kazanımı) — animasyonlu bildirim ── */
     #reward-toast {
       position: fixed; left: 50%; top: 13%;
@@ -3122,7 +3130,7 @@
     #quests-modal-box .quest-card { padding: 8px 12px; gap: 6px; }
     #quests-modal-box .daily-box { padding: 7px 12px; }
     .quest-card .quest-bar-wrap { flex: 1; }
-    .quest-card .quest-progress-txt { white-space: nowrap; }
+    .quest-card .quest-progress-txt { white-space: nowrap; flex: 0 0 108px; text-align: right; }   /* sabit → tüm çubuklar eşit genişlik */
     #quests-modal-box { gap: 10px; }
     @media (max-height: 520px) {   /* SE1 Safari vb. — kaydırma çıkmasın */
       #quests-modal-box { padding: 16px 16px 14px; gap: 8px; }
@@ -3595,12 +3603,6 @@
     /* ══════════ GAME OVER EXTRAS ══════════ */
     #go-score-row { text-align: center; }
     /* Game-over twin row: SCORE + DISTANCE side by side, small BEST below each */
-    #go-cause { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-bottom: 2px; }
-    #go-cause:empty { display: none; }
-    #go-cause b { font-size: 11px; letter-spacing: 2px; color: #ff6a80; font-weight: 700; }
-    #go-cause[data-cause="energy"] b { color: #ffb13b; }
-    #go-cause[data-cause="crystal"] b { color: #8fe6ff; }
-    #go-cause span { font-size: 8.5px; letter-spacing: .8px; color: rgba(255,255,255,.45); text-align: center; }
     #go-twin-row {
       display: flex; gap: 14px; width: 100%;
       align-items: stretch;
@@ -3625,7 +3627,16 @@
     }
     #go-coin-lbl { font-size: 10.5px; color: #ffcc44; letter-spacing: 1.4px; }
     #go-coin-earned { font-size: 13px; color: #ffcc44; display: inline-block; transform-origin: left center; }
-    #go-coin-progress { font-size: 10.5px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
+    #go-coin-progress { font-size: 9px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
+    #go-coin-progress b { color: #ffcc44; font-weight: 600; }
+    /* Coin kırılımı: kaynak başına etiket (DISTANCE +0.9 · GOLD +1 · ×2 …) */
+    #go-coin-break { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+    #go-coin-break:empty { display: none; }
+    .gcb { font-size: 8.5px; letter-spacing: 1px; color: rgba(255,255,255,.55); padding: 3px 7px; border-radius: 7px;
+      border: 1px solid rgba(255,204,68,.25); background: rgba(255,204,68,.06); white-space: nowrap; }
+    .gcb b { color: #ffcc44; font-weight: 600; margin-left: 3px; }
+    .gcb.neg { border-color: rgba(255,100,120,.3); background: rgba(255,100,120,.06); }
+    .gcb.neg b { color: #ff7a8e; }
     #go-coin-bar-wrap {
       width: 100%; height: 6px; border-radius: 3px;
       background: rgba(255,255,255,.08); overflow: hidden;
@@ -4323,7 +4334,6 @@
 <!-- ══ GAME OVER ══ -->
 <div class="screen" id="gameover">
   <div class="panel gl gl-purple gl-glass">
-    <div id="go-cause"></div>
     <!-- Animated score + distance, with small best lines under each -->
     <div id="go-twin-row">
       <div class="go-twin-col">
@@ -4341,8 +4351,9 @@
     <div id="go-coin-row">
       <div id="go-coin-top">
         <span id="go-coin-lbl"><span class="ic-coin" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>COINS &nbsp;<span id="go-coin-earned">+0</span></span>
-        <span id="go-coin-progress">0 / 1000</span>
+        <span id="go-coin-progress"></span>
       </div>
+      <div id="go-coin-break"></div>
       <div id="go-coin-bar-wrap"><div id="go-coin-bar"></div></div>
     </div>
     <!-- Leaderboard -->
@@ -5569,7 +5580,7 @@ const ARC_DB = (() => {
   // ── Arkadaşlık istekleri (friendreqs/{from__to}) ─────────────
   const _reqId = (fromId, toId) => `${fromId}__${toId}`;
   // İstek gönder (pending). fromId/toId = NAME#TAG. Döner: true/false.
-  async function sendFriendRequest(fromId, toId, fromName, fromTag, fromAvatar) {
+  async function sendFriendRequest(fromId, toId, fromName, fromTag, fromAvatar, via) {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     await ensureAuth(); const uid = getUid();
     if (!uid || !fromId || !toId || fromId === toId) return false;
@@ -5593,6 +5604,8 @@ const ARC_DB = (() => {
           fromAvatar: { integerValue: String(Number(fromAvatar) || 0) },
           status:     { stringValue: 'pending' },
           ts:         { integerValue: String(Date.now()) },
+          // Davet linkiyle gelen: davet edenin kodu → davet eden istemci otomatik kabul eder
+          ...(/^[A-Z0-9]{6}$/.test(via || '') ? { via: { stringValue: via } } : {}),
         }}),
       });
       return res.ok;
@@ -5636,6 +5649,7 @@ const ARC_DB = (() => {
           fromTag:    f.fromTag?.stringValue || '',
           fromAvatar: parseInt(f.fromAvatar?.integerValue || '0', 10),
           ts:     parseInt(f.ts?.integerValue || '0', 10),
+          via:    f.via?.stringValue || '',
         };
         // Aynı uid'in BAŞKA profillerine (NAME#TAG) ait kenarları ele.
       }).filter(e => e.from === myId || e.to === myId);
@@ -6475,7 +6489,7 @@ const ARC_DB = (() => {
     localStorage.setItem('arc_name', playerName);
     localStorage.setItem('arc_avatar', avatarIdx);
     applyProfile();
-    try { ensureAccount(); } catch(_){} // name#tag hesabını oluştur + yayınla
+    try { ensureAccount().then(() => sendPendingReferralFriend()).catch(() => {}); } catch(_){} // name#tag hesabını oluştur + yayınla (+ davet edene istek)
     // Profil oluştur → her zaman home'a git. Tutorial ilk START tıklamasında açılacak.
     showScene('home');
   });
@@ -9808,13 +9822,8 @@ const ARC_DB = (() => {
 
   // ── Hit-stop: ölüm anında ~0.38s slow-motion, sonra gerçek endGame ──
   let dyingT = -1; // -1 = normal; >=0 = ölüm sonrası kısa patlama bekleme sayacı (loop'ta ilerler)
-  // Ölüm sebebi: game over ekranında yazılır, çarpma noktası kısa süre halkayla gösterilir.
-  const DEATH_TXT = {
-    obstacle: ['HIT AN OBSTACLE', 'Tap earlier to curve around the red balls'],
-    crystal:  ['HIT A CRYSTAL', 'Brush past crystals for a booster — break them with Shockwave, Shield or Ghost'],
-    wall:     ['HIT THE WALL', 'Switch direction before you reach the edge'],
-    energy:   ['OUT OF ENERGY', 'Grab green balls to refill the countdown'],
-  };
+  // Ölüm: çarpma noktası kısa süre halkayla gösterilir (game over'daki sebep yazısı kaldırıldı).
+
   function beginDeath(cause, x, y, r) {
     if (dyingT >= 0) return;
     _deathInfo = { cause: cause || 'obstacle', x: x ?? player.x, y: y ?? player.y, r: r || 0, t: 0 };
@@ -10019,11 +10028,6 @@ const ARC_DB = (() => {
     if (adBtn) adBtn.style.display =
       (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
     try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
-    // Ölüm sebebi satırı
-    try {
-      const c = DEATH_TXT[_deathInfo?.cause] || DEATH_TXT.obstacle, el = document.getElementById('go-cause');
-      if (el) { el.dataset.cause = _deathInfo?.cause || 'obstacle'; el.innerHTML = `<b>${c[0]}</b><span>${c[1]}</span>`; }
-    } catch(_) {}
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
@@ -10062,13 +10066,17 @@ const ARC_DB = (() => {
     barEl.style.transition = 'none';
     barEl.style.width = '0%';
     earnedEl.textContent = '+0';
-    const breakdown = (gameMode === 'wife')
-      ? 'Wife Mode · no coins'
-      : `${fmtDist(runDistCm)} → ${f1(fromDist)}` + (coinModeMul() > 1 ? ' (extreme ×2)' : '')
-        + (fromGold ? ` · ${_runGolds} gold → ${fromGold}` : '')
-        + (runDoublerActive ? ' · ×2' : '')
-        + (_runCoinsCapped >= 0.05 ? ` · daily cap −${f1(_runCoinsCapped)}` : '');   // sonraki coin'e ilerleme çubukta
-    progEl.textContent = breakdown;
+    // Kırılım: her kaynak ayrı etiket; çubuk = bir sonraki coine birikmiş kesir ("NEXT COIN %")
+    const chip = (lbl, val, neg) => `<span class="gcb${neg ? ' neg' : ''}">${lbl}<b>${val}</b></span>`;
+    const breakEl = document.getElementById('go-coin-break');
+    if (gameMode === 'wife') { breakEl.innerHTML = chip('WIFE MODE', 'NO COINS'); }
+    else breakEl.innerHTML =
+        chip('DISTANCE ' + fmtDist(runDistCm), '+' + f1(fromDist))
+      + (fromGold ? chip(_runGolds + ' GOLD', '+' + fromGold) : '')
+      + (coinModeMul() > 1 ? chip('EXTREME', '×2') : '')
+      + (runDoublerActive ? chip('DOUBLER', '×2') : '')
+      + (_runCoinsCapped >= 0.05 ? chip('DAILY CAP', '−' + f1(_runCoinsCapped), true) : '');
+    progEl.textContent = '';
     let lastEarnedShown = 0;
     const popEarned = (n) => {
       earnedEl.textContent = '+' + n;
@@ -10100,6 +10108,7 @@ const ARC_DB = (() => {
         if (gameMode !== 'wife') {   // bar → bir sonraki coin'e biriken kısım
           barEl.style.transition = 'width .5s ease-out';
           barEl.style.width = Math.floor(coinCarry * 100) + '%';
+          progEl.innerHTML = `NEXT COIN <b>${Math.floor(coinCarry * 100)}%</b>`;
         }
       }
     }
@@ -10980,8 +10989,8 @@ const ARC_DB = (() => {
     return String(str).split(',').slice(0, 2).map(id => {
       const b = findBadge(id.trim());
       if (!b) return '';
-      // Madalyon: kademe rengi + kademe noktaları (bronz→elmas)
-      return `<span style="display:inline-block;vertical-align:middle;margin-left:4px">${badgeHTML(b, 14)}</span>`;
+      // Yalnız ikon (madalyon dairesi yok), kademe renginde, isim satırında okunur boyda
+      return `<span style="display:inline-block;vertical-align:middle;margin-left:5px">${badgeGlyphHTML(b, 20)}</span>`;
     }).join('');
   }
 
@@ -13304,6 +13313,13 @@ const ARC_DB = (() => {
     'last-second': (P, D) => `<path d="M6 2.5h12M6 21.5h12" stroke="${P}" stroke-width="2" stroke-linecap="round"/><path d="M7.5 2.5c0 5 4.5 6.2 4.5 9.5s-4.5 4.5-4.5 9.5h9c0-5-4.5-6.2-4.5-9.5s4.5-4.5 4.5-9.5z" fill="${P}" opacity=".35"/><path d="M8.6 21.5c.6-2.4 2.2-3.4 3.4-4.2 1.2.8 2.8 1.8 3.4 4.2z" fill="${P}"/><circle cx="18.5" cy="12" r="3.2" fill="#fff"/>`,
   };
   let _bdgUid = 0;
+  // Yalnız glif (daire/halka yok): kademe renginde dolgu + hafif ışıma — isim yanı için
+  function badgeGlyphHTML(b, size) {
+    if (!b) return '';
+    const col = b.tier > 0 ? TIER_COLORS[b.tier - 1] : (BADGE_SPECIAL_COLORS[b.id] || '#ff66cc');
+    const glyph = (BADGE_GLYPHS[b.family || b.id] || BADGE_GLYPHS.score)(col, '#0a0a14');
+    return `<svg class="bdg-glyph" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" style="display:inline-block;vertical-align:middle;filter:drop-shadow(0 0 3px ${col})">${glyph}</svg>`;
+  }
   function badgeHTML(b, size) {
     if (!b) return '';
     const col = b.tier > 0 ? TIER_COLORS[b.tier - 1] : (BADGE_SPECIAL_COLORS[b.id] || '#ff66cc');
@@ -14500,7 +14516,8 @@ const ARC_DB = (() => {
     const base = (location.origin && location.origin !== 'null')
       ? location.origin + location.pathname
       : location.href.split('#')[0].split('?')[0];
-    return base + '?ref=' + myFriendCode();
+    const me = myId();
+    return base + '?ref=' + myFriendCode() + (me ? '&from=' + encodeURIComponent(me) : '');
   }
   function updateReferralStat(clicks) {
     const el = document.getElementById('friends-reward-stat');
@@ -14531,6 +14548,11 @@ const ARC_DB = (() => {
       if (ref.length === 6 && ref !== myFriendCode() && !used) {
         try { localStorage.setItem('arc_ref_used', '1'); } catch(_){}
         if (ARC_DB.recordReferralClick) ARC_DB.recordReferralClick(ref);
+        // Yeni kayıt (henüz profil yok) → profil oluşunca davet edene otomatik arkadaşlık isteği
+        const from = (new URLSearchParams(location.search).get('from') || '').toUpperCase();
+        let hasName = false; try { hasName = !!localStorage.getItem('arc_name'); } catch(_){}
+        if (!hasName && /^[A-Z0-9]{1,16}#[0-9]{4}$/.test(from))
+          try { localStorage.setItem('arc_ref_from', JSON.stringify({ code: ref, from })); } catch(_){}
       }
     } catch(_){}
   })();
@@ -14572,7 +14594,7 @@ const ARC_DB = (() => {
       const ex = await ARC_DB.getPlayer(playerName, tag);
       if (ex) { bestScore = Math.max(bestScore, ex.score || 0); bestDistCm = Math.max(bestDistCm, (ex.dist || 0) * 100); }
     } catch(_){}
-    try { ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
+    try { await ARC_DB.registerPlayer(playerName, tag, avatarIdx, bestScore, bestDistCm / 100); } catch(_){} // registry metre saklar
   }
   // ══ Sosyal: onaylı arkadaşlık (sunucu-tabanlı friendreqs kenarları) ══
   const SOCIAL_KEY = 'arc_social_v1';
@@ -14593,9 +14615,29 @@ const ARC_DB = (() => {
     const n = incomingInvites().length;
     if (n > 0) { b.textContent = n > 9 ? '9+' : String(n); b.hidden = false; } else b.hidden = true;
   }
+  // Davet linkiyle kaydolan oyuncu: profili oluşunca davet edene istek (via = davet kodu) gönderir
+  async function sendPendingReferralFriend() {
+    let pr = null; try { pr = JSON.parse(localStorage.getItem('arc_ref_from') || 'null'); } catch(_){}
+    const me = myId();
+    if (!pr || !me || pr.from === me) return;
+    let ok = false;
+    try { ok = await ARC_DB.sendFriendRequest(me, pr.from, _sanId(playerName), myTag(), avatarIdx, pr.code); } catch(_){}
+    if (ok) try { localStorage.removeItem('arc_ref_from'); } catch(_){}
+  }
   async function loadSocial() {
     const me = myId(); if (!me) return;
     try { const edges = await ARC_DB.getMySocial(me); if (Array.isArray(edges)) { socialEdges = edges; saveSocial(); } } catch(_){}
+    // Benim davet linkimle gelenlerin istekleri → otomatik kabul (doğrudan arkadaş listesine)
+    const mine = myFriendCode();
+    for (const e of socialEdges) {
+      if (e.status === 'pending' && e.to === me && e.via && e.via === mine) {
+        let ok = false; try { ok = await ARC_DB.acceptFriendRequest(e.id); } catch(_){}
+        if (ok) {
+          e.status = 'accepted'; saveSocial();
+          try { showRewardToast({ icon: 'hearts', title: 'NEW FRIEND', sub: (e.fromName || parseId(e.from).name) + ' joined with your link' }); } catch(_){}
+        }
+      }
+    }
     updateFriendsBadge();
     const modal = document.getElementById('friendslist-modal');
     if (modal && modal.classList.contains('open')) { renderFriendsList(); refreshFriendProfiles(); }
@@ -14723,7 +14765,7 @@ const ARC_DB = (() => {
     renderFriendsList();
   }));
   // Hesabı oluştur (name#tag ata) + profili yayınla, ardından sosyal kenarları yükle (bildirim rozeti)
-  ensureAccount().then(() => loadSocial()).catch(() => {});
+  ensureAccount().then(() => sendPendingReferralFriend()).then(() => loadSocial()).catch(() => {});
   // Bildirimleri arada bir tazele (push yok; ana ekranda gelen davet rozeti güncellensin)
   setInterval(() => { try { loadSocial(); } catch(_){} }, 60000);
 

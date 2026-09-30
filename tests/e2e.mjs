@@ -377,14 +377,6 @@ test('nesneler: kapı, ×2 halkası, koridor, kristal, timing bonus verir', asyn
   check(f.gates === 1 && f.crystals === 1 && f.timings === 1 && f.corridors === 1, `sayaçlar: ${JSON.stringify(f)}`);
 });
 
-test('ölüm sebebi game over ekranında yazar', async () => {
-  await fresh();
-  await ev(`document.getElementById('btn-start').click(); true`);
-  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
-  const txt = await ev(`document.getElementById('go-cause').textContent`);
-  check(/HIT|OUT OF ENERGY/.test(txt), `sebep yazısı: "${txt}"`);
-});
-
 test('rozetler: THREADER / GATEKEEPER / CRYSTAL / MAESTRO açılır', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(600);
@@ -515,6 +507,36 @@ test('bounce: duvar ve engelden seker, 3 hak, ölmez', async () => {
   await ev(`ARC_TEST.obstacleAhead(40, 24); true`); await sleep(300);
   check(await ev('ARC_TEST.scene') === 'play', 'engelde öldü');
   check(await ev('ARC_TEST.bounces') === 1, `engel sekmesi hak düşürmedi: ${await ev('ARC_TEST.bounces')}`);
+});
+
+test('davet: linkle kaydolan oyuncu davet edenin arkadaş listesine otomatik düşer', async () => {
+  fbReset();
+  // 1) Davet eden (HOST) hesap açar
+  await fresh({}, { name: 'HOST' });
+  check(await waitFor(`!!localStorage.getItem('arc_tag') && !!ARC_DB.getUid()`, 8000), 'HOST hesabı oluşmadı');
+  await sleep(800);
+  const host = await ev(`({ code: localStorage.getItem('arc_friend_code'), tag: localStorage.getItem('arc_tag'), rt: localStorage.getItem('arc_fb_rt'), reset: localStorage.getItem('arc_reset_v') })`);
+  check(host.code, 'HOST davet kodu yok');
+  const hostId = 'HOST#' + host.tag;
+  check(fb.docs.has('players/' + hostId), 'HOST profili sunucuda yok');
+  // 2) Yeni oyuncu linkle gelir (profil yok), GUEST adıyla kaydolur
+  await send('Page.navigate', { url: `${ORIGIN}/__blank` }); await sleep(200);
+  await ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('arc_reset_v', ${JSON.stringify(host.reset)}); localStorage.setItem('arc_debug', '1'); true`);
+  await send('Page.navigate', { url: `${PAGE}?ref=${host.code}&from=${encodeURIComponent(hostId)}` });
+  check(await waitFor(`!!window.ARC_TEST && document.getElementById('profile-setup').classList.contains('active')`, 10000), 'profil ekranı açılmadı');
+  check(!!(await ls('arc_ref_from')), 'davet bilgisi saklanmadı');
+  await ev(`const i = document.getElementById('ps-name-input'); i.value = 'GUEST'; i.dispatchEvent(new Event('input', { bubbles: true })); document.getElementById('ps-confirm').click(); true`);
+  check(await waitFor(`!localStorage.getItem('arc_ref_from')`, 10000), 'davet edene istek gönderilmedi');
+  const reqKey = [...fb.docs.keys()].find(k => k.startsWith('friendreqs/') && k.includes(hostId));
+  check(reqKey, 'friendreqs dokümanı yok');
+  check(fb.docs.get(reqKey).fields.via?.stringValue === host.code, 'istekte via kodu yok');
+  // 3) HOST oyuna döner → otomatik kabul
+  await send('Page.navigate', { url: `${ORIGIN}/__blank` }); await sleep(200);
+  await ev(`localStorage.clear(); ['arc_reset_v', 'arc_debug', 'arc_name', 'arc_tag', 'arc_friend_code', 'arc_fb_rt', 'arc_firstplay'].forEach((k, i) => localStorage.setItem(k, ${JSON.stringify([host.reset, '1', 'HOST', host.tag, host.code, host.rt, '1'])}[i])); true`);
+  await send('Page.navigate', { url: PAGE });
+  check(await waitFor(`!!window.ARC_TEST`, 10000), 'HOST sayfası açılmadı');
+  const accepted = await (async () => { for (let k = 0; k < 40; k++) { if (fb.docs.get(reqKey)?.fields.status?.stringValue === 'accepted') return true; await sleep(200); } return false; })();
+  check(accepted, `istek otomatik kabul edilmedi: ${JSON.stringify(fb.docs.get(reqKey)?.fields.status)}`);
 });
 
 // ── Koştur ───────────────────────────────────────────────────

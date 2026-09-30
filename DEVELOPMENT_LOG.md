@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Görev çubukları eşit, ölüm yazısı kaldırıldı, isim yanı rozet ikonları, davetle otomatik arkadaş, cam bildirimler, coin kırılımı (2026-09-30)
+
+- **Görev çubukları:** ilerleme yazısı sabit genişlik (108 px, sağa hizalı) → üç çubuk eşit.
+- **Game over ölüm sebebi yazısı kaldırıldı** (markup, CSS, `DEATH_TXT`, test). Çarpma noktasındaki kısa halka kaldı.
+- **İsim yanı rozetler:** madalyon dairesi yerine yalnız glif (`badgeGlyphHTML`), kademe renginde + ışıma, 14 → 20 px.
+- **Davetle otomatik arkadaş:** davet linki davet edenin kimliğini de taşır (`?ref=KOD&from=İSİM#ETİKET`). Linkle gelen ve henüz profili olmayan oyuncu, profilini oluşturunca davet edene `via: KOD` alanlı arkadaşlık isteği gönderir (`sendPendingReferralFriend`, profil kaydı artık bekleniyor — kurallar gönderen profilini arar). Davet eden oyunu açınca `via` kendi koduna eşit bekleyen istekleri otomatik kabul eder ("NEW FRIEND — X joined with your link"). Kod yalnız linki alanlarda olduğu için başkası bu yolla zorla arkadaş ekleyemez. `firestore.rules`: friendreqs'e isteğe bağlı `via` (^[A-Z0-9]{6}$) — **deploy bekliyor** (deploy edilene kadar istek 403, oyuncu tarafında bekler ve sonraki açılışta tekrar dener).
+- **Bildirimler cam efekti:** ödül kartı ve toast'ta arka plan bulanıklığı (16–18 px) + daha opak zemin (kartın %94'lük zemini `gl-glass` tarafından %72'ye eziliyordu → alttaki yazılar içinden okunuyordu). LOWFX'te bulanıklık yerine %96 opak zemin.
+- **Game over coin satırı:** "0.90M → 0.9 · 1 GOLD → 1" yerine kaynak başına etiketler (DISTANCE 0.90M +0.9 · 1 GOLD +1 · EXTREME ×2 · DOUBLER ×2 · DAILY CAP −x); çubuk sonunda "NEXT COIN %".
+- Test 27/27 (yeni: davet linki → istek via koduyla → davet eden otomatik kabul; ölüm yazısı testi kaldırıldı).
+
 ### Yeni item: Bounce (2026-09-30)
 
 - **Tek kullanımlık item (Items sekmesi):** takılıyken run'ın ilk **3 çarpışması** (duvar ya da engel) ölüm yerine gerçek sekme olur. Fiyat **8 coin**, en fazla 3 stok (Shield 1 çarpışma / 4 coin'e karşı). Günlük koşuda item yok (kural gereği). Sandık havuzuna otomatik girer.
