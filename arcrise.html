@@ -8840,6 +8840,23 @@ const ARC_DB = (() => {
   const W2S = y => y - camY;
   const S2W = y => y + camY;
 
+  // Duvardan sekme (Ghost / Shield / tutorial). Eskiden yalnız dönüş yönü çevriliyordu: gidiş
+  // yönü hâlâ duvara baktığı için top sonraki karede yine dışarıda kalıyor, her kare yeniden
+  // çevriliyor → duvara yapışıp dümdüz kayıyor, dokunuşlar anında geri alınıyor, Ghost bitince
+  // duvarda patlıyordu. Şimdi gerçek yansıma: gidiş yönü duvara göre aynalanır (vx → −vx) ve
+  // aynalanmış yay (ters dönüş) çizilir. Top zaten duvardan uzaklaşıyorsa yön değişmez.
+  function bounceOffWall() {
+    const left = player.x - player.r < walls.left;
+    player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
+    const vx = Math.cos(player.heading);
+    const intoWall = left ? vx < 0 : vx > 0;
+    if (intoWall) {
+      player.heading = Math.PI - player.heading;               // x bileşeni aynalanır
+      beginArc(-player.dir || (left ? 1 : -1), getRadius());   // aynalı yay → duvardan uzaklaşır
+    } else {
+      beginArc(player.dir || (left ? 1 : -1), getRadius());    // yalnız kırpılan konumdan devam
+    }
+  }
   function beginArc(sign, radius) {
     player.dir = sign; player.radius = radius;
     const nx = -Math.sin(player.heading) * sign;
@@ -8876,7 +8893,7 @@ const ARC_DB = (() => {
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
-    _runGates = 0; _runCrystals = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
+    _runGates = 0; _runCrystals = 0; _runCrystalClose = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
@@ -9454,8 +9471,7 @@ const ARC_DB = (() => {
     // Ghost (Phase Burst / booster) engellerden geçer ama oyun alanından çıkamaz → duvardan seker
     if (isGhost && !tutActive && dyingT < 0 &&
         (player.x - player.r < walls.left || player.x + player.r > walls.right)) {
-      player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
-      beginArc(-player.dir, getRadius());
+      bounceOffWall();
     }
     if (!isGhost && !tutActive && dyingT < 0) {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
@@ -9463,8 +9479,7 @@ const ARC_DB = (() => {
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
         if (runShield) {                      // Shield eşyası: duvardan sektirir, kalkan gider
           runShield = false; spawnShieldPop(player.x, player.y);
-          player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
-          beginArc(-player.dir, getRadius());
+          bounceOffWall();
         } else if (hasShield) { clearBooster(); } else { beginDeath('wall', player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y, 0); return; }
       }
       for (const ob of obstacles) {
@@ -9491,6 +9506,21 @@ const ARC_DB = (() => {
             energy = Math.min(1, energy + 0.10);
             spawnFloatText(player.x, player.y - 20, 'CLOSE! +' + pts, 200, 1.1);
             haptic(15);
+            // KRİSTAL CLOSE: sıyırıp geçmek mor top gibi rastgele işe yarar bir booster verir
+            // (Tight Arc / Mystery yok). Booster zaten açıksa üzerine yazmaz → puan.
+            if (ob.crystal && !tutActive) {
+              if (!boosterType) {
+                const pool = ['wide', 'magnet', 'xmult', 'ghost', 'speed'];
+                const bt = pool[Math.floor(Math.random() * pool.length)];
+                activateBooster(bt);
+                spawnFloatText(player.x, player.y - 44, 'CRYSTAL · ' + BOOSTER_INFO[bt].name, 190, 1.25);
+                spawnShards(ob._ox, ob._oy, 190);
+              } else {
+                const cp = gainScore(10 * getBoostScoreMul());
+                spawnFloatText(player.x, player.y - 44, 'CRYSTAL +' + cp, 190, 1.2);
+              }
+              _runCrystalClose++;
+            }
           }
         }
       }
@@ -9667,8 +9697,7 @@ const ARC_DB = (() => {
   function tutTick(dt) {
     _tutStageT += dt;
     if (player.x - player.r < walls.left || player.x + player.r > walls.right) {
-      player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
-      beginArc(-player.dir, getRadius());          // duvarda ölüm yok → geri sek
+      bounceOffWall();                             // duvarda ölüm yok → geri sek
     }
     if (tutStage === 2) {
       const b = bonuses[0];
@@ -9734,7 +9763,7 @@ const ARC_DB = (() => {
   // Ölüm sebebi: game over ekranında yazılır, çarpma noktası kısa süre halkayla gösterilir.
   const DEATH_TXT = {
     obstacle: ['HIT AN OBSTACLE', 'Tap earlier to curve around the red balls'],
-    crystal:  ['HIT A CRYSTAL', 'Break crystals with Shockwave, Shield or Ghost'],
+    crystal:  ['HIT A CRYSTAL', 'Brush past crystals for a booster — break them with Shockwave, Shield or Ghost'],
     wall:     ['HIT THE WALL', 'Switch direction before you reach the edge'],
     energy:   ['OUT OF ENERGY', 'Grab green balls to refill the countdown'],
   };
@@ -9768,6 +9797,7 @@ const ARC_DB = (() => {
   const feats = [];
   let _featId = 0, _ringMulT = 0;  // ×2 halkası kalan süre (sn)
   const _corr = {};               // koridor id → { n, got, fail }
+  let _runCrystalClose = 0;
   let _runGates = 0, _runCrystals = 0, _runTimings = 0, _runCorridors = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
@@ -10663,7 +10693,14 @@ const ARC_DB = (() => {
       obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: 0, mt: 0, pid, lead: true });
       obstacles.push({ x: player.x, y: player.y - ahead, r: 22, mk: 'orbit', orbR, ow: 1.2, oph: Math.PI, mt: 0, pid }); },
     ghost: s => activateBooster('ghost', s || 4),
-    get feats() { return { gates: _runGates, crystals: _runCrystals, timings: _runTimings, corridors: _runCorridors, ringMul: _ringMulT, threads: _runThreads }; },
+    // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
+    placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
+    get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
+    tap: () => { if (running) beginArc(-player.dir, getRadius()); },
+    // Test: kristali topun DIŞ yanına (yay merkezinin tersi), kenarlar arası 12 px koy → çarpmadan sıyırır
+    spawnCrystalBeside: () => { const d = player.dir || 1, nx = -Math.sin(player.heading) * d, ny = Math.cos(player.heading) * d, r = 30, g = player.r + r + 12;
+      const x = player.x - nx * g, y = player.y - ny * g; obstacles.push({ x, y, r, crystal: true, _ox: x, _oy: y }); },
+    get feats() { return { crystalClose: _runCrystalClose, booster: boosterType, gates: _runGates, crystals: _runCrystals, timings: _runTimings, corridors: _runCorridors, ringMul: _ringMulT, threads: _runThreads }; },
     get score() { return Math.floor(score); },
     get bonus() { return scoreBonus; },
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },

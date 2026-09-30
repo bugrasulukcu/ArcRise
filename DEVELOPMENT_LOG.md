@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Ghost duvara yapışma hatası + kristal CLOSE booster (2026-09-30)
+
+- **Hata (oyuncu bildirimi):** Ghost iken duvara değince top duvara yaslanıp dümdüz kayıyor, hiçbir dokunuşu kabul etmiyor, Ghost bitince patlıyordu; tutorial'da da oldu. **Sebep:** duvar sekmesi yalnız dönüş yönünü (`dir`) çeviriyordu; gidiş yönü (`heading`) hâlâ duvara baktığı için top sonraki karede yine dışarıda, yön her kare yeniden çevriliyor → yapışma, dokunuşlar anında geri alınıyor. **Düzeltme:** `bounceOffWall()` — gerçek yansıma: gidiş yönü aynalanır (`heading = π − heading`) ve aynalı yay çizilir; top zaten uzaklaşıyorsa yön değişmez (titreşim yok). Ghost, Shield ve tutorial duvar sekmeleri bu fonksiyonu kullanır.
+- Eski/yeni karşılaştırma (Ghost, sol duvara doğru): eski 30/30 kare duvara yapışık, en uzak 1 px, dokunuş 120 ms içinde geri alınıyor; yeni 0/30, 196–292 px uzaklaşıyor, dokunuş kalıcı.
+- **Kristal CLOSE (arkadaş önerisi):** dönen altıgen kristalin dibinden sıyırıp geçmek (CLOSE!) mor top gibi rastgele işe yarar bir booster verir (Wide / Magnet / ×N / Ghost / Speed; Tight Arc ve Mystery yok). Booster zaten açıksa üzerine yazmaz, +10 puan verir. Kristal ölüm ipucu güncellendi.
+- Test 26/26 (yeni: Ghost duvar yansıması + dokunuş kalıcılığı, kristal CLOSE booster).
+
 ### Yetenek slot ikonları: slot renginde ve tam ortada (2026-09-29)
 
 - **Oyun içi:** ikonlar `currentColor` kullanıyor, slotlar `<button>` olduğu için tarayıcının varsayılan metin rengini (siyah) alıyordu → koyu zeminde görünmüyordu. `.slot { color: rgb(var(--sc)) }` → pembe/mavi/yeşil/kırmızı slot renginde + aynı renkte hafif ışıma.

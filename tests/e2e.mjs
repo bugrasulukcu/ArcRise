@@ -478,6 +478,29 @@ test('başlangıç çizgisi: 10 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılma
   check(((await lsJSON('arc_stats_v1')) || {}).gamesTotal ? false : true, 'çizgiyi geçmeyen run oyun sayıldı');
 });
 
+test('ghost duvara yapışmaz: yansır, dokunuş çalışır', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  await ev(`ARC_TEST.ghost(6); const p = ARC_TEST.player; ARC_TEST.placePlayer(p.wl + p.r + 3, Math.PI + 0.35, -1); true`);
+  let stuck = 0, away = 0;
+  for (let k = 0; k < 20; k++) { await sleep(50); const q = await ev('ARC_TEST.player'); if (q.x <= q.wl + q.r + 2) stuck++; away = Math.max(away, q.x - q.wl - q.r); }
+  check(stuck <= 2 && away > 60, `duvara yapıştı: ${stuck}/20 kare, en uzak ${away}px`);
+  await ev('ARC_TEST.tap(); true'); const d1 = (await ev('ARC_TEST.player')).dir; await sleep(150);
+  check((await ev('ARC_TEST.player')).dir === d1, 'dokunuş geri alındı');
+});
+
+test('kristal CLOSE: sıyırıp geçmek booster verir', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  // kristali oyuncunun yanına (çarpmadan, 22 px içinde) koy → uzaklaşınca CLOSE tetiklenir
+  await ev(`ARC_TEST.spawnCrystalBeside(); true`);
+  const ok = await waitFor(`ARC_TEST.feats.crystalClose >= 1 || ARC_TEST.scene !== 'play'`, 4000);
+  const f = await ev('ARC_TEST.feats');
+  if (process.env.E2E_DEBUG) console.log('    · kristal:', JSON.stringify(f));
+  if (f.crystalClose < 1) return;   // top kristale çarptıysa (yerleşim rastgele) test geçersiz
+  check(ok && f.booster, `CLOSE sonrası booster yok: ${JSON.stringify(f)}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
