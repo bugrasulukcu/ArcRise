@@ -566,6 +566,16 @@ test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldo
   check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
 });
 
+test('coin yalnız mesafeden: altın ve kristal coin vermez, dolum önceki kesirden', async () => {
+  await fresh({ arc_coin_carry: '0.85', arc_login_day: today(), arc_coins_earned: '0' });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  for (const k of ['crystal']) { await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('${k}'); true`); await sleep(700); }
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(2500);
+  const c = await ev('ARC_TEST.coinAnim'), r = await ev('ARC_TEST.lastRun');
+  check(Math.abs(c.from - 0.85) < 1e-6, `dolum başlangıcı ${c.from}`);
+  check(Math.abs((c.to - c.from) - r.distCm / 100) < 0.02, `coin kazancı mesafeden farklı: ${c.to - c.from} vs ${r.distCm / 100} m (altın/kristal coin vermemeli)`);
+});
+
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
 async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
 async function asUser(snap) {

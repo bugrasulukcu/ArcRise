@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Game over coin satırı: sade açıklama + önceki birikimden dolan çubuk + fırlayan coinler; altın/kristal artık coin vermez (2026-09-30)
+
+- **Açıklama:** kutulu etiketler yerine düz cümle — "1 COIN PER METER · +0.4 FROM 0.40M" (Extreme'de "2 COINS PER METER"; varsa "×2 DOUBLER", "−x DAILY CAP"). Çubuk bitince "NEXT COIN · 0.64M TO GO".
+- **Dolum animasyonu:** eskiden çubuk 0 → %100 dolup sonra birikmiş kesre "zıplıyordu". Artık önceki birikmiş kesirden (`_coinAnimFrom`) başlar, bu run'ın kazancı kadar ilerler; her %100'de çubuğun sağ ucundan bir coin "+N" sayacına fırlar (çubuk parlar, sayı büyüyüp söner) ve çubuk sıfırdan dolmaya devam eder. Süre en fazla 1 sn (kısa kazançta 0.45 sn) → çok coin kazanınca hızlı ardışık coin yağmuru.
+- **Altın ve kristal coin vermez** (kullanıcı kararı: altın yalnız skor). `COIN_PER_GOLD = 0`, kristal `_runGolds++` kaldırıldı; Gold Rush açıklaması güncellendi. Coin artık yalnız mesafeden (+ giriş / görev / sandık / ilk oyun +3 / davet).
+- Test 31/31 (yeni: coin kazancı = mesafe; dolum önceki kesirden).
+
 ### Koyu iz renginde profil geri butonu ve rekor değerleri görünür (2026-09-30)
 
 - Profil penceresinin geri butonu ve "Highest Score / Distance" değerleri iz (trace) rengini alıyor; siyah/çok koyu izde görünmüyordu. `visibleOnDark(renk)`: parlaklık 0.35'in altındaysa tonu koruyarak #808080'e doğru griye çekilir (siyah → açık-koyu gri, #333344 → gri-mavi); parlak renkler ve gradyanlar değişmez.

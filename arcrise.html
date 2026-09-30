@@ -3659,8 +3659,15 @@
     #go-coin-progress { font-size: 9px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
     #go-coin-progress b { color: #ffcc44; font-weight: 600; }
     /* Coin kırılımı: kaynak başına etiket (DISTANCE +0.9 · GOLD +1 · ×2 …) */
-    #go-coin-break { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+    #go-coin-break { font-size: 8.5px; letter-spacing: .8px; line-height: 1.5; color: rgba(255,255,255,.5); margin-bottom: 7px; }
     #go-coin-break:empty { display: none; }
+    #go-coin-break b { color: #ffcc44; font-weight: 600; }
+    #go-coin-break .neg { color: #ff7a8e; }
+    #go-coin-bar-wrap { position: relative; overflow: visible; }
+    .go-coin-fly { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; pointer-events: none; z-index: 3;
+      animation: goCoinFly .6s cubic-bezier(.3,.7,.3,1) forwards; }
+    @keyframes goCoinFly { 0% { transform: translate(0, 0) scale(.6); opacity: 1; } 60% { transform: translate(var(--fx), var(--fy)) scale(1.25); opacity: 1; } 100% { transform: translate(var(--fx), var(--fy)) scale(.4); opacity: 0; } }
+    #go-coin-bar.flash { box-shadow: 0 0 12px #ffe066, 0 0 24px rgba(255,200,40,.8); }
     .gcb { font-size: 8.5px; letter-spacing: 1px; color: rgba(255,255,255,.55); padding: 3px 7px; border-radius: 7px;
       border: 1px solid rgba(255,204,68,.25); background: rgba(255,204,68,.06); white-space: nowrap; }
     .gcb b { color: #ffcc44; font-weight: 600; margin-left: 3px; }
@@ -6694,6 +6701,7 @@ const ARC_DB = (() => {
   let running = false, started = false;
   let _lastRunInfo = {};
   let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur
+  let _coinAnimFrom = 0, _coinAnimTo = 0;   // bu run'ın coin çubuğu: önceki birikmiş kesir → yeni toplam
   let _activeChal = null, _chalPrevMode = null;   // oynanan meydan okuma + öncesindeki mod (showScene erken çağrılır → burada)
   // Günlük meydan okuma: aynı gün herkese aynı pist. spawnAhead tohumlu rastgele (srand) kullanır.
   let _dailyRun = false, _dailyRng = null, _dailyPrevMode = null;
@@ -7082,7 +7090,7 @@ const ARC_DB = (() => {
   // birikir (arc_coin_carry), böylece 1 m'ye varmayan run bile bir sonraki coin'e sayar.
   const COIN_PER_M       = 1;     // her metre başına coin
   const COIN_EXTREME_MUL = 2;     // Extreme'de metre başına ×2 (altın toplar hariç)
-  const COIN_PER_GOLD    = 1;     // toplanan her altın top başına coin
+  const COIN_PER_GOLD    = 0;     // v28: altın yalnız SKOR verir (coin yok) — coin yalnız mesafeden
   const COIN_DAY_SOFT    = 25;    // bu günlük eşikten sonra oran düşer (normal oyuncu ~25 m/gün)
   const COIN_SOFT_RATE   = 0.4;   // eşik sonrası oran
   const COIN_CARRY_KEY   = 'arc_coin_carry';
@@ -9212,7 +9220,7 @@ const ARC_DB = (() => {
           }
         }
 
-        // CRYSTAL: kırılabilir engel (Shockwave / Shield / Ghost-Phase ile) — kırınca puan + 1 coin.
+        // CRYSTAL: kırılabilir engel (Shockwave / Shield / Ghost-Phase ile) — kırınca puan.
         // Kırıcı bir yeteneği/eşyası olan oyuncuda iki kat sık.
         const hasBreaker = runShield || slotItems.some(it => it && (it.key === 'shock' || it.key === 'phaseburst'));
         if (distCm >= 50 && srand() < (_dailyRun ? 0.1 : hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
@@ -9258,7 +9266,7 @@ const ARC_DB = (() => {
     if (!o || !o.crystal || o._broken || tutActive) return;
     o._broken = true;
     const pts = gainScore(20 * getBoostScoreMul());
-    _runCrystals++; _runGolds++;          // _runGolds → run sonunda +1 coin
+    _runCrystals++;
     stats.crystalsTotal = (stats.crystalsTotal || 0) + 1;
     spawnFloatText(o._ox ?? o.x, (o._oy ?? o.y) - 20, 'CRYSTAL +' + pts, 190, 1.35);
     spawnShards(o._ox ?? o.x, o._oy ?? o.y, 190);
@@ -10079,6 +10087,7 @@ const ARC_DB = (() => {
       const rawCoins = runCoinsRaw(deltaCm, deltaGold) * doublerMul;
       const capped   = applySoftCap(rawCoins);
       const total    = capped + coinCarry;
+      _coinAnimFrom = coinCarry; _coinAnimTo = total;   // game over dolum animasyonu: önceki kesirden başlar
       const gained   = Math.floor(total);
       coinCarry = total - gained;
       try { localStorage.setItem(COIN_CARRY_KEY, String(coinCarry)); } catch(_){}
@@ -10207,17 +10216,17 @@ const ARC_DB = (() => {
     barEl.style.width = '0%';
     earnedEl.textContent = '+0';
     // Kırılım: her kaynak ayrı etiket; çubuk = bir sonraki coine birikmiş kesir ("NEXT COIN %")
-    const chip = (lbl, val, neg) => `<span class="gcb${neg ? ' neg' : ''}">${lbl}<b>${val}</b></span>`;
+    // Açıklama: düz cümle — "1 COIN PER METER · +0.4 FROM 0.40M · +1 FROM 1 GOLD · ×2 EXTREME"
     const breakEl = document.getElementById('go-coin-break');
-    if (gameMode === 'wife') { breakEl.innerHTML = chip('WIFE MODE', 'NO COINS'); }
-    else breakEl.innerHTML =
-        chip('DISTANCE ' + fmtDist(runDistCm), '+' + f1(fromDist))
-      + (fromGold ? chip(_runGolds + ' GOLD', '+' + fromGold) : '')
-      + (coinModeMul() > 1 ? chip('EXTREME', '×2') : '')
-      + (runDoublerActive ? chip('DOUBLER', '×2') : '')
-      + (_runCoinsCapped >= 0.05 ? chip('DAILY CAP', '−' + f1(_runCoinsCapped), true) : '');
+    if (gameMode === 'wife') breakEl.textContent = 'WIFE MODE · NO COINS';
+    else breakEl.innerHTML = [
+        `${coinModeMul() > 1 ? '2 COINS' : '1 COIN'} PER METER`,
+        `<b>+${f1(fromDist)}</b> FROM ${fmtDist(runDistCm)}`,
+
+        runDoublerActive ? `<b>×2</b> DOUBLER` : '',
+        _runCoinsCapped >= 0.05 ? `<span class="neg">−${f1(_runCoinsCapped)} DAILY CAP</span>` : '',
+      ].filter(Boolean).join(' · ');
     progEl.textContent = '';
-    let lastEarnedShown = 0;
     const popEarned = (n) => {
       earnedEl.textContent = '+' + n;
       earnedEl.style.transition = 'none';
@@ -10229,25 +10238,40 @@ const ARC_DB = (() => {
         earnedEl.style.color = '#ffcc44';
       });
     };
-    const coinAnimDur = Math.min(2000, Math.max(700, gained * 40));
-    let coinAnimStart = 0;
+    // Çubuk ÖNCEKİ birikmiş kesirden başlar ve bu run'ın kazancı kadar ilerler; her %100'de
+    // çubuğun sağ ucundan bir coin "+N" sayacına fırlar ve çubuk sıfırdan dolmaya devam eder.
+    // Süre en fazla 1 sn → çok coin kazanılınca hızlı ardışık coin yağmuru / patlama gibi görünür.
+    const from = gameMode === 'wife' ? 0 : _coinAnimFrom, to = gameMode === 'wife' ? 0 : _coinAnimTo;
+    const coinAnimDur = Math.max(450, Math.min(1000, (to - from) * 700));
+    const wrapEl = document.getElementById('go-coin-bar-wrap');
+    const flyCoin = () => {
+      if (!wrapEl) return;
+      const el = document.createElement('span'); el.className = 'go-coin-fly'; el.innerHTML = iconHTML('coin', { size: 16 });
+      const wr = wrapEl.getBoundingClientRect(), er = earnedEl.getBoundingClientRect();
+      el.style.left = wr.width + 'px';   // çubuğun sağ ucu
+      el.style.setProperty('--fx', (er.left + er.width / 2 - wr.right) + 'px');
+      el.style.setProperty('--fy', (er.top + er.height / 2 - (wr.top + wr.height / 2)) + 'px');
+      el.addEventListener('animationend', () => el.remove());
+      wrapEl.appendChild(el);
+      barEl.classList.add('flash'); setTimeout(() => barEl.classList.remove('flash'), 140);
+    };
+    barEl.style.width = (from * 100) + '%';
+    let wraps = 0, coinAnimStart = 0;
     function animCoin(ts) {
       if (!coinAnimStart) coinAnimStart = ts;
       const t = Math.min(1, (ts - coinAnimStart) / coinAnimDur);
-      const eased = 1 - Math.pow(1 - t, 2.4);
-      barEl.style.width = (eased * 100) + '%';
-      const shown = Math.floor(gained * eased);
-      if (shown !== lastEarnedShown) {
-        lastEarnedShown = shown;
-        popEarned(shown);
-        haptic(8);
+      const eased = 1 - Math.pow(1 - t, 1.6);
+      const v = from + (to - from) * eased;
+      const w = Math.floor(v + 1e-9);
+      while (wraps < w && wraps < gained) {   // %100'e vurdu → coin
+        wraps++; popEarned(wraps); flyCoin(); haptic(8);
       }
+      barEl.style.width = ((v - w) * 100) + '%';
       if (t < 1) requestAnimationFrame(animCoin);
       else {
-        if (lastEarnedShown !== gained) popEarned(gained);
-        if (gameMode !== 'wife') {   // bar → bir sonraki coin'e biriken kısım
-          barEl.style.transition = 'width .5s ease-out';
-          barEl.style.width = Math.floor(coinCarry * 100) + '%';
+        while (wraps < gained) { wraps++; popEarned(wraps); flyCoin(); }
+        barEl.style.width = (coinCarry * 100) + '%';
+        if (gameMode !== 'wife') {
           const nc = nextCoinLeft();   // coins penceresiyle aynı: "NEXT COIN · 0.60M TO GO"
           progEl.innerHTML = `NEXT COIN · <b>${fmtDist(nc.leftCm)} TO GO</b>`;
         }
@@ -10909,6 +10933,7 @@ const ARC_DB = (() => {
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
     get bounces() { return runBounces; },
+    get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
     trigger: i => triggerAbility(i),
@@ -12901,7 +12926,7 @@ const ARC_DB = (() => {
     shield:    { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: a shield absorbs your first crash. The obstacle shatters (or the wall bounces you back) and you keep going.' },
     // Bounce: Shield 1 çarpışma / 4 coin, Revive 1 kurtarma / 7 → Bounce 3 çarpışma / 11 coin (engel kırılmaz, top seker)
     bounce:    { price: 11, max: 3, autoArm: false, desc: 'Arm it before a run: your first 3 crashes — walls or obstacles — bounce you off at the mirrored angle instead of ending the run.' },
-    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each is worth 1 coin and lots of points.' },
+    coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each one is worth lots of points.' },
     preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random useful booster (no Tight Arc) that lasts twice as long.' },
     filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
   };
