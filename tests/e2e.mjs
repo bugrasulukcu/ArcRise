@@ -501,6 +501,22 @@ test('kristal CLOSE: sıyırıp geçmek booster verir', async () => {
   check(ok && f.booster, `CLOSE sonrası booster yok: ${JSON.stringify(f)}`);
 });
 
+test('bounce: duvar ve engelden seker, 3 hak, ölmez', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { bounce: { count: 2, armed: true } } } });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  check((await lsJSON('arc_upg_v1')).inv.bounce.count === 1, 'bounce eşyası harcanmadı');
+  check(await ev('ARC_TEST.bounces') === 3, `run başında 3 hak yok: ${await ev('ARC_TEST.bounces')}`);
+  await ev(`const p = ARC_TEST.player; ARC_TEST.placePlayer(p.wl + p.r + 3, Math.PI + 0.35, -1); true`);
+  await sleep(300);
+  check(await ev('ARC_TEST.scene') === 'play', 'duvarda öldü');
+  check(await ev('ARC_TEST.bounces') === 2, `duvar sekmesi hak düşürmedi: ${await ev('ARC_TEST.bounces')}`);
+  const q = await ev('ARC_TEST.player');
+  check(q.x > q.wl + q.r + 5, 'duvardan uzaklaşmadı');
+  await ev(`ARC_TEST.obstacleAhead(40, 24); true`); await sleep(300);
+  check(await ev('ARC_TEST.scene') === 'play', 'engelde öldü');
+  check(await ev('ARC_TEST.bounces') === 1, `engel sekmesi hak düşürmedi: ${await ev('ARC_TEST.bounces')}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

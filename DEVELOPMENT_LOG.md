@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yeni item: Bounce (2026-09-30)
+
+- **Tek kullanımlık item (Items sekmesi):** takılıyken run'ın ilk **3 çarpışması** (duvar ya da engel) ölüm yerine gerçek sekme olur. Fiyat **8 coin**, en fazla 3 stok (Shield 1 çarpışma / 4 coin'e karşı). Günlük koşuda item yok (kural gereği). Sandık havuzuna otomatik girer.
+- **Fizik:** duvarda `bounceOffWall()` (x bileşeni aynalanır); engelde `bounceOffObstacle()` — gidiş yönü çarpma noktasındaki yüzey normaline göre yansıtılır (v' = v − 2(v·n)n), top yüzeyin dışına itilir, aynı engele 0.25 sn tekrar çarpmaz. Yeni yayın yönü geometriden seçilir (`awaySign`: yay merkezi yüzeyin dış tarafında → top yüzeyden uzağa kıvrılır; ilk sürümde yay engele geri kıvrılıp bir sekmede 2 hak yiyordu). Ghost/Shield/tutorial duvar sekmesi de aynı yön kuralını kullanır. Engel kırılmaz.
+- **Görsel:** topun üstünde kalan hak sayısı kadar yeşil nokta, sekmede yeşil kıvılcım + "BOUNCE ×n" / "LAST BOUNCE", titreşim + dokunuş sesi. İkon (duvar + yansıyan yol), info animasyonu (duvara → engele sekme, "3 BOUNCES PER RUN").
+- Survivor rozeti: Bounce takılı run "ikinci şanslı" sayılır. Önceliği Shield'dan önce (ikisi takılıysa önce Bounce hakları).
+- Test 27/27 (yeni: Bounce duvar + engel sekmesi, hak sayımı, stok).
+
 ### Ghost duvara yapışma hatası + kristal CLOSE booster (2026-09-30)
 
 - **Hata (oyuncu bildirimi):** Ghost iken duvara değince top duvara yaslanıp dümdüz kayıyor, hiçbir dokunuşu kabul etmiyor, Ghost bitince patlıyordu; tutorial'da da oldu. **Sebep:** duvar sekmesi yalnız dönüş yönünü (`dir`) çeviriyordu; gidiş yönü (`heading`) hâlâ duvara baktığı için top sonraki karede yine dışarıda, yön her kare yeniden çevriliyor → yapışma, dokunuşlar anında geri alınıyor. **Düzeltme:** `bounceOffWall()` — gerçek yansıma: gidiş yönü aynalanır (`heading = π − heading`) ve aynalı yay çizilir; top zaten uzaklaşıyorsa yön değişmez (titreşim yok). Ghost, Shield ve tutorial duvar sekmeleri bu fonksiyonu kullanır.

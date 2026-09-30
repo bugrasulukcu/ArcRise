@@ -6048,6 +6048,8 @@ const ARC_DB = (() => {
       revive:      `<path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${F}/><path d="M12 20s-7-4.4-7-9.6A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.4C19 15.6 12 20 12 20z" ${S}/><path d="M9 3.5a5 5 0 0 1 7.5 1.2" ${S}/><path d="M16.8 2.3l-.3 2.6-2.5-.6" ${S}/>`,
       doubler:     `<circle cx="15" cy="9" r="6" ${F}/><circle cx="15" cy="9" r="6" ${S} opacity=".55"/><circle cx="9" cy="15" r="6.5" fill="currentColor" opacity=".35"/><circle cx="9" cy="15" r="6.5" ${S}/><path d="M11.1 12.7a3 3 0 1 0 0 4.6" ${S}/>`,
       shield:      `<path d="M12 2.8 19.5 5.6v6.2c0 4.6-3.1 8.2-7.5 9.6-4.4-1.4-7.5-5-7.5-9.6V5.6z" ${F}/><path d="M12 2.8 19.5 5.6v6.2c0 4.6-3.1 8.2-7.5 9.6-4.4-1.4-7.5-5-7.5-9.6V5.6z" ${S}/><path d="M8.6 12.2l2.4 2.4 4.6-4.8" ${S}/>`,
+      // Bounce: duvar + yansıyan V yol + top
+      bounce:      `<path d="M20.5 3v18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".5"/><path d="M3.5 19 18.5 12 5 4" ${S}/><circle cx="5" cy="4.6" r="2.6" ${F}/><circle cx="5" cy="4.6" r="2.6" ${S}/><path d="M16 9.5l2.5 2.5-2.5 2.5" ${S} opacity=".7"/>`,
       coinrain:    `<path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${F}/><path d="M6.5 11a4 4 0 0 1 .6-7.9A5.2 5.2 0 0 1 17 4.2 3.5 3.5 0 0 1 17.5 11z" ${S}/><circle cx="7.5" cy="16" r="2" fill="currentColor"/><circle cx="16" cy="15.2" r="2" fill="currentColor"/><circle cx="12" cy="20.2" r="2" fill="currentColor"/>`,
       preboost:    `<rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${F}/><rect x="3.5" y="10" width="17" height="10.5" rx="1.8" ${S}/><path d="M2.5 7h19v3h-19zM12 7v13.5" ${S}/><path d="M12 7C9.5 7 7.5 4 9.5 3.2 11 2.6 12 5 12 7c0-2 1-4.4 2.5-3.8C16.5 4 14.5 7 12 7z" ${S}/>`,
       filter:      `<path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${F}/><path d="M12 11.2C10 6 5 6.3 5.2 9.3c.2 2.6 3.6 2.9 6.8 1.9zM12.8 12c5.2-2 4.9-7 1.9-6.8-2.6.2-2.9 3.6-1.9 6.8zM12 12.8c2 5.2 7 4.9 6.8 1.9-.2-2.6-3.6-2.9-6.8-1.9zM11.2 12c-5.2 2-4.9 7-1.9 6.8 2.6-.2 2.9-3.6 1.9-6.8z" ${S}/><path d="M12.6 13.5c.8 3 2 5.5 3.6 7.5" ${S}/>`,
@@ -6229,6 +6231,15 @@ const ARC_DB = (() => {
              <animate attributeName="r" values="10;10;38;38" keyTimes="0;.5;.64;1" dur="4s" repeatCount="indefinite"/>${fade('0;0;1;0;0', '0;.5;.51;.64;1', 4)}</circle>
            <g>${ball(0, 0, 7)}<circle r="15" fill="rgba(120,190,255,.14)" stroke="#9fd0ff" stroke-width="2">${fade('1;1;0;0;1', '0;.49;.5;.97;1', 4)}</circle>${move(a.d, 4)}</g>
            ${label(180, 136, 'ONE FREE CRASH', '#9fd0ff', 10)}`);
+      },
+      bounce: () => {
+        const d = 'M60 140 L214 90 L130 40 L148 128';
+        return scene(
+          `${walls()}${obst(120, 26, 12)}${guide(d, .45)}
+           <g>${ball(0, 0, 7)}<circle r="12" fill="none" stroke="${C.green}" stroke-width="2" opacity=".7"/>${move(d, 4, 'keyPoints="0;.463;.743;1" keyTimes="0;.463;.743;1" calcMode="linear"')}</g>
+           <g opacity="0"><circle cx="214" cy="90" r="9" fill="none" stroke="${C.green}" stroke-width="2.5"/>${label(186, 70, 'BOUNCE', C.green, 10)}${fade('0;0;1;0;0', '0;.45;.47;.6;1', 4)}</g>
+           <g opacity="0"><circle cx="130" cy="40" r="9" fill="none" stroke="${C.green}" stroke-width="2.5"/>${label(170, 44, 'BOUNCE', C.green, 10)}${fade('0;0;1;0;0', '0;.73;.75;.88;1', 4)}</g>
+           ${label(120, 146, '3 BOUNCES PER RUN', C.green, 9)}`);
       },
       coinrain: () => scene(
         `${walls()}${[46, 70, 96, 122, 148, 172, 196, 58, 110, 160, 84, 136].map((x, i) => `<circle cx="${x}" r="5.5" fill="${C.gold}" GLOW><animate attributeName="cy" values="-10;160" dur="${1.5 + (i % 3) * .3}s" begin="${-i * .23}s" repeatCount="indefinite"/></circle>`).join('')}
@@ -6760,6 +6771,7 @@ const ARC_DB = (() => {
       revive:    { count: 0, armed: false },  // ölünce devam (always-armed; armed flag yok sayılır)
       doubler:   { count: 0, armed: false },  // run'da coin gain ×2
       shield:    { count: 0, armed: false },  // ilk çarpışmayı affeder (engel parçalanır / duvardan seker)
+      bounce:    { count: 0, armed: false },  // run'ın ilk 3 çarpışması (duvar/engel) gerçek yansımayla seker
       coinrain:  { count: 0, armed: false },  // gold ball spawn ×2
       preboost:  { count: 0, armed: false },  // run rastgele booster ile başlar
       filter:    { count: 0, armed: false },  // sadece ghost+speed booster spawn
@@ -8728,6 +8740,13 @@ const ARC_DB = (() => {
       ctx.beginPath(); ctx.arc(px, py, r + 9, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = 'rgba(120,190,255,.10)'; ctx.fill(); ctx.shadowBlur = 0;
     }
+    if (runBounces > 0) {                 // Bounce: kalan sekme hakkı — topun üstünde yeşil noktalar
+      ctx.fillStyle = 'rgba(124,255,122,0.95)';
+      for (let k = 0; k < runBounces; k++) {
+        const a = -Math.PI / 2 + (k - (runBounces - 1) / 2) * 0.42;
+        ctx.beginPath(); ctx.arc(px + Math.cos(a) * (r + 9), py + Math.sin(a) * (r + 9), 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
     if (tutActive && tutStage === 3) {   // tutorial: "bu sayı enerjin" — nabız halkası
       const k = 0.5 + 0.5 * Math.sin(performance.now() / 180);
       ctx.strokeStyle = `rgba(124,255,122,${0.45 + 0.45 * k})`; ctx.lineWidth = 3;
@@ -8845,17 +8864,36 @@ const ARC_DB = (() => {
   // çevriliyor → duvara yapışıp dümdüz kayıyor, dokunuşlar anında geri alınıyor, Ghost bitince
   // duvarda patlıyordu. Şimdi gerçek yansıma: gidiş yönü duvara göre aynalanır (vx → −vx) ve
   // aynalanmış yay (ters dönüş) çizilir. Top zaten duvardan uzaklaşıyorsa yön değişmez.
+  // Yay yönü: merkez yüzey normalinin (nx, ny) tarafında olsun → top yüzeyden UZAĞA kıvrılır.
+  // (beginArc merkezi = konum + (−sin h, cos h)·sign·r)
+  function awaySign(nx, ny) { return (-Math.sin(player.heading) * nx + Math.cos(player.heading) * ny) >= 0 ? 1 : -1; }
   function bounceOffWall() {
     const left = player.x - player.r < walls.left;
     player.x = Math.max(walls.left + player.r + 1, Math.min(walls.right - player.r - 1, player.x));
     const vx = Math.cos(player.heading);
     const intoWall = left ? vx < 0 : vx > 0;
-    if (intoWall) {
-      player.heading = Math.PI - player.heading;               // x bileşeni aynalanır
-      beginArc(-player.dir || (left ? 1 : -1), getRadius());   // aynalı yay → duvardan uzaklaşır
-    } else {
-      beginArc(player.dir || (left ? 1 : -1), getRadius());    // yalnız kırpılan konumdan devam
-    }
+    if (intoWall) player.heading = Math.PI - player.heading;   // x bileşeni aynalanır
+    beginArc(awaySign(left ? 1 : -1, 0), getRadius());         // yay duvardan uzağa kıvrılır
+  }
+  // Bounce eşyası: engelden gerçek yansıma — gidiş yönü çarpma noktasındaki yüzey normaline göre
+  // aynalanır (v' = v − 2(v·n)n), top yüzeyin dışına itilir; aynı engele 0.25 sn tekrar çarpmaz.
+  const BOUNCE_CHARGES = 3;
+  function bounceOffObstacle(ob) {
+    const ox = ob._ox ?? ob.x, oy = ob._oy ?? ob.y;
+    let nx = player.x - ox, ny = player.y - oy;
+    const d = Math.hypot(nx, ny) || 1; nx /= d; ny /= d;
+    player.x = ox + nx * (ob.r + player.r + 1.5); player.y = oy + ny * (ob.r + player.r + 1.5);
+    const vx = Math.cos(player.heading), vy = Math.sin(player.heading), dot = vx * nx + vy * ny;
+    if (dot < 0) player.heading = Math.atan2(vy - 2 * dot * ny, vx - 2 * dot * nx);
+    beginArc(awaySign(nx, ny), getRadius());   // yay yüzeyden uzağa kıvrılır (engele geri dönmez)
+    ob._bncUntil = performance.now() + 250;
+  }
+  function useBounce(wx, wy) {
+    runBounces--;
+    spawnFloatText(player.x, player.y - 26, runBounces > 0 ? 'BOUNCE ×' + runBounces : 'LAST BOUNCE', 110, 1.25);
+    spawnShards(wx, wy, 100);
+    haptic([12, 25, 12]);
+    try { playTouchSound(); } catch(_) {}
   }
   function beginArc(sign, radius) {
     player.dir = sign; player.radius = radius;
@@ -9477,7 +9515,10 @@ const ARC_DB = (() => {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
       const wallTol = (upg.wallSoft || 0);
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
-        if (runShield) {                      // Shield eşyası: duvardan sektirir, kalkan gider
+        if (runBounces > 0) {                 // Bounce eşyası: duvardan aynalı seker
+          useBounce(player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y);
+          bounceOffWall();
+        } else if (runShield) {               // Shield eşyası: duvardan sektirir, kalkan gider
           runShield = false; spawnShieldPop(player.x, player.y);
           bounceOffWall();
         } else if (hasShield) { clearBooster(); } else { beginDeath('wall', player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y, 0); return; }
@@ -9487,6 +9528,13 @@ const ARC_DB = (() => {
         const rr = player.r + ob.r;
         const d2 = dx*dx + dy*dy;
         if (d2 < rr*rr) {
+          if (ob._bncUntil && performance.now() < ob._bncUntil) continue;   // az önce buradan sekti
+          if (runBounces > 0) {               // Bounce eşyası: engelden aynalı seker (engel kalır)
+            const dn = Math.sqrt(d2) || 1;   // temas noktası: engel merkezinden oyuncuya doğru r kadar
+            useBounce(ob._ox + dx * ob.r / dn, ob._oy + dy * ob.r / dn);
+            bounceOffObstacle(ob);
+            break;
+          }
           if (runShield) {                    // Shield eşyası: engeli parçalar, kalkan gider
             runShield = false; spawnShieldPop(player.x, player.y);
             onObstacleBroken(ob);
@@ -10695,6 +10743,9 @@ const ARC_DB = (() => {
     ghost: s => activateBooster('ghost', s || 4),
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
+    get bounces() { return runBounces; },
+    // Test: topun gidiş yönünde, çarpacağı mesafeye engel koy
+    obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
     tap: () => { if (running) beginArc(-player.dir, getRadius()); },
     // Test: kristali topun DIŞ yanına (yay merkezinin tersi), kenarlar arası 12 px koy → çarpmadan sıyırır
@@ -11945,6 +11996,7 @@ const ARC_DB = (() => {
       { key: 'doubler',    title: 'Coin Doubler', icon: 'u-doubler' },
       { key: 'preboost',   title: 'Pre-Booster',  icon: 'u-preboost' },
       { key: 'shield',     title: 'Shield',       icon: 'u-shield' },
+      { key: 'bounce',     title: 'Bounce',       icon: 'u-bounce' },
       { key: 'filter',     title: 'Lucky Boost', icon: 'u-filter' },
       { key: 'coinrain',   title: 'Gold Rush',    icon: 'u-coinrain' },
     ]},
@@ -12631,6 +12683,8 @@ const ARC_DB = (() => {
     revive:    { price: 7, max: 5, autoArm: true,  desc: 'When you crash, you can continue from your last safe spot instead of ending the run. You are asked when it happens; one revive per run.' },
     doubler:   { price: 6, max: 5, autoArm: false, desc: 'Arm it before a run: every coin you earn is doubled for your next 5 runs.' },
     shield:    { price: 4, max: 5, autoArm: false, desc: 'Arm it before a run: a shield absorbs your first crash. The obstacle shatters (or the wall bounces you back) and you keep going.' },
+    // Bounce: Shield 1 çarpışma / 4 coin → Bounce 3 çarpışma / 8 coin (engel kırılmaz, top seker)
+    bounce:    { price: 8, max: 3, autoArm: false, desc: 'Arm it before a run: your first 3 crashes — walls or obstacles — bounce you off at the mirrored angle instead of ending the run.' },
     coinrain:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run: gold balls appear 4× as often, right from the start. Each is worth 1 coin and lots of points.' },
     preboost:  { price: 3, max: 5, autoArm: false, desc: 'Arm it before a run to start with a random useful booster (no Tight Arc) that lasts twice as long.' },
     filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
@@ -13578,6 +13632,7 @@ const ARC_DB = (() => {
   // Per-run consumable flags
   let runDoublerActive = false;
   let runShield = false;          // Shield eşyası: ilk çarpışmayı affeder
+  let runBounces = 0;             // Bounce eşyası: kalan sekme hakkı (run başı 3)
   let _runShieldArmed = false;    // bu run Shield ile mi başladı (kullanılmış olsa bile) — Survivor rozeti için
   let runCoinRainActive = false;  // Gold Rush: altın spawn ×4, 0 m'den itibaren
   let runLuckyBoost = false;      // Lucky Boost ('filter' anahtarı): tüm booster'lar 2× uzun
@@ -13585,7 +13640,7 @@ const ARC_DB = (() => {
   const DOUBLER_RUNS = 5;         // bir Coin Doubler kaç run ×2 verir
   function consumeArmedConsumables() {
     runDoublerActive = false;
-    runShield = false; _runShieldArmed = false;
+    runShield = false; _runShieldArmed = false; runBounces = 0;
     runCoinRainActive = false;
     runLuckyBoost = false;
     _runPreboostPending = null;
@@ -13597,7 +13652,8 @@ const ARC_DB = (() => {
     if ((inv.doubler.runsLeft | 0) > 0) { runDoublerActive = true; inv.doubler.runsLeft--; }
     else if (inv.doubler.armed && inv.doubler.count > 0) { runDoublerActive = true; consume('doubler'); inv.doubler.runsLeft = DOUBLER_RUNS - 1; }
     if (inv.shield.armed    && inv.shield.count    > 0) { runShield = true;               consume('shield');    }
-    _runShieldArmed = runShield;
+    if (inv.bounce && inv.bounce.armed && inv.bounce.count > 0) { runBounces = BOUNCE_CHARGES; consume('bounce'); }
+    _runShieldArmed = runShield || runBounces > 0;   // Survivor rozeti: ikinci şanssız
     if (inv.coinrain.armed  && inv.coinrain.count  > 0) { runCoinRainActive = true;       consume('coinrain');  }
     if (inv.filter.armed    && inv.filter.count    > 0) { runLuckyBoost = true;           consume('filter');    }
     if (inv.preboost.armed  && inv.preboost.count  > 0) {
