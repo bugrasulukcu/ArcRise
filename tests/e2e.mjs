@@ -660,7 +660,10 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   check(await toastHas('FRIEND ADDED'), 'ALICE\'e kabul bildirimi düşmedi');
   await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
   await ev(`document.querySelector('.fl-chal').click(); true`);
-  // ⚔ → hemen ortak pistte yeni oyun (3 hak). 1. deneme: bot oynar, skor > 0 olsun
+  // ⚔ → START ekranı (oyun kendiliğinden başlamaz); START'a basınca ortak pistte yeni oyun (3 hak). 1. deneme: bot oynar, skor > 0 olsun
+  check(await waitFor(`document.getElementById('chal-intro').classList.contains('open')`, 3000), 'challenge START ekranı açılmadı');
+  await sleep(800); check(await ev(`ARC_TEST.scene !== 'play'`), 'START\'a basmadan oyun başladı');
+  await ev(`document.getElementById('chal-start-btn').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'play' && ARC_TEST.chal && ARC_TEST.chal.role === 'send'`, 5000), 'meydan okuma oyunu başlamadı');
   const sigA = await ev('ARC_TEST.layoutSig(10)');
   await ev(`ARC_BOT.start(); ARC_TEST.ghost(4); true`); await sleep(4500); await ev(`ARC_BOT.stop(); true`);
@@ -677,10 +680,12 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   check(await toastHas('CHALLENGE!'), 'HOST\'a meydan okuma bildirimi düşmedi');
   await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
   await ev(`document.querySelector('.fl-ch-play').click(); true`);
+  check(await waitFor(`document.getElementById('chal-intro').classList.contains('open') && /VS/.test(document.getElementById('chal-intro-vs').textContent)`, 3000), 'alan taraf START ekranı / karşılıklı skorlar yok');
+  await ev(`document.getElementById('chal-start-btn').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('chal-num').hidden`, 5000), 'meydan okuma run\'ı / hedef HUD yok');
   check(JSON.stringify(await ev('ARC_TEST.layoutSig(10)')) === JSON.stringify(sigA), 'alan taraf aynı pisti oynamıyor');
   for (let tr = 1; tr <= 3; tr++) {
-    if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
+    if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); await sleep(300); await ev(`document.getElementById('chal-start-btn').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
     await ev(`ARC_BOT.start(); ARC_TEST.ghost(2); true`); await sleep(1800); await ev(`ARC_BOT.stop(); true`);
     check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), `${tr}. deneme bitmedi`); await sleep(600);
     if (tr < 3) check(await ev(`document.getElementById('btn-again').textContent`) === `TRY ${tr + 1}/3`, `${tr}. denemeden sonra AGAIN etiketi: ${await ev(`document.getElementById('btn-again').textContent`)}`);

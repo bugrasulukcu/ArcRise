@@ -356,8 +356,10 @@
     /* ══ Düşük efekt modu (iPhone düşük güç modu / zayıf cihaz — otomatik, bkz. LOWFX) ══ */
     html.lowfx .rb-wrap::before, html.lowfx .rb-inner::after, html.lowfx .mode-deco { display: none !important; }
     html.lowfx .rb-wrap, html.lowfx #home-av-wrap::before, html.lowfx .seg-ind { animation: none !important; }
-    html.lowfx * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-    html.lowfx .gl-glass { background-color: rgba(9,10,16,.9) !important; }
+    /* Blur yalnız oyun/game over sırasında kapanır (canvas her kare akıyor). Menüler statik olduğu için
+       cam efekti orada kalır — eskiden bir kez düşük moda düşünce tüm menüler oturum boyu camsız kalıyordu. */
+    html.lowfx.in-play * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    html.lowfx.in-play .gl-glass { background-color: rgba(9,10,16,.9) !important; }
     /* Start + Again — bold, +50% over original, uppercase */
     #btn-start, #btn-again {
       font-size: 30px; font-weight: 700; letter-spacing: 4px;
@@ -2464,7 +2466,7 @@
       backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
       box-shadow: 0 10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
     }
-    html.lowfx #toast, html.lowfx .rt-card.gl { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: rgba(12,14,22,.96); }
+    html.lowfx.in-play #toast, html.lowfx.in-play .rt-card.gl { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: rgba(12,14,22,.96); }
     /* ── Ödül kartı (rozet / coin kazanımı) — animasyonlu bildirim ── */
     #reward-toast {
       position: fixed; left: 50%; top: 13%;
@@ -3028,7 +3030,7 @@
     }
 
     /* ══════════ QUESTS MODAL ══════════ */
-    #quests-modal, #friends-modal, #friendslist-modal, #gearpick-modal, #credits-modal {
+    #quests-modal, #friends-modal, #friendslist-modal, #gearpick-modal, #credits-modal, #chal-intro {
       position: fixed; inset: 0; z-index: 56;
       display: none; align-items: center; justify-content: center;
       background: rgba(6,8,14,0.30);
@@ -3036,8 +3038,8 @@
       -webkit-backdrop-filter: blur(20px) saturate(1.15);
     }
     #gearpick-modal { z-index: 64; } /* upgrades modal'ın (58) üstünde açılır */
-    #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open, #credits-modal.open { display: flex; }
-    #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box, #credits-box {
+    #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open, #credits-modal.open, #chal-intro.open { display: flex; }
+    #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box, #credits-box, #chal-intro-box {
       position: relative; width: min(92vw, 360px);
       border-radius: 22px; padding: 24px 20px 18px;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
@@ -3294,6 +3296,31 @@
     .fl-chal { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1; padding: 0;
       color: #ff9a5a; border: 1px solid rgba(255,154,90,.55); background: rgba(255,122,40,.10); margin-right: 4px; }
     .fl-chal:disabled { opacity: .45; }
+
+    /* ══════════ CHALLENGE START EKRANI (karşılıklı skorlar + START) ══════════ */
+    #chal-intro { z-index: 66; }
+    #chal-intro-box { border-color: rgba(255,154,90,.5); }
+    #chal-intro-box .fm-title { color: #ff9a5a; }
+    .ci-vs { width: 100%; display: flex; align-items: stretch; gap: 8px; }
+    .ci-side { flex: 1; min-width: 0; padding: 14px 8px 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); }
+    .ci-side.me { border-color: rgba(124,255,122,.4); background: rgba(124,255,122,.06); }
+    .ci-side.them { border-color: rgba(255,154,90,.45); background: rgba(255,122,40,.07); }
+    .ci-name { max-width: 100%; font-size: 11px; letter-spacing: 1.2px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ci-score { font-size: 24px; letter-spacing: 1px; color: #fff; }
+    .ci-side.me .ci-score { color: #9fffa0; }
+    .ci-side.them .ci-score { color: #ffb07a; }
+    .ci-lbl { font-size: 7.5px; letter-spacing: 1.4px; color: rgba(255,255,255,.45); text-align: center; }
+    .ci-x { align-self: center; font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,.4); }
+    .ci-info { font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.6; }
+    .ci-info b { color: #fff; font-weight: 600; }
+    .ci-dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
+    .ci-dots i { width: 7px; height: 7px; border-radius: 50%; background: #ff9a5a; }
+    .ci-dots i.used { background: rgba(255,255,255,.18); }
+    #chal-start-btn { width: 100%; padding: 15px; border-radius: 13px; cursor: pointer; font-family: var(--font); font-size: 16px; letter-spacing: 3px;
+      color: #2a1204; border: 1px solid rgba(255,154,90,.8); background: linear-gradient(180deg, #ffb07a, #ff7a28);
+      box-shadow: 0 0 22px rgba(255,122,40,.35); }
+    #chal-start-btn:active { transform: scale(.97); }
     #chal-num { color: #ff9a5a; }
     #chal-num.beat { color: #7CFF7A; text-shadow: 0 0 8px rgba(124,255,122,.6); }
     .fl-inv-row {
@@ -4714,6 +4741,20 @@
   </div>
 </div>
 
+<!-- ══ CHALLENGE START EKRANI ══ -->
+<div id="chal-intro">
+  <div id="chal-intro-box" class="gl gl-blue gl-glass">
+    <div class="modal-head">
+      <button id="chal-intro-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
+      <div class="fm-title modal-head-title">⚔ CHALLENGE</div>
+      <span class="modal-head-spacer"></span>
+    </div>
+    <div class="ci-vs" id="chal-intro-vs"></div>
+    <div class="ci-info" id="chal-intro-info"></div>
+    <button id="chal-start-btn" type="button">START</button>
+  </div>
+</div>
+
 <!-- ══ CHALLENGE / INVITE MODAL ══ -->
 <div id="friends-modal">
   <div id="friends-modal-box" class="gl gl-blue gl-glass">
@@ -4751,7 +4792,7 @@
     </div>
     <div class="fm-divider"><span>ADD FRIEND BY ID</span></div>
     <div class="fm-add-row">
-      <input type="text" id="fl-add-input" maxlength="16" placeholder="NAME#0000" autocomplete="off">
+      <input type="text" id="fl-add-input" maxlength="21" placeholder="NAME#0000" autocomplete="off">
       <button id="fl-add-btn" type="button">ADD</button>
     </div>
     <div class="fm-add-msg" id="fl-add-msg"></div>
@@ -7904,19 +7945,9 @@ const ARC_DB = (() => {
 
   // ── Mesafe milestone'ları ────────────────────────────────
   // Her tam metrede koridor boyunca kesikli çizgi + "kM" etiketi, ayrıca
-  // mesafe arttıkça sahneye çok hafif, sürekli kayan bir renk tonu biner.
-  function drawMilestoneLines() {
+    function drawMilestoneLines() {
     if (tutActive) return;
     const m = Math.max(0, (distancePx / H_REF) * CM_PER_SCREEN) / 100; // metre
-    // Ton kayması: 1m sonrasında ~her 5m'de bir tam hue adımı (sürekli)
-    if (m > 1) {
-      const hue = ((m / 5) * 36) % 360;
-      ctx.save();
-      ctx.globalAlpha = 0.05;
-      ctx.fillStyle = `hsl(${hue},70%,55%)`;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-    }
     const pxPerM = 100 * H_REF / CM_PER_SCREEN;
     const topW = S2W(-30), botW = S2W(H + 30);
     const kMin = Math.max(1, Math.ceil((distOriginY() - botW) / pxPerM));
@@ -8347,6 +8378,62 @@ const ARC_DB = (() => {
         ctx.fillText(info.mark, b.x, sy + 0.5);
       }
       ctx.restore();
+    }
+  }
+
+
+  // ── CLOSE CALL: animasyonlu yazı + 2 sn'de sönen kırmızı vignette ──────────
+  const CC_VIG_DUR = 2.0, CC_TXT_DUR = 1.2;
+  let _ccVigT = 0, _ccTxtT = 0, _ccPts = 0, _ccCool = 0, _wallNm = false;
+  function triggerCloseCall(pts) {
+    _ccVigT = CC_VIG_DUR; _ccTxtT = CC_TXT_DUR; _ccPts = pts || 0; _ccCool = 2.0;
+  }
+  function resetCloseCall() { _ccVigT = _ccTxtT = _ccCool = 0; _wallNm = false; }
+  function drawCloseCall(dt) {
+    if (_ccCool > 0) _ccCool -= dt;
+    if (_ccVigT > 0) {
+      const k = _ccVigT / CC_VIG_DUR;                       // 1 → 0 (yavaş sönüm)
+      const a = 0.55 * k * k * (3 - 2 * k);                 // smoothstep: hızlı vuruş, yumuşak kayboluş
+      ctx.save();
+      const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.75);
+      g.addColorStop(0, 'rgba(255,20,40,0)');
+      g.addColorStop(0.6, `rgba(255,20,40,${a * 0.35})`);
+      g.addColorStop(1, `rgba(220,0,30,${a})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      _ccVigT = Math.max(0, _ccVigT - dt);
+    }
+    if (_ccTxtT > 0) {
+      const t = 1 - _ccTxtT / CC_TXT_DUR;                   // 0 → 1
+      // Giriş: 0.22 sn'de 0 → 1.3 (aşma) → 1; sonra tutar; son %30'da yukarı süzülüp söner
+      const pop = t < 0.18 ? (t / 0.18) * 1.3 : t < 0.32 ? 1.3 - 0.3 * ((t - 0.18) / 0.14) : 1;
+      const out = t > 0.7 ? (t - 0.7) / 0.3 : 0;
+      const shake = t < 0.4 ? Math.sin(t * 90) * (1 - t / 0.4) * 5 : 0;
+      const lane = walls.right - walls.left;
+      const fs = Math.max(14, Math.min(30, Math.floor(lane * 0.85 / 11)));
+      const cx = (walls.left + walls.right) / 2 + shake, cy = H * 0.30 - out * 40;
+      ctx.save();
+      ctx.globalAlpha = 1 - out;
+      ctx.translate(cx, cy); ctx.rotate(shake * 0.006); ctx.scale(pop, pop);
+      ctx.font = `bold ${fs}px 'Press Start 2P', monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // yan çizgiler: yazıdan dışarı açılır
+      const lw = fs * 5.5 * Math.min(1, t / 0.25), ly = fs * 1.15;
+      ctx.strokeStyle = 'rgba(255,90,60,.9)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-lw, ly); ctx.lineTo(lw, ly); ctx.moveTo(-lw * 0.7, -ly); ctx.lineTo(lw * 0.7, -ly); ctx.stroke();
+      ctx.lineJoin = 'round'; ctx.lineWidth = fs * 0.28; ctx.strokeStyle = 'rgba(80,0,10,.9)';
+      ctx.shadowColor = 'rgba(255,40,50,.95)'; ctx.shadowBlur = 22;
+      ctx.strokeText('CLOSE CALL!', 0, 0);
+      const gr = ctx.createLinearGradient(0, -fs / 2, 0, fs / 2);
+      gr.addColorStop(0, '#fff3c4'); gr.addColorStop(0.5, '#ffb23a'); gr.addColorStop(1, '#ff3b3b');
+      ctx.fillStyle = gr; ctx.shadowBlur = 12;
+      ctx.fillText('CLOSE CALL!', 0, 0);
+      if (_ccPts > 0) {
+        ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(255,200,40,.9)';
+        ctx.font = `bold ${Math.round(fs * 0.62)}px 'Press Start 2P', monospace`; ctx.fillStyle = '#ffe27a';
+        ctx.fillText('+' + _ccPts, 0, fs * 1.9);
+      }
+      ctx.restore();
+      _ccTxtT = Math.max(0, _ccTxtT - dt);
     }
   }
 
@@ -9089,11 +9176,11 @@ const ARC_DB = (() => {
   let lbFrame = 0;
 
   // Firestore'dan canlı skorları çek, lbNPCScores'u doldur.
-  // Rate-limited: çağrı başına en fazla 10 doc, ve aynı oturumda 5 dk içinde
+  // Rate-limited: çağrı başına en fazla 50 doc, ve aynı oturumda 5 dk içinde
   // yeniden istenirse cache'ten dönüyor (getTopScores TTL'i devreye giriyor).
   async function fetchLiveScores() {
     try {
-      const rows = await ARC_DB.getTopScores(10, gameMode);
+      const rows = await ARC_DB.getTopScores(50, gameMode);   // 50: oyuncu skor kazandıkça listede yukarı çıkarken altında/üstünde gerçek rakipler olsun
       if (rows && rows.length > 0) {
         // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
         lbNPCScores = rows
@@ -9229,7 +9316,7 @@ const ARC_DB = (() => {
     _runGates = 0; _runCrystals = 0; _runCrystalClose = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
     _runGolds = 0; _runGoldBanked = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
-    goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
+    goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0; resetCloseCall();
     flameParticles.length = 0; flyScores.length = 0;
     // Reset visual-flash state so they resume from clean slate every game
     goldFlashAlpha = 0;
@@ -9869,6 +9956,12 @@ const ARC_DB = (() => {
           bounceOffWall();
         } else if (hasShield) { clearBooster(); } else { beginDeath('wall', player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y, 0); return; }
       }
+      // Duvar close call: duvarın dibine (≤10px) girip çıkınca (≥40px) — puan yok, yazı + vignette
+      {
+        const gw = Math.min(player.x - player.r - walls.left, walls.right - (player.x + player.r));
+        if (gw < 10) _wallNm = true;
+        else if (_wallNm && gw > 40) { _wallNm = false; if (_ccCool <= 0) triggerCloseCall(0); }
+      }
       for (const ob of obstacles) {
         const dx = player.x - ob._ox, dy = player.y - ob._oy;
         const rr = player.r + ob.r;
@@ -9898,7 +9991,7 @@ const ARC_DB = (() => {
             if (++_runNearMiss >= 10 && !stats.daredevilDone) stats.daredevilDone = true;   // DAREDEVIL rozeti
             const pts = gainScore(3 * getBoostScoreMul());
             energy = Math.min(1, energy + 0.10);
-            spawnFloatText(player.x, player.y - 20, 'CLOSE! +' + pts, 200, 1.1);
+            triggerCloseCall(pts);
             haptic(15);
             // KRİSTAL CLOSE: sıyırıp geçmek mor top gibi rastgele işe yarar bir booster verir
             // (Tight Arc / Mystery yok). Booster zaten açıksa üzerine yazmaz → puan.
@@ -10756,7 +10849,7 @@ const ARC_DB = (() => {
       drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawPbGhost(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
-      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown();   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
+      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
     }
 
     // Reklamla dönüşte top üzerinde 3→1 geri sayım; biter bitmez oyun akmaya başlar.
@@ -10862,6 +10955,7 @@ const ARC_DB = (() => {
       else if (s !== 'play') { endThemeTrial(); return; }
     }
     scene = s;
+    document.documentElement.classList.toggle('in-play', s === 'play' || s === 'over');
     if (s !== 'play' && _musicPlaying() && !_fadeStopT) stopBgMusic();   // menü/ayar/profil: müzik yok
     profileSetupEl.classList.toggle('active', s === 'profile-setup');
     homeEl.classList.toggle('active',         s === 'home');
@@ -14472,7 +14566,7 @@ const ARC_DB = (() => {
     showScene('home');
   });
 
-  document.getElementById('wrap-again').addEventListener('click', () => startGame());   // iç düğme dinlemez (çift başlatma)
+  document.getElementById('wrap-again').addEventListener('click', () => { if (_activeChal && !_activeChal.done) openChalIntro(_activeChal); else startGame(); });   // iç düğme dinlemez (çift başlatma)
 
   // ── Rewarded ad stub ──────────────────────────────────────
   // v1'de ADS_ENABLED=false → "reklam izle · devam et" butonu hiç gösterilmez,
@@ -15105,9 +15199,19 @@ const ARC_DB = (() => {
   const _friendProfiles = {};
   let _flSort = 'score';
   function flFmtDist(m) { return fmtDist((Number(m) || 0) * 100); } // registry metre → fmtDist cm bekler
-  function incomingInvites() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.to === me); }
-  function acceptedFriends() { return socialEdges.filter(e => e.status === 'accepted'); }
-  function outgoingPending() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.from === me); }
+  function incomingInvites() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.to === me && !socialEdges.some(x => x.status === 'accepted' && (x.from === e.from || x.to === e.from))); }
+  // Karşılıklı iki kenar (A→B ve B→A) olabilir → karşı taraf başına TEK kayıt (listede çift görünmesin)
+  function acceptedFriends() {
+    const me = myId(), seen = new Set();
+    return socialEdges.filter(e => {
+      if (e.status !== 'accepted') return false;
+      const oid = e.from === me ? e.to : e.from;
+      if (seen.has(oid)) return false; seen.add(oid); return true;
+    });
+  }
+  // Karşı tarafla olan TÜM kenar id'leri (silme çift kenarı da temizlesin)
+  function edgesWith(oid) { const me = myId(); return socialEdges.filter(e => (e.from === me ? e.to : e.from) === oid).map(e => e.id); }
+  function outgoingPending() { const me = myId(); return socialEdges.filter(e => e.status === 'pending' && e.from === me && !socialEdges.some(x => x.status === 'accepted' && (x.from === e.to || x.to === e.to))); }
   function updateFriendsBadge() {
     const b = document.getElementById('friends-badge'); if (!b) return;
     let n = incomingInvites().length;
@@ -15119,6 +15223,7 @@ const ARC_DB = (() => {
     let pr = null; try { pr = JSON.parse(localStorage.getItem('arc_ref_from') || 'null'); } catch(_){}
     const me = myId();
     if (!pr || !me || pr.from === me) return;
+    if (socialEdges.some(e => (e.from === me ? e.to : e.from) === pr.from)) { try { localStorage.removeItem('arc_ref_from'); } catch(_){} return; }   // zaten bağlı → tekrar deneme
     let ok = false;
     try { ok = await ARC_DB.sendFriendRequest(me, pr.from, _sanId(playerName), myTag(), avatarIdx, pr.code); } catch(_){}
     if (ok) try { localStorage.removeItem('arc_ref_from'); } catch(_){}
@@ -15192,11 +15297,12 @@ const ARC_DB = (() => {
   async function respondInvite(id, accept) {
     let ok = false;
     try { ok = accept ? await ARC_DB.acceptFriendRequest(id) : await ARC_DB.removeFriendEdge(id); } catch(_){}
-    if (!ok) return;
+    if (!ok) return false;
     if (accept) { const e = socialEdges.find(x => x.id === id); if (e) e.status = 'accepted'; }
     else socialEdges = socialEdges.filter(x => x.id !== id);
     saveSocial(); renderFriendsList(); updateFriendsBadge();
     if (accept) refreshFriendProfiles();
+    return true;
   }
   // Meydan okuma bölümü: gelen açıklar (PLAY) + gönderdiklerim (bekliyor / kazandı / kaybetti)
   function renderChallenges() {
@@ -15232,12 +15338,49 @@ const ARC_DB = (() => {
     if (challenges.some(c => c.from === me && c.to === toId && c.status === 'open')) { showToast('You already challenged **' + parseId(toId).name + '**'); return; }
     try { if (_dailyRun) endDailyMode(); } catch(_) {}
     const mode = gameMode === 'extreme' ? 'extreme' : 'normal';
-    _activeChal = { role: 'send', to: toId, mode, seed: Date.now(), tries: 0, best: 0 };
-    _chalPrevMode = gameMode; gameMode = mode;
-    document.querySelectorAll('.open').forEach(e => e.classList.remove('open'));
-    startGame('gated');
-    try { showToast(`Challenge **${parseId(toId).name}** — best of **${CHAL_TRIES}** tries on a shared course`); } catch(_) {}
+    openChalIntro({ role: 'send', to: toId, mode, seed: Date.now(), tries: 0, best: 0 });
   }
+  // Challenge START ekranı: iki tarafın skoru yan yana; oyun yalnız START'a basınca başlar.
+  // c henüz _activeChal değil (yeni challenge) ya da zaten aktif (AGAIN ile yeniden deneme).
+  let _ciPending = null;
+  function openChalIntro(c) {
+    _ciPending = c;
+    const recv = c.role === 'recv';
+    const myName = _sanId(playerName) || 'YOU';
+    const oppName = recv ? (c.fromName || parseId(c.from).name) : parseId(c.to).name;
+    const myBest = c.tries ? c.best : 0;
+    let theirs, lblMe, lblThem;
+    if (recv) { theirs = c.target; lblMe = c.tries ? 'YOUR BEST' : 'NOT PLAYED'; lblThem = 'TO BEAT'; }
+    else { const pr = _friendProfiles[c.to]; theirs = pr && pr.score != null ? pr.score : null; lblMe = c.tries ? 'YOUR BEST' : 'NOT PLAYED'; lblThem = 'THEIR RECORD'; }
+    const fmt = n => n == null ? '—' : (n > 0 ? pad(n) : '—');
+    document.getElementById('chal-intro-vs').innerHTML =
+      `<div class="ci-side me"><span class="ci-name">${esc(myName)}</span><span class="ci-score">${fmt(myBest)}</span><span class="ci-lbl">${lblMe}</span></div>`
+      + `<span class="ci-x">VS</span>`
+      + `<div class="ci-side them"><span class="ci-name">${esc(oppName)}</span><span class="ci-score">${fmt(theirs)}</span><span class="ci-lbl">${lblThem}</span></div>`;
+    const dots = Array.from({ length: CHAL_TRIES }, (_, i) => `<i class="${i < c.tries ? 'used' : ''}"></i>`).join('');
+    document.getElementById('chal-intro-info').innerHTML =
+      `${c.mode === 'extreme' ? 'EXTREME' : 'CHILL'} · SAME COURSE · TRY <b>${Math.min(c.tries + 1, CHAL_TRIES)}/${CHAL_TRIES}</b><span class="ci-dots">${dots}</span>`
+      + `<br>${recv ? 'Best of your tries decides the winner' : 'Your best run becomes the target'}`;
+    document.getElementById('chal-start-btn').textContent = c.tries ? 'TRY ' + (c.tries + 1) : 'START';
+    document.querySelectorAll('.open').forEach(e => e.classList.remove('open'));
+    document.getElementById('chal-intro').classList.add('open');
+  }
+  function closeChalIntro() { _ciPending = null; document.getElementById('chal-intro').classList.remove('open'); }
+  function startChalRun() {
+    const c = _ciPending; if (!c) return;
+    document.getElementById('chal-intro').classList.remove('open'); _ciPending = null;
+    if (_activeChal !== c) {   // yeni challenge: modu ayarla (yeniden denemede zaten ayarlı)
+      _activeChal = c; _chalPrevMode = _chalPrevMode || gameMode; gameMode = c.mode === 'extreme' ? 'extreme' : 'normal';
+    }
+    startGame('gated');
+    try {
+      if (c.role === 'send') showToast(`Challenge **${parseId(c.to).name}** — best of **${CHAL_TRIES}** tries on a shared course`);
+      else showToast(`Beat **${c.fromName || parseId(c.from).name}**'s **${c.target}** — try **${c.tries + 1}/${CHAL_TRIES}**`);
+    } catch(_) {}
+  }
+  document.getElementById('chal-start-btn').addEventListener('click', startChalRun);
+  document.getElementById('chal-intro-close').addEventListener('click', closeChalIntro);
+  document.getElementById('chal-intro').addEventListener('click', e => { if (e.target.id === 'chal-intro') closeChalIntro(); });
   // Alan tarafın deneme ilerlemesi (uygulama kapanınca sıfırlanıp hak kazanılmasın)
   const CHAL_PROG_KEY = 'arc_chal_prog';
   const chalProg = id => { try { return (JSON.parse(localStorage.getItem(CHAL_PROG_KEY) || '{}') || {})[id] || { tries: 0, best: 0 }; } catch(_) { return { tries: 0, best: 0 }; } };
@@ -15293,11 +15436,7 @@ const ARC_DB = (() => {
     try { if (_dailyRun) endDailyMode(); } catch(_) {}
     const pr = chalProg(id);
     if (pr.tries >= CHAL_TRIES) { finishChallenge({ role: 'recv', id, from: c.from, fromName: c.fromName, target: c.target, tries: pr.tries, best: pr.best }); renderChallenges(); return; }
-    _activeChal = { role: 'recv', id, from: c.from, fromName: c.fromName, mode: c.mode, target: c.target, seed: c.ts, tries: pr.tries, best: pr.best };
-    _chalPrevMode = gameMode; gameMode = c.mode === 'extreme' ? 'extreme' : 'normal';
-    document.querySelectorAll('.open').forEach(e => e.classList.remove('open'));
-    startGame('gated');
-    try { showToast(`Beat **${c.fromName || parseId(c.from).name}**'s **${c.target}** — try **${pr.tries + 1}/${CHAL_TRIES}**`); } catch(_) {}
+    openChalIntro({ role: 'recv', id, from: c.from, fromName: c.fromName, mode: c.mode, target: c.target, seed: c.ts, tries: pr.tries, best: pr.best });
   }
   function renderFriendsList() {
     const idEl = document.getElementById('myid-code');
@@ -15336,9 +15475,11 @@ const ARC_DB = (() => {
       </div>`).join('');
     list.querySelectorAll('.fl-chal').forEach(b => b.addEventListener('click', () => challengeFriend(b.dataset.to, b)));
     list.querySelectorAll('.fl-remove').forEach(b => b.addEventListener('click', async () => {
-      const id = b.dataset.id;
-      socialEdges = socialEdges.filter(x => x.id !== id); saveSocial(); renderFriendsList(); updateFriendsBadge();
-      try { await ARC_DB.removeFriendEdge(id); } catch(_){}
+      const e0 = socialEdges.find(x => x.id === b.dataset.id);
+      const oid = e0 ? (e0.from === me ? e0.to : e0.from) : '';
+      const ids = oid ? edgesWith(oid) : [b.dataset.id];
+      socialEdges = socialEdges.filter(x => !ids.includes(x.id)); saveSocial(); renderFriendsList(); updateFriendsBadge();
+      for (const id of ids) { try { await ARC_DB.removeFriendEdge(id); } catch(_){} }
     }));
   }
   async function refreshFriendProfiles() {
@@ -15359,6 +15500,13 @@ const ARC_DB = (() => {
     if (toId === me) { if (msgEl) msgEl.textContent = "That's you!"; return false; }
     if (acceptedFriends().some(e => (e.from === me ? e.to : e.from) === toId)) { if (msgEl) msgEl.textContent = 'Already friends'; return false; }
     if (outgoingPending().some(e => e.to === toId)) { if (msgEl) msgEl.textContent = 'Request already sent'; return false; }
+    // Karşı taraf bana zaten istek yolladıysa: ters yönde ikinci kenar açma → onunkini kabul et
+    const incoming = incomingInvites().find(e => e.from === toId);
+    if (incoming) {
+      const done = await respondInvite(incoming.id, true);
+      if (msgEl) msgEl.textContent = done ? 'Friend added ✓' : 'Could not accept (try again)';
+      return !!done;
+    }
     if (msgEl) msgEl.textContent = 'Looking up…';
     let p = null; try { p = await ARC_DB.getPlayer(name, tag); } catch(_){}
     if (!p) { if (msgEl) msgEl.textContent = 'No such player'; return false; }
