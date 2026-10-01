@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Başlıklar sola, çıkış (X) sağa; Friends boşluğu; geniş ve kalın/ince bildirimler (2026-10-01)
+
+- **Başlıklar:** %80 küçültme geri alındı (kullanıcı: çok küçük) → 21px / 3px, ama artık SOLA dayalı. Tüm pencerelerde ok (geri) yerine çarpı (X, aria-label "Close") ve SAĞDA (`.modal-head` içinde `order`, boşluk elemanı gizli; Profil'de sağ üst köşe). Upgrades üst barı: başlık · coin · X; başlık dar ekranda `clamp(14px, 5.2vw, 21px)` (320 px'de coin kutusuna binmez).
+- **Friends:** boş mesaj/davet/meydan okuma kutuları kutunun aralığını yiyordu → SORT BY üstünde büyük boşluk. `:empty { display: none }`.
+- **Bildirimler (ödül kartı + toast):** `left: 50%` kapsayıcıyı ekranın yarısına sıkıştırıyor, satır düşüyordu → `width: max-content`, en fazla %94–96 ekran / 480 px. Taşarsa yazı 0.5 px adımlarla küçülür (tek satır), en küçükte de sığmazsa satır kırılır. Metinde `**…**` → kalın-beyaz, kalanı ince-soluk (önce HTML kaçırılır). Meydan okuma / arkadaş isteği / kabul / davet / rozet sayısı / giriş serisi mesajlarında isim ve skorlar kalın; skorlar sıfırsız (8191).
+- Debug modu sosyal sistemi etkilemiyor: arkadaşlık istekleri kimliğe (NAME#TAG) gelir; tarayıcı ve uygulama ayrı depolama → ayrı hesap.
+- Test: ilgili 7 test + önceki tur (başlık/sıralama) geçti.
+
 ### Menü başlıkları küçüldü, Upgrades başlığı coin kutusuna binmez (2026-10-01)
 
 - Tüm menü/pencere başlıkları (Settings, Coins, Upgrades, High Scores, Badges, Quests, Friends, Themes, Credits, Trace… `.modal-head-title`, `.qm-title`, `.fm-title`, `#settings h2`) tek kuralla 21px → 16.8px (%80), harf aralığı 3px → 1.5px (%50); profil başlığı 18 → 14.4px. SETTINGS/COINS'teki satır içi boyutlar kaldırıldı.

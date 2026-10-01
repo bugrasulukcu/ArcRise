@@ -1372,7 +1372,7 @@
     }
     /* Geri butonu her pencerede kutu köşesinden aynı yerde: 21px sağ / 25px aşağı
        (standart kutu dolgusu 24/20 + çerçeve). Farklı dolgulu kutular burada eşitlenir. */
-    #prof-back-arrow { position: absolute; top: 24px; left: 20px; z-index: 2; }
+    #prof-back-arrow { position: absolute; top: 24px; right: 20px; z-index: 2; }
     #theme-back { position: relative; left: 4px; top: 8px; }
     #coins-modal-close { position: relative; left: -2px; top: -2px; }
     #prof-modal-title { font-size: 18px; letter-spacing: 3px; color: #fff; }
@@ -1814,11 +1814,13 @@
     /* Üst bar: geri oku (sol) · başlık (mutlak ortalı) · coin (sağ) */
     #upg-topbar {
       position: relative;
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%;
+      display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; width: 100%;
       min-height: 38px;
     }
-    #upg-topbar > #upg-back-arrow { justify-self: start; }
-    #upg-topbar > #upgrades-modal-sub { justify-self: end; }
+    /* Sırası: başlık (sola dayalı) · coin · çıkış (X) */
+    #upg-topbar > #upgrades-modal-title { order: 1; }
+    #upg-topbar > #upgrades-modal-sub { order: 2; }
+    #upg-topbar > #upg-back-arrow { order: 3; }
     /* Tüm modal başlık satırlarında ortak çerçeveli geri-dön butonu */
     .modal-back, #upg-back-arrow {
       flex-shrink: 0; width: 38px; height: 38px;
@@ -1857,9 +1859,8 @@
     /* Tüm alt-sayfa başlıkları Settings (h2) ile aynı kalınlıkta */
     .modal-head-title, #upgrades-modal-title { flex: 1; min-width: 0; text-align: center; margin: 0; font-weight: 700; }
     .modal-head-spacer { flex-shrink: 0; width: 38px; }
-    /* Başlık: 3 sütunlu ızgaranın ortasında — yer varken tam ortada, dar ekranda coin kutusuna binmeden kayar */
-    #upgrades-modal-title {
-      font-size: 21px; letter-spacing: 3px; color: #fff; text-align: center; white-space: nowrap;
+    #upgrades-modal-title {   /* dar ekranda (≈<400px) coin kutusuna binmesin diye esnek boy; normal telefonda 21px */
+      font-size: clamp(14px, 5.2vw, 21px); letter-spacing: clamp(1.5px, .75vw, 3px); color: #fff; text-align: center; white-space: nowrap;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
     /* Coin rozeti — geri okuyla aynı kare form + radius (sadece daha geniş) */
@@ -2449,7 +2450,7 @@
       color: var(--green);
       font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
       padding: 12px 18px; border-radius: 11px;
-      max-width: min(86vw, 460px); text-align: center; line-height: 1.55;
+      width: max-content; max-width: min(94vw, 480px); text-align: center; line-height: 1.55; box-sizing: border-box; overflow: hidden;
       box-shadow: 0 0 24px rgba(124,255,122,.20);
       opacity: 0; pointer-events: none;
       transition: opacity .22s, transform .22s;
@@ -2469,15 +2470,16 @@
       position: fixed; left: 50%; top: 13%;
       transform: translateX(-50%);
       z-index: 120; pointer-events: none; display: none;
+      width: max-content; max-width: 96vw;   /* left:50% → içerik ekranın yarısına sıkışıp satır düşürüyordu */
     }
     #reward-toast.show { display: block; }
     .rt-card {
       position: relative; overflow: hidden;
-      max-width: min(92vw, 440px);
-      display: flex; align-items: center; gap: 14px;
+      max-width: min(96vw, 480px); min-width: min(84vw, 320px); box-sizing: border-box;
+      display: flex; align-items: center; gap: 12px;
       background: rgba(16,22,34,.94);
       border: 1.5px solid rgba(255,206,90,.6);
-      border-radius: 16px; padding: 14px 24px 14px 16px;
+      border-radius: 16px; padding: 13px 18px 13px 14px;
       font-family: var(--font);
       animation: rtPop .55s cubic-bezier(.18,1.35,.4,1) both,
                  rtGlow 1.5s ease-in-out .5s infinite alternate;
@@ -2490,7 +2492,7 @@
       animation: rtShine 1.8s ease-out .25s 2;
     }
     .rt-ic {
-      flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+      flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       background: radial-gradient(circle at 32% 30%, rgba(255,220,120,.35), rgba(255,206,90,.08));
       border: 1.5px solid rgba(255,206,90,.5); color: #ffce5a;
@@ -2498,7 +2500,10 @@
     }
     .rt-txt { display: flex; flex-direction: column; gap: 3px; }
     .rt-title { font-size: 9px; letter-spacing: 2.5px; color: rgba(255,255,255,.6); }
-    .rt-sub { font-size: 15px; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
+    /* Alt satır: önemli kısımlar (isim, skor) kalın-beyaz, kalanı ince-soluk; işaretsiz metin tümüyle kalın */
+    .rt-sub { font-size: 13.5px; letter-spacing: 1px; color: rgba(255,255,255,.72); font-weight: 400; }
+    .rt-sub.all-b, .rt-sub b, #toast b { color: #fff; font-weight: 700; }
+    #toast { font-weight: 400; }
     .rt-coin {
       display: inline-flex; align-items: center; gap: 5px; margin-top: 2px;
       font-size: 12px; color: #ffce5a; letter-spacing: 1px;
@@ -3269,6 +3274,8 @@
     /* Meydan okumalar */
     #fl-challenges { width: 100%; display: flex; flex-direction: column; gap: 7px; }
     #fl-challenges:not(:empty) { margin: 2px 0 4px; }
+    /* Boş bölümler kutunun aralığını yemesin (SORT BY satırının üstünde büyük boşluk kalıyordu) */
+    :is(#fl-invites, #fl-challenges, #fl-add-msg):empty { display: none; }
     .fl-inv-hdr.ch { color: #ff9a5a; }
     .fl-ch-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 11px;
       background: rgba(255,122,40,.07); border: 1px solid rgba(255,122,40,.3); }
@@ -4052,9 +4059,12 @@
     .theme-try:active { transform: scale(.95); }
     .theme-tried { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.35); }
     #theme-open { padding: 9px 14px; border-radius: 11px; font-family: var(--font); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; }
-    /* Menü başlıkları: 21px → 16.8px (%80), harf aralığı 3px → 1.5px (%50) — telefonda UPGRADES coin kutusuna binmesin */
-    :is(.modal-head-title, #upgrades-modal-title, #lb-modal-title, #badges-modal-title, .qm-title, .fm-title, #settings h2) { font-size: 16.8px; letter-spacing: 1.5px; }
-    #prof-modal-title { font-size: 14.4px; letter-spacing: 1.5px; }
+    /* Pencere başlık satırı: başlık SOLA dayalı (eski boy 21px / 3px), çıkış (X) SAĞDA */
+    .modal-head-title { font-size: 21px; letter-spacing: 3px; }
+    .modal-head-title, #upgrades-modal-title { text-align: left !important; }
+    .modal-head > .modal-head-title { order: 0; }
+    .modal-head > .modal-back { order: 2; }
+    .modal-head-spacer { display: none; }
     html#arc .gl.gl-glass {
       background:
         radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%),
@@ -4253,7 +4263,7 @@
 <div class="screen" id="settings">
   <div class="panel gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="settings-back" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="settings-back" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="modal-head-title">SETTINGS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4356,7 +4366,7 @@
 <div id="privacy-modal">
   <div id="privacy-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="privacy-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="privacy-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">PRIVACY</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4406,7 +4416,7 @@
 <div id="theme-modal">
   <div id="theme-modal-box" class="gl gl-pink gl-glass" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <button id="theme-back" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="theme-back" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="modal-head-title">THEMES</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4568,7 +4578,7 @@
   <div id="upgrades-modal-box" class="gl gl-purple gl-glass">
     <div id="upg-topbar">
       <button id="upg-back-arrow" type="button" aria-label="Back">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg>
       </button>
       <div id="upgrades-modal-title">UPGRADES</div>
       <div id="upgrades-modal-sub" class="home-chip chip-coin gl gl-gold">
@@ -4595,7 +4605,7 @@
 <div id="gearpick-modal">
   <div id="gearpick-box" class="gl gl-purple gl-glass">
     <div class="modal-head">
-      <button id="gearpick-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="gearpick-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title" id="gearpick-title">CHOOSE GEAR</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4607,7 +4617,7 @@
 <div id="coins-modal">
   <div id="coins-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
-      <button id="coins-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="coins-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="modal-head-title" style="color:#ffd866">COINS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4661,7 +4671,7 @@
 <div id="quests-modal">
   <div id="quests-modal-box" class="gl gl-amber gl-glass">
     <div class="modal-head">
-      <button id="quests-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="quests-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="qm-title modal-head-title">DAILY QUESTS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4674,7 +4684,7 @@
 <div id="credits-modal">
   <div id="credits-box" class="gl gl-blue gl-glass">
     <div class="modal-head">
-      <button id="credits-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="credits-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">CREDITS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4689,7 +4699,7 @@
 <div id="friends-modal">
   <div id="friends-modal-box" class="gl gl-blue gl-glass">
     <div class="modal-head">
-      <button id="friends-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="friends-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">CHALLENGE!</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4711,7 +4721,7 @@
 <div id="friendslist-modal">
   <div id="friendslist-modal-box" class="gl gl-green gl-glass">
     <div class="modal-head">
-      <button id="friendslist-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="friendslist-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">FRIENDS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4742,7 +4752,7 @@
   <div id="lb-modal-box" class="gl gl-gold gl-glass">
     <div class="lb-fx" aria-hidden="true"><i style="left:8%;--d:9s;--dl:0s;--sx:14px"></i><i style="left:19%;--d:11s;--dl:-4s;--sx:-10px"></i><i style="left:31%;--d:8s;--dl:-2s;--sx:8px"></i><i style="left:44%;--d:12s;--dl:-7s;--sx:-16px"></i><i style="left:56%;--d:10s;--dl:-1s;--sx:12px"></i><i style="left:67%;--d:9s;--dl:-5s;--sx:-8px"></i><i style="left:78%;--d:13s;--dl:-3s;--sx:18px"></i><i style="left:89%;--d:10s;--dl:-8s;--sx:-12px"></i><i style="left:25%;--d:14s;--dl:-10s;--sx:6px"></i><i style="left:72%;--d:12s;--dl:-6s;--sx:-6px"></i></div>
     <div class="modal-head">
-      <button id="lb-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="lb-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div id="lb-modal-title" class="modal-head-title">High Scores</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4796,7 +4806,7 @@
 <div id="prof-modal">
   <div id="prof-modal-box" class="gl gl-lilac gl-glass">
     <!-- Geri oku (diğer alt-sayfalardaki gibi) -->
-    <button id="prof-back-arrow" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+    <button id="prof-back-arrow" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
 
     <!-- Avatar; rozet slotları dairenin sol/sağ alt köşelerinde -->
     <div id="prof-av-row">
@@ -4882,7 +4892,7 @@
 <div id="analysis-modal">
   <div id="analysis-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="analysis-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="analysis-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">ANALYSIS</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4904,7 +4914,7 @@
 <div id="trace-modal">
   <div id="trace-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="trace-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="trace-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">TRACE</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4924,7 +4934,7 @@
 <div id="custom-modal">
   <div id="custom-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="custom-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="custom-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">CUSTOM GRADIENT</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4942,7 +4952,7 @@
 <div id="tomb-modal">
   <div id="tomb-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="tomb-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="tomb-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">TOMB</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4955,7 +4965,7 @@
 <div id="deathtext-modal">
   <div id="deathtext-modal-box" class="gl gl-lilac gl-glass">
     <div class="modal-head">
-      <button id="deathtext-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="deathtext-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">DEATH TEXT</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -4968,7 +4978,7 @@
 <div id="badges-modal">
   <div id="badges-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
-      <button id="badges-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
+      <button id="badges-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div id="badges-modal-title" class="modal-head-title">Badges</div>
       <span class="modal-head-spacer"></span>
     </div>
@@ -6658,10 +6668,21 @@ const ARC_DB = (() => {
   // Generic toast (auto-hide after 1.6s)
   let _toastTimer = null;
   // Bilgi toast'ı — 5sn görünür; herhangi bir yere dokununca kapanır.
+  // Bildirim metni: **…** arası kalın (önce HTML kaçırılır → kullanıcı adı güvenli)
+  const richTxt = t => esc(t || '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  // Tek satıra sığdır: taşarsa yazı boyunu 0.5px adımlarla küçült (en az minPx); yine sığmazsa satır kırılır
+  function fitOneLine(el, maxW, minPx) {
+    if (!el) return;
+    el.style.fontSize = ''; el.style.whiteSpace = 'nowrap'; el.style.maxWidth = maxW + 'px';
+    let fs = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth + 1 && fs > minPx) { fs -= .5; el.style.fontSize = fs + 'px'; }
+    if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = 'normal';
+  }
   function showToast(msg) {
     const el = document.getElementById('toast');
     if (!el) return;
-    el.textContent = msg;
+    el.innerHTML = richTxt(msg);
+    el.style.maxWidth = ''; fitOneLine(el, Math.min(innerWidth * .94, 480), 9.5);
     el.classList.add('show');
     if (_toastTimer) clearTimeout(_toastTimer);
     const hide = () => {
@@ -6701,11 +6722,13 @@ const ARC_DB = (() => {
       <span class="rt-ic">${o.badge ? badgeHTML(o.badge, 34) : iconHTML(o.icon || 'coin', { size: 26 })}</span>
       <span class="rt-txt">
         <span class="rt-title">${esc(o.title || 'REWARD')}</span>
-        <span class="rt-sub">${esc(o.sub || '')}</span>
+        <span class="rt-sub${/\*\*/.test(o.sub || '') ? '' : ' all-b'}">${richTxt(o.sub)}</span>
         ${n ? `<span class="rt-coin">${iconHTML('coin', { size: 13 })} +${n} COIN${n === 1 ? '' : 'S'}</span>` : ''}
       </span>
     </div>`;
     host.classList.add('show');
+    { const sub = host.querySelector('.rt-sub'); const room = Math.min(innerWidth * .96, 480) - 28 - 42 - 12;   // kart iç boşluğu + ikon + aralık
+      fitOneLine(sub, room, 10.5); }
     try { haptic(20); } catch(_){}
     const hide = () => {
       if (_rtTimer) { clearTimeout(_rtTimer); _rtTimer = null; }
@@ -10506,7 +10529,7 @@ const ARC_DB = (() => {
       chal.status = won ? 'won' : 'lost'; chal.result = sc;
       try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
       try { showRewardToast({ icon: 'bolt', title: won ? 'CHALLENGE WON!' : 'CHALLENGE LOST',
-        sub: won ? `You beat ${chal.fromName || parseId(chal.from).name}'s ${pad(chal.target)}` : `${pad(sc)} / ${pad(chal.target)} — so close` }); } catch(_){}
+        sub: won ? `You beat **${chal.fromName || parseId(chal.from).name}**'s **${chal.target}**` : `**${sc}** / **${chal.target}** — so close` }); } catch(_){}
       ARC_DB.resolveChallenge(chal.id, won, sc).catch(() => {});
       updateFriendsBadge();
     }
@@ -11121,6 +11144,7 @@ const ARC_DB = (() => {
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
     get bounces() { return runBounces; },
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
+    rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
@@ -13875,7 +13899,7 @@ const ARC_DB = (() => {
       });
       const list = [...best.values()];
       if (list.length > 3) {
-        showRewardToast({ icon: 'medal', title: 'BADGES UNLOCKED', sub: list.length + ' new badges' });
+        showRewardToast({ icon: 'medal', title: 'BADGES UNLOCKED', sub: '**' + list.length + '** new badges' });
       } else {
         list.forEach(b => showRewardToast({
           icon: b.icon, badge: b, title: 'BADGE UNLOCKED', sub: b.name,
@@ -14695,7 +14719,7 @@ const ARC_DB = (() => {
         const d = (parseInt(localStorage.getItem('arc_series_day')||'0',10) || 0) + 1;
         localStorage.setItem('arc_series_day', String(Math.min(SERIES_LEN, d)));
         grantCoins(LOGIN_COIN);
-        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Streak day ' + (stats.dayStreak || 1), coins: LOGIN_COIN }); } catch(_){}
+        try { showRewardToast({ icon: 'coin', title: 'DAILY LOGIN', sub: 'Streak day **' + (stats.dayStreak || 1) + '**', coins: LOGIN_COIN }); } catch(_){}
       }
     } catch(_){}
   }
@@ -15097,11 +15121,11 @@ const ARC_DB = (() => {
     if (!Array.isArray(rows)) return;
     for (const c of rows) {
       if (c.to === me && c.status === 'open' && _markSeen(c.id + ':open'))
-        try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE!', sub: `${c.fromName || parseId(c.from).name} dares you to beat ${pad(c.target)}` }); haptic([20, 40, 20]); } catch(_){}
+        try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE!', sub: `**${c.fromName || parseId(c.from).name}** dares you to beat **${c.target}**` }); haptic([20, 40, 20]); } catch(_){}
       if (c.from === me && c.status !== 'open' && _markSeen(c.id + ':' + c.status)) {
         const nm = parseId(c.to).name;
         try { showRewardToast({ icon: 'bolt', title: c.status === 'won' ? 'CHALLENGE BEATEN' : 'CHALLENGE HELD',
-          sub: c.status === 'won' ? `${nm} beat your ${pad(c.target)} with ${pad(c.result)}` : `${nm} couldn't beat your ${pad(c.target)} (${pad(c.result)})` }); } catch(_){}
+          sub: c.status === 'won' ? `**${nm}** beat your ${c.target} with **${c.result}**` : `**${nm}** couldn't beat your **${c.target}** (${c.result})` }); } catch(_){}
       }
     }
     challenges = rows; try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
@@ -15113,9 +15137,9 @@ const ARC_DB = (() => {
     // Bildirim: yeni gelen istek; gönderdiğim istek kabul edildi
     for (const e of socialEdges) {
       if (e.status === 'pending' && e.to === me && !(e.via && e.via === myFriendCode()) && _markSeen(e.id + ':pending'))
-        try { showRewardToast({ icon: 'hearts', title: 'FRIEND REQUEST', sub: `${e.fromName || parseId(e.from).name}#${e.fromTag || parseId(e.from).tag} wants to be friends` }); haptic([15, 30, 15]); } catch(_){}
+        try { showRewardToast({ icon: 'hearts', title: 'FRIEND REQUEST', sub: `**${e.fromName || parseId(e.from).name}#${e.fromTag || parseId(e.from).tag}** wants to be friends` }); haptic([15, 30, 15]); } catch(_){}
       if (e.status === 'accepted' && e.from === me && prevPending.has(e.id) && _markSeen(e.id + ':accepted'))
-        try { showRewardToast({ icon: 'hearts', title: 'FRIEND ADDED', sub: `${parseId(e.to).name} accepted your request` }); } catch(_){}
+        try { showRewardToast({ icon: 'hearts', title: 'FRIEND ADDED', sub: `**${parseId(e.to).name}** accepted your request` }); } catch(_){}
     }
     await loadChallenges();
     // Benim davet linkimle gelenlerin istekleri → otomatik kabul (doğrudan arkadaş listesine)
@@ -15125,7 +15149,7 @@ const ARC_DB = (() => {
         let ok = false; try { ok = await ARC_DB.acceptFriendRequest(e.id); } catch(_){}
         if (ok) {
           e.status = 'accepted'; saveSocial();
-          try { showRewardToast({ icon: 'hearts', title: 'NEW FRIEND', sub: (e.fromName || parseId(e.from).name) + ' joined with your link' }); } catch(_){}
+          try { showRewardToast({ icon: 'hearts', title: 'NEW FRIEND', sub: '**' + (e.fromName || parseId(e.from).name) + '** joined with your link' }); } catch(_){}
         }
       }
     }
