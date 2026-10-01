@@ -226,7 +226,7 @@
       right: calc(3.4% + 10px);
       width: 108px; height: 100%;
       display: flex; flex-direction: column;
-      justify-content: center; gap: 5px;
+      justify-content: center; gap: 3px;
       padding: 60px 0 20px 0;
       overflow: hidden;
     }
@@ -5519,6 +5519,56 @@ const ARC_DB = (() => {
     } catch(e) { console.warn('[ArcDB] fetch failed', e); _topFailed = true; return []; }
   }
 
+
+  // ── Sıralama komşuları (mode + score composite index: firestore.indexes.json) ──
+  // Oyuncunun skoruna göre üstündeki/altındaki satırlar ve gerçek sırası — top-N dışında da çalışır.
+  // Kendi skor dokümanı (uid_mode) hariç tutulur.
+  async function _scoreRange(mode, op, S, dir, limit) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    mode = normMode(mode);
+    try {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'scores' }],
+          where: { compositeFilter: { op: 'AND', filters: [
+            { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: mode } } },
+            { fieldFilter: { field: { fieldPath: 'score' }, op, value: { integerValue: String(Math.max(0, Math.floor(S))) } } },
+          ] } },
+          orderBy: [{ field: { fieldPath: 'score' }, direction: dir }],
+          limit,
+        }}),
+      });
+      if (!res.ok) throw new Error('range ' + res.status);
+      const mine = getUid() ? `${getUid()}_${mode}` : '';
+      return parseRows(await res.json()).filter(r => r.docId !== mine);
+    } catch (e) { console.warn('[ArcDB] range failed', e); return null; }
+  }
+  // Skoru S'den büyük olanlar, en yakından başlayarak (artan)
+  const getScoresAbove = (mode, S, n) => _scoreRange(mode, 'GREATER_THAN', S, 'ASCENDING', n);
+  // Skoru S'den küçük/eşit olanlar, en yakından başlayarak (azalan)
+  const getScoresBelow = (mode, S, n) => _scoreRange(mode, 'LESS_THAN_OR_EQUAL', S, 'DESCENDING', n);
+  // Skoru S'den büyük kaç kayıt var (kendi dokümanı dahil olabilir — çağıran düzeltir)
+  async function countAbove(mode, S) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    try {
+      const res = await fbFetch(`${BASE}:runAggregationQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredAggregationQuery: {
+          structuredQuery: { from: [{ collectionId: 'scores' }], where: { compositeFilter: { op: 'AND', filters: [
+            { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: normMode(mode) } } },
+            { fieldFilter: { field: { fieldPath: 'score' }, op: 'GREATER_THAN', value: { integerValue: String(Math.max(0, Math.floor(S))) } } },
+          ] } } },
+          aggregations: [{ alias: 'n', count: {} }],
+        }}),
+      });
+      if (!res.ok) throw new Error('count ' + res.status);
+      const j = await res.json();
+      const v = j?.[0]?.result?.aggregateFields?.n?.integerValue;
+      return v != null ? parseInt(v, 10) : null;
+    } catch (e) { console.warn('[ArcDB] count failed', e); return null; }
+  }
+
   // Allow explicit cache wipe (e.g. after submitting a new score).
   function invalidateTopCache() {
     _memCache.clear();
@@ -6070,7 +6120,7 @@ const ARC_DB = (() => {
     } catch (_) { return null; }
   }
 
-  const api = { sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  const api = { getScoresAbove, getScoresBelow, countAbove, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -7151,7 +7201,6 @@ const ARC_DB = (() => {
   }
 
   // LB NPC sabit skorları (her oyun başında yeniden çekilir)
-  let lbNPCScores = [];
 
   // Tutorial system removed — players learn by playing.
 
@@ -9197,26 +9246,28 @@ const ARC_DB = (() => {
   const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
   let lbFrame = 0;
 
-  // Firestore'dan canlı skorları çek, lbNPCScores'u doldur.
-  // Rate-limited: çağrı başına en fazla 50 doc, ve aynı oturumda 5 dk içinde
-  // yeniden istenirse cache'ten dönüyor (getTopScores TTL'i devreye giriyor).
-  async function fetchLiveScores() {
-    try {
-      const rows = await ARC_DB.getTopScores(50, gameMode);   // 50: oyuncu skor kazandıkça listede yukarı çıkarken altında/üstünde gerçek rakipler olsun
-      if (rows && rows.length > 0) {
-        // Oyuncunun kendi satırını dışarıda bırak; refreshLB dinamik ekleyecek
-        lbNPCScores = rows
-          .filter(r => r.name !== playerName)
-          .map(r => ({ n: r.name, s: r.score }));
-      } else {
-        // Firebase boş / ulaşılamadı → sahte NPC'ler
-        lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
-        lbNPCScores.sort((a, b) => b.s - a.s);
-      }
-    } catch (e) {
-      lbNPCScores = LB_NAMES.map(n => ({ n, s: 2 + Math.floor(Math.random() * 18) }));
-      lbNPCScores.sort((a, b) => b.s - a.s);
+  // Oyun içi sağ liste: oyuncunun ÜSTÜNDEKİ oyunculardan bir havuz (en yakından başlayarak).
+  // Oyuncu yükseldikçe geçtikleri altta kalır; üstte 20'den az kişi kalınca bir sonraki parti çekilir.
+  const LB_BATCH = 40, LB_WIN = 31;
+  let lbPool = new Map(), lbTopDone = false, lbFetching = false, lbRunTok = 0;
+  async function lbFetchMore(fromScore) {
+    if (lbFetching || lbTopDone) return;
+    lbFetching = true; const tok = lbRunTok, mode = gameMode;
+    let rows = null; try { rows = await ARC_DB.getScoresAbove(mode, fromScore, LB_BATCH); } catch(_) {}
+    if (tok !== lbRunTok) return;   // yeni run başladı → bu cevap bayat (lbFetching yeni run'da sıfırlandı)
+    lbFetching = false;
+    if (!rows) {   // ulaşılamadı → havuz boşsa sahte NPC'ler
+      lbTopDone = true;
+      if (!lbPool.size) LB_NAMES.forEach((n, i) => lbPool.set('npc' + i, { n, s: 2 + Math.floor(Math.random() * 18) }));
+      return;
     }
+    const myT = myTag();
+    for (const r of rows) if (!(r.name === playerName && (!r.tag || r.tag === myT))) lbPool.set(r.docId, { n: r.name, s: r.score });
+    if (rows.length < LB_BATCH) lbTopDone = true;   // liderliğin tepesine ulaşıldı
+  }
+  function fetchLiveScores() {
+    lbRunTok++; lbPool = new Map(); lbTopDone = false; lbFetching = false;
+    return lbFetchMore(0);
   }
 
   // Cross-player ghost trails for current mode — own ghost excluded.
@@ -9243,14 +9294,19 @@ const ARC_DB = (() => {
     if (lbFrame % 30 !== 0) return; // update every 30 frames
     const sc  = Math.floor(score);
     const avc = AVATAR_COLORS[avatarIdx];
-    // NPC'leri ve oyuncuyu birleştir, skora göre sırala
-    const rows = [...lbNPCScores, { n: playerName, s: sc, you: true }];
-    rows.sort((a, b) => b.s - a.s);
-    // Oyuncunun sırası
+    // Üstte 20'den az kişi kaldıysa bir sonraki partiyi çek (en yüksek bilinen skorun üstü)
+    if (!lbTopDone && !lbFetching) {
+      let above = 0, max = 0;
+      for (const v of lbPool.values()) { if (v.s > sc) above++; if (v.s > max) max = v.s; }
+      if (above < 20) lbFetchMore(max);
+    }
+    const rows = [...lbPool.values(), { n: playerName, s: sc, you: true }];
+    rows.sort((a, b) => b.s - a.s || (a.you ? 1 : b.you ? -1 : 0));   // eşitlikte oyuncu altta
+    // 31 satırlık pencere: başta üstte 30 kişi; yükseldikçe oyuncu ortada (15 üst / 15 alt);
+    // tepeye yaklaşınca pencere durur, oyuncu yukarı kayar ve altta 30 kişi kalır.
     const youIdx = rows.findIndex(r => r.you);
-    // Oyuncu ortada kalacak şekilde 12 satır dilim
-    const start = Math.max(0, youIdx - 5);
-    const slice = rows.slice(start, start + 13);
+    const start = Math.max(0, Math.min(youIdx - 15, rows.length - LB_WIN));
+    const slice = rows.slice(start, start + LB_WIN);
     lbEl.innerHTML = slice.map(r =>
       r.you
         ? `<div class="lb-row you" style="color:${avc}">▶ ${esc(r.n)}</div>`
@@ -10708,7 +10764,21 @@ const ARC_DB = (() => {
     if (!markedYou) {
       const ins = ann.findIndex(r => r.score < sc);
       const pe  = { name: playerName, avatar: avatarIdx, score: sc, isYou: true };
-      if (ins === -1) {
+      // İlk 20'nin altındaysa gerçek sıra: üstündeki kayıt sayısı (+ hemen üstündeki oyuncu)
+      let real = null;
+      if (ins === -1 && !wasDaily && !lbFallback && sc > 0) {
+        try {
+          const [cnt, ab] = await Promise.all([ARC_DB.countAbove(gameMode, sc), ARC_DB.getScoresAbove(gameMode, sc, 1)]);
+          // Kendi en iyi skorum bu elden yüksekse sayımda ben de varım → çıkar
+          const myBestMode = gameMode === 'extreme' ? (stats.bestExtreme || 0) : (stats.bestNormal || 0);
+          if (cnt != null) real = { cnt: Math.max(0, cnt - (myBestMode > sc ? 1 : 0)), above: ab && ab[0] };
+        } catch(_) {}
+      }
+      if (real && real.cnt >= ann.length) {
+        if (real.above && real.cnt > ann.length) ann.push({ ...real.above, rank: real.cnt - 1, isYou: false });
+        pe.rank = real.cnt;
+        ann.push(pe);
+      } else if (ins === -1) {
         pe.rank = ann.length;
         ann.push(pe);
       } else {
@@ -11511,13 +11581,22 @@ const ARC_DB = (() => {
       // (Daha geriye uzanmak için kullanıcı zaten Firestore quota'sı yiyor.)
       rows = await ARC_DB.getTopScores(30, mode);
     }
+    // İlk 30'da değilsem: gerçek sıram + hemen üstüm/altım (yalnız skor metriği; mesafe sorgusu yok)
+    let around = null;
+    const myBest = mode === 'extreme' ? (stats?.bestExtreme || 0) : (stats?.bestNormal || 0);
+    if (lbMetric === 'score' && myBest > 0 && !rows.some(isMyRow)) {
+      try {
+        const [cnt, ab, be] = await Promise.all([ARC_DB.countAbove(mode, myBest), ARC_DB.getScoresAbove(mode, myBest, 1), ARC_DB.getScoresBelow(mode, myBest, 1)]);
+        if (cnt != null) around = { rank: cnt, above: ab && ab[0], below: be && be[0], score: myBest };
+      } catch(_) {}
+    }
     const now = Date.now();
     const dayStart   = startOfDay(now);
     const monthStart = startOfMonth(now);
     const top     = rows[0] || null;
     const daily   = rows.filter(r => r.ts >= dayStart).sort((a,b)=>b.score-a.score)[0] || null;
     const monthly = rows.filter(r => r.ts >= monthStart).sort((a,b)=>b.score-a.score)[0] || null;
-    const data = { rows, top, daily, monthly, metric: lbMetric };
+    const data = { rows, top, daily, monthly, metric: lbMetric, around };
     if (!ARC_DB.topFailed()) lbCache[mode] = data;  // başarısız okuma cache'lenmesin → sonraki açılışta tekrar dener
     return data;
   }
@@ -11546,7 +11625,7 @@ const ARC_DB = (() => {
     }).join('');
   }
 
-  function renderLbPosition(rows, mode) {
+  function renderLbPosition(rows, mode, around) {
     const listEl = document.getElementById('lb-list');
     if (!rows || rows.length === 0) {
       const label = mode === 'normal' ? 'CHILL' : mode.toUpperCase();
@@ -11571,11 +11650,20 @@ const ARC_DB = (() => {
     }
     // Tekrarsız ve sıralı
     pickIdx = [...new Set(pickIdx)].sort((a, b) => a - b);
-    const show = pickIdx.map(i => ({
+    let show = pickIdx.map(i => ({
       ...rows[i],
       rank: i,
       _markTop: i === 0,
     }));
+    // İlk 30 dışındaysam: #1 · ··· · üstüm · BEN · altım (gerçek sıra numaralarıyla)
+    if (youIdx === -1 && around) {
+      const me = { name: playerName, avatar: avatarIdx, score: around.score, tag: myTag(), rank: around.rank };
+      show = [{ ...rows[0], rank: 0, _markTop: true }];
+      if (around.rank > 2) show.push({ _divider: true });
+      if (around.above && around.rank > 1) show.push({ ...around.above, rank: around.rank - 1 });
+      show.push(me);
+      if (around.below) show.push({ ...around.below, rank: around.rank + 1 });
+    }
     listEl.innerHTML = show.map(r => {
       if (r._divider) return `<div class="lb-list-row divider">···</div>`;
       if (r._youPlaceholder) {
@@ -11633,7 +11721,7 @@ const ARC_DB = (() => {
     renderLbCard('best',    data.top);
     renderLbCard('daily',   data.daily);
     renderLbCard('monthly', data.monthly);
-    renderLbPosition(data.rows, mode);
+    renderLbPosition(data.rows, mode, data.around);
   }
 
   function openLbModal() {

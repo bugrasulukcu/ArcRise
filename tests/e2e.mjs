@@ -86,11 +86,22 @@ function onFirebase({ requestId, request }) {
   if (!url.host.includes('firestore')) return reply(requestId, 404, {});
   const authed = Object.keys(request.headers || {}).some(k => k.toLowerCase() === 'authorization');
   const docPath = decodeURIComponent(url.pathname.split('/documents/')[1] || '');
-  if (url.pathname.endsWith(':runQuery')) {
-    const q = JSON.parse(request.postData || '{}').structuredQuery || {};
+  if (url.pathname.endsWith(':runQuery') || url.pathname.endsWith(':runAggregationQuery')) {
+    const body = JSON.parse(request.postData || '{}');
+    const agg = !!body.structuredAggregationQuery;
+    const q = (agg ? body.structuredAggregationQuery.structuredQuery : body.structuredQuery) || {};
     const coll = q.from?.[0]?.collectionId;
-    const rows = [...fb.docs.entries()].filter(([k]) => k.split('/')[0] === coll).map(([, d]) => d)
-      .sort((a, b) => Number(b.fields.score?.integerValue || 0) - Number(a.fields.score?.integerValue || 0));
+    // where: fieldFilter / compositeFilter(AND) — EQUAL, GREATER_THAN, LESS_THAN_OR_EQUAL (sayısal veya metin)
+    const val = v => v == null ? undefined : v.integerValue != null ? Number(v.integerValue) : v.doubleValue != null ? Number(v.doubleValue) : v.stringValue;
+    const OPS = { EQUAL: (a, b) => a === b, GREATER_THAN: (a, b) => a > b, LESS_THAN_OR_EQUAL: (a, b) => a <= b, GREATER_THAN_OR_EQUAL: (a, b) => a >= b, LESS_THAN: (a, b) => a < b };
+    const filters = q.where ? (q.where.compositeFilter ? q.where.compositeFilter.filters : [q.where]).map(f => f.fieldFilter).filter(Boolean) : [];
+    let rows = [...fb.docs.entries()].filter(([k]) => k.split('/')[0] === coll).map(([, d]) => d)
+      .filter(d => filters.every(f => { const a = val(d.fields[f.field.fieldPath]); return a !== undefined && OPS[f.op] && OPS[f.op](a, val(f.value)); }));
+    const ob = q.orderBy?.[0];
+    const sf = ob ? ob.field.fieldPath : 'score', dir = ob && ob.direction === 'ASCENDING' ? 1 : -1;
+    rows.sort((a, b) => dir * ((val(a.fields[sf]) || 0) - (val(b.fields[sf]) || 0)));
+    if (agg) return reply(requestId, 200, [{ result: { aggregateFields: { n: { integerValue: String(rows.length) } } } }]);
+    if (q.limit) rows = rows.slice(0, q.limit);
     return reply(requestId, 200, rows.length ? rows.map(document => ({ document })) : [{ readTime: new Date().toISOString() }]);
   }
   if (request.method === 'GET') return fb.docs.has(docPath) ? reply(requestId, 200, fb.docs.get(docPath)) : reply(requestId, 404, { error: { code: 404 } });
@@ -623,6 +634,26 @@ test('oyun sonu sıralaması: başlıksız ≤3 satır (#1 · üstündeki · sen
   check(r.names[0] === 'AAA' && r.names[1] === 'EEE' && r.gap, `#1 + üstündeki + sen bekleniyordu: ${JSON.stringify(r)}`);
   check(r.adds[0] && r.adds[1] && !r.adds[2], `arkadaş ekle yalnız başkalarında: ${JSON.stringify(r.adds)}`);
   check(!r.head && !r.brk, 'eski başlık satırı / coin kırılım satırı hâlâ var');
+});
+
+test('sıralama penceresi: oyun içi liste 31 satır (üstte 30 kişi), High Scores penceresinde gerçek sıra (ilk 30 dışında)', async () => {
+  fbReset();
+  const doc = (n, sc) => ({ name: `projects/p/databases/(default)/documents/scores/${n}_normal`,
+    fields: { name: { stringValue: n }, owner: { stringValue: 'SEED' }, tag: { stringValue: '1234' }, score: { integerValue: String(sc) },
+      mode: { stringValue: 'normal' }, ts: { integerValue: String(Date.now()) }, avatar: { integerValue: '1' } } });
+  for (let i = 1; i <= 80; i++) fb.docs.set(`scores/P${i}_normal`, doc('P' + i, i * 1000));   // hepsi tek owner (seed gibi)
+  await fresh({ arc_score_v26: '1', arc_denom_v23: '1', arc_dist_reset_v2: '1', arc_combo_reset_v24: '1', arc_stats_v1: JSON.stringify({ bestNormal: 50500 }) });
+  // oyun içi: run başında oyuncu en altta, üstünde en yakın 30 kişi (P1..P30)
+  await ev(`document.getElementById('wrap-start').click(); true`);
+  check(await waitFor(`document.querySelectorAll('#lb .lb-row').length === 31`, 6000), 'oyun içi liste 31 satır değil: ' + await ev(`document.querySelectorAll('#lb .lb-row').length`));
+  const lb = await ev(`[...document.querySelectorAll('#lb .lb-row')].map(x => x.textContent.trim())`);
+  check(lb[30].includes('▶') && lb[29] === 'P1' && lb[0] === 'P30', `oyun içi pencere yanlış: ${JSON.stringify([lb[0], lb[29], lb[30]])}`);
+  await ev(`ARC_TEST.toScene('home'); true`); await sleep(400);
+  // High Scores: ilk 30'da değilim (50500 → 30 kişi üstte) → #1 · ··· · üstüm · BEN (031.) · altım
+  await ev(`document.getElementById('btn-lb').click(); true`);
+  check(await waitFor(`!!document.querySelector('#lb-list .lb-list-row.you')`, 6000), 'High Scores listesinde kendi satırım yok: ' + await ev(`document.getElementById('lb-list').textContent.replace(/\\s+/g,' ') + ' | best=' + JSON.parse(localStorage.getItem('arc_stats_v1')||'{}').bestNormal`));
+  const hs = await ev(`[...document.querySelectorAll('#lb-list .lb-list-row')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())`);
+  check(hs[0].startsWith('001. P80') && hs[1] === '···' && hs[2].startsWith('030. P51') && hs[3].startsWith('031.') && hs[4].startsWith('032. P50'), `High Scores satırları: ${JSON.stringify(hs)}`);
 });
 
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
