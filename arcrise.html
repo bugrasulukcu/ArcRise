@@ -3666,7 +3666,10 @@
     #go-coin-bar-wrap { position: relative; overflow: visible; }
     .go-coin-fly { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; pointer-events: none; z-index: 3;
       animation: goCoinFly .6s cubic-bezier(.3,.7,.3,1) forwards; }
-    @keyframes goCoinFly { 0% { transform: translate(0, 0) scale(.6); opacity: 1; } 60% { transform: translate(var(--fx), var(--fy)) scale(1.25); opacity: 1; } 100% { transform: translate(var(--fx), var(--fy)) scale(.4); opacity: 0; } }
+    @keyframes goCoinFly { 0% { transform: translate(0, 0) scale(.5); opacity: 1; } 55% { transform: translate(var(--fx), var(--fy)) scale(1.2); opacity: 1; } 100% { transform: translate(var(--fx), calc(var(--fy) - 14px)) scale(.9); opacity: 0; } }
+    .go-coin-ring { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none; z-index: 2;
+      border: 2px solid #ffe066; animation: goCoinRing .45s ease-out forwards; }
+    @keyframes goCoinRing { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(3.2); opacity: 0; } }
     #go-coin-bar.flash { box-shadow: 0 0 12px #ffe066, 0 0 24px rgba(255,200,40,.8); }
     .gcb { font-size: 8.5px; letter-spacing: 1px; color: rgba(255,255,255,.55); padding: 3px 7px; border-radius: 7px;
       border: 1px solid rgba(255,204,68,.25); background: rgba(255,204,68,.06); white-space: nowrap; }
@@ -8061,6 +8064,25 @@ const ARC_DB = (() => {
         ctx.fillStyle = '#ffe89a'; ctx.font = "bold 13px 'Press Start 2P', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('×2', f.x, sy + 1);
         ctx.globalAlpha = 1;
+      } else if (f.kind === 'chest') {
+        const a = f.done ? Math.max(0, 1 - f.doneT / 0.9) : 1, bob = f.done ? 0 : Math.sin(now * 3) * 3;
+        ctx.globalAlpha = a;
+        if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 26; }
+        const S = 2.1, cx = f.x, cy = sy + bob;
+        ctx.save(); ctx.translate(cx - 16 * S, cy - 16 * S); ctx.scale(S, S);
+        ctx.fillStyle = '#8a5a12'; ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(4, 14, 24, 13, 2.5); else ctx.rect(4, 14, 24, 13); ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.save(); ctx.translate(5, 14); ctx.rotate(f.done ? -0.6 * Math.min(1, f.doneT / 0.25) : 0);
+        ctx.fillStyle = '#a8701a'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -3); ctx.quadraticCurveTo(0, -9, 5, -9); ctx.lineTo(18, -9); ctx.quadraticCurveTo(23, -9, 23, -3); ctx.lineTo(23, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#ffd24a'; ctx.fillRect(14, 16, 4, 5);
+        ctx.restore();
+        if (!f.done) {
+          ctx.fillStyle = '#ffe089'; ctx.font = "bold 11px 'Press Start 2P', monospace"; ctx.textAlign = 'center';
+          ctx.fillText('+' + f.val, cx, cy - 24 * S + 6);
+        }
+        ctx.globalAlpha = 1;
       } else if (f.kind === 'bigcoin') {
         const a = f.done ? Math.max(0, 1 - f.doneT / 0.5) : 1, sc = f.done ? 1 + (1 - a) * 1.2 : 1;
         const spin = Math.abs(Math.cos(now * 2.6)) * 0.75 + 0.25, R = f.r * sc;
@@ -9103,7 +9125,7 @@ const ARC_DB = (() => {
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
-    _nextBigCoinCm = BIG_COIN_EVERY_CM; _runBigCoins = 0; _runBigBanked = 0;
+    _nextBigCoinCm = 250; _runBigCoins = 0; _runBigBanked = 0; _runChestCoins = 0; _runChestBanked = 0; _runChestCms = [];
     _runGates = 0; _runCrystals = 0; _runCrystalClose = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
     _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
@@ -9180,7 +9202,12 @@ const ARC_DB = (() => {
 
         // ── Büyük coin: slotun kendi mesafesi (başlangıç çizgisinden) 5 m işaretini geçti mi ──
         const slotCm = (distOriginY() - nextSpawnY) / H_REF * CM_PER_SCREEN;
-        if (!_dailyRun && slotCm >= _nextBigCoinCm) { _nextBigCoinCm += BIG_COIN_EVERY_CM; spawnBigCoin(); nextSpawnY -= gap; continue; }
+        if (!_dailyRun && slotCm >= _nextBigCoinCm) {
+          const mark = _nextBigCoinCm;
+          _nextBigCoinCm = mark < BIG_COIN_EVERY_CM ? BIG_COIN_EVERY_CM : mark + BIG_COIN_EVERY_CM;
+          if (!_distChestsOpened.has(mark)) { spawnDistChest(mark); nextSpawnY -= gap; continue; }
+          if (mark >= BIG_COIN_EVERY_CM) { spawnBigCoin(); nextSpawnY -= gap; continue; }
+        }
         // ── Skorla birleşen nesneler (engel slotunun bir kısmı) ──
         const featRoll = srand();
         if (distCm >= 40 && featRoll < 0.07) { spawnGate(); nextSpawnY -= gap; continue; }
@@ -9267,6 +9294,14 @@ const ARC_DB = (() => {
     const x = lo + srand() * Math.max(1, hi - lo), y = nextSpawnY;
     obstacles.push({ x: x - gh - r, y, r }); obstacles.push({ x: x + gh + r, y, r });
     feats.push({ kind: 'bigcoin', id: ++_featId, x, y, r: 13 });
+  }
+  // MESAFE SANDIĞI: iki engelin arasında (büyük coinden geniş boşluk), üstünde ödül etiketi
+  function spawnDistChest(cm) {
+    const r = 22, gh = player.r + 30;
+    const lo = walls.left + gh + 2 * r + 20, hi = walls.right - gh - 2 * r - 20;
+    const x = lo + srand() * Math.max(1, hi - lo), y = nextSpawnY;
+    obstacles.push({ x: x - gh - r, y, r }); obstacles.push({ x: x + gh + r, y, r });
+    feats.push({ kind: 'chest', id: ++_featId, x, y, r: 18, cm, val: distChestValue(cm) });
   }
   // ×2 HALKASI: koridoru sağa sola süpüren halka; içinden geçene 5 sn ×2 skor.
   function spawnRing() {
@@ -9638,6 +9673,18 @@ const ARC_DB = (() => {
           }
           f._py = player.y;
           if (f.done && (f.doneT += dt) > 0.6) feats.splice(i, 1);
+        } else if (f.kind === 'chest') {
+          if (!f.done && _distChestsOpened.has(f.cm)) { f.done = true; f.doneT = 0.9; }   // zaten açılmış (savunma)
+          if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < player.r + f.r + magGrabF * 0.5) {
+            f.done = true; f.doneT = 0;
+            _distChestsOpened.add(f.cm); try { localStorage.setItem(DIST_CHEST_KEY, JSON.stringify([..._distChestsOpened])); } catch(_) {}
+            _runChestCoins += f.val; _runChestCms.push(f.cm);
+            try { localStorage.setItem(CHEST_PENDING_KEY, String(_runChestCoins - _runChestBanked)); } catch(_) {}
+            spawnFloatText(f.x, f.y - 30, '+' + f.val + ' COINS', 48, 1.8);
+            spawnGoldParticles(f.x, f.y); spawnGoldParticles(f.x, f.y); triggerGoldFlash(0.5); haptic([20, 40, 20, 40, 30]);
+            try { playTouchSound(); } catch(_) {}
+          }
+          if (f.done && (f.doneT += dt) > 0.9) feats.splice(i, 1);
         } else if (f.kind === 'bigcoin') {
           if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < player.r + f.r + magGrabF * 0.5) {
             f.done = true; f.doneT = 0; _runBigCoins++;
@@ -10042,7 +10089,15 @@ const ARC_DB = (() => {
   let _runCrystalClose = 0;
   // BÜYÜK COIN: run mesafesinde her 5 m'de bir, iki engelin arasına sıkıştırılmış, 2 coin
   const BIG_COIN_EVERY_CM = 500, BIG_COIN_VALUE = 2;
-  let _nextBigCoinCm = BIG_COIN_EVERY_CM, _runBigCoins = 0, _runBigBanked = 0;
+  let _nextBigCoinCm = 250, _runBigCoins = 0, _runBigBanked = 0;
+  // MESAFE SANDIKLARI: ömür boyu birer kez — 2.5 m 25 coin, 5 m 50, sonra her 5 m +25 (10 m 75, 15 m 100…).
+  // Açılan sandık bir daha çıkmaz; 5 m işaretlerinde yerine 2'lik büyük coin gelir.
+  // Kazanç run sonunda (yumuşak tavansız) eklenir; uygulama run ortasında kapanırsa bekleyen sandık
+  // coini sonraki açılışta verilir (arc_chest_pending).
+  const DIST_CHEST_KEY = 'arc_dist_chests', CHEST_PENDING_KEY = 'arc_chest_pending';
+  const distChestValue = cm => cm < 500 ? 25 : 50 + 25 * (Math.round(cm / 500) - 1);
+  let _distChestsOpened = (() => { try { return new Set(JSON.parse(localStorage.getItem(DIST_CHEST_KEY) || '[]')); } catch(_) { return new Set(); } })();
+  let _runChestCoins = 0, _runChestBanked = 0, _runChestCms = [];
   let _runGates = 0, _runCrystals = 0, _runTimings = 0, _runCorridors = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
@@ -10126,9 +10181,11 @@ const ARC_DB = (() => {
       distTotal += deltaCm;
       localStorage.setItem('arc_dist_total', String(distTotal));
       const deltaBig   = Math.max(0, _runBigCoins - _runBigBanked); _runBigBanked = _runBigCoins;
+      const deltaChest = Math.max(0, _runChestCoins - _runChestBanked); _runChestBanked = _runChestCoins;
+      try { localStorage.removeItem(CHEST_PENDING_KEY); } catch(_) {}
       const rawCoins = (runCoinsRaw(deltaCm, deltaGold) + deltaBig * BIG_COIN_VALUE) * doublerMul;
       const capped   = applySoftCap(rawCoins);
-      const total    = capped + coinCarry;
+      const total    = capped + deltaChest + coinCarry;   // sandık hediyesi tavana/Doubler'a tabi değil
       _coinAnimFrom = coinCarry; _coinAnimTo = total;   // game over dolum animasyonu: önceki kesirden başlar
       const gained   = Math.floor(total);
       coinCarry = total - gained;
@@ -10262,12 +10319,10 @@ const ARC_DB = (() => {
     const breakEl = document.getElementById('go-coin-break');
     if (gameMode === 'wife') breakEl.textContent = 'WIFE MODE · NO COINS';
     else breakEl.innerHTML = [
-        `${coinModeMul() > 1 ? '2 COINS' : '1 COIN'} PER METER`,
-        `<b>+${f1(fromDist)}</b> FROM ${fmtDist(runDistCm)}`,
+        `<b>+${f1(fromDist)}</b> FROM ${fmtDist(runDistCm)}${coinModeMul() > 1 ? ' (EXTREME ×2)' : ''}`,
         _runBigCoins ? `<b>+${_runBigCoins * BIG_COIN_VALUE}</b> FROM ${_runBigCoins} BIG COIN${_runBigCoins > 1 ? 'S' : ''}` : '',
-
+        ..._runChestCms.map(cm => `<b>+${distChestValue(cm)}</b> FROM ${fmtDist(cm)} CHEST`),
         runDoublerActive ? `<b>×2</b> DOUBLER` : '',
-        _runCoinsCapped >= 0.05 ? `<span class="neg">−${f1(_runCoinsCapped)} DAILY CAP</span>` : '',
       ].filter(Boolean).join(' · ');
     progEl.textContent = '';
     const popEarned = (n) => {
@@ -10287,15 +10342,21 @@ const ARC_DB = (() => {
     const from = gameMode === 'wife' ? 0 : _coinAnimFrom, to = gameMode === 'wife' ? 0 : _coinAnimTo;
     const coinAnimDur = Math.max(450, Math.min(1000, (to - from) * 700));
     const wrapEl = document.getElementById('go-coin-bar-wrap');
+    // Her %100: çubuğun dolduğu uçtan (sağ uç) bir coin yukarı yükselir; birden fazlaysa yelpaze
+    // gibi farklı yönlere dağılır. Uçta kısa parlama halkası.
+    let flyN = 0;
     const flyCoin = () => {
       if (!wrapEl) return;
+      const k = flyN++, spread = gained > 1 ? ((k * 0.618) % 1) * 2 - 1 : 0;   // −1..1 (altın oran → eşit dağılım)
       const el = document.createElement('span'); el.className = 'go-coin-fly'; el.innerHTML = iconHTML('coin', { size: 16 });
-      const wr = wrapEl.getBoundingClientRect(), er = earnedEl.getBoundingClientRect();
-      el.style.left = wr.width + 'px';   // çubuğun sağ ucu
-      el.style.setProperty('--fx', (er.left + er.width / 2 - wr.right) + 'px');
-      el.style.setProperty('--fy', (er.top + er.height / 2 - (wr.top + wr.height / 2)) + 'px');
+      el.style.left = wrapEl.getBoundingClientRect().width + 'px';
+      el.style.setProperty('--fx', (spread * 70 - (gained > 1 ? 30 : 0)).toFixed(0) + 'px');
+      el.style.setProperty('--fy', (-(46 + Math.abs(spread) * 18 + (k % 3) * 10)).toFixed(0) + 'px');
       el.addEventListener('animationend', () => el.remove());
       wrapEl.appendChild(el);
+      const ring = document.createElement('span'); ring.className = 'go-coin-ring';
+      ring.style.left = wrapEl.getBoundingClientRect().width + 'px';
+      ring.addEventListener('animationend', () => ring.remove()); wrapEl.appendChild(ring);
       barEl.classList.add('flash'); setTimeout(() => barEl.classList.remove('flash'), 140);
     };
     barEl.style.width = (from * 100) + '%';
@@ -10707,7 +10768,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_dist_chests','arc_chest_pending',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
@@ -10976,6 +11037,7 @@ const ARC_DB = (() => {
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
     get bounces() { return runBounces; },
+    get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
@@ -11005,6 +11067,7 @@ const ARC_DB = (() => {
           feats.push({ kind: 'spark', id: ++_featId, cid, x: sx, y: sy, r: 6 });
           if (ahead && i % 2 === 0) { const side = player.r + 46; obstacles.push({ x: sx - side - 18, y: sy, r: 18 }); obstacles.push({ x: sx + side + 18, y: sy, r: 18 }); } } }
       if (kind === 'crystal') obstacles.push({ x, y, r: 30, crystal: true, _ox: x, _oy: y });
+      if (kind === 'chest') { if (ahead) { const ny = nextSpawnY; nextSpawnY = y; spawnDistChest(250); nextSpawnY = ny; } else feats.push({ kind: 'chest', id: ++_featId, x, y, r: 18, cm: 250, val: 25 }); }
       if (kind === 'bigcoin') { if (ahead) { const ny = nextSpawnY; nextSpawnY = y; spawnBigCoin(); nextSpawnY = ny; const f = feats.at(-1); f.x = x; obstacles.at(-2).x = x - player.r - 14 - 24; obstacles.at(-1).x = x + player.r + 14 + 24; } else feats.push({ kind: 'bigcoin', id: ++_featId, x, y, r: 13 }); }
       if (kind === 'timing') obstacles.push({ x, y, r: 20, r0: 60, pk: true, pph: -Math.PI / 2, pt: 0, _ox: x, _oy: y });
     },
@@ -14554,6 +14617,8 @@ const ARC_DB = (() => {
     } catch(_){}
   }
   advanceDayIfNeeded();
+  // Run ortasında kapanan uygulama: açılmış sandığın coini kaybolmasın
+  try { const pc = parseInt(localStorage.getItem('arc_chest_pending') || '0', 10); if (pc > 0) { localStorage.removeItem('arc_chest_pending'); grantCoins(pc); } } catch(_) {}
   let questState = loadQuests();
 
   // ══════════ GİRİŞ SERİSİ ÖDÜLLERİ ══════════

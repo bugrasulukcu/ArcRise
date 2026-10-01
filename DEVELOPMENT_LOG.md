@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Mesafe sandıkları (2.5 m 25 coin, 5 m 50, +25/5 m; ömür boyu birer kez), yükselen coin animasyonu, sade açıklama (2026-10-01)
+
+- **Sandıklar:** run mesafesi 2.5 m, 5 m, 10 m, 15 m … işaretlerinde, iki engel arasında (büyük coinden geniş boşluk, oyuncu ±26 px) sallanan altın sandık + "+N" etiketi. Değer: 2.5 m → 25, 5 m → 50, sonra her 5 m +25 (10 m 75, 15 m 100, 20 m 125 …). Her sandık ÖMÜR BOYU bir kez (`arc_dist_chests`); açıldıktan sonra o işarette 5 m'lik işaretlerde 2'lik büyük coin çıkar, 2.5 m'de hiçbir şey. Kazanç run sonunda eklenir — günlük yumuşak tavana ve Doubler'a tabi değil; run ortasında uygulama kapanırsa `arc_chest_pending` ile sonraki açılışta verilir. Açılış: kapak kalkar, çift altın parçacık, ekran flaşı, titreşim. Günlük koşuda yok.
+- **Ekonomi:** gerçekçi ilerlemede (en iyi mesafe zamanla 2.5 → 5 → 10 → 15 → 20 m) toplam ≈ 25+50+75+100+125 = **375 coin**, birkaç ay boyunca — 36k kataloğun ~%1'i; ilk gün 2.5 m sandığı (~25 coin ≈ günlük gelirin %75'i) yeni oyuncuya erken ödül. Büyük coin (2 / 5 m) sürekli geliri telafi etmeye devam eder.
+- **Game over coin animasyonu:** her %100'de çubuğun dolan ucunda parlama halkası + coin yukarı yükselir; birden fazla coin altın oran dağılımıyla farklı yönlere yelpaze gibi saçılır.
+- **Açıklama sadeleşti:** "1 COIN PER METER" ve kırmızı "−x DAILY CAP" kaldırıldı (tavan hâlâ uygulanır, yalnız gösterilmez). Kalan: "+0.4 FROM 0.40M (EXTREME ×2) · +2 FROM 1 BIG COIN · +25 FROM 2.50M CHEST · ×2 DOUBLER".
+- Test 33/33 (yeni: sandık 25 coin, bir kez, kazanca ve açıklamaya eklenir, bekleyen kayıt temizlenir).
+
 ### Büyük coin: her 5 m'de iki engel arasında, 2 coin (2026-09-30)
 
 - **Hesap (bot, 4'er dk):** altın ≈ 0.30–0.33 adet/m → eskiden 1 coin/adet ile run gelirinin ~%23'ü (günde ~25 m → ~7.5 coin). Altın coin'den çıkınca bu gelir düştü.

@@ -586,6 +586,23 @@ test('büyük coin: 5 m\'de oluşur, toplanınca 2 coin', async () => {
   check(Math.abs((c.to - c.from) - (r.distCm / 100 + 2)) < 0.02, `kazanç ${c.to - c.from} (beklenen mesafe + 2)`);
 });
 
+test('mesafe sandığı: 2.5 m 25 coin, bir kez açılır, kazanca eklenir', async () => {
+  await fresh({ arc_coin_carry: '0', arc_login_day: today(), arc_coins_earned: '0' });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  check((await ev('ARC_TEST.chests')).next === 250, 'ilk işaret 2.5 m değil');
+  await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('chest'); true`); await sleep(600);
+  const ch = await ev('ARC_TEST.chests');
+  check(ch.run === 25 && ch.opened.includes(250), `sandık açılmadı: ${JSON.stringify(ch)}`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(2500);
+  const c = await ev('ARC_TEST.coinAnim'), r = await ev('ARC_TEST.lastRun');
+  check(Math.abs((c.to - c.from) - (r.distCm / 100 + 25)) < 0.02, `kazanç ${c.to - c.from} (beklenen mesafe + 25)`);
+  check(/25<\/b> FROM .*CHEST/.test(await ev(`document.getElementById('go-coin-break').innerHTML`)), 'açıklamada sandık yok');
+  check(!(await ls('arc_chest_pending')), 'bekleyen sandık kaydı silinmedi');
+  // bir dahaki run: 2.5 m'de sandık yok → ilk işaret 5 m sandığı
+  await ev(`document.getElementById('btn-again').click(); true`); await sleep(400);
+  check(JSON.parse(await ls('arc_dist_chests')).includes(250), 'açılan sandık kaydı yok');
+});
+
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)
 async function snapshotUser() { return await ev(`JSON.stringify(Object.fromEntries(Object.keys(localStorage).map(k => [k, localStorage.getItem(k)])))`); }
 async function asUser(snap) {
