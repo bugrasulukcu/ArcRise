@@ -396,6 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### 📌 Oturum sonu durumu (2026-10-01) — kaldığımız yer
+
+- **Canlı sürüm:** `f97d4b1`, önbellek `?v=20261001e`. Çalışma ağacı temiz, `main` = `origin/main`. Firestore kuralları bu turda değişmedi (deploy gerekmiyor).
+- **Bugün yapılanlar (ayrıntılar aşağıdaki girdilerde):** game over yeni düzen + coin uçuş animasyonu + NEW BEST · sandık coinlerinin günlük tavana sayılması hatası · başlıklar sola / X çıkış sağa · Friends boşluğu ve kaydırma çubuğu · sabit genişlikli, isim/skor kalın bildirimler · meydan okuma: ortak pistte 3 hak.
+- **Açık / kullanıcıya sorulacak:** game over "ting" sesi kalsın mı · sıralamada "altındaki oyuncu" satırı geri gelsin mi · meydan okumada eşitlik kuralı (şu an meydan okuyan tutar) · alt sayfalarda (Profil → Trace vb.) X yerine geri ok gerekir mi.
+- **Test notu:** tam paket 10 dk'yı aşıyor → `E2E_PART=1/2 npm test` ve `E2E_PART=2/2 npm test` (ön planda). Ekran görüntüsü betiklerinde Sarpanch yerel gömülü sunuluyor (headless'ta Google Fonts yüklenmiyor).
+
 ### Meydan okuma: ortak pistte 3 hak, iki tarafın en iyisi kıyaslanır; sabit genişlikli bildirimler; Friends kaydırma çubuğu (2026-10-01)
 
 - **Yeni meydan okuma akışı:** ⚔ artık en iyi skoru göndermiyor → hemen YENİ oyun başlar: tohumlu ortak pist (`dailySeed('chal-' + ts)`, günlük koşunun mekanizması `_seeded()` ile genellendi: eşya yok, sandık/büyük coin yok), **3 deneme**, en iyisi sayılır. 3. denemede ya da menüye dönünce en iyi skor hedef olarak gönderilir (0 ise iptal). Arkadaş aynı pisti (`seed = challenge.ts`) 3 hakla oynar; haklar `arc_chal_prog`'da (uygulama kapanınca sıfırlanmaz, PLAY → CONTINUE ile devam). 3. denemeden sonra iki en iyi kıyaslanır (eşitlikte meydan okuyan tutar) ve sonuç yazılır. Başlangıç çizgisini geçmeyen run hak yemez.
