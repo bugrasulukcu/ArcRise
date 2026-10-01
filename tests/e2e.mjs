@@ -660,18 +660,35 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   check(await toastHas('FRIEND ADDED'), 'ALICE\'e kabul bildirimi düşmedi');
   await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
   await ev(`document.querySelector('.fl-chal').click(); true`);
+  // ⚔ → hemen ortak pistte yeni oyun (3 hak). 1. deneme: bot oynar, skor > 0 olsun
+  check(await waitFor(`ARC_TEST.scene === 'play' && ARC_TEST.chal && ARC_TEST.chal.role === 'send'`, 5000), 'meydan okuma oyunu başlamadı');
+  const sigA = await ev('ARC_TEST.layoutSig(10)');
+  await ev(`ARC_BOT.start(); ARC_TEST.ghost(4); true`); await sleep(4500); await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'ALICE run bitmedi'); await sleep(800);
+  const goA = await ev(`({ again: document.getElementById('btn-again').textContent, strip: !document.getElementById('go-chal').hidden, best: ARC_TEST.chal && ARC_TEST.chal.best })`);
+  check(goA.again === 'TRY 2/3' && goA.strip && goA.best > 0, `game over meydan okuma durumu: ${JSON.stringify(goA)}`);
+  // yarıda menüye dönmek → en iyi skorla gönderilir
+  await ev(`ARC_TEST.toScene('home'); true`);
   const chKey = await (async () => { for (let k = 0; k < 30; k++) { const c = [...fb.docs.keys()].find(x => x.startsWith('challenges/')); if (c) return c; await sleep(200); } })();
-  check(chKey && fb.docs.get(chKey).fields.target.integerValue === '100', `meydan okuma dokümanı yok / hedef yanlış: ${chKey && fb.docs.get(chKey).fields.target.integerValue} · toast="${await ev(`document.getElementById('toast').textContent`)}" · butonlar=${await ev(`document.querySelectorAll('.fl-chal').length`)} · best=${await ev(`JSON.parse(localStorage.getItem('arc_stats_v1')).bestNormal`)} · yazımlar=${JSON.stringify(fb.writes.slice(-4).map(w => w.path + ':' + w.status))}`);
+  check(chKey && fb.docs.get(chKey).fields.target.integerValue === String(goA.best), `meydan okuma dokümanı yok / hedef yanlış: ${chKey && fb.docs.get(chKey).fields.target.integerValue} (beklenen ${goA.best})`);
   const A2 = await snapshotUser();
-  // 4) HOST: bildirim → PLAY → sonuç
+  // 4) HOST: bildirim → PLAY → aynı pist, 3 deneme → sonuç
   await asUser(H2);
   check(await toastHas('CHALLENGE!'), 'HOST\'a meydan okuma bildirimi düşmedi');
   await ev(`document.getElementById('btn-friends').click(); true`); await sleep(800);
   await ev(`document.querySelector('.fl-ch-play').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('chal-num').hidden`, 5000), 'meydan okuma run\'ı / hedef HUD yok');
-  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  check(JSON.stringify(await ev('ARC_TEST.layoutSig(10)')) === JSON.stringify(sigA), 'alan taraf aynı pisti oynamıyor');
+  for (let tr = 1; tr <= 3; tr++) {
+    if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
+    await ev(`ARC_BOT.start(); ARC_TEST.ghost(2); true`); await sleep(1800); await ev(`ARC_BOT.stop(); true`);
+    check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), `${tr}. deneme bitmedi`); await sleep(600);
+    if (tr < 3) check(await ev(`document.getElementById('btn-again').textContent`) === `TRY ${tr + 1}/3`, `${tr}. denemeden sonra AGAIN etiketi: ${await ev(`document.getElementById('btn-again').textContent`)}`);
+  }
+  await sleep(1000);
   const st = fb.docs.get(chKey).fields.status?.stringValue;
-  check(st === 'won' || st === 'lost', `sonuç yazılmadı: ${st}`);
+  check(st === 'won' || st === 'lost', `3 denemeden sonra sonuç yazılmadı: ${st}`);
+  check(await ev(`document.getElementById('btn-again').textContent`) === 'AGAIN!', 'meydan okuma bitince AGAIN etiketi geri dönmedi');
   // 5) ALICE: sonuç bildirimi
   await asUser(A2);
   check(await toastHas(st === 'won' ? 'CHALLENGE BEATEN' : 'CHALLENGE HELD'), 'ALICE\'e sonuç bildirimi düşmedi');
@@ -680,6 +697,8 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
+// E2E_PART=1/2 → testlerin ilk yarısı (tam paket 10 dk'yı aşınca parça parça koşturmak için)
+if (process.env.E2E_PART) { const [k, n] = process.env.E2E_PART.split('/').map(Number), sz = Math.ceil(run.length / n); run.splice(0, run.length, ...run.slice((k - 1) * sz, k * sz)); }
 for (const t of run) {
   jsErrors = [];
   const t0 = Date.now(); T0.t = t0;

@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Meydan okuma: ortak pistte 3 hak, iki tarafın en iyisi kıyaslanır; sabit genişlikli bildirimler; Friends kaydırma çubuğu (2026-10-01)
+
+- **Yeni meydan okuma akışı:** ⚔ artık en iyi skoru göndermiyor → hemen YENİ oyun başlar: tohumlu ortak pist (`dailySeed('chal-' + ts)`, günlük koşunun mekanizması `_seeded()` ile genellendi: eşya yok, sandık/büyük coin yok), **3 deneme**, en iyisi sayılır. 3. denemede ya da menüye dönünce en iyi skor hedef olarak gönderilir (0 ise iptal). Arkadaş aynı pisti (`seed = challenge.ts`) 3 hakla oynar; haklar `arc_chal_prog`'da (uygulama kapanınca sıfırlanmaz, PLAY → CONTINUE ile devam). 3. denemeden sonra iki en iyi kıyaslanır (eşitlikte meydan okuyan tutar) ve sonuç yazılır. Başlangıç çizgisini geçmeyen run hak yemez.
+- Firestore şeması/kuralları DEĞİŞMEDİ: `ts` alanı aynı zamanda pist tohumu; alan taraf tek güncellemeyle (status/result) sonucu yazar.
+- **Arayüz:** HUD'da "⚔ TARGET · 2/3" (alan) / "⚔ BEST · 1/3" (gönderen); game over'da mavi şerit (kim, hedef, en iyi + 3 deneme noktası); AGAIN → "TRY 2/3". Friends listesinde kalan hak/en iyi; giden satırlarda WON/LOST · THEIRS n. Bildirimler: "dares you — 3 tries to beat", "CHALLENGE SENT", sonuçta iki skor.
+- **Bildirimler:** satır düşebilir ama sabit genişlik (ödül kartı min(92vw, 360px), toast min(88vw, 340px)); otomatik küçültme kaldırıldı.
+- **Friends:** tarayıcıda liste/kutu kaydırma çubuğu gizli (kaydırma çalışır), yatay taşma yok.
+- Test: `E2E_PART=1/2` / `2/2` ile paket ikiye bölünebiliyor (tamamı 10 dk'yı aşıyordu). 34/34; meydan okuma testi: aynı pist imzası, TRY etiketleri, yarıda menü → en iyiyle gönderim, 3 deneme sonrası sonuç.
+
 ### Başlıklar sola, çıkış (X) sağa; Friends boşluğu; geniş ve kalın/ince bildirimler (2026-10-01)
 
 - **Başlıklar:** %80 küçültme geri alındı (kullanıcı: çok küçük) → 21px / 3px, ama artık SOLA dayalı. Tüm pencerelerde ok (geri) yerine çarpı (X, aria-label "Close") ve SAĞDA (`.modal-head` içinde `order`, boşluk elemanı gizli; Profil'de sağ üst köşe). Upgrades üst barı: başlık · coin · X; başlık dar ekranda `clamp(14px, 5.2vw, 21px)` (320 px'de coin kutusuna binmez).

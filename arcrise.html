@@ -2450,7 +2450,7 @@
       color: var(--green);
       font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
       padding: 12px 18px; border-radius: 11px;
-      width: max-content; max-width: min(94vw, 480px); text-align: center; line-height: 1.55; box-sizing: border-box; overflow: hidden;
+      width: min(88vw, 340px); text-align: center; line-height: 1.55; box-sizing: border-box;   /* sabit genişlik: kısa/uzun hepsi aynı kutu, gerekirse alt satır */
       box-shadow: 0 0 24px rgba(124,255,122,.20);
       opacity: 0; pointer-events: none;
       transition: opacity .22s, transform .22s;
@@ -2475,7 +2475,7 @@
     #reward-toast.show { display: block; }
     .rt-card {
       position: relative; overflow: hidden;
-      max-width: min(96vw, 480px); min-width: min(84vw, 320px); box-sizing: border-box;
+      width: min(92vw, 360px); box-sizing: border-box;   /* sabit genişlik; uzun metin alt satıra iner */
       display: flex; align-items: center; gap: 12px;
       background: rgba(16,22,34,.94);
       border: 1.5px solid rgba(255,206,90,.6);
@@ -2498,7 +2498,7 @@
       border: 1.5px solid rgba(255,206,90,.5); color: #ffce5a;
       animation: rtIcon .7s cubic-bezier(.2,1.6,.35,1) .12s both;
     }
-    .rt-txt { display: flex; flex-direction: column; gap: 3px; }
+    .rt-txt { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; line-height: 1.35; }
     .rt-title { font-size: 9px; letter-spacing: 2.5px; color: rgba(255,255,255,.6); }
     /* Alt satır: önemli kısımlar (isim, skor) kalın-beyaz, kalanı ince-soluk; işaretsiz metin tümüyle kalın */
     .rt-sub { font-size: 13.5px; letter-spacing: 1px; color: rgba(255,255,255,.72); font-weight: 400; }
@@ -3324,7 +3324,9 @@
     .fl-inv-acc:hover { filter: brightness(1.12); box-shadow: 0 0 16px rgba(74,222,106,.45), inset 0 1px 0 rgba(255,255,255,.16); }
     .fl-inv-rej:hover { filter: brightness(1.12); box-shadow: 0 0 14px rgba(255,77,106,.34), inset 0 1px 0 rgba(255,255,255,.13); }
     .fl-inv-acc:active, .fl-inv-rej:active { transform: scale(0.9); }
-    #fl-list { width: 100%; display: flex; flex-direction: column; gap: 7px; max-height: 230px; overflow-y: auto; }
+    #fl-list { width: 100%; display: flex; flex-direction: column; gap: 7px; max-height: 230px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+    #fl-list::-webkit-scrollbar, #friendslist-modal-box::-webkit-scrollbar { display: none; }
+    #friendslist-modal-box { scrollbar-width: none; overflow-x: hidden; }
     .fl-row {
       display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 11px;
       background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
@@ -3688,6 +3690,21 @@
     }
     @keyframes goNbIn { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
     @keyframes goNbGlow { 50% { text-shadow: 0 0 14px rgba(255,214,70,1); } }
+    /* ── Meydan okuma şeridi (game over): ⚔ · kim / en iyi / hedef · deneme noktaları ── */
+    #go-chal { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 12px; border: 1px solid rgba(61,139,255,.45);
+      background: radial-gradient(120% 160% at 0% 0%, rgba(61,139,255,.16), transparent 60%), rgba(61,139,255,.05);
+      font-size: 9.5px; letter-spacing: .8px; color: rgba(255,255,255,.62); font-weight: 400; }
+    #go-chal[hidden] { display: none; }
+    #go-chal b { color: #fff; font-weight: 700; }
+    #go-chal .gc-ic { font-size: 15px; color: #8fb8ff; }
+    #go-chal .gc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; white-space: nowrap; overflow: hidden; }
+    #go-chal .gc-main > span:nth-child(2) { font-size: 8.5px; color: rgba(255,255,255,.5); }
+    #go-chal .gc-main .w, #go-chal .gc-main .w b { color: #7CFF7A; }
+    #go-chal .gc-main .l, #go-chal .gc-main .l b { color: #ff7a8e; }
+    #go-chal .gc-dots { display: flex; gap: 4px; margin-left: 4px; flex: 0 0 auto; }
+    #go-chal .gc-dots i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #8fb8ff; box-sizing: border-box; }
+    #go-chal .gc-dots i.used { background: #8fb8ff; }
     /* ── Coin kapsülü: solda toplayıcı coin + "+N COINS", sağda sonraki coin, altta dolum çubuğu ── */
     #go-coin-row {
       position: relative; width: 100%; box-sizing: border-box;
@@ -4452,6 +4469,8 @@
         <div class="go-twin-best" id="go-bestdist-line"><span class="ob">BEST: <span id="go-bestdist-val-inline">0M</span></span><span class="nb">NEW BEST</span></div>
       </div>
     </div>
+    <!-- Meydan okuma: deneme / en iyi / hedef (yalnız meydan okuma run'ında) -->
+    <div id="go-chal" hidden></div>
     <!-- Coin kazancı: tek kapsül — sayaç (toplayıcı coin) + bir sonraki coine dolum çubuğu -->
     <div id="go-coin-row">
       <div id="go-coin-top">
@@ -5769,15 +5788,15 @@ const ARC_DB = (() => {
       return res.ok;
     } catch (_) { return false; }
   }
-  // ── Meydan okuma: challenges/{from__to__ts} — arkadaşa "bu skoru geç" (tek deneme) ──
-  async function sendChallenge(fromId, toId, fromName, fromTag, mode, target) {
+  // ── Meydan okuma: challenges/{from__to__ts} — ts aynı zamanda ortak pistin tohumu; iki taraf 3 denemedeki en iyisiyle yarışır ──
+  async function sendChallenge(fromId, toId, fromName, fromTag, mode, target, seedTs) {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     await ensureAuth(); const uid = getUid();
     if (!uid || !fromId || !toId || fromId === toId) return false;
     const hi = toId.lastIndexOf('#');
     const toP = hi > 0 ? await getPlayer(toId.slice(0, hi), toId.slice(hi + 1)) : null;
     if (!toP || !toP.owner) return false;
-    const ts = Date.now(), id = `${fromId}__${toId}__${ts}`;
+    const ts = Math.round(Number(seedTs) || Date.now()), id = `${fromId}__${toId}__${ts}`;   // ts = ortak pistin tohumu
     try {
       const res = await fbFetch(`${BASE}/challenges/${encodeURIComponent(id)}?key=${apiKey}&currentDocument.exists=false`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -6670,19 +6689,10 @@ const ARC_DB = (() => {
   // Bilgi toast'ı — 5sn görünür; herhangi bir yere dokununca kapanır.
   // Bildirim metni: **…** arası kalın (önce HTML kaçırılır → kullanıcı adı güvenli)
   const richTxt = t => esc(t || '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  // Tek satıra sığdır: taşarsa yazı boyunu 0.5px adımlarla küçült (en az minPx); yine sığmazsa satır kırılır
-  function fitOneLine(el, maxW, minPx) {
-    if (!el) return;
-    el.style.fontSize = ''; el.style.whiteSpace = 'nowrap'; el.style.maxWidth = maxW + 'px';
-    let fs = parseFloat(getComputedStyle(el).fontSize);
-    while (el.scrollWidth > el.clientWidth + 1 && fs > minPx) { fs -= .5; el.style.fontSize = fs + 'px'; }
-    if (el.scrollWidth > el.clientWidth + 1) el.style.whiteSpace = 'normal';
-  }
   function showToast(msg) {
     const el = document.getElementById('toast');
     if (!el) return;
     el.innerHTML = richTxt(msg);
-    el.style.maxWidth = ''; fitOneLine(el, Math.min(innerWidth * .94, 480), 9.5);
     el.classList.add('show');
     if (_toastTimer) clearTimeout(_toastTimer);
     const hide = () => {
@@ -6727,8 +6737,6 @@ const ARC_DB = (() => {
       </span>
     </div>`;
     host.classList.add('show');
-    { const sub = host.querySelector('.rt-sub'); const room = Math.min(innerWidth * .96, 480) - 28 - 42 - 12;   // kart iç boşluğu + ikon + aralık
-      fitOneLine(sub, room, 10.5); }
     try { haptic(20); } catch(_){}
     const hide = () => {
       if (_rtTimer) { clearTimeout(_rtTimer); _rtTimer = null; }
@@ -6781,6 +6789,9 @@ const ARC_DB = (() => {
   // Günlük meydan okuma: aynı gün herkese aynı pist. spawnAhead tohumlu rastgele (srand) kullanır.
   let _dailyRun = false, _dailyRng = null, _dailyPrevMode = null;
   const srand = () => _dailyRng ? _dailyRng() : Math.random();
+  // Tohumlu pist: günlük koşu ya da meydan okuma (iki oyuncu aynı pisti oynar; eşya yok, sandık/büyük coin yok)
+  const _seeded = () => _dailyRun || !!_activeChal;
+  const CHAL_TRIES = 3;   // meydan okumada deneme hakkı — en yüksek skor sayılır
   const dailyDay = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
   const dailySeed = day => { let h = 2166136261; for (const c of 'arcrise-daily-' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
   // Kendi en iyi run'ının hayaleti: run boyunca 0.1 sn'de bir [t×10, x, başlangıçtan yükseklik];
@@ -9194,7 +9205,7 @@ const ARC_DB = (() => {
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
     _pbRec.length = 0; _pbT = 0; _pbIdx = 0; _pbStartY = player.y;
-    _dailyRng = _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
+    _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _pbGhost = (gameMode !== 'wife' && upg.pbGhost !== false) ? loadPbGhost(gameMode) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
@@ -9204,7 +9215,7 @@ const ARC_DB = (() => {
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
     // Günlük koşu: ilk slot sabit referans yüksekliğinden (H cihaza göre değişir → pist kayardı)
-    const firstSlot = _dailyRun ? H_REF : H;
+    const firstSlot = _seeded() ? H_REF : H;
     nextSpawnY = player.y - firstSlot; lastBonusY = player.y - firstSlot;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0; distScore = 0; _prevDistPx = 0; _startCrossed = false; _startFlashAt = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
@@ -9239,7 +9250,7 @@ const ARC_DB = (() => {
       // Difficulty driver — linear in distance. Eşikler gerçek oynanan aralığa
       // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
       // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
-      const distCm = _dailyRun
+      const distCm = _seeded()
         ? Math.max(0, _pbStartY - nextSpawnY - 2200 - START_PX) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
         : (distancePx / H_REF) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 500));
@@ -9291,7 +9302,7 @@ const ARC_DB = (() => {
 
         // ── Büyük coin: slotun kendi mesafesi (başlangıç çizgisinden) 5 m işaretini geçti mi ──
         const slotCm = (distOriginY() - nextSpawnY) / H_REF * CM_PER_SCREEN;
-        if (!_dailyRun && slotCm >= _nextBigCoinCm) {
+        if (!_seeded() && slotCm >= _nextBigCoinCm) {
           const mark = _nextBigCoinCm;
           _nextBigCoinCm = mark < BIG_COIN_EVERY_CM ? BIG_COIN_EVERY_CM : mark + BIG_COIN_EVERY_CM;
           if (!_distChestsOpened.has(mark)) { spawnDistChest(mark); nextSpawnY -= gap; continue; }
@@ -9361,7 +9372,7 @@ const ARC_DB = (() => {
         // CRYSTAL: kırılabilir engel (Shockwave / Shield / Ghost-Phase ile) — kırınca puan.
         // Kırıcı bir yeteneği/eşyası olan oyuncuda iki kat sık.
         const hasBreaker = runShield || slotItems.some(it => it && (it.key === 'shock' || it.key === 'phaseburst'));
-        if (distCm >= 50 && srand() < (_dailyRun ? 0.1 : hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
+        if (distCm >= 50 && srand() < (_seeded() ? 0.1 : hasBreaker ? 0.16 : 0.08)) ob.crystal = true;
 
         obstacles.push(ob);
       }
@@ -10234,7 +10245,7 @@ const ARC_DB = (() => {
     // Bu run günlük müydü? Aşağıda await'ler var: oyuncu bu sırada yeni (günlük/normal) bir run
     // başlatırsa bayrak değişir → normal skorun günlük tabloya yazılması gibi karışmalar olmasın.
     const wasDaily = _dailyRun;
-    const chal = _activeChal; _activeChal = null;   // meydan okuma tek deneme — sonuç aşağıda
+    const chal = _activeChal;   // meydan okuma: 3 deneme, en iyisi sayılır — aşağıda
     // Müzik fade + ölüm SFX'i artık beginDeath'te patlama anında tetikleniyor.
     haptic(2000); // çarpışma titreşimi — 2 saniye
     // Ghost: save this run's sparse sample into the persistent ring buffer
@@ -10525,14 +10536,13 @@ const ARC_DB = (() => {
     }
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (chal) {
-      const won = sc > chal.target;
-      chal.status = won ? 'won' : 'lost'; chal.result = sc;
-      try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
-      try { showRewardToast({ icon: 'bolt', title: won ? 'CHALLENGE WON!' : 'CHALLENGE LOST',
-        sub: won ? `You beat **${chal.fromName || parseId(chal.from).name}**'s **${chal.target}**` : `**${sc}** / **${chal.target}** — so close` }); } catch(_){}
-      ARC_DB.resolveChallenge(chal.id, won, sc).catch(() => {});
-      updateFriendsBadge();
-    }
+      if (_startCrossed) {   // başlangıç çizgisini geçmeyen (yanlışlıkla) run hak yemez
+        chal.tries++; chal.best = Math.max(chal.best, sc);
+        if (chal.role === 'recv') saveChalProg(chal);
+      }
+      if (chal.tries >= CHAL_TRIES) finishChallenge(chal);
+      renderGoChal(chal);
+    } else renderGoChal(null);
     if (wasDaily) {
       const eqB = (equippedBadges || []).filter(Boolean).join(',');
       dailyLocalRecord(sc);
@@ -10761,10 +10771,12 @@ const ARC_DB = (() => {
     if (scene === 'play' && running) {
       step(dt);
       hScore.textContent = pad(Math.floor(score));
-      if (_activeChal) {   // meydan okuma: hedef skor, geçilince yeşil
-        const cn = document.getElementById('chal-num');
-        if (cn) { if (cn.hidden) { cn.hidden = false; document.getElementById('chal-lbl').hidden = false; cn.textContent = pad(_activeChal.target); }
-          cn.classList.toggle('beat', score > _activeChal.target); }
+      if (_activeChal) {   // meydan okuma: alanda hedef (gelen) ya da şimdiye kadarki en iyi (gönderen); geçilince yeşil
+        const cn = document.getElementById('chal-num'), c = _activeChal;
+        const ref = c.role === 'recv' ? c.target : c.best;
+        if (cn) { if (cn.hidden) { cn.hidden = false; const l = document.getElementById('chal-lbl'); l.hidden = false;
+            l.textContent = `⚔ ${c.role === 'recv' ? 'TARGET' : 'BEST'} · ${c.tries + 1}/${CHAL_TRIES}`; cn.textContent = pad(ref); }
+          cn.classList.toggle('beat', ref > 0 && score > ref); }
       }
       hBest.textContent  = pad(best);
       // Distance: 1 screen height = 15cm. (Spawn-relative, cm 1 decimal)
@@ -10839,6 +10851,10 @@ const ARC_DB = (() => {
 
   function showScene(s) {
     if (_dailyRun && s !== 'play' && s !== 'over') endDailyMode();   // günlükten çıkış → normal mod geri
+    if (_activeChal && s !== 'play' && s !== 'over') {   // meydan okumadan çıkış
+      const c = _activeChal; _activeChal = null;
+      if (c.role === 'send') finishChallenge(c, true);
+    }
     if (_chalPrevMode && !_activeChal && s !== 'play' && s !== 'over') { gameMode = _chalPrevMode; _chalPrevMode = null; }
     // Deneme run'ı başladıktan sonra oyundan çıkılan her ekran (game over hariç) denemeyi bitirir
     if (_themeTrial && _trialStarted) {
@@ -11124,6 +11140,7 @@ const ARC_DB = (() => {
   // Otomatik testler (tests/e2e.mjs) için iç durum — yalnız debug modunda dışarı açılır.
   if (window.ARC_DEBUG) window.ARC_TEST = {
     get scene() { return scene; }, get mode() { return gameMode; }, setMode: m => { gameMode = m; },
+    toScene: x => showScene(x), get chal() { return _activeChal ? { ..._activeChal } : null; },
     runCoinsRaw, applySoftCap, coinsEarnedToday,
     get audio() { return _audioDiag(); },
     get lastRun() { return _lastRunInfo; },
@@ -14092,7 +14109,7 @@ const ARC_DB = (() => {
     if (withTutorial !== 'gated' && !_startGate() && scene === 'play') return;
     if (_themeTrial && _trialRunDone) { endThemeTrial(); return; }   // deneme tek run
     if (_chalPrevMode && !_activeChal) { gameMode = _chalPrevMode; _chalPrevMode = null; }   // meydan okuma bitti → mod geri
-    try { const cn = document.getElementById('chal-num'); if (cn && !_activeChal) { cn.hidden = true; document.getElementById('chal-lbl').hidden = true; } } catch(_) {}
+    try { const cn = document.getElementById('chal-num'); if (cn) { cn.hidden = true; document.getElementById('chal-lbl').hidden = true; } } catch(_) {}
     if (_themeTrial) _trialStarted = true;
     try { fitCanvas(); } catch(_){} // oyuna girerken canvas oranını taze ölç (sünme önlemi)
     initAudio(); // AudioContext unlock
@@ -14133,7 +14150,7 @@ const ARC_DB = (() => {
     runCoinRainActive = false;
     runLuckyBoost = false;
     _runPreboostPending = null;
-    if (gameMode === 'wife' || _dailyRun) return; // Wife mode coin/etki yok; günlükte eşya yok (adil)
+    if (gameMode === 'wife' || _seeded()) return; // Wife mode coin/etki yok; günlük/meydan okumada eşya yok (adil)
     const inv = upg.inv;
     const consume = (k) => { inv[k].count = Math.max(0, inv[k].count - 1); if (inv[k].count === 0) inv[k].armed = false; };
     // Coin Doubler: bir adet DOUBLER_RUNS run boyunca ×2 verir (runsLeft sayacı; kurcalamaya karşı kırpılır).
@@ -15121,11 +15138,11 @@ const ARC_DB = (() => {
     if (!Array.isArray(rows)) return;
     for (const c of rows) {
       if (c.to === me && c.status === 'open' && _markSeen(c.id + ':open'))
-        try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE!', sub: `**${c.fromName || parseId(c.from).name}** dares you to beat **${c.target}**` }); haptic([20, 40, 20]); } catch(_){}
+        try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE!', sub: `**${c.fromName || parseId(c.from).name}** dares you — ${CHAL_TRIES} tries to beat **${c.target}**` }); haptic([20, 40, 20]); } catch(_){}
       if (c.from === me && c.status !== 'open' && _markSeen(c.id + ':' + c.status)) {
         const nm = parseId(c.to).name;
         try { showRewardToast({ icon: 'bolt', title: c.status === 'won' ? 'CHALLENGE BEATEN' : 'CHALLENGE HELD',
-          sub: c.status === 'won' ? `**${nm}** beat your ${c.target} with **${c.result}**` : `**${nm}** couldn't beat your **${c.target}** (${c.result})` }); } catch(_){}
+          sub: c.status === 'won' ? `**${nm}** beat your ${c.target} with **${c.result}**` : `**${nm}** couldn't beat your **${c.target}** — best ${c.result}` }); } catch(_){}
       }
     }
     challenges = rows; try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
@@ -15192,14 +15209,14 @@ const ARC_DB = (() => {
     host.innerHTML = `<div class="fl-inv-hdr ch">CHALLENGES</div>`
       + inc.map(c => `<div class="fl-ch-row in">
           <span class="fl-ch-ic">⚔</span>
-          <span class="fl-ch-txt"><span><b>${esc(c.fromName || parseId(c.from).name)}</b> · beat <b>${pad(c.target)}</b></span><span class="fl-ch-mode">${modeTxt(c.mode)}</span></span>
-          <button class="fl-ch-play" data-id="${esc(c.id)}" type="button">PLAY</button>
+          <span class="fl-ch-txt"><span><b>${esc(c.fromName || parseId(c.from).name)}</b> · beat <b>${c.target}</b></span><span class="fl-ch-mode">${modeTxt(c.mode)} · ${CHAL_TRIES - chalProg(c.id).tries} TRIES LEFT${chalProg(c.id).best ? ' · BEST ' + chalProg(c.id).best : ''}</span></span>
+          <button class="fl-ch-play" data-id="${esc(c.id)}" type="button">${chalProg(c.id).tries ? 'CONTINUE' : 'PLAY'}</button>
         </div>`).join('')
       + out.map(c => {
-          const st = c.status === 'open' ? 'WAITING' : c.status === 'won' ? `BEATEN · ${pad(c.result)}` : `HELD · ${pad(c.result)}`;
+          const st = c.status === 'open' ? 'WAITING' : c.status === 'won' ? `LOST · THEIRS ${c.result}` : `WON · THEIRS ${c.result}`;
           return `<div class="fl-ch-row out ${c.status}">
             <span class="fl-ch-ic">→</span>
-            <span class="fl-ch-txt"><span><b>${esc(parseId(c.to).name)}</b> · ${pad(c.target)}</span><span class="fl-ch-mode">${st}</span></span>
+            <span class="fl-ch-txt"><span><b>${esc(parseId(c.to).name)}</b> · yours ${c.target}</span><span class="fl-ch-mode">${st}</span></span>
             <button class="fl-ch-del" data-id="${esc(c.id)}" type="button" aria-label="Dismiss">&times;</button>
           </div>`; }).join('');
     host.querySelectorAll('.fl-ch-play').forEach(b => b.addEventListener('click', () => playChallenge(b.dataset.id)));
@@ -15209,31 +15226,78 @@ const ARC_DB = (() => {
       renderChallenges(); try { await ARC_DB.deleteChallenge(id); } catch(_){}
     }));
   }
-  // ⚔: o moddaki en iyi skorumla meydan oku
-  async function challengeFriend(toId, btn) {
+  // ⚔: arkadaşla ortak tohumlu pistte yeni oyun — 3 deneme, en iyisi meydan okuma olarak gider
+  function challengeFriend(toId) {
     const me = myId(); if (!me) return;
+    if (challenges.some(c => c.from === me && c.to === toId && c.status === 'open')) { showToast('You already challenged **' + parseId(toId).name + '**'); return; }
+    try { if (_dailyRun) endDailyMode(); } catch(_) {}
     const mode = gameMode === 'extreme' ? 'extreme' : 'normal';
-    const target = mode === 'extreme' ? (stats.bestExtreme || 0) : (stats.bestNormal || 0);
-    if (target <= 0) { showToast('Play a run first — your best score is the challenge'); return; }
-    if (challenges.some(c => c.from === me && c.to === toId && c.status === 'open')) { showToast('You already challenged ' + parseId(toId).name); return; }
-    if (btn) btn.disabled = true;
-    let id = false; try { id = await ARC_DB.sendChallenge(me, toId, _sanId(playerName), myTag(), mode, target); } catch(_) {}
-    if (btn) btn.disabled = false;
-    if (!id) { showToast('Could not send the challenge — try again'); return; }
-    challenges.unshift({ id, from: me, to: toId, fromName: _sanId(playerName), mode, target, status: 'open', result: 0, ts: Date.now() });
-    try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
-    _markSeen(id + ':open');
-    showToast(`Challenge sent — ${parseId(toId).name} must beat ${pad(target)}`);
-    renderChallenges();
+    _activeChal = { role: 'send', to: toId, mode, seed: Date.now(), tries: 0, best: 0 };
+    _chalPrevMode = gameMode; gameMode = mode;
+    document.querySelectorAll('.open').forEach(e => e.classList.remove('open'));
+    startGame('gated');
+    try { showToast(`Challenge **${parseId(toId).name}** — best of **${CHAL_TRIES}** tries on a shared course`); } catch(_) {}
   }
-  // PLAY: meydan okumanın modunda tek deneme; hedef HUD'da
+  // Alan tarafın deneme ilerlemesi (uygulama kapanınca sıfırlanıp hak kazanılmasın)
+  const CHAL_PROG_KEY = 'arc_chal_prog';
+  const chalProg = id => { try { return (JSON.parse(localStorage.getItem(CHAL_PROG_KEY) || '{}') || {})[id] || { tries: 0, best: 0 }; } catch(_) { return { tries: 0, best: 0 }; } };
+  function saveChalProg(c) {
+    try { const o = JSON.parse(localStorage.getItem(CHAL_PROG_KEY) || '{}') || {}; o[c.id] = { tries: c.tries, best: c.best };
+      localStorage.setItem(CHAL_PROG_KEY, JSON.stringify(o)); } catch(_) {}
+  }
+  // Meydan okuma bitti: gönderen → en iyi skoru hedef olarak gönder; alan → iki en iyiyi kıyasla, sonucu yaz
+  async function finishChallenge(c, quiet) {
+    if (_activeChal === c) _activeChal = null;
+    c.done = true;
+    const me = myId();
+    if (c.role === 'send') {
+      if (c.best <= 0) { if (!quiet) try { showToast('Challenge cancelled — no score to send'); } catch(_) {} return; }
+      let id = false; try { id = await ARC_DB.sendChallenge(me, c.to, _sanId(playerName), myTag(), c.mode, c.best, c.seed); } catch(_) {}
+      if (!id) { c.sendFailed = true; try { showToast('Could not send the challenge — check your connection'); renderGoChal(c); } catch(_) {} return; }
+      challenges.unshift({ id, from: me, to: c.to, fromName: _sanId(playerName), mode: c.mode, target: c.best, status: 'open', result: 0, ts: c.seed });
+      try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
+      _markSeen(id + ':open');
+      try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE SENT', sub: `**${parseId(c.to).name}** has ${CHAL_TRIES} tries to beat **${c.best}**` }); } catch(_) {}
+      try { renderChallenges(); } catch(_) {}
+      return;
+    }
+    const won = c.best > c.target;   // eşitlikte meydan okuyan tutar
+    const row = challenges.find(x => x.id === c.id);
+    if (row) { row.status = won ? 'won' : 'lost'; row.result = c.best; }
+    try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
+    try { showRewardToast({ icon: 'bolt', title: won ? 'CHALLENGE WON!' : 'CHALLENGE LOST',
+      sub: won ? `Your **${c.best}** beat **${c.fromName || parseId(c.from).name}**'s **${c.target}**` : `Your best **${c.best}** · **${c.fromName || parseId(c.from).name}** **${c.target}**` }); } catch(_){}
+    ARC_DB.resolveChallenge(c.id, won, c.best).catch(() => {});
+    updateFriendsBadge();
+  }
+  // Game over şeridi + AGAIN etiketi (kalan deneme)
+  function renderGoChal(c) {
+    const el = document.getElementById('go-chal'), again = document.getElementById('btn-again');
+    if (again) again.textContent = c && !c.done ? `TRY ${c.tries + 1}/${CHAL_TRIES}` : 'AGAIN!';
+    if (!el) return;
+    if (!c) { el.hidden = true; el.innerHTML = ''; return; }
+    const who = esc(c.role === 'recv' ? (c.fromName || parseId(c.from).name) : parseId(c.to).name);
+    const dots = Array.from({ length: CHAL_TRIES }, (_, i) => `<i class="${i < c.tries ? 'used' : ''}"></i>`).join('');
+    let line;
+    if (!c.done) line = c.role === 'recv'
+      ? `<span>Beat <b>${who}</b>'s <b>${c.target}</b></span><span>BEST <b>${c.best}</b></span>`
+      : `<span>vs <b>${who}</b></span><span>BEST <b>${c.best}</b></span>`;
+    else if (c.role === 'send') line = c.sendFailed ? `<span>Not sent — connection</span>` : c.best > 0 ? `<span>Sent to <b>${who}</b></span><span>TARGET <b>${c.best}</b></span>` : `<span>No score — not sent</span>`;
+    else line = c.best > c.target ? `<span class="w">WON vs <b>${who}</b></span><span><b>${c.best}</b> · ${c.target}</span>` : `<span class="l">LOST vs <b>${who}</b></span><span>${c.best} · <b>${c.target}</b></span>`;
+    el.innerHTML = `<span class="gc-ic">⚔</span><span class="gc-main">${line}</span><span class="gc-dots">${dots}</span>`;
+    el.hidden = false;
+  }
+  // PLAY: gelen meydan okuma — aynı pist, kalan haklarla (en iyisi sayılır)
   function playChallenge(id) {
     const c = challenges.find(x => x.id === id && x.status === 'open'); if (!c) return;
     try { if (_dailyRun) endDailyMode(); } catch(_) {}
-    _activeChal = c; _chalPrevMode = gameMode; gameMode = c.mode === 'extreme' ? 'extreme' : 'normal';
+    const pr = chalProg(id);
+    if (pr.tries >= CHAL_TRIES) { finishChallenge({ role: 'recv', id, from: c.from, fromName: c.fromName, target: c.target, tries: pr.tries, best: pr.best }); renderChallenges(); return; }
+    _activeChal = { role: 'recv', id, from: c.from, fromName: c.fromName, mode: c.mode, target: c.target, seed: c.ts, tries: pr.tries, best: pr.best };
+    _chalPrevMode = gameMode; gameMode = c.mode === 'extreme' ? 'extreme' : 'normal';
     document.querySelectorAll('.open').forEach(e => e.classList.remove('open'));
     startGame('gated');
-    try { showToast(`Beat ${c.fromName || parseId(c.from).name}'s ${pad(c.target)} — one try`); } catch(_) {}
+    try { showToast(`Beat **${c.fromName || parseId(c.from).name}**'s **${c.target}** — try **${pr.tries + 1}/${CHAL_TRIES}**`); } catch(_) {}
   }
   function renderFriendsList() {
     const idEl = document.getElementById('myid-code');
