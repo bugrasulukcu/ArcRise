@@ -7,7 +7,12 @@
 //   node tools/seed-players.mjs cleanup
 import fs from 'node:fs';
 import path from 'node:path';
-const API_KEY = 'AIzaSyB7x2es8UgEkQ91K4hruM7OaJKhpXkzvW4', PROJECT = 'arcrise-e1504';
+// Anahtar dosyaya yazılmaz: oyunun kendi Firebase config'inden (arcrise.html) okunur.
+const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
+const CFG = fs.readFileSync(path.join(ROOT, 'arcrise.html'), 'utf8');
+const API_KEY = process.env.ARC_API_KEY || (CFG.match(/apiKey:\s*'([^']+)'/) || [])[1];
+const PROJECT = (CFG.match(/projectId:\s*'([^']+)'/) || [])[1];
+if (!API_KEY || !PROJECT) { console.error('Firebase config bulunamadı (arcrise.html)'); process.exit(1); }
 const DB = `projects/${PROJECT}/databases/(default)/documents`;
 const STATE = path.join(path.dirname(new URL(import.meta.url).pathname), '.seed-state.json');
 const cmd = process.argv[2], N = Math.max(1, +(process.argv[3] || 1000));
