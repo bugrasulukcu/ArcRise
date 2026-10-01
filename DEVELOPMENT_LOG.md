@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Menü başlıkları küçüldü, Upgrades başlığı coin kutusuna binmez (2026-10-01)
+
+- Tüm menü/pencere başlıkları (Settings, Coins, Upgrades, High Scores, Badges, Quests, Friends, Themes, Credits, Trace… `.modal-head-title`, `.qm-title`, `.fm-title`, `#settings h2`) tek kuralla 21px → 16.8px (%80), harf aralığı 3px → 1.5px (%50); profil başlığı 18 → 14.4px. SETTINGS/COINS'teki satır içi boyutlar kaldırıldı.
+- Upgrades üst barı: başlık mutlak ortalıydı → dar telefonda coin kutusunun üstüne çıkıyordu. Artık 3 sütunlu ızgara (geri · başlık · coin): yer varken tam ortada, darsa kutuya binmeden kayar (320 / 360 / 390 px ölçüldü, çakışma yok).
+
 ### Game over yeni düzen: coin kapsülü, kompakt sıralama, toplayıcıya uçan coin animasyonu, NEW BEST (2026-10-01)
 
 - **Sorun:** kullanıcı ekran görüntüsü — kırılım satırı ("+0.7 FROM 0.67M") anlaşılmıyor, RANK/NAME/SCORE başlığında NAME aşağı kaymış (inline `padding:0 10px` alt boşluğu sıfırlıyordu), 4 satır + ADD yazılı butonlar ekranı kalabalıklaştırıyor.

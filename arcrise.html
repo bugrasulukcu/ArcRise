@@ -1814,9 +1814,11 @@
     /* Üst bar: geri oku (sol) · başlık (mutlak ortalı) · coin (sağ) */
     #upg-topbar {
       position: relative;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%;
       min-height: 38px;
     }
+    #upg-topbar > #upg-back-arrow { justify-self: start; }
+    #upg-topbar > #upgrades-modal-sub { justify-self: end; }
     /* Tüm modal başlık satırlarında ortak çerçeveli geri-dön butonu */
     .modal-back, #upg-back-arrow {
       flex-shrink: 0; width: 38px; height: 38px;
@@ -1855,9 +1857,8 @@
     /* Tüm alt-sayfa başlıkları Settings (h2) ile aynı kalınlıkta */
     .modal-head-title, #upgrades-modal-title { flex: 1; min-width: 0; text-align: center; margin: 0; font-weight: 700; }
     .modal-head-spacer { flex-shrink: 0; width: 38px; }
-    /* Başlık: üst barın tam ortasında (mutlak), yan öğelerden bağımsız */
+    /* Başlık: 3 sütunlu ızgaranın ortasında — yer varken tam ortada, dar ekranda coin kutusuna binmeden kayar */
     #upgrades-modal-title {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
       font-size: 21px; letter-spacing: 3px; color: #fff; text-align: center; white-space: nowrap;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
@@ -4051,6 +4052,9 @@
     .theme-try:active { transform: scale(.95); }
     .theme-tried { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.35); }
     #theme-open { padding: 9px 14px; border-radius: 11px; font-family: var(--font); font-size: 11px; letter-spacing: 1.5px; cursor: pointer; }
+    /* Menü başlıkları: 21px → 16.8px (%80), harf aralığı 3px → 1.5px (%50) — telefonda UPGRADES coin kutusuna binmesin */
+    :is(.modal-head-title, #upgrades-modal-title, #lb-modal-title, #badges-modal-title, .qm-title, .fm-title, #settings h2) { font-size: 16.8px; letter-spacing: 1.5px; }
+    #prof-modal-title { font-size: 14.4px; letter-spacing: 1.5px; }
     html#arc .gl.gl-glass {
       background:
         radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%),
@@ -4250,7 +4254,7 @@
   <div class="panel gl gl-lilac gl-glass">
     <div class="modal-head">
       <button id="settings-back" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
-      <div class="modal-head-title" style="font-size:21px;letter-spacing:3px">SETTINGS</div>
+      <div class="modal-head-title">SETTINGS</div>
       <span class="modal-head-spacer"></span>
     </div>
 
@@ -4604,7 +4608,7 @@
   <div id="coins-modal-box" class="gl gl-gold gl-glass">
     <div class="modal-head">
       <button id="coins-modal-close" class="modal-back" type="button" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5"/><path d="M11 6 L5 12 L11 18"/></svg></button>
-      <div class="modal-head-title" style="font-size:21px;letter-spacing:3px;color:#ffd866">COINS</div>
+      <div class="modal-head-title" style="color:#ffd866">COINS</div>
       <span class="modal-head-spacer"></span>
     </div>
     <!-- Current balance: coin icon + number -->
