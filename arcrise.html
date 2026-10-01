@@ -766,23 +766,45 @@
       width: min(90vw, 330px);
       display: flex; flex-direction: column; gap: 18px; align-items: center;
     }
-    .rtable { width: 100%; border-collapse: collapse; }
-    .rtable th { font-size: 11px; color: var(--green); letter-spacing: 1.4px; padding-bottom: 10px; text-align: left; }
-    .rtable th:last-child { text-align: right; }
-    .rtable td { font-size: 11.5px; color: rgba(255,255,255,.65); padding: 6px 0; letter-spacing: 1px; }
-    .rtable td:last-child { text-align: right; }
-    .rtable tr.you td { color: #fff; }
-    /* Oyun-sonu listesinde arkadaş ekle butonu */
-    .go-add-fr {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 3px 10px; border-radius: 9px; border: 1px solid rgba(124,255,122,.5);
-      background: rgba(124,255,122,.12); color: #9fffa0;
-      font-size: 9.5px; letter-spacing: 1px; line-height: 1.4; font-weight: 700;
-      cursor: pointer; white-space: nowrap; transition: transform .12s, filter .2s;
+    /* Oyun-sonu sıralaması: başlıksız kompakt satırlar — LEADERBOARD penceresinin satır dili
+       (#1 altın, sen yeşil); skorun baştaki sıfırları sönük, arkadaş ekle küçük yuvarlak ikon. */
+    .go-ladder { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+    .go-lr {
+      display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 24px; align-items: center; column-gap: 8px;
+      height: 32px; padding: 0 6px 0 10px; box-sizing: border-box; border-radius: 9px;
+      font-size: 11.5px; letter-spacing: 1px; color: rgba(255,255,255,.72);
+      border: 1px solid transparent;
     }
+    .go-lr-rank { font-size: 10px; letter-spacing: .5px; color: rgba(255,216,102,.7); font-variant-numeric: tabular-nums; }
+    .go-lr-name { display: flex; align-items: center; min-width: 0; white-space: nowrap; }
+    .go-lr-name .nm { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .go-lr-name .bdg-in-name { flex: 0 0 auto; top: 0; }
+    .go-lr-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; margin-right: 7px; }
+    .go-lr-score { text-align: right; font-variant-numeric: tabular-nums; }
+    .go-lr-score i { font-style: normal; opacity: .3; }
+    .go-lr-act { display: flex; justify-content: flex-end; }
+    .go-lr.top { color: #ffd866; }
+    .go-lr.top .go-lr-rank { color: #ffd866; }
+    .go-lr.you { background: rgba(124,255,122,.10); border-color: rgba(124,255,122,.32); color: var(--green); }
+    .go-lr.you.top { background: rgba(255,210,80,.12); border-color: rgba(255,210,80,.55); color: #ffd866; box-shadow: 0 0 14px rgba(255,210,80,.16); }
+    .go-lr-gap { height: 6px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .go-lr-gap i { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.22); }
+    /* Yükleniyor: aynı yükseklikte iskelet satırlar → veri gelince panel zıplamaz */
+    .go-lr.skel { background: linear-gradient(90deg, rgba(255,255,255,.02) 30%, rgba(255,255,255,.07) 50%, rgba(255,255,255,.02) 70%) 0 0 / 300% 100%;
+      animation: goSkel 1.2s linear infinite; }
+    @keyframes goSkel { from { background-position: 100% 0; } to { background-position: 0 0; } }
+    .go-add-fr {
+      width: 24px; height: 24px; padding: 0; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(124,255,122,.5); background: rgba(124,255,122,.1); color: #9fffa0;
+      cursor: pointer; transition: transform .12s, background .2s, color .2s, filter .2s;
+    }
+    .go-add-fr svg { width: 13px; height: 13px; display: block; }
+    html#arc #rank-rows .go-add-fr svg[stroke="currentColor"] { stroke: currentColor; filter: none; }
     .go-add-fr:hover { filter: brightness(1.15); }
-    .go-add-fr:active { transform: scale(0.92); }
-    .go-add-fr:disabled { opacity: .6; cursor: default; }
+    .go-add-fr:active { transform: scale(0.9); }
+    .go-add-fr:disabled { cursor: default; }
+    .go-add-fr.sent { background: rgba(124,255,122,.85); border-color: transparent; color: #062a08; }
     #go-best { font-size: 13px; color: var(--green); letter-spacing: 1.6px; text-align: center; }
     #go-best span { color: #fff; }
 
@@ -3647,45 +3669,69 @@
       font-size: 8.5px; color: rgba(255,255,255,.5);
       letter-spacing: 1.4px; margin-top: 2px;
     }
-    .go-twin-best span { color: var(--green); }
-    /* Coin progress bar */
-    #go-coin-row { width: 100%; }
-    #go-coin-top {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: 6px;
+    .go-twin-best .ob > span { color: var(--green); }
+    /* Rekor kırıldıysa BEST satırının yerinde parlayan NEW BEST (sayım bitince belirir) */
+    .go-twin-best .nb { display: none; }
+    .go-twin-best.is-new .ob { display: none; }
+    .go-twin-best.is-new .nb {
+      display: inline-block; color: #ffe066; font-weight: 700; letter-spacing: 2px;
+      text-shadow: 0 0 8px rgba(255,210,60,.75);
+      animation: goNbIn .45s cubic-bezier(.3,1.6,.5,1) both, goNbGlow 1.8s ease-in-out .45s infinite;
     }
-    #go-coin-lbl { font-size: 10.5px; color: #ffcc44; letter-spacing: 1.4px; }
-    #go-coin-earned { font-size: 13px; color: #ffcc44; display: inline-block; transform-origin: left center; }
-    #go-coin-progress { font-size: 9px; color: rgba(255,255,255,.5); letter-spacing: 1.2px; }
+    @keyframes goNbIn { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes goNbGlow { 50% { text-shadow: 0 0 14px rgba(255,214,70,1); } }
+    /* ── Coin kapsülü: solda toplayıcı coin + "+N COINS", sağda sonraki coin, altta dolum çubuğu ── */
+    #go-coin-row {
+      position: relative; width: 100%; box-sizing: border-box;
+      padding: 11px 13px 13px; border-radius: 14px;
+      background: radial-gradient(130% 160% at 0% 0%, rgba(255,204,68,.13), transparent 58%), rgba(255,204,68,.035);
+      border: 1px solid rgba(255,204,68,.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    #go-coin-row.done { animation: goCoinDone 1s ease-out; }
+    @keyframes goCoinDone { 25% { border-color: rgba(255,214,90,.65); box-shadow: 0 0 24px rgba(255,200,60,.3), inset 0 1px 0 rgba(255,255,255,.08); } }
+    #go-coin-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    #go-coin-lbl { display: inline-flex; align-items: center; gap: 7px; color: #ffcc44; }
+    #go-coin-ico { display: inline-flex; width: 22px; height: 22px; flex: 0 0 auto; }
+    html#arc #go-coin-ico svg { width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,200,60,.5)); }
+    #go-coin-earned { font-size: 17px; font-weight: 700; letter-spacing: 1px; color: #ffcc44; display: inline-block; transition: opacity .3s; }
+    #go-coin-earned.zero { opacity: .6; font-weight: 500; }
+    #go-coin-word { font-size: 9px; letter-spacing: 1.8px; color: rgba(255,204,68,.7); margin-left: 3px; }
+    #go-coin-progress { font-size: 8.5px; letter-spacing: 1.1px; color: rgba(255,255,255,.5); white-space: nowrap;
+      opacity: 0; transform: translateY(3px); transition: opacity .35s ease, transform .35s ease; }
+    #go-coin-progress.show { opacity: 1; transform: none; }
     #go-coin-progress b { color: #ffcc44; font-weight: 600; }
-    /* Coin kırılımı: kaynak başına etiket (DISTANCE +0.9 · GOLD +1 · ×2 …) */
-    #go-coin-break { font-size: 8.5px; letter-spacing: .8px; line-height: 1.5; color: rgba(255,255,255,.5); margin-bottom: 7px; }
-    #go-coin-break:empty { display: none; }
-    #go-coin-break b { color: #ffcc44; font-weight: 600; }
-    #go-coin-break .neg { color: #ff7a8e; }
-    #go-coin-bar-wrap { position: relative; overflow: visible; }
-    .go-coin-fly { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; pointer-events: none; z-index: 3;
-      animation: goCoinFly .6s cubic-bezier(.3,.7,.3,1) forwards; }
-    @keyframes goCoinFly { 0% { transform: translate(0, 0) scale(.5); opacity: 1; } 55% { transform: translate(var(--fx), var(--fy)) scale(1.2); opacity: 1; } 100% { transform: translate(var(--fx), calc(var(--fy) - 14px)) scale(.9); opacity: 0; } }
-    .go-coin-ring { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none; z-index: 2;
-      border: 2px solid #ffe066; animation: goCoinRing .45s ease-out forwards; }
-    @keyframes goCoinRing { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(3.2); opacity: 0; } }
-    #go-coin-bar.flash { box-shadow: 0 0 12px #ffe066, 0 0 24px rgba(255,200,40,.8); }
-    .gcb { font-size: 8.5px; letter-spacing: 1px; color: rgba(255,255,255,.55); padding: 3px 7px; border-radius: 7px;
-      border: 1px solid rgba(255,204,68,.25); background: rgba(255,204,68,.06); white-space: nowrap; }
-    .gcb b { color: #ffcc44; font-weight: 600; margin-left: 3px; }
-    .gcb.neg { border-color: rgba(255,100,120,.3); background: rgba(255,100,120,.06); }
-    .gcb.neg b { color: #ff7a8e; }
+    /* Çubuk: gömük iz + altın dolgu; dolarken parıltı süpürür, ucunda kıvılcım taşır, %100'de parlar */
     #go-coin-bar-wrap {
-      width: 100%; height: 6px; border-radius: 3px;
-      background: rgba(255,255,255,.08); overflow: hidden;
+      position: relative; width: 100%; height: 8px; border-radius: 4px;
+      background: rgba(0,0,0,.38); box-shadow: inset 0 1px 2px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.04);
     }
     #go-coin-bar {
-      height: 100%; border-radius: 3px;
-      background: linear-gradient(to right, #ffaa00, #ffee44);
-      transition: width .8s cubic-bezier(.22,.68,0,1.2);
-      width: 0%;
+      position: relative; height: 100%; width: 0%; border-radius: 4px; overflow: hidden;
+      background: linear-gradient(90deg, #ff9d00, #ffc933 55%, #fff09a);
+      box-shadow: 0 0 8px rgba(255,190,40,.35);
+      transition: filter .3s ease, box-shadow .3s ease;
     }
+    #go-coin-bar::after {
+      content: ''; position: absolute; top: 0; bottom: 0; left: -40px; width: 40px; opacity: 0;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent);
+    }
+    #go-coin-bar-wrap.run #go-coin-bar::after { opacity: 1; animation: goBarSheen .5s linear infinite; }
+    @keyframes goBarSheen { to { left: 100%; } }
+    #go-coin-bar-wrap.flash #go-coin-bar { filter: brightness(1.7); box-shadow: 0 0 14px #ffe066, 0 0 26px rgba(255,200,40,.8); transition: none; }
+    #go-coin-tip {
+      position: absolute; top: 50%; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, #fff 0 28%, rgba(255,236,150,.9) 42%, rgba(255,200,60,0) 72%);
+      box-shadow: 0 0 10px 3px rgba(255,214,90,.7); opacity: 0; transition: opacity .25s;
+    }
+    #go-coin-bar-wrap.run #go-coin-tip { opacity: 1; }
+    /* Uçan coin, iz kıvılcımı ve halka — konum/hareket JS'te (Web Animations) */
+    .go-coin-fly { position: absolute; left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none; z-index: 5; opacity: 0; will-change: transform, opacity; }
+    html#arc #gameover .go-coin-fly svg { width: 18px; height: 18px; display: block; filter: drop-shadow(0 0 6px rgba(255,210,60,.85)); }
+    .go-coin-spark { position: absolute; left: 0; top: 0; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; pointer-events: none; z-index: 4;
+      background: #fff6c2; box-shadow: 0 0 6px 2px rgba(255,210,60,.85); }
+    .go-coin-ring { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; z-index: 3; box-sizing: border-box;
+      border: 1.5px solid #fff0a0; box-shadow: 0 0 8px rgba(255,220,90,.85); }
 
     /* ══════════ DIFFICULTY COLORS ══════════ */
     #hd-label { transition: color .25s, border-color .25s, background .25s; }
@@ -3945,6 +3991,10 @@
     html.theme-gameboy body > :not(.stack) :is(#ps-confirm, #buy-confirm-btn, .core-buy:not(.empty):not(.maxed):not([disabled]), .core-buy.toggle.on, .theme-card.active) :where(*):not(svg):not(svg *) { color: var(--gb0) !important; border-color: var(--gb0) !important; background-color: transparent !important; }
     /* START / AGAIN: gökkuşağı çerçeve yerine açık yeşil çerçeve */
     html.theme-gameboy body > :not(.stack) .rb-wrap { background-color: var(--gb2) !important; }
+    /* İlerleme çubukları gradyanla boyalı (GB'de background-image kapalı → görünmüyordu): düz açık yeşil */
+    html.theme-gameboy body > :not(.stack) :is(#go-coin-bar, #coins-progress-bar) { background-color: var(--gb2) !important; }
+    html.theme-gameboy body > :not(.stack) :is(#go-coin-tip, .go-coin-spark) { display: none !important; }
+    html.theme-gameboy body > :not(.stack) .go-coin-ring { border-color: var(--gb3) !important; }
     html.theme-gameboy body > :not(.stack) :is(button, .gl, .core-card):active { background-color: var(--gb1) !important; transform: none !important; }
     html.theme-gameboy :is(.gl, .btn-gray) { --c: #8bac0f; --gg: #9bbc0f; }
     html.theme-gameboy body > :not(.stack) :is(img, svg:not(#glow-defs), .av-img-opt) { filter: url(#fx-gb-ui) !important; }
@@ -4380,30 +4430,24 @@
       <div class="go-twin-col">
         <div id="go-score-lbl" class="go-twin-lbl">SCORE</div>
         <div id="go-score-val" class="go-twin-val">000000</div>
-        <div class="go-twin-best">BEST: <span id="go-best-val-inline">000000</span></div>
+        <div class="go-twin-best" id="go-best-line"><span class="ob">BEST: <span id="go-best-val-inline">000000</span></span><span class="nb">NEW BEST</span></div>
       </div>
       <div class="go-twin-col">
         <div class="go-twin-lbl" id="go-dist-lbl">DISTANCE</div>
         <div class="go-twin-val" id="go-dist-val">0M</div>
-        <div class="go-twin-best">BEST: <span id="go-bestdist-val-inline">0M</span></div>
+        <div class="go-twin-best" id="go-bestdist-line"><span class="ob">BEST: <span id="go-bestdist-val-inline">0M</span></span><span class="nb">NEW BEST</span></div>
       </div>
     </div>
-    <!-- Coin progress -->
+    <!-- Coin kazancı: tek kapsül — sayaç (toplayıcı coin) + bir sonraki coine dolum çubuğu -->
     <div id="go-coin-row">
       <div id="go-coin-top">
-        <span id="go-coin-lbl"><span class="ic-coin" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>COINS &nbsp;<span id="go-coin-earned">+0</span></span>
+        <span id="go-coin-lbl"><span id="go-coin-ico" class="ic-coin"></span><span id="go-coin-earned">+0</span><span id="go-coin-word">COINS</span></span>
         <span id="go-coin-progress"></span>
       </div>
-      <div id="go-coin-break"></div>
-      <div id="go-coin-bar-wrap"><div id="go-coin-bar"></div></div>
+      <div id="go-coin-bar-wrap"><div id="go-coin-bar"></div><i id="go-coin-tip"></i></div>
     </div>
-    <!-- Leaderboard -->
-    <table class="rtable">
-      <thead>
-        <tr><th>RANK</th><th style="padding:0 10px">NAME</th><th>SCORE</th><th></th></tr>
-      </thead>
-      <tbody id="rank-rows"></tbody>
-    </table>
+    <!-- Sıralama: başlıksız kompakt satırlar (#1 · üstündeki · sen) -->
+    <div id="rank-rows" class="go-ladder"></div>
     <div style="width:100%;display:flex;flex-direction:column;gap:12px">
       <button class="btn-gray" id="btn-continue-ad" style="display:none;font-size:11.5px;white-space:nowrap;border-color:rgba(124,255,122,.4);color:var(--green)">
         <span style="display:inline-flex;align-items:center;gap:7px;justify-content:center">
@@ -6705,6 +6749,7 @@ const ARC_DB = (() => {
   let _lastRunInfo = {};
   let _deathInfo = null;   // { cause, x, y, r, t } — beginDeath doldurur
   let _coinAnimFrom = 0, _coinAnimTo = 0;   // bu run'ın coin çubuğu: önceki birikmiş kesir → yeni toplam
+  let _goAnimTok = 0;                       // game over coin animasyonu jetonu (yeni ekran eskisini durdurur)
   let _activeChal = null, _chalPrevMode = null;   // oynanan meydan okuma + öncesindeki mod (showScene erken çağrılır → burada)
   // Günlük meydan okuma: aynı gün herkese aynı pist. spawnAhead tohumlu rastgele (srand) kullanır.
   let _dailyRun = false, _dailyRng = null, _dailyPrevMode = null;
@@ -7666,6 +7711,23 @@ const ARC_DB = (() => {
   function playTouchSound() {
     if (!sfxOn) return;
     playSfx(touchBuffer, 'AUDIO/ArcRiseTouch.wav', 0.55);
+  }
+  // Game over coin "ting"i: iki kısa üçgen dalga (dörtlü aralık, klasik coin sesi); ardışık coinlerde
+  // perde yarım tonlarla yükselir (en fazla yarım oktav). Ses dosyası yok — Web Audio ile üretilir.
+  function playCoinTing(i) {
+    if (!sfxOn || !sfxCtx || sfxCtx.state !== 'running') return;
+    try {
+      const t = sfxCtx.currentTime, f0 = 987.8 * Math.pow(2, Math.min(i, 12) / 24);
+      [[f0, 0, .09], [f0 * 4 / 3, .06, .22]].forEach(([f, d, len]) => {
+        const o = sfxCtx.createOscillator(), g = sfxCtx.createGain();
+        o.type = 'triangle'; o.frequency.setValueAtTime(f, t + d);
+        g.gain.setValueAtTime(0.0001, t + d);
+        g.gain.exponentialRampToValueAtTime(0.07, t + d + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d + len);
+        o.connect(g); g.connect(sfxCtx.destination);
+        o.start(t + d); o.stop(t + d + len + 0.03);
+      });
+    } catch (_) {}
   }
   // Uygulama arka plana/kapanınca: tüm ses askıya alınır (arka planda çalmaz); dönünce devam.
   function _audioPause() { try { if (sfxCtx && sfxCtx.state === 'running') sfxCtx.suspend(); } catch(_) {} if (bgAudio) bgAudio.pause(); _setAudioSession('auto'); }
@@ -9125,9 +9187,9 @@ const ARC_DB = (() => {
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
-    _nextBigCoinCm = 250; _runBigCoins = 0; _runBigBanked = 0; _runChestCoins = 0; _runChestBanked = 0; _runChestCms = [];
+    _nextBigCoinCm = 250; _runBigCoins = 0; _runBigBanked = 0; _runChestCoins = 0; _runChestBanked = 0;
     _runGates = 0; _runCrystals = 0; _runCrystalClose = 0; _runTimings = 0; _runCorridors = 0; _ringMulT = 0; feats.length = 0; for (const k in _corr) delete _corr[k];
-    _runGolds = 0; _runGoldBanked = 0; _runCoinsRaw = 0; _runCoinsCapped = 0;
+    _runGolds = 0; _runGoldBanked = 0;
     for (let i = 0; i < slotCD.length; i++) slotCD[i] = 0; activeAbility = null;
     goldBalls.length = 0; purpleBalls.length = 0; particles.length = 0; floatTexts.length = 0;
     flameParticles.length = 0; flyScores.length = 0;
@@ -9678,7 +9740,7 @@ const ARC_DB = (() => {
           if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < player.r + f.r + magGrabF * 0.5) {
             f.done = true; f.doneT = 0;
             _distChestsOpened.add(f.cm); try { localStorage.setItem(DIST_CHEST_KEY, JSON.stringify([..._distChestsOpened])); } catch(_) {}
-            _runChestCoins += f.val; _runChestCms.push(f.cm);
+            _runChestCoins += f.val;
             try { localStorage.setItem(CHEST_PENDING_KEY, String(_runChestCoins - _runChestBanked)); } catch(_) {}
             spawnFloatText(f.x, f.y - 30, '+' + f.val + ' COINS', 48, 1.8);
             spawnGoldParticles(f.x, f.y); spawnGoldParticles(f.x, f.y); triggerGoldFlash(0.5); haptic([20, 40, 20, 40, 30]);
@@ -10097,13 +10159,11 @@ const ARC_DB = (() => {
   const DIST_CHEST_KEY = 'arc_dist_chests', CHEST_PENDING_KEY = 'arc_chest_pending';
   const distChestValue = cm => cm < 500 ? 25 : 50 + 25 * (Math.round(cm / 500) - 1);
   let _distChestsOpened = (() => { try { return new Set(JSON.parse(localStorage.getItem(DIST_CHEST_KEY) || '[]')); } catch(_) { return new Set(); } })();
-  let _runChestCoins = 0, _runChestBanked = 0, _runChestCms = [];
+  let _runChestCoins = 0, _runChestBanked = 0;
   let _runGates = 0, _runCrystals = 0, _runTimings = 0, _runCorridors = 0;
   let _runCmBanked    = 0;        // bu run'dan coin'e çevrilmiş cm (ad-continue çift saymasın)
   let _runGolds       = 0;        // bu run'da toplanan altın top sayısı (coin verir)
   let _runGoldBanked  = 0;        // bunlardan coin'e çevrilmiş olanlar
-  let _runCoinsRaw    = 0;        // son run'ın tavan ÖNCESİ ham coin kazancı
-  let _runCoinsCapped = 0;        // günlük yumuşak tavanla kesilen miktar
   let runCombo        = 0;        // timer canlıyken art arda toplanan kazanım zinciri
   let _runMaxCombo    = 0;        // bu run'daki en uzun combo serisi (art arda toplanan top sayısı)
   let _comboStreak    = 0;        // şu anki seri (tavanda bankalama kesmez)
@@ -10190,12 +10250,14 @@ const ARC_DB = (() => {
       const gained   = Math.floor(total);
       coinCarry = total - gained;
       try { localStorage.setItem(COIN_CARRY_KEY, String(coinCarry)); } catch(_){}
-      if (gained > 0) { coinsEarned += gained; addCoinsEarnedToday(gained); }
-      _runCoinsRaw    = rawCoins;    // game-over ekranı kırılımı gösterebilsin
-      _runCoinsCapped = rawCoins - capped;
+      if (gained > 0) { coinsEarned += gained; addCoinsEarnedToday(Math.max(0, gained - deltaChest)); }   // sandık hediyesi günlük tavanı doldurmaz
       syncCoins();
     }
     const earned = coins - prevCoins;
+    // Rekor kırıldı mı? (güncellemeden önce kıyasla → game over'da BEST yerine NEW BEST)
+    const newBest     = gameMode !== 'wife' && lastScore > 0 && lastScore > best;
+    const newBestDist = gameMode !== 'wife' && runDistCm >= 5 && runDistCm > bestDistanceM;
+    const bestBefore  = best, bestDistBefore = bestDistanceM;   // sayım sürerken eski rekor görünür
     // Wife Mode: skor/mesafe kaydı yok — sadece coin'lerle birlikte tamamen
     // casual akış. (Daha aşağıdaki submitScore zaten guard'lı.)
     if (gameMode !== 'wife') {
@@ -10260,16 +10322,12 @@ const ARC_DB = (() => {
     }
 
     const sc  = lastScore;
-    const avc = AVATAR_COLORS[avatarIdx];
 
     // Best lines under twin SCORE / DISTANCE values
     const goBestInline = document.getElementById('go-best-val-inline');
-    if (goBestInline) goBestInline.textContent = pad(best);
+    if (goBestInline) goBestInline.textContent = pad(newBest ? bestBefore : best);
     const goBestDistInline = document.getElementById('go-bestdist-val-inline');
-    if (goBestDistInline) {
-      const bd = bestDistanceM || 0;
-      goBestDistInline.textContent = fmtDist(bd);
-    }
+    if (goBestDistInline) goBestDistInline.textContent = fmtDist((newBestDist ? bestDistBefore : bestDistanceM) || 0);
     // Reklamla devam: run başına tek hak, wife mode'da ve güvenli nokta yoksa kapalı.
     // ADS_ENABLED false iken (v1) hiç gösterilmez — sahte reklam yok.
     const adBtn = document.getElementById('btn-continue-ad');
@@ -10286,6 +10344,8 @@ const ARC_DB = (() => {
     if (distValEl) distValEl.textContent = '0';
     const animDur = Math.min(1400, Math.max(600, sc / 4));
     const animStart = performance.now();
+    const bestLine = document.getElementById('go-best-line'), bestDistLine = document.getElementById('go-bestdist-line');
+    bestLine.classList.remove('is-new'); bestDistLine.classList.remove('is-new');
     function animScore() {
       const elapsed = performance.now() - animStart;
       const t = Math.min(1, elapsed / animDur);
@@ -10296,95 +10356,122 @@ const ARC_DB = (() => {
         distValEl.textContent = fmtDist(d);
       }
       if (t < 1) requestAnimationFrame(animScore);
+      else { bestLine.classList.toggle('is-new', newBest); bestDistLine.classList.toggle('is-new', newBestDist); }   // sayım bitince NEW BEST
     }
     requestAnimationFrame(animScore);
 
-    // ── Coin kazancı: "+N" sayım animasyonu + kırılım satırı ──
-    // Eskiden bar, maliyeti her coin'de büyüyen bir mesafe eşiğine doluyordu —
-    // oyuncu ilerledikçe barın yavaşlamasını görüyordu. Artık kazanç sabit
-    // oranlı olduğu için bar sadece sayımın ilerleyişini gösteriyor ve alt
-    // satır parayı NEREDEN kazandığını söylüyor (mesafe + altın).
+    // ── Coin kazancı ──
+    // Çubuk ÖNCEKİ birikmiş kesirden başlar, bu run'ın kazancı kadar ilerler (≤1 sn). Her %100'de
+    // çubuğun ucu parlar ve oradan coin fırlar: yelpaze gibi farklı kavislerle yükselip kapsülün
+    // üstünden solundaki coine (toplayıcı) akar. Varınca sayaç artar, toplayıcı zıplar, kısa bir
+    // "ting" çalar. Çok coin (sandık) → çubuk ≤6 kez dolar, ≤10 coin uçar; her biri payını taşır.
+    const coinRow  = document.getElementById('go-coin-row');
     const earnedEl = document.getElementById('go-coin-earned');
     const progEl   = document.getElementById('go-coin-progress');
     const barEl    = document.getElementById('go-coin-bar');
-    const gained   = Math.max(0, earned);
-    const fromDist = (runDistCm / 100) * COIN_PER_M * coinModeMul();
-    const fromGold = _runGolds * COIN_PER_GOLD;
-    const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
-    barEl.style.transition = 'none';
-    barEl.style.width = '0%';
-    earnedEl.textContent = '+0';
-    // Kırılım: her kaynak ayrı etiket; çubuk = bir sonraki coine birikmiş kesir ("NEXT COIN %")
-    // Açıklama: düz cümle — "1 COIN PER METER · +0.4 FROM 0.40M · +1 FROM 1 GOLD · ×2 EXTREME"
-    const breakEl = document.getElementById('go-coin-break');
-    if (gameMode === 'wife') breakEl.textContent = 'WIFE MODE · NO COINS';
-    else breakEl.innerHTML = [
-        `<b>+${f1(fromDist)}</b> FROM ${fmtDist(runDistCm)}${coinModeMul() > 1 ? ' (EXTREME ×2)' : ''}`,
-        _runBigCoins ? `<b>+${_runBigCoins * BIG_COIN_VALUE}</b> FROM ${_runBigCoins} BIG COIN${_runBigCoins > 1 ? 'S' : ''}` : '',
-        ..._runChestCms.map(cm => `<b>+${distChestValue(cm)}</b> FROM ${fmtDist(cm)} CHEST`),
-        runDoublerActive ? `<b>×2</b> DOUBLER` : '',
-      ].filter(Boolean).join(' · ');
-    progEl.textContent = '';
-    const popEarned = (n) => {
-      earnedEl.textContent = '+' + n;
-      earnedEl.style.transition = 'none';
-      earnedEl.style.transform = 'scale(1.55)';
-      earnedEl.style.color = '#ffee88';
-      requestAnimationFrame(() => {
-        earnedEl.style.transition = 'transform .35s cubic-bezier(.2,.8,.3,1), color .5s';
-        earnedEl.style.transform = 'scale(1)';
-        earnedEl.style.color = '#ffcc44';
-      });
+    const wrapEl   = document.getElementById('go-coin-bar-wrap');
+    const tipEl    = document.getElementById('go-coin-tip');
+    const icoEl    = document.getElementById('go-coin-ico');
+    const isWife   = gameMode === 'wife';
+    const gained   = isWife ? 0 : Math.max(0, earned);
+    const goTok    = ++_goAnimTok;   // yeni game over → önceki animasyonun geciken adımları durur
+    const goLive   = () => goTok === _goAnimTok && scene === 'over';   // AGAIN'e basıldıysa run sırasında ses/sayaç yok
+    const lowFx    = document.documentElement.classList.contains('lowfx');
+    coinRow.querySelectorAll('.go-coin-fly, .go-coin-spark, .go-coin-ring').forEach(e => e.remove());
+    coinRow.classList.remove('done'); wrapEl.classList.remove('run', 'flash');
+    earnedEl.textContent = '+0'; earnedEl.classList.add('zero');
+    progEl.classList.toggle('show', isWife);
+    progEl.textContent = isWife ? 'WIFE MODE · NO COINS' : '';
+    const from = isWife ? coinCarry : _coinAnimFrom, to = isWife ? coinCarry : _coinAnimTo;
+    const FLIGHTS = Math.min(gained, 10), WRAPS = Math.min(gained, 6);   // ≤10 uçan coin, çubuk ≤6 kez dolar (flaş yorucu olmasın)
+    const visTo = gained > WRAPS ? WRAPS + coinCarry : to;   // çubuk WRAPS kez dolar, gerçek kalan kesirde durur
+    const coinAnimDur = Math.max(450, Math.min(1000, (visTo - from) * 700));
+    const setBar = f => { const pc = (Math.max(0, Math.min(1, f)) * 100) + '%'; barEl.style.width = pc; tipEl.style.left = pc; };
+    // Kapsül içi koordinat: uçuşlar #go-coin-row'a göre konumlanır
+    const ptIn = (el, fx, fy) => { const r = el.getBoundingClientRect(), o = coinRow.getBoundingClientRect();
+      return { x: r.left - o.left + r.width * fx, y: r.top - o.top + r.height * fy }; };
+    // İnce halka: tam boyda çizilip küçükten büyütülür → kenar hep ince ve keskin kalır
+    const ring = (p, size, ms) => {
+      const e = document.createElement('span'); e.className = 'go-coin-ring';
+      Object.assign(e.style, { left: p.x + 'px', top: p.y + 'px', width: size + 'px', height: size + 'px', margin: (-size / 2) + 'px 0 0 ' + (-size / 2) + 'px' });
+      coinRow.appendChild(e);
+      e.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1)', opacity: 0 }],
+        { duration: ms, easing: 'cubic-bezier(.2,.7,.3,1)' }).onfinish = () => e.remove();
     };
-    // Çubuk ÖNCEKİ birikmiş kesirden başlar ve bu run'ın kazancı kadar ilerler; her %100'de
-    // çubuğun sağ ucundan bir coin "+N" sayacına fırlar ve çubuk sıfırdan dolmaya devam eder.
-    // Süre en fazla 1 sn → çok coin kazanılınca hızlı ardışık coin yağmuru / patlama gibi görünür.
-    const from = gameMode === 'wife' ? 0 : _coinAnimFrom, to = gameMode === 'wife' ? 0 : _coinAnimTo;
-    const coinAnimDur = Math.max(450, Math.min(1000, (to - from) * 700));
-    const wrapEl = document.getElementById('go-coin-bar-wrap');
-    // Her %100: çubuğun dolduğu uçtan (sağ uç) bir coin yukarı yükselir; birden fazlaysa yelpaze
-    // gibi farklı yönlere dağılır. Uçta kısa parlama halkası.
-    let flyN = 0;
-    const flyCoin = () => {
-      if (!wrapEl) return;
-      const k = flyN++, spread = gained > 1 ? ((k * 0.618) % 1) * 2 - 1 : 0;   // −1..1 (altın oran → eşit dağılım)
-      const el = document.createElement('span'); el.className = 'go-coin-fly'; el.innerHTML = iconHTML('coin', { size: 16 });
-      el.style.left = wrapEl.getBoundingClientRect().width + 'px';
-      el.style.setProperty('--fx', (spread * 70 - (gained > 1 ? 30 : 0)).toFixed(0) + 'px');
-      el.style.setProperty('--fy', (-(46 + Math.abs(spread) * 18 + (k % 3) * 10)).toFixed(0) + 'px');
-      el.addEventListener('animationend', () => el.remove());
-      wrapEl.appendChild(el);
-      const ring = document.createElement('span'); ring.className = 'go-coin-ring';
-      ring.style.left = wrapEl.getBoundingClientRect().width + 'px';
-      ring.addEventListener('animationend', () => ring.remove()); wrapEl.appendChild(ring);
-      barEl.classList.add('flash'); setTimeout(() => barEl.classList.remove('flash'), 140);
+    const land = k => {
+      if (!goLive()) return;
+      earnedEl.textContent = '+' + Math.round(gained * k / FLIGHTS);
+      earnedEl.classList.remove('zero');
+      earnedEl.animate([{ transform: 'scale(1.3)', color: '#fff6c2' }, { transform: 'scale(1)', color: '#ffcc44' }],
+        { duration: 380, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      icoEl.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.4) rotate(-14deg)', offset: .35 }, { transform: 'scale(.9)', offset: .7 }, { transform: 'scale(1)' }],
+        { duration: 360, easing: 'ease-out' });
+      ring(ptIn(icoEl, .5, .5), 44, 420);
+      playCoinTing(k - 1); haptic(8);
+      if (k === FLIGHTS) coinRow.classList.add('done');
     };
-    barEl.style.width = (from * 100) + '%';
-    let wraps = 0, coinAnimStart = 0;
-    function animCoin(ts) {
-      if (!coinAnimStart) coinAnimStart = ts;
-      const t = Math.min(1, (ts - coinAnimStart) / coinAnimDur);
-      const eased = 1 - Math.pow(1 - t, 1.6);
-      const v = from + (to - from) * eased;
-      const w = Math.floor(v + 1e-9);
-      while (wraps < w && wraps < gained) {   // %100'e vurdu → coin
-        wraps++; popEarned(wraps); flyCoin(); haptic(8);
+    const FLY_MS = 720;
+    const cub = (a, b, c, d, t) => { const m = 1 - t, A = m * m * m, B = 3 * m * m * t, C = 3 * m * t * t, D = t * t * t;
+      return { x: A * a.x + B * b.x + C * c.x + D * d.x, y: A * a.y + B * b.y + C * c.y + D * d.y }; };
+    // Bir dolum: çubuk ucu parlar + halka, payına düşen coinler 70 ms arayla fırlar
+    let launched = 0;
+    const wrapBurst = i => {
+      wrapEl.classList.remove('flash'); void wrapEl.offsetWidth; wrapEl.classList.add('flash');
+      setTimeout(() => wrapEl.classList.remove('flash'), 110);
+      ring(ptIn(wrapEl, 1, .5), 34, 380);
+      const upto = Math.round(FLIGHTS * i / WRAPS);
+      for (let n = 0; launched < upto; n++) { const k = ++launched; setTimeout(() => { if (goTok === _goAnimTok) launch(k); }, n * 70); }
+    };
+    const launch = k => {
+      const p0 = ptIn(wrapEl, 1, .5), p3 = ptIn(icoEl, .5, .5);
+      // Yelpaze: her coin kendi kavisini çizer — çubuk ucundan yükselir, kapsülün üstünden sola
+      // akar, toplayıcıya dalar. Tepede durmaz (kümelenmez); hız ortada hafifçe düşer, uçlarda hızlı.
+      const u = FLIGHTS > 1 ? (k * 0.618) % 1 : .55, w = FLIGHTS > 1 ? (k * 0.382 + .3) % 1 : .5;
+      const top = -6 - w * 24;                                                  // kavisin yüksekliği
+      const P1 = { x: p0.x + 4 + u * 22, y: top - 14 };                         // uçtan yukarı (hafif sağa açılır)
+      const P2 = { x: p3.x + (p0.x - p3.x) * (.2 + .5 * u), y: top - 22 };      // üstte sola kavis
+      const pos = f => cub(p0, P1, P2, p3, f + .07 * Math.sin(2 * Math.PI * f));
+      const frames = [];
+      for (let i = 0; i <= 24; i++) {
+        const f = i / 24, p = pos(f);
+        const sc = f < .25 ? .4 + 3 * f : (f < .75 ? 1.15 - .3 * (f - .25) : 1 - 1.6 * (f - .75));
+        frames.push({ offset: f, opacity: f < .06 ? f / .06 : (f > .93 ? (1 - f) / .07 : 1),
+          transform: `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) rotateY(${(720 * (1 - (1 - f) * (1 - f))).toFixed(0)}deg) scale(${sc.toFixed(3)})` });
       }
-      barEl.style.width = ((v - w) * 100) + '%';
-      if (t < 1) requestAnimationFrame(animCoin);
-      else {
-        while (wraps < gained) { wraps++; popEarned(wraps); flyCoin(); }
-        barEl.style.width = (coinCarry * 100) + '%';
-        if (gameMode !== 'wife') {
-          const nc = nextCoinLeft();   // coins penceresiyle aynı: "NEXT COIN · 0.60M TO GO"
-          progEl.innerHTML = `NEXT COIN · <b>${fmtDist(nc.leftCm)} TO GO</b>`;
-        }
+      const el = document.createElement('span'); el.className = 'go-coin-fly'; el.innerHTML = iconHTML('coin', { size: 18 });
+      coinRow.appendChild(el);
+      el.animate(frames, { duration: FLY_MS, easing: 'linear', fill: 'forwards' }).onfinish = () => { el.remove(); land(k); };
+      if (!lowFx) [.18, .36, .54, .72].forEach(f => setTimeout(() => {   // iz kıvılcımları
+        if (!goLive()) return;
+        const p = pos(f), s = document.createElement('span'); s.className = 'go-coin-spark';
+        s.style.left = (p.x + (Math.random() - .5) * 6) + 'px'; s.style.top = (p.y + (Math.random() - .5) * 6) + 'px';
+        coinRow.appendChild(s);
+        s.animate([{ transform: 'scale(1)', opacity: .95 }, { transform: 'translateY(7px) scale(0)', opacity: 0 }],
+          { duration: 420, easing: 'ease-out' }).onfinish = () => s.remove();
+      }, f * FLY_MS));
+    };
+    setBar(from);
+    let wraps = 0, coinT0 = 0;
+    function animCoin(ts) {
+      if (goTok !== _goAnimTok) return;
+      if (!coinT0) { coinT0 = ts; if (visTo > from) wrapEl.classList.add('run'); }
+      const t = Math.min(1, (ts - coinT0) / coinAnimDur);
+      const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;   // yumuşak hızlan → yavaşla
+      const v = from + (visTo - from) * e, w = Math.floor(v + 1e-9);
+      while (wraps < w && wraps < WRAPS) wrapBurst(++wraps);           // %100 → coin(ler) fırlar
+      if (t < 1) { setBar(v - w); requestAnimationFrame(animCoin); return; }
+      while (wraps < WRAPS) wrapBurst(++wraps);
+      setBar(coinCarry); wrapEl.classList.remove('run');
+      if (!isWife) {
+        const nc = nextCoinLeft();   // coins penceresiyle aynı: "NEXT COIN · 0.60M TO GO"
+        progEl.innerHTML = `NEXT COIN · <b>${fmtDist(nc.leftCm)} TO GO</b>`;
+        progEl.classList.add('show');
       }
     }
     setTimeout(() => requestAnimationFrame(animCoin), 350);
 
-    // Geçici "yükleniyor" satırları
-    rankRows.innerHTML = `<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.3);font-size: 8px;padding:12px 0">LOADING...</td></tr>`;
+    // Yükleniyor: aynı yükseklikte iskelet satırlar (veri gelince panel zıplamasın)
+    rankRows.innerHTML = '<div class="go-lr skel"></div>'.repeat(3);
 
     // Skoru + distance'ı Firestore'a gönder (config yoksa no-op).
     // Build optional trace data: only meaningful if we have enough sample points.
@@ -10481,37 +10568,27 @@ const ARC_DB = (() => {
 
     const youIdx = ann.findIndex(r => r.isYou);
 
-    // Gösterilecek 4 satır: #1 + bir üst + kendim + bir alt
-    const showSet = new Set([0]);
-    if (youIdx > 0)                      showSet.add(youIdx - 1);
-    showSet.add(youIdx);
-    if (youIdx + 1 < ann.length)         showSet.add(youIdx + 1);
-    const showArr = [...showSet].sort((a, b) => a - b);
-
-    // Satırları oluştur; boşluk varsa ··· ayırıcı
-    let html = '';
-    let prev = -1;
+    // En fazla 3 satır: ilk üçteysen ilk 3; değilsen #1 · ··· · hemen üstündeki · sen
+    const showArr = youIdx <= 2 ? [0, 1, 2].filter(i => i < ann.length) : [0, youIdx - 1, youIdx];
+    // Skorun baştaki sıfırları sönük (000940 → 000 sönük + 940)
+    const scoreHTML = n => { const s = pad(n), z = s.match(/^0*(?=\d)/)[0]; return (z ? `<i>${z}</i>` : '') + s.slice(z.length); };
+    let html = '', prev = -1;
     for (const idx of showArr) {
-      if (prev >= 0 && idx > prev + 1) {
-        html += `<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.22);font-size: 10.5px;padding:3px 0;letter-spacing:2px">···</td></tr>`;
-      }
+      if (prev >= 0 && idx > prev + 1) html += '<div class="go-lr-gap"><i></i><i></i><i></i></div>';
       const r  = ann[idx];
       const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
-      const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       const canAdd = !r.isYou && !lbFallback;
-      const addBtn = canAdd ? `<button class="go-add-fr" data-n="${esc(r.name)}" data-t="${esc(r.tag || '')}" aria-label="Add friend">Add</button>` : '';
-      html += `<tr class="${r.isYou ? 'you' : ''}" ${r.isYou ? `style="color:${avc}"` : ''}>
-        <td style="white-space:nowrap">${rankStr}</td>
-        <td style="padding:0 8px">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${rc};vertical-align:middle;margin-right:4px"></span>${esc(r.name)}${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}
-        </td>
-        <td style="text-align:right">${pad(r.score)}</td>
-        <td style="text-align:right;padding-left:8px">${addBtn}</td>
-      </tr>`;
+      const addBtn = canAdd ? `<button class="go-add-fr" type="button" data-n="${esc(r.name)}" data-t="${esc(r.tag || '')}" aria-label="Add friend">${GO_ADD_IC}</button>` : '';
+      html += `<div class="go-lr${r.isYou ? ' you' : ''}${idx === 0 ? ' top' : ''}">
+        <span class="go-lr-rank">${String(r.rank + 1).padStart(3, '0')}.</span>
+        <span class="go-lr-name"><i class="go-lr-dot" style="background:${rc}"></i><span class="nm">${esc(r.name)}</span>${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
+        <span class="go-lr-score">${scoreHTML(r.score)}</span>
+        <span class="go-lr-act">${addBtn}</span>
+      </div>`;
       prev = idx;
     }
     rankRows.innerHTML = html;
-    // Oyun-sonu listesinden arkadaş ekle (istek gönder)
+    // Oyun-sonu listesinden arkadaş ekle (istek gönder) — gönderilince ikon tike döner
     rankRows.querySelectorAll('.go-add-fr').forEach(b => b.addEventListener('click', async () => {
       b.disabled = true;
       const name = b.dataset.n;
@@ -10524,10 +10601,12 @@ const ARC_DB = (() => {
       }
       let ok = false;
       try { ok = await sendRequestTo(name, tag, null); } catch(_){}
-      if (ok) { b.textContent = 'Sent'; try { showToast('Friend request sent'); } catch(_){} }
-      else { b.textContent = 'Add'; b.disabled = false; }
+      if (ok) { b.classList.add('sent'); b.innerHTML = GO_SENT_IC; b.setAttribute('aria-label', 'Request sent'); try { showToast('Friend request sent'); } catch(_){} }
+      else b.disabled = false;
     }));
   }
+  const GO_ADD_IC  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="8" r="3.6"/><path d="M3 20.5c.7-3.6 3.3-5.7 6.5-5.7s5.8 2.1 6.5 5.7"/><path d="M19 7.5v6M16 10.5h6"/></svg>';
+  const GO_SENT_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   // 6 haneli skor gösterimi (000000 → 999999+)
   const pad = n => {

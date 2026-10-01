@@ -596,11 +596,33 @@ test('mesafe sandığı: 2.5 m 25 coin, bir kez açılır, kazanca eklenir', asy
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(2500);
   const c = await ev('ARC_TEST.coinAnim'), r = await ev('ARC_TEST.lastRun');
   check(Math.abs((c.to - c.from) - (r.distCm / 100 + 25)) < 0.02, `kazanç ${c.to - c.from} (beklenen mesafe + 25)`);
-  check(/25<\/b> FROM .*CHEST/.test(await ev(`document.getElementById('go-coin-break').innerHTML`)), 'açıklamada sandık yok');
+  const whole = Math.floor(c.to + 1e-9);
+  check(await waitFor(`document.getElementById('go-coin-earned').textContent === '+${whole}'`, 6000),
+    `sayaç kazancı göstermedi: ${await ev("document.getElementById('go-coin-earned').textContent")} (beklenen +${whole})`);
+  const dayAmt = Number(await ls('arc_coin_day_amt') || 0);
+  check(dayAmt === whole - 25, `sandık günlük tavana sayıldı: gün=${dayAmt}, kazanç=${whole}`);
   check(!(await ls('arc_chest_pending')), 'bekleyen sandık kaydı silinmedi');
   // bir dahaki run: 2.5 m'de sandık yok → ilk işaret 5 m sandığı
   await ev(`document.getElementById('btn-again').click(); true`); await sleep(400);
   check(JSON.parse(await ls('arc_dist_chests')).includes(250), 'açılan sandık kaydı yok');
+});
+
+test('oyun sonu sıralaması: başlıksız ≤3 satır (#1 · üstündeki · sen), arkadaş ekle ikonu', async () => {
+  fbReset();
+  const doc = (n, sc) => ({ name: `projects/p/databases/(default)/documents/scores/${n}_normal`,
+    fields: { name: { stringValue: n }, owner: { stringValue: n }, tag: { stringValue: '1234' }, score: { integerValue: String(sc) },
+      mode: { stringValue: 'normal' }, ts: { integerValue: String(Date.now()) } } });
+  for (const [n, sc] of [['AAA', 9000], ['BBB', 8000], ['CCC', 7000], ['DDD', 6000], ['EEE', 5000]]) fb.docs.set(`scores/${n}_normal`, doc(n, sc));
+  await fresh();
+  await playRun(1500);
+  const r = await ev(`(() => { const rows = [...document.querySelectorAll('#rank-rows .go-lr')]; return {
+    n: rows.length, you: rows.findIndex(x => x.classList.contains('you')), gap: !!document.querySelector('#rank-rows .go-lr-gap'),
+    names: rows.map(x => x.querySelector('.nm').textContent), adds: rows.map(x => !!x.querySelector('.go-add-fr')),
+    head: !!document.querySelector('#gameover th'), brk: !!document.getElementById('go-coin-break') }; })()`);
+  check(r.n === 3 && r.you === 2, `satırlar: ${JSON.stringify(r)}`);
+  check(r.names[0] === 'AAA' && r.names[1] === 'EEE' && r.gap, `#1 + üstündeki + sen bekleniyordu: ${JSON.stringify(r)}`);
+  check(r.adds[0] && r.adds[1] && !r.adds[2], `arkadaş ekle yalnız başkalarında: ${JSON.stringify(r.adds)}`);
+  check(!r.head && !r.brk, 'eski başlık satırı / coin kırılım satırı hâlâ var');
 });
 
 // İki oyunculu testler için: tüm localStorage'ı yakala / geri yükle (aynı origin'de kimlik değiştirir)

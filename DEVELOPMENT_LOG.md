@@ -396,6 +396,17 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Game over yeni düzen: coin kapsülü, kompakt sıralama, toplayıcıya uçan coin animasyonu, NEW BEST (2026-10-01)
+
+- **Sorun:** kullanıcı ekran görüntüsü — kırılım satırı ("+0.7 FROM 0.67M") anlaşılmıyor, RANK/NAME/SCORE başlığında NAME aşağı kaymış (inline `padding:0 10px` alt boşluğu sıfırlıyordu), 4 satır + ADD yazılı butonlar ekranı kalabalıklaştırıyor.
+- **Coin kapsülü:** tek çerçevede solda toplayıcı coin + "+N COINS", sağda "NEXT COIN · X TO GO" (çubuk bitince belirir), altta 8 px gömük çubuk. Kırılım satırı kaldırıldı (`_runChestCms`, `_runCoinsRaw/_runCoinsCapped` artık gereksiz → silindi). Wife Mode: "WIFE MODE · NO COINS" sağ etikette.
+- **Coin animasyonu:** çubuk önceki birikimden dolar (≤1 sn, yumuşak hızlan–yavaşla), dolarken parıltı süpürür ve ucunda kıvılcım taşır. Her %100'de uç parlar + ince halka; coin(ler) uçtan fırlar, her biri farklı kübik kavisle (altın oran yelpaze) yükselip kapsülün üstünden sola akar, 3B döner, iz kıvılcımı bırakır ve toplayıcıya dalar. Varınca: sayaç +N (büyüyüp söner), toplayıcı zıplar + halka, kısa sentez "ting" (Web Audio, dosyasız; ardışık coinlerde perde yükselir, SFX kapalıysa çalmaz), 8 ms titreşim; son coin'de kapsül kısa parlar. Çok coin (sandık): çubuk ≤6 kez dolar (sürekli flaş yorucuydu), ≤10 coin uçar, her biri payını taşır; sayaç tam kazançta biter. Animasyon jetonu: AGAIN'e basılınca/yeni game over'da geciken adımlar durur, run sırasında ses çalmaz. LOWFX'te iz kıvılcımı yok.
+- **Sıralama:** başlıksız kompakt satırlar (LEADERBOARD penceresinin dili): en fazla 3 satır — ilk üçteysen ilk 3, değilsen #1 · ··· · hemen üstündeki · sen. #1 altın yazı, sen yeşil çerçeveli satır; skorun baştaki sıfırları sönük; ADD yazısı yerine küçük yuvarlak "kişi +" ikonu (gönderilince tik). Yüklenirken aynı yükseklikte iskelet satırlar (panel zıplamaz).
+- **NEW BEST:** skor/mesafe rekoru kırıldıysa sayım sürerken eski rekor görünür, sayım bitince BEST satırının yerinde parlayan "NEW BEST".
+- **Ekonomi düzeltmesi:** sandık coinleri günlük yumuşak tavan sayacına (`arc_coin_day_amt`) ekleniyordu → 25'lik sandık açan oyuncunun o günkü mesafe oranı hemen ×0.4'e düşüyordu ("1.75M TO GO"). Artık sayaca yalnız sandık dışı kazanç eklenir.
+- **Game Boy teması:** coin çubukları gradyanla boyalıydı, temada `background-image: none` → görünmüyordu (coins penceresi dahil). Düz açık yeşil.
+- Test 34/34 (sandık testi: sayaç +N'de biter, sandık günlük tavana sayılmaz; yeni: oyun sonu sıralaması ≤3 satır, #1 · üstündeki · sen, ekle ikonu yalnız başkalarında, eski başlık/kırılım yok). Not: tam paket 600 sn'yi aşınca arka plana alınıp macOS tarafından donduruldu → kalan testler ön planda ayrı koşturuldu.
+
 ### Mesafe sandıkları (2.5 m 25 coin, 5 m 50, +25/5 m; ömür boyu birer kez), yükselen coin animasyonu, sade açıklama (2026-10-01)
 
 - **Sandıklar:** run mesafesi 2.5 m, 5 m, 10 m, 15 m … işaretlerinde, iki engel arasında (büyük coinden geniş boşluk, oyuncu ±26 px) sallanan altın sandık + "+N" etiketi. Değer: 2.5 m → 25, 5 m → 50, sonra her 5 m +25 (10 m 75, 15 m 100, 20 m 125 …). Her sandık ÖMÜR BOYU bir kez (`arc_dist_chests`); açıldıktan sonra o işarette 5 m'lik işaretlerde 2'lik büyük coin çıkar, 2.5 m'de hiçbir şey. Kazanç run sonunda eklenir — günlük yumuşak tavana ve Doubler'a tabi değil; run ortasında uygulama kapanırsa `arc_chest_pending` ile sonraki açılışta verilir. Açılış: kapak kalkar, çift altın parçacık, ekran flaşı, titreşim. Günlük koşuda yok.
