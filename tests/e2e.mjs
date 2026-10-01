@@ -685,7 +685,7 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('chal-num').hidden`, 5000), 'meydan okuma run\'ı / hedef HUD yok');
   check(JSON.stringify(await ev('ARC_TEST.layoutSig(10)')) === JSON.stringify(sigA), 'alan taraf aynı pisti oynamıyor');
   for (let tr = 1; tr <= 3; tr++) {
-    if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); await sleep(300); await ev(`document.getElementById('chal-start-btn').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
+    if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
     await ev(`ARC_BOT.start(); ARC_TEST.ghost(2); true`); await sleep(1800); await ev(`ARC_BOT.stop(); true`);
     check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), `${tr}. deneme bitmedi`); await sleep(600);
     if (tr < 3) check(await ev(`document.getElementById('btn-again').textContent`) === `TRY ${tr + 1}/3`, `${tr}. denemeden sonra AGAIN etiketi: ${await ev(`document.getElementById('btn-again').textContent`)}`);

@@ -753,6 +753,7 @@
     }
     /* OFF state next to active On stays dim */
     .tog-btn.active-off { color: rgba(255,255,255,.32); }
+    #gfx-tog .tog-btn { padding: 10px 11px; }
     /* When the Off side itself is the selected (i.e. feature disabled), use red text */
     .tog-btn[id$="-off"].active-on {
       background: none;
@@ -2999,8 +3000,8 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
       transition: filter .15s, box-shadow .2s, transform .12s;
     }
-    /* Challenge metni uzun ("Challenge a friend") → biraz daha geniş pay al */
-    #btn-challenge-link { flex: 1.7 1 0; }
+    /* Invite + Friends eşit genişlikte */
+    #btn-challenge-link { flex: 1 1 0; }
     #btn-challenge-link {
       border: 1px solid rgba(61,139,255,.35); color: #6fa8ff;
       background:
@@ -3299,27 +3300,28 @@
 
     /* ══════════ CHALLENGE START EKRANI (karşılıklı skorlar + START) ══════════ */
     #chal-intro { z-index: 66; }
-    #chal-intro-box { border-color: rgba(255,154,90,.5); }
-    #chal-intro-box .fm-title { color: #ff9a5a; }
+    #chal-intro-box { border-color: rgba(124,255,122,.42); }
+    #chal-intro-box .fm-title { color: #9fffa0; }
     .ci-vs { width: 100%; display: flex; align-items: stretch; gap: 8px; }
     .ci-side { flex: 1; min-width: 0; padding: 14px 8px 12px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
       border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); }
-    .ci-side.me { border-color: rgba(124,255,122,.4); background: rgba(124,255,122,.06); }
-    .ci-side.them { border-color: rgba(255,154,90,.45); background: rgba(255,122,40,.07); }
+    .ci-side.me { border-color: rgba(124,255,122,.45); background: rgba(124,255,122,.07); }
+    .ci-side.them { border-color: rgba(124,255,122,.2); background: rgba(124,255,122,.03); }
     .ci-name { max-width: 100%; font-size: 11px; letter-spacing: 1.2px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ci-score { font-size: 24px; letter-spacing: 1px; color: #fff; }
     .ci-side.me .ci-score { color: #9fffa0; }
-    .ci-side.them .ci-score { color: #ffb07a; }
+    .ci-side.them .ci-score { color: #d8ffd8; }
     .ci-lbl { font-size: 7.5px; letter-spacing: 1.4px; color: rgba(255,255,255,.45); text-align: center; }
     .ci-x { align-self: center; font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,.4); }
     .ci-info { font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.6; }
     .ci-info b { color: #fff; font-weight: 600; }
     .ci-dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 6px; }
-    .ci-dots i { width: 7px; height: 7px; border-radius: 50%; background: #ff9a5a; }
+    .ci-dots i { width: 7px; height: 7px; border-radius: 50%; background: #7CFF7A; }
     .ci-dots i.used { background: rgba(255,255,255,.18); }
     #chal-start-btn { width: 100%; padding: 15px; border-radius: 13px; cursor: pointer; font-family: var(--font); font-size: 16px; letter-spacing: 3px;
-      color: #2a1204; border: 1px solid rgba(255,154,90,.8); background: linear-gradient(180deg, #ffb07a, #ff7a28);
-      box-shadow: 0 0 22px rgba(255,122,40,.35); }
+      color: #062a08; border: 1px solid rgba(124,255,122,.85);
+      background: radial-gradient(120% 80% at 50% 0%, rgba(190,255,170,.40), transparent 65%), linear-gradient(180deg, #7CFF7A, #3ad055);
+      box-shadow: 0 0 22px rgba(124,255,122,.35), inset 0 1px 0 rgba(255,255,255,.35); }
     #chal-start-btn:active { transform: scale(.97); }
     #chal-num { color: #ff9a5a; }
     #chal-num.beat { color: #7CFF7A; text-shadow: 0 0 8px rgba(124,255,122,.6); }
@@ -4287,7 +4289,7 @@
     <div class="challenge-friends-row">
       <button id="btn-challenge-link" class="gl gl-blue" type="button">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3"/><path d="M7 8l5-5 5 5"/></svg>
-        <span class="cl-label">Challenge a friend</span>
+        <span class="cl-label">Invite</span>
       </button>
       <button id="btn-friends" class="gl gl-green" type="button">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -4378,6 +4380,40 @@
         <div class="tog">
           <button class="tog-btn active-on"  id="fb-on">On</button>
           <button class="tog-btn active-off" id="fb-off">Off</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PB Ghost (oyun sırasında kişisel en iyi run'ın hayaleti) ── -->
+    <div class="srow">
+      <span class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 21V11a7 7 0 0 1 14 0v10l-2.3-1.8-2.3 1.8-2.4-1.8-2.3 1.8-2.4-1.8z"/>
+          <circle cx="9.5" cy="11" r="1"/><circle cx="14.5" cy="11" r="1"/>
+        </svg>
+      </span>
+      <span class="slbl">PB Ghost</span>
+      <div class="sctl">
+        <div class="tog">
+          <button class="tog-btn active-on"  id="pbg-on">On</button>
+          <button class="tog-btn active-off" id="pbg-off">Off</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Graphics: Auto (FPS'e göre), High (her zaman tam efekt), Low (sade, yüksek FPS) ── -->
+    <div class="srow">
+      <span class="sicon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>
+        </svg>
+      </span>
+      <span class="slbl">Graphics</span>
+      <div class="sctl">
+        <div class="tog" id="gfx-tog">
+          <button class="tog-btn" id="gfx-auto">Auto</button>
+          <button class="tog-btn" id="gfx-high">High</button>
+          <button class="tog-btn" id="gfx-low">Low</button>
         </div>
       </div>
     </div>
@@ -4743,7 +4779,7 @@
 
 <!-- ══ CHALLENGE START EKRANI ══ -->
 <div id="chal-intro">
-  <div id="chal-intro-box" class="gl gl-blue gl-glass">
+  <div id="chal-intro-box" class="gl gl-green gl-glass">
     <div class="modal-head">
       <button id="chal-intro-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
       <div class="fm-title modal-head-title">⚔ CHALLENGE</div>
@@ -4760,7 +4796,7 @@
   <div id="friends-modal-box" class="gl gl-blue gl-glass">
     <div class="modal-head">
       <button id="friends-modal-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
-      <div class="fm-title modal-head-title">CHALLENGE!</div>
+      <div class="fm-title modal-head-title">INVITE</div>
       <span class="modal-head-spacer"></span>
     </div>
     <!-- Davet ödülü vurgusu -->
@@ -5406,9 +5442,11 @@ const ARC_DB = (() => {
   // (Old/legacy duplicates can sneak in; this guarantees one row per
   // (name, mode) in any rendered list.)
   function dedupeBest(rows) {
-    const best = new Map(); // key = `${owner||name}|${normMode(mode)}` — aynı isimli farklı oyuncular birleşmez
+    // key = owner + isim#tag + mod: aynı isimli farklı oyuncular birleşmez; aynı uid'in farklı
+    // profilleri (ör. test seed'i: tek uid, 1000 profil) de tek satıra çökmez.
+    const best = new Map();
     for (const r of rows) {
-      const key = `${r.owner || r.name}|${normMode(r.mode || 'normal')}`;
+      const key = `${r.owner || ''}|${r.name}#${r.tag || ''}|${normMode(r.mode || 'normal')}`;
       const cur = best.get(key);
       if (!cur || r.score > cur.score || (r.score === cur.score && r.ts > cur.ts)) {
         best.set(key, r);
@@ -6124,6 +6162,9 @@ const ARC_DB = (() => {
   // iPhone düşük güç modu rAF'ı ~30 fps'e indirir ve CPU'yu kısar; ışıma (shadowBlur) ve arka plan
   // bulanıklaştırma o zaman kasıyor. Kare hızı 42'nin altına inerse (ya da sistem "reduced motion"
   // istiyorsa) html.lowfx açılır: CSS dekorları kapanır, canvas shadowBlur 0'a iner. Oynanış aynı.
+  // Settings → Graphics: 'auto' (FPS düşerse otomatik) | 'high' (asla düşürme) | 'low' (her zaman sade)
+  let GFX = 'auto';
+  try { GFX = ['auto', 'high', 'low'].includes(localStorage.getItem('arc_gfx')) ? localStorage.getItem('arc_gfx') : 'auto'; } catch(_) {}
   let LOWFX = false;
   function enableLowFx() {
     if (LOWFX) return;
@@ -6131,7 +6172,13 @@ const ARC_DB = (() => {
     document.documentElement.classList.add('lowfx');
     console.log('[ArcRise] düşük efekt modu açıldı');
   }
-  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) enableLowFx(); } catch(_) {}
+  function disableLowFx() {
+    if (!LOWFX) return;
+    LOWFX = false;
+    document.documentElement.classList.remove('lowfx');
+  }
+  if (GFX === 'low') enableLowFx();
+  else if (GFX === 'auto') try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) enableLowFx(); } catch(_) {}
   (() => {
     const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
     if (d && d.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', { configurable: true, enumerable: true,
@@ -6142,7 +6189,7 @@ const ARC_DB = (() => {
   // 3 sn'lik ölçüm gerekir; tek bir takılma yetmez.
   let _fpsT = 0, _fpsN = 0, _fpsLow = 0, _fpsWarm = 4;
   function trackFps(dtReal) {      // loop'tan her kare; sekme gizliyken büyük dt'ler atlanır
-    if (LOWFX || dtReal <= 0 || dtReal > 0.25) return;
+    if (LOWFX || GFX !== 'auto' || dtReal <= 0 || dtReal > 0.25) return;
     if (_fpsWarm > 0) { _fpsWarm -= dtReal; return; }
     _fpsT += dtReal; _fpsN++;
     if (_fpsT >= 3) {
@@ -8382,59 +8429,30 @@ const ARC_DB = (() => {
   }
 
 
-  // ── CLOSE CALL: animasyonlu yazı + 2 sn'de sönen kırmızı vignette ──────────
-  const CC_VIG_DUR = 2.0, CC_TXT_DUR = 1.2;
-  let _ccVigT = 0, _ccTxtT = 0, _ccPts = 0, _ccCool = 0, _wallNm = false;
-  function triggerCloseCall(pts) {
-    _ccVigT = CC_VIG_DUR; _ccTxtT = CC_TXT_DUR; _ccPts = pts || 0; _ccCool = 2.0;
+  // ── CLOSE CALL: sıyrıldığı yerde belirgin yazı + 2 sn'de sönen kırmızı vignette ──────────
+  // Vignette bir kez offscreen'e çizilir; her karede yalnız globalAlpha ile basılır (gradyan maliyeti yok).
+  const CC_VIG_DUR = 2.0;
+  let _ccVigT = 0, _ccCool = 0, _wallNm = false, _ccVigCv = null;
+  function ccVignette() {
+    if (_ccVigCv && _ccVigCv.width === W && _ccVigCv.height === H) return _ccVigCv;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.75);
+    g.addColorStop(0, 'rgba(255,20,40,0)'); g.addColorStop(0.6, 'rgba(255,20,40,0.19)'); g.addColorStop(1, 'rgba(220,0,30,0.55)');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    return (_ccVigCv = c);
   }
-  function resetCloseCall() { _ccVigT = _ccTxtT = _ccCool = 0; _wallNm = false; }
+  function triggerCloseCall(pts) {
+    _ccVigT = CC_VIG_DUR; _ccCool = 2.0;
+    floatTexts.push({ x: player.x, y: player.y - 22, text: pts > 0 ? 'CLOSE! +' + pts : 'CLOSE!', hue: 15, life: 1, scale: 1.6, pop: true });
+  }
+  function resetCloseCall() { _ccVigT = _ccCool = 0; _wallNm = false; }
   function drawCloseCall(dt) {
     if (_ccCool > 0) _ccCool -= dt;
-    if (_ccVigT > 0) {
-      const k = _ccVigT / CC_VIG_DUR;                       // 1 → 0 (yavaş sönüm)
-      const a = 0.55 * k * k * (3 - 2 * k);                 // smoothstep: hızlı vuruş, yumuşak kayboluş
-      ctx.save();
-      const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.75);
-      g.addColorStop(0, 'rgba(255,20,40,0)');
-      g.addColorStop(0.6, `rgba(255,20,40,${a * 0.35})`);
-      g.addColorStop(1, `rgba(220,0,30,${a})`);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-      _ccVigT = Math.max(0, _ccVigT - dt);
-    }
-    if (_ccTxtT > 0) {
-      const t = 1 - _ccTxtT / CC_TXT_DUR;                   // 0 → 1
-      // Giriş: 0.22 sn'de 0 → 1.3 (aşma) → 1; sonra tutar; son %30'da yukarı süzülüp söner
-      const pop = t < 0.18 ? (t / 0.18) * 1.3 : t < 0.32 ? 1.3 - 0.3 * ((t - 0.18) / 0.14) : 1;
-      const out = t > 0.7 ? (t - 0.7) / 0.3 : 0;
-      const shake = t < 0.4 ? Math.sin(t * 90) * (1 - t / 0.4) * 5 : 0;
-      const lane = walls.right - walls.left;
-      const fs = Math.max(14, Math.min(30, Math.floor(lane * 0.85 / 11)));
-      const cx = (walls.left + walls.right) / 2 + shake, cy = H * 0.30 - out * 40;
-      ctx.save();
-      ctx.globalAlpha = 1 - out;
-      ctx.translate(cx, cy); ctx.rotate(shake * 0.006); ctx.scale(pop, pop);
-      ctx.font = `bold ${fs}px 'Press Start 2P', monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      // yan çizgiler: yazıdan dışarı açılır
-      const lw = fs * 5.5 * Math.min(1, t / 0.25), ly = fs * 1.15;
-      ctx.strokeStyle = 'rgba(255,90,60,.9)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(-lw, ly); ctx.lineTo(lw, ly); ctx.moveTo(-lw * 0.7, -ly); ctx.lineTo(lw * 0.7, -ly); ctx.stroke();
-      ctx.lineJoin = 'round'; ctx.lineWidth = fs * 0.28; ctx.strokeStyle = 'rgba(80,0,10,.9)';
-      ctx.shadowColor = 'rgba(255,40,50,.95)'; ctx.shadowBlur = 22;
-      ctx.strokeText('CLOSE CALL!', 0, 0);
-      const gr = ctx.createLinearGradient(0, -fs / 2, 0, fs / 2);
-      gr.addColorStop(0, '#fff3c4'); gr.addColorStop(0.5, '#ffb23a'); gr.addColorStop(1, '#ff3b3b');
-      ctx.fillStyle = gr; ctx.shadowBlur = 12;
-      ctx.fillText('CLOSE CALL!', 0, 0);
-      if (_ccPts > 0) {
-        ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(255,200,40,.9)';
-        ctx.font = `bold ${Math.round(fs * 0.62)}px 'Press Start 2P', monospace`; ctx.fillStyle = '#ffe27a';
-        ctx.fillText('+' + _ccPts, 0, fs * 1.9);
-      }
-      ctx.restore();
-      _ccTxtT = Math.max(0, _ccTxtT - dt);
-    }
+    if (_ccVigT <= 0) return;
+    const k = _ccVigT / CC_VIG_DUR;
+    ctx.save(); ctx.globalAlpha = k * k * (3 - 2 * k); ctx.drawImage(ccVignette(), 0, 0); ctx.restore();
+    _ccVigT = Math.max(0, _ccVigT - dt);
   }
 
   // ── Float Texts (combo bonuses) ──────────────────────────
@@ -8454,7 +8472,7 @@ const ARC_DB = (() => {
   function updateFloatTexts(dt) {
     for (let i = floatTexts.length - 1; i >= 0; i--) {
       floatTexts[i].y -= dt * 80; // drift upward (world-space)
-      floatTexts[i].life -= dt * 1.6;
+      floatTexts[i].life -= dt * (floatTexts[i].pop ? 1.1 : 1.6);
       if (floatTexts[i].life <= 0) floatTexts.splice(i, 1);
     }
   }
@@ -8466,7 +8484,9 @@ const ARC_DB = (() => {
       const sy = W2S(t.y);
       if (sy < -40 || sy > H + 40) continue;
       const a = Math.max(0, t.life);
-      const sc = 0.6 + 0.4 * (1 - t.life); // grows a bit as it fades
+      const age = 1 - t.life;
+      // pop (CLOSE!): ilk ~0.1 sn'de büyüyüp hafif aşar, sonra sabit; diğerleri soldukça hafif büyür
+      const sc = t.pop ? (age < 0.08 ? 0.5 + 0.8 * (age / 0.08) : age < 0.16 ? 1.3 - 0.3 * ((age - 0.08) / 0.08) : 1) : 0.6 + 0.4 * age;
       ctx.globalAlpha = a;
       const mulSc = Math.min(4, t.scale || 1);
       ctx.font = `bold ${Math.round(14 * sc * mulSc)}px 'Press Start 2P', monospace`;
@@ -8585,6 +8605,7 @@ const ARC_DB = (() => {
   }
 
   function updateParticles(dt) {
+    if (LOWFX && particles.length > 40) particles.splice(0, particles.length - 40);   // sade mod: en yeni 40 parçacık
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       // Very low friction → particles travel further across scene
@@ -8854,6 +8875,7 @@ const ARC_DB = (() => {
     ctx.restore();
   }
   function drawGhostTrail() {
+    if (LOWFX) return;   // sade mod: geçmiş run izleri çizilmez (en pahalı katmanlardan)
     if (!allGhosts.length && !crossPlayerGhosts.length) return;
     ctx.save();
     ctx.lineCap   = 'round';
@@ -10979,7 +11001,7 @@ const ARC_DB = (() => {
     // 1) Önce BULUT verisini sil (skor/profil/arkadaş) — local temizlenmeden ad/tag lazım.
     try { await ARC_DB.deleteMyData(playerName, myTag()); } catch(_){}
     // 2) Local tüm anahtarlar (kimlik token'ı dahil → taze anonim kimlik).
-    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
+    ['arc_best','arc_sfx','arc_mus','arc_fb','arc_gfx','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
      'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt','arc_wallet_purchased',
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
@@ -11402,6 +11424,26 @@ const ARC_DB = (() => {
   fbOn.addEventListener('click',  () => setFeedback(true));
   fbOff.addEventListener('click', () => setFeedback(false));
   setFeedback(feedbackOn);
+
+  // PB Ghost: upg.pbGhost (false → hayalet yüklenmez; bkz. resetGame)
+  function setPbGhost(v) {
+    upg.pbGhost = v; try { saveUpg(); } catch(_) {}
+    document.getElementById('pbg-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
+    document.getElementById('pbg-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
+  }
+  document.getElementById('pbg-on').addEventListener('click',  () => setPbGhost(true));
+  document.getElementById('pbg-off').addEventListener('click', () => setPbGhost(false));
+  setPbGhost(upg.pbGhost !== false);
+
+  // Graphics: Auto / High / Low
+  function setGfx(v) {
+    GFX = v; try { localStorage.setItem('arc_gfx', v); } catch(_) {}
+    if (v === 'low') enableLowFx(); else disableLowFx();   // auto: FPS ölçümü yeniden başlar
+    _fpsWarm = 2; _fpsT = 0; _fpsN = 0; _fpsLow = 0;
+    ['auto', 'high', 'low'].forEach(k => document.getElementById('gfx-' + k).className = 'tog-btn ' + (k === v ? 'active-on' : 'active-off'));
+  }
+  ['auto', 'high', 'low'].forEach(k => document.getElementById('gfx-' + k).addEventListener('click', () => setGfx(k)));
+  ['auto', 'high', 'low'].forEach(k => document.getElementById('gfx-' + k).className = 'tog-btn ' + (k === GFX ? 'active-on' : 'active-off'));
 
   // ── High Scores Modal ─────────────────────────────────────
   const lbModal = document.getElementById('lb-modal');
@@ -14566,7 +14608,7 @@ const ARC_DB = (() => {
     showScene('home');
   });
 
-  document.getElementById('wrap-again').addEventListener('click', () => { if (_activeChal && !_activeChal.done) openChalIntro(_activeChal); else startGame(); });   // iç düğme dinlemez (çift başlatma)
+  document.getElementById('wrap-again').addEventListener('click', () => startGame());   // iç düğme dinlemez (çift başlatma)
 
   // ── Rewarded ad stub ──────────────────────────────────────
   // v1'de ADS_ENABLED=false → "reklam izle · devam et" butonu hiç gösterilmez,
@@ -15348,10 +15390,11 @@ const ARC_DB = (() => {
     const recv = c.role === 'recv';
     const myName = _sanId(playerName) || 'YOU';
     const oppName = recv ? (c.fromName || parseId(c.from).name) : parseId(c.to).name;
+    // Yalnız bu challenge'da yapılan en iyi skorlar (kişisel rekor gösterilmez)
     const myBest = c.tries ? c.best : 0;
-    let theirs, lblMe, lblThem;
-    if (recv) { theirs = c.target; lblMe = c.tries ? 'YOUR BEST' : 'NOT PLAYED'; lblThem = 'TO BEAT'; }
-    else { const pr = _friendProfiles[c.to]; theirs = pr && pr.score != null ? pr.score : null; lblMe = c.tries ? 'YOUR BEST' : 'NOT PLAYED'; lblThem = 'THEIR RECORD'; }
+    const lblMe = c.tries ? 'CHALLENGE BEST' : 'NOT PLAYED';
+    const theirs = recv ? c.target : null;
+    const lblThem = recv ? 'CHALLENGE BEST' : 'PLAYS AFTER YOU';
     const fmt = n => n == null ? '—' : (n > 0 ? pad(n) : '—');
     document.getElementById('chal-intro-vs').innerHTML =
       `<div class="ci-side me"><span class="ci-name">${esc(myName)}</span><span class="ci-score">${fmt(myBest)}</span><span class="ci-lbl">${lblMe}</span></div>`
