@@ -4027,6 +4027,24 @@
       box-shadow: 0 0 18px color-mix(in srgb, var(--c) 15%, transparent), inset 0 1px 0 rgba(255,255,255,.07);
       color: color-mix(in srgb, var(--c) 72%, #fff);
     }
+    /* Ana menü sadeleşti: en güçlü ışık START'ta; ikincil butonlar sakin, bildirim noktası olan (anlamlı tek hedef) parlar */
+    html#arc #home :is(#btn-lb, #btn-quests, #btn-settings, #btn-challenge-link, #btn-friends):not(.attn) {
+      background: radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 12%, transparent), transparent 70%), linear-gradient(180deg, #0b0c12, #07080c);
+      border-color: color-mix(in srgb, var(--c) 26%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    html#arc #home :is(#btn-lb, #btn-quests, #btn-settings, #btn-challenge-link, #btn-friends):not(.attn) svg { filter: none; }
+    #btn-daily { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 8px; margin: 2px 0 0; padding: 8px 14px;
+      border-radius: 11px; border: 1px solid rgba(124,255,122,.28); background: rgba(124,255,122,.05);
+      font-family: var(--font); font-size: 10px; font-weight: 700; letter-spacing: 1.6px; color: #9fffa0; cursor: pointer; }
+    #btn-daily:active { transform: scale(.97); }
+    #btn-daily .dly-ic { font-size: 9px; color: #7CFF7A; }
+    #btn-daily .dly-sub { flex: 1; min-width: 0; text-align: left; font-weight: 400; font-size: 8.5px; letter-spacing: 1px; color: rgba(255,255,255,.45);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #btn-daily .dly-go { font-size: 9.5px; letter-spacing: 1.2px; color: #7CFF7A; }
+    @media (max-height: 640px) {   /* SE vb. kısa ekran: satır inceldi, alt yazı gizli (menü alt bilgiye binmesin) */
+      #btn-daily { padding: 4px 12px; margin-top: 0; font-size: 9px; }
+      #btn-daily .dly-sub { visibility: hidden; }
+    }
     html#arc .gl:hover, html#arc .btn-gray:hover { border-color: color-mix(in srgb, var(--c) 70%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--c) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.1); filter: none; }
     html#arc .gl svg, html#arc .btn-gray svg { filter: drop-shadow(0 0 3.5px color-mix(in srgb, var(--c) 85%, transparent)); }
     html#arc :is(.gl, .btn-gray) svg[stroke="currentColor"], html#arc :is(.gl, .btn-gray) svg [stroke="currentColor"] { stroke: var(--gg); }
@@ -4285,6 +4303,8 @@
     <div class="rb-wrap" id="wrap-start">
       <div class="rb-inner" id="btn-start"><svg class="start-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>START<span class="start-mode" id="start-mode"> · CHILL</span></div>
     </div>
+    <!-- Günlük koşu: QUESTS'e girmeden görünen küçük giriş -->
+    <button id="btn-daily" type="button"><span class="dly-ic">◆</span>DAILY RUN<span class="dly-sub" id="btn-daily-sub">SAME COURSE FOR EVERYONE</span><span class="dly-go">PLAY ▸</span></button>
     <!-- Alt aksiyon satırı: High Scores (kupa) · Quests · Settings -->
     <div class="share-settings-row">
       <button class="btn-gray btn-icon gl gl-gold" id="btn-lb" title="High Scores" aria-label="High Scores">
@@ -14203,8 +14223,16 @@ const ARC_DB = (() => {
     let d = el.querySelector(':scope > .notif-dot');
     if (on) { if (!d) { d = document.createElement('span'); d.className = 'notif-dot'; el.appendChild(d); } d.hidden = false; }
     else if (d) { d.hidden = true; }
+    el.classList.toggle('attn', !!on);   // ana menü: bildirimi olan buton parlamasını korur
   }
+  function refreshDailyEntry() {
+    const el = document.getElementById('btn-daily-sub'); if (!el) return;
+    const d = dailyLocal();
+    el.textContent = d.best > 0 ? `TODAY'S BEST ${d.best}` : 'SAME COURSE FOR EVERYONE';
+  }
+  document.getElementById('btn-daily')?.addEventListener('click', () => { try { if (_activeChal) return; startDailyRun(); } catch(_) {} });
   function refreshNotifs() {
+    try { refreshDailyEntry(); } catch(_) {}
     const badgeNew = hasUnseenBadges();
     document.querySelectorAll('.prof-eq-slot').forEach(el => { const d = el.querySelector('.notif-dot'); if (d) d.hidden = !badgeNew; });
     _setDot('#home-profile', badgeNew);                    // profile girişinde de
