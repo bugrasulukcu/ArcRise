@@ -3766,6 +3766,10 @@
     html#arc #go-coin-ico svg { width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,200,60,.5)); }
     #go-coin-earned { font-size: 17px; font-weight: 700; letter-spacing: 1px; color: #ffcc44; display: inline-block; transition: opacity .3s; }
     #go-coin-earned.zero { opacity: .6; font-weight: 500; }
+    #go-coin-row.zero-run #go-coin-earned { font-size: 13px; opacity: .45; }
+    #go-coin-row.zero-run #go-coin-word { opacity: .5; }
+    #go-coin-row.zero-run #go-coin-ico { transform: scale(.82); opacity: .7; }
+    #go-coin-row.zero-run #go-coin-progress { font-size: 10px; color: rgba(255,255,255,.78); }
     #go-coin-word { font-size: 9px; letter-spacing: 1.8px; color: rgba(255,204,68,.7); margin-left: 3px; }
     #go-coin-progress { font-size: 8.5px; letter-spacing: 1.1px; color: rgba(255,255,255,.5); white-space: nowrap;
       opacity: 0; transform: translateY(3px); transition: opacity .35s ease, transform .35s ease; }
@@ -10466,6 +10470,17 @@ const ARC_DB = (() => {
     if (offerRevive()) return;
     _proceedEndGame();
   }
+  function runGoalLine(distCm, bestDist) {
+    if (bestDist > 0 && distCm >= bestDist * 0.6 && distCm < bestDist)
+      return ['#7CFF7A', `**${fmtDist(bestDist - distCm)}** short of your best distance`];
+    const marks = [250]; for (let m = 500; m <= Math.max(1000, distCm + 1000); m += 500) marks.push(m);
+    const next = marks.find(m => m > distCm && !_distChestsOpened.has(m));
+    if (next && next - distCm <= Math.max(100, distCm * 0.5))
+      return ['#ffcc44', `Next chest **+${distChestValue(next)}** at **${fmtDist(next)}** — **${fmtDist(next - distCm)}** to go`];
+    const cm = Math.min(Math.max(1, _runMaxCombo - (COMBO_START - 2)), comboCap());
+    if (_runMaxCombo >= COMBO_START) return ['#5ad8ff', `Best combo this run **×${cm}** — max is ×${comboCap()}`];
+    return null;
+  }
   // Rekor kutlaması (game over): değer altına döner + büyüyüp oturur, çevresine altın kıvılcım, panel kısa parlar.
   function celebrateRecord(els) {
     const panel = document.querySelector('#gameover .panel');
@@ -10786,8 +10801,12 @@ const ARC_DB = (() => {
       const hEl = document.getElementById('go-hint'), di = _deathInfo;
       const HINTS = { energy: ['#ffb13b', '**Energy ran out** — every green refills it'], obstacle: ['#ff4664', '**Hit a red ball** — tap earlier to curve around it'],
         wall: ['#ff4664', '**Hit the wall** — tap to turn before the edge'], crystal: ['#8fe6ff', '**Crystal** — break it with Shockwave, Shield or Ghost'] };
-      const h = di && gameMode !== 'wife' && (stats.gamesTotal || 0) <= 5 ? HINTS[di.cause] : null;
+      let h = di && gameMode !== 'wife' && (stats.gamesTotal || 0) <= 5 ? HINTS[di.cause] : null;
+      // Yoksa tek bir kişisel "bir daha" nedeni: rekora kalan → sıradaki sandık → en iyi combo (rekor kırıldıysa kutlama yeter)
+      if (!h && gameMode !== 'wife' && !wasDaily && !chal && !newBest && !newBestDist) h = runGoalLine(runDistCm, bestDistBefore);
       if (hEl) { hEl.hidden = !h; if (h) { hEl.style.setProperty('--hc', h[0]); hEl.innerHTML = richTxt(h[1]); } }
+      // Coin kazanılmayan kısa run: büyük "+0" yerine ilerleme çubuğu / "NEXT COIN" öne çıkar
+      document.getElementById('go-coin-row')?.classList.toggle('zero-run', gameMode !== 'wife' && earned <= 0);
     } catch(_) {}
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (chal) {
