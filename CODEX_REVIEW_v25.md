@@ -11,6 +11,46 @@ You are reviewing ArcRise, a mobile arcade game, at commit `90ce218`. The previo
 - Do not run `firebase` CLI commands (no rules or index deploys), `git push`, or anything that deletes data.
 - Do not start the autopilot (`?bot=1`, `ARC_BOT.start()`) without the network block above.
 
+## The game
+
+ArcRise is a one-touch, endless vertical arcade game for phones (portrait). **The goal is to get as far up as possible and score as high as possible in one run**, then beat your own best, your friends and the leaderboard. Coins earned from runs buy permanent upgrades, abilities, items and cosmetics.
+
+**Controls and movement**
+- A glowing ball moves forward constantly along a circular arc, rising up the screen. The player never stops it.
+- **Tap anywhere** to flip the turn direction, so the ball curves the other way. That is the only input. Steering means timing taps to weave between things.
+- The canvas is 600 px wide; height follows the screen. Distance is measured against a fixed `H_REF = 1066` px, so it is the same on every device. One `H_REF` screen = 15 cm (`CM_PER_SCREEN`). Typical runs are 1–3 m; 5 m is good.
+- A run starts at a start line 10 cm above the spawn. Distance and score count from the line.
+
+**What ends a run**
+- Touching a **red obstacle** or a **side wall**.
+- **Energy running out.** The ball shows a countdown number (8 by default, `comboDisplayMax()`); it drops about one step per second. Collecting a **green ball** refills it to the top.
+
+**What gives score**
+- Distance: 5 points per metre.
+- Green balls (1), gold balls (20), purple balls (10, they also grant a temporary **booster**: wide or tight arc, magnet, ×2/×3/×4 score, ghost, shield, speed).
+- Skill objects: near-miss past an obstacle (CLOSE), THREAD (pass between a spinning pair), gates, ×2 ring, breakable crystals, gold corridors, TIMING obstacles, crossing your PB line.
+- Every gain is multiplied by:
+  - the **time multiplier**: the countdown number when you collect (0–3 ×1, 4–6 ×2, 7–9 ×3, 10–12 ×4), so collecting early pays more;
+  - the **combo multiplier**: collect greens back to back while the countdown is still in its top band (the first ~2 s after a green). The 3rd consecutive green starts ×2, then ×3 … up to the cap (×3 base, ×7 with upgrades). Missing the band resets it to ×1;
+  - the active booster.
+
+**Modes**
+- **Chill** (`normal` in code): base speed 400.
+- **Extreme**: base speed 800, accelerating with distance, coins per metre ×2. Unlocked by reaching a distance/score target, or bought.
+- **Wife mode**: a hidden casual mode at half speed. It earns no coins and saves no records.
+- **Daily Run**: the same seeded track for everyone today, Chill rules, no items, unlimited tries, its own daily table.
+- **Challenge**: a friend-vs-friend duel on a shared seeded track, 3 tries each, best try counts.
+
+**Progression**
+- Coins come from distance (1 per metre, ×2 in Extreme, reduced after 25 a day), big coins every 5 m, one-time distance chests, daily login, 3 daily quests, a login-streak chest cycle and invites.
+- Spend coins in Upgrades:
+  - **CORE** permanent stats: arc radius, speed, Score Boost, timer length, combo window, combo cap, wall tolerance, magnet range;
+  - up to 4 **ability slots** (Time Slow, Phase Burst, Brake, Coin Pull, Shockwave, Anchor), triggered in a run with a cooldown;
+  - one-run **items** (Revive, Doubler, Shield, Bounce …);
+  - cosmetics (trail colours, themes, avatars).
+- Badges, a profile, friends (`NAME#TAG`), ghost trails of past runs and a PB ghost replay round it out.
+- First launch runs an interactive tutorial (tap to turn, steer into green, the number is your energy, avoid red and walls).
+
 ## Project layout
 
 - The whole game is one file: `arcrise.html` (~15.8k lines; inline `<script>`s, no build step). Everything referenced below lives in it unless stated.
