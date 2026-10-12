@@ -41,7 +41,7 @@ const PAGE = `${ORIGIN}/arcrise.html`;
 
 // ── Chrome + CDP ─────────────────────────────────────────────
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'arc-e2e-'));
-const chrome = spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
+const chrome = spawn(CHROME, ['--headless=new', '--mute-audio', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
   '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
 let wsUrl;
 for (let i = 0; i < 200 && !wsUrl; i++) {

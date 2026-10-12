@@ -2456,6 +2456,20 @@
     }
     html.lowfx.in-play #toast, html.lowfx.in-play .rt-card.gl { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: rgba(12,14,22,.96); }
     /* ── Ödül kartı (rozet / coin kazanımı) — animasyonlu bildirim ── */
+    /* Koşu sırasındaki ödül işareti: mesafe sütununun altında küçük ikon, kart oyun sonunda */
+    #rt-mini {
+      position: absolute; top: 108px; right: 18px; width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; pointer-events: none;
+      color: #ffd866; background: rgba(255,206,90,.12); border: 1.5px solid rgba(255,206,90,.55);
+      box-shadow: 0 0 14px rgba(255,206,90,.45); opacity: 0; transform: scale(.6);
+      transition: opacity .3s ease, transform .3s ease;
+    }
+    #rt-mini.on { opacity: 1; transform: scale(1); animation: rtMiniPop .18s ease-out; }
+    #rt-mini svg, #rt-mini .bdg-glyph { width: 18px; height: 18px; }
+    #rt-mini b { position: absolute; top: -6px; right: -6px; min-width: 15px; height: 15px; border-radius: 8px; padding: 0 3px;
+      background: #ffd866; color: #1a1306; font: 800 10px/15px Sarpanch, monospace; text-align: center; box-sizing: border-box; }
+    @keyframes rtMiniPop { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    html.lowfx #rt-mini { box-shadow: none; }
     #reward-toast {
       position: fixed; left: 50%; top: 13%;
       transform: translateX(-50%);
@@ -4161,6 +4175,7 @@
         <div class="hud-sub-lbl">BEST</div>
         <div class="hud-sub-num" id="h-dist-best">0</div>
       </div>
+      <div id="rt-mini" aria-hidden="true"></div>
       <!-- Combo indicator -->
       <div id="combo-hud">
         <div id="combo-pill">&times;<span id="combo-val">1</span><div id="combo-fx"></div></div>
@@ -6834,7 +6849,19 @@ const ARC_DB = (() => {
   let _rtBusy = false, _rtTimer = null;
   function showRewardToast(opts) {
     _rtQueue.push(opts || {});
+    if (_inRun()) _rtMiniPulse(opts || {});   // koşu sırasında kart yok: köşede kısa ikon parlaması, kart oyun sonunda
     if (!_rtBusy) _rtNext();
+  }
+  // Koşu sırasında ödül kartları (rozet, görev, giriş…) yaklaşan nesnelerin üstünü kapatıyordu → kuyrukta
+  // bekler, koşu bitince (game over sayımı/coin animasyonu başladıktan ~1.4 sn sonra) sırayla gösterilir.
+  const _inRun = () => { try { return scene === 'play' && !tutActive; } catch(_) { return false; } };
+  let _rtWasRun = false, _rtHoldUntil = 0, _rtMiniT = 0, _rtMiniN = 0;
+  function _rtMiniPulse(o) {
+    const el = document.getElementById('rt-mini'); if (!el) return;
+    _rtMiniN++;
+    el.innerHTML = (o.badge ? badgeGlyphHTML(o.badge, 18) : iconHTML(o.icon || 'coin', { size: 18 })) + (_rtMiniN > 1 ? `<b>${_rtMiniN}</b>` : '');
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(_rtMiniT); _rtMiniT = setTimeout(() => { el.classList.remove('on'); _rtMiniN = 0; }, 1400);
   }
   // Tutorial ve ilk girişteki profil oluşturma sırasında ödül bildirimleri yazının/panelin
   // üstüne binmesin → bitene kadar kuyrukta bekler. (tutActive henüz tanımsız olabilir → try.)
@@ -6843,7 +6870,9 @@ const ARC_DB = (() => {
     try { return tutActive; } catch(_) { return false; }
   };
   function _rtNext() {
-    if (_tutOn()) { _rtBusy = true; setTimeout(() => { _rtBusy = false; _rtNext(); }, 700); return; }
+    if (_inRun()) _rtWasRun = true;
+    else if (_rtWasRun) { _rtWasRun = false; _rtHoldUntil = Date.now() + 1400; }
+    if (_tutOn() || _inRun() || Date.now() < _rtHoldUntil) { _rtBusy = true; setTimeout(() => { _rtBusy = false; _rtNext(); }, 400); return; }
     const host = document.getElementById('reward-toast');
     if (!host) { _rtBusy = false; return; }
     const o = _rtQueue.shift();
