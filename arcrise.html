@@ -3730,6 +3730,11 @@
     #gameover .panel.go-rec { animation: goRecPanel 1s ease-out; }
     @keyframes goRecPanel { 0% { box-shadow: 0 0 0 rgba(255,210,60,0); } 25% { box-shadow: 0 0 46px rgba(255,210,60,.65), inset 0 0 24px rgba(255,210,60,.25); } 100% { box-shadow: 0 0 0 rgba(255,210,60,0); } }
     @keyframes goNbGlow { 50% { text-shadow: 0 0 14px rgba(255,214,70,1); } }
+    #go-hint { font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,.7); text-align: center; margin: -2px 0 2px;
+      animation: goHintIn .25s ease-out both; }
+    #go-hint[hidden] { display: none; }
+    #go-hint b { color: var(--hc, #ffb13b); font-weight: 700; }
+    @keyframes goHintIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     /* ── Meydan okuma şeridi (game over): ⚔ · kim / en iyi / hedef · deneme noktaları ── */
     #go-chal { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px;
       padding: 9px 12px; border-radius: 12px; border: 1px solid rgba(61,139,255,.45);
@@ -4543,6 +4548,8 @@
         <div class="go-twin-best" id="go-bestdist-line"><span class="ob">BEST: <span id="go-bestdist-val-inline">0M</span></span><span class="nb">NEW BEST</span></div>
       </div>
     </div>
+    <!-- İlk birkaç oyunda ölüm ipucu (tek satır; AGAIN'i bekletmez) -->
+    <div id="go-hint" hidden></div>
     <!-- Meydan okuma: deneme / en iyi / hedef (yalnız meydan okuma run'ında) -->
     <div id="go-chal" hidden></div>
     <!-- Coin kazancı: tek kapsül — sayaç (toplayıcı coin) + bir sonraki coine dolum çubuğu -->
@@ -8242,10 +8249,32 @@ const ARC_DB = (() => {
     const d = _deathInfo; d.t += dt;
     if (d.t > 1.6) return;
     const sy = W2S(d.y), k = (d.t % 0.8) / 0.8, col = d.cause === 'energy' ? '255,177,59' : d.cause === 'crystal' ? '143,230,255' : '255,70,100';
+    const hold = Math.max(0, 1 - Math.max(0, d.t - 1.1) / 0.5);   // net işaret ~1.1 sn sabit, sonra söner
     ctx.save();
     ctx.strokeStyle = `rgba(${col},${0.9 * (1 - k)})`; ctx.lineWidth = 3;
     if (d.cause === 'wall') { ctx.beginPath(); ctx.moveTo(d.x, sy - 40 - 30 * k); ctx.lineTo(d.x, sy + 40 + 30 * k); ctx.lineWidth = 6 * (1 - k) + 2; ctx.stroke(); }
-    else { ctx.beginPath(); ctx.arc(d.x, sy, (d.r || 14) + 8 + 30 * k, 0, Math.PI * 2); ctx.stroke(); }
+    else if (d.cause !== 'energy') { ctx.beginPath(); ctx.arc(d.x, sy, (d.r || 14) + 8 + 30 * k, 0, Math.PI * 2); ctx.stroke(); }
+    // Öğretici, temiz işaret: NEYE çarptığın / NE bittiği
+    const psy = W2S(d.py);
+    if (d.cause === 'energy') {   // boşalan enerji halkası + 0
+      const f = Math.max(0, 1 - d.t / 0.6);
+      ctx.strokeStyle = `rgba(255,255,255,${0.18 * hold})`; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(d.px, psy, d.pr + 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(${col},${0.95 * hold})`; ctx.lineCap = 'round';
+      if (f > 0) { ctx.beginPath(); ctx.arc(d.px, psy, d.pr + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke(); }
+      ctx.fillStyle = `rgba(${col},${hold})`; ctx.font = "700 20px Sarpanch, monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('0', d.px, psy);
+    } else {
+      // temas noktası: engelde merkezden topa doğru yüzey noktası, duvarda topun hizası
+      let cx, cy;
+      if (d.cause === 'wall') { cx = d.x; cy = psy; }
+      else { const a = Math.atan2(psy - sy, d.px - d.x); cx = d.x + Math.cos(a) * d.r; cy = sy + Math.sin(a) * d.r;
+        ctx.strokeStyle = `rgba(255,255,255,${0.75 * hold})`; ctx.lineWidth = 2.5;   // çarpılan engelin kenarı
+        ctx.beginPath(); ctx.arc(d.x, sy, d.r, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.fillStyle = `rgba(255,255,255,${hold})`;
+      if (!LOWFX) { ctx.shadowColor = `rgb(${col})`; ctx.shadowBlur = 12; }
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+    }
     ctx.restore();
   }
   function drawStartLine() {
@@ -10353,7 +10382,7 @@ const ARC_DB = (() => {
 
   function beginDeath(cause, x, y, r) {
     if (dyingT >= 0) return;
-    _deathInfo = { cause: cause || 'obstacle', x: x ?? player.x, y: y ?? player.y, r: r || 0, t: 0 };
+    _deathInfo = { cause: cause || 'obstacle', x: x ?? player.x, y: y ?? player.y, r: r || 0, t: 0, px: player.x, py: player.y, pr: player.r };
     // Bekleyen combo potunu skora ekle (ölümde kaybolmasın)
     _comboPot = 0; runCombo = 0;
     _comboStreak = 0;
@@ -10752,6 +10781,14 @@ const ARC_DB = (() => {
       // firestore.rules limiti 20KB — normalde ~2KB üretilir; taşarsa trace'siz gönder.
       if (traceData.pts.length > 19000) delete traceData.pts;
     }
+    // İlk 5 oyunda ölüm ipucu: neye çarptın / ne bitti + tek cümlelik çözüm
+    try {
+      const hEl = document.getElementById('go-hint'), di = _deathInfo;
+      const HINTS = { energy: ['#ffb13b', '**Energy ran out** — every green refills it'], obstacle: ['#ff4664', '**Hit a red ball** — tap earlier to curve around it'],
+        wall: ['#ff4664', '**Hit the wall** — tap to turn before the edge'], crystal: ['#8fe6ff', '**Crystal** — break it with Shockwave, Shield or Ghost'] };
+      const h = di && gameMode !== 'wife' && (stats.gamesTotal || 0) <= 5 ? HINTS[di.cause] : null;
+      if (hEl) { hEl.hidden = !h; if (h) { hEl.style.setProperty('--hc', h[0]); hEl.innerHTML = richTxt(h[1]); } }
+    } catch(_) {}
     // Wife Mode is casual-only — never submits to the leaderboard / ghost pool
     if (chal) {
       if (_startCrossed) {   // başlangıç çizgisini geçmeyen (yanlışlıkla) run hak yemez
