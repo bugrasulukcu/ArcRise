@@ -785,6 +785,37 @@ test('review düzeltmeleri: günlükte Revive yok, Gold Rush günlük pisti bozm
     `Wife'ta sandık açıldı: pending=${await ls('arc_chest_pending')} opened=${await ls('arc_dist_chests')}`);
 });
 
+test('meydan okuma kuyruğu: çevrimdışılık kaydı silmez, süresi dolan bildirimle düşer, bekleme sırasında eklenen korunur', async () => {
+  fbReset();
+  const at = Date.now();
+  await fresh({ arc_chal_outbox: [{ to: 'HOST#1234', mode: 'normal', best: 123, seed: at, n: 0, next: 0 }] });
+  check(await waitFor(`!!(ARC_TEST.chalOutbox && localStorage.getItem('arc_tag'))`, 8000), 'kuyruk kancası / hesap yok');
+  fb.offline = true;
+  // 1) art arda 8 başarısız deneme (bekleme süresi her seferinde sıfırlanır) → kayıt durur, sayaç artar
+  for (let i = 0; i < 8; i++) await ev(`(() => { const a = ARC_TEST.chalOutbox.read(); a.forEach(o => o.next = 0); localStorage.setItem('arc_chal_outbox', JSON.stringify(a)); return ARC_TEST.chalOutbox.flush(); })()`);
+  const q1 = await ev('ARC_TEST.chalOutbox.read()');
+  check(q1.length === 1 && q1[0].n >= 8 && q1[0].next > Date.now(),   // açılıştaki sosyal tazeleme de bir deneme yapabilir
+    `çevrimdışı denemeler kaydı sildi / sayaç yanlış: ${JSON.stringify(q1)}`);
+  // bekleme süresi dolmadan tekrar denenmez
+  await ev('ARC_TEST.chalOutbox.flush()');
+  const n1 = q1[0].n;
+  check((await ev('ARC_TEST.chalOutbox.read()'))[0].n === n1, 'bekleme süresi içinde yeniden denendi');
+  // 2) gönderim beklerken kuyruğa eklenen B korunur, A'nın sonucu yalnız A'ya uygulanır
+  await ev(`(() => { const a = ARC_TEST.chalOutbox.read(); a[0].next = 0; localStorage.setItem('arc_chal_outbox', JSON.stringify(a));
+    window._origSend = ARC_DB.sendChallenge; ARC_DB.sendChallenge = () => new Promise(r => { window._relSend = r; });
+    window._flushP = ARC_TEST.chalOutbox.flush(); return true; })()`);
+  check(await waitFor('!!window._relSend', 3000), 'gönderim başlamadı');
+  await ev(`ARC_TEST.chalOutbox.queue({ to: 'BOB#5678', mode: 'normal', best: 50, seed: ${at + 1} }); window._relSend(false); window._flushP.then(() => { ARC_DB.sendChallenge = window._origSend; return true; })`);
+  const q2 = await ev('ARC_TEST.chalOutbox.read()');
+  check(q2.length === 2 && q2.find(o => o.to === 'HOST#1234')?.n === n1 + 1 && q2.some(o => o.to === 'BOB#5678' && o.n === 0), `bekleme sırasında eklenen kayıt kayboldu: ${JSON.stringify(q2)}`);
+  // 3) süresi dolan (3 gün) kayıt düşer, kullanıcıya söylenir
+  await ev(`(() => { const a = ARC_TEST.chalOutbox.read(); a.forEach(o => { o.next = 0; if (o.to === 'HOST#1234') o.seed = Date.now() - 4 * 864e5; }); localStorage.setItem('arc_chal_outbox', JSON.stringify(a)); return ARC_TEST.chalOutbox.flush(); })()`);
+  const q3 = await ev('ARC_TEST.chalOutbox.read()');
+  check(q3.length === 1 && q3[0].to === 'BOB#5678', `süresi dolan kayıt düşmedi / diğeri silindi: ${JSON.stringify(q3)}`);
+  check(await ev(`/expired/i.test(document.getElementById('toast').textContent)`), 'süre dolumu bildirilmedi');
+  fb.offline = false;
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

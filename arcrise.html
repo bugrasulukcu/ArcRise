@@ -15466,35 +15466,55 @@ const ARC_DB = (() => {
   // Meydan okuma bitti: gönderen → en iyi skoru hedef olarak gönder; alan → iki en iyiyi kıyasla, sonucu yaz
   // Gönderilemeyen meydan okuma (çevrimdışı vb.) kaybolmasın: kuyruğa alınır, sosyal tazelemede yeniden denenir.
   // Belge kimliği from__to__ts sabit (create-only) → önceki deneme aslında gittiyse listede görülür ve kuyruktan düşer.
-  const CHAL_OUTBOX_KEY = 'arc_chal_outbox', CHAL_OUTBOX_MAX_AGE = 3 * 864e5, CHAL_OUTBOX_MAX_TRIES = 6;
+  // Başarısız deneme kaydı SİLMEZ (çevrimdışılık reddedilmeyle ayırt edilemiyor): yalnız bekleme süresi artar
+  // (30 sn → 10 dk). Kayıt yalnız gönderilince, listede görülünce ya da 3 gün dolunca (bildirimle) düşer.
+  const CHAL_OUTBOX_KEY = 'arc_chal_outbox', CHAL_OUTBOX_MAX_AGE = 3 * 864e5;
+  const chalOutKey = o => o.to + '|' + o.seed;
   const readChalOutbox = () => { try { const a = JSON.parse(localStorage.getItem(CHAL_OUTBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch(_) { return []; } };
   const writeChalOutbox = a => { try { if (a.length) localStorage.setItem(CHAL_OUTBOX_KEY, JSON.stringify(a)); else localStorage.removeItem(CHAL_OUTBOX_KEY); } catch(_) {} };
   function queueChalSend(c) {
-    const a = readChalOutbox().filter(o => !(o.to === c.to && o.seed === c.seed));
-    a.push({ to: c.to, mode: c.mode, best: c.best, seed: c.seed, n: 0 });
+    const a = readChalOutbox().filter(o => chalOutKey(o) !== chalOutKey(c));
+    a.push({ to: c.to, mode: c.mode, best: c.best, seed: c.seed, n: 0, next: 0 });
     writeChalOutbox(a.slice(-10));
   }
   let _chalOutboxBusy = false;
   async function flushChalOutbox() {
     const me = myId(); if (!me || _chalOutboxBusy) return;
-    const a = readChalOutbox(); if (!a.length) return;
+    const now = Date.now(), due = readChalOutbox().filter(o => !(o.next > now));
+    if (!due.length) return;
     _chalOutboxBusy = true;
-    const keep = [];
+    const res = new Map();   // anahtar → 'drop' | güncellenmiş kayıt (bekleme sırasında kuyruğa eklenenlere dokunulmaz)
     try {
-      for (const o of a) {
+      for (const o of due) {
+        const k = chalOutKey(o);
         const id0 = `${me}__${o.to}__${Math.round(Number(o.seed) || 0)}`;
-        if (challenges.some(x => x.id === id0)) continue;                         // önceki deneme gitmiş
-        if (!(o.best > 0) || Date.now() - (Number(o.seed) || 0) > CHAL_OUTBOX_MAX_AGE) continue;   // bayat
+        if (challenges.some(x => x.id === id0) || !(o.best > 0)) { res.set(k, 'drop'); continue; }   // önceki deneme gitmiş / geçersiz
+        if (now - (Number(o.seed) || 0) > CHAL_OUTBOX_MAX_AGE) {
+          res.set(k, 'drop');
+          try { showToast(`Challenge to **${parseId(o.to).name}** expired — it could not be sent`); } catch(_) {}
+          continue;
+        }
         let id = false; try { id = await ARC_DB.sendChallenge(me, o.to, _sanId(playerName), myTag(), o.mode, o.best, o.seed); } catch(_) {}
         if (id) {
+          res.set(k, 'drop');
           challenges.unshift({ id, from: me, to: o.to, fromName: _sanId(playerName), mode: o.mode, target: o.best, status: 'open', result: 0, ts: o.seed });
           try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
           _markSeen(id + ':open');
           try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE SENT', sub: `**${parseId(o.to).name}** has ${CHAL_TRIES} tries to beat **${o.best}**` }); } catch(_) {}
-        } else if (++o.n < CHAL_OUTBOX_MAX_TRIES) keep.push(o);
+        } else {
+          const n = (o.n | 0) + 1;
+          res.set(k, { ...o, n, next: Date.now() + Math.min(600e3, 30e3 * 2 ** (n - 1)) });
+        }
       }
-    } finally { writeChalOutbox(keep); _chalOutboxBusy = false; }
+    } finally {
+      // Sonuçlar GÜNCEL kuyruğa anahtarla uygulanır — bu sırada queueChalSend ile eklenen kayıtlar korunur
+      const cur = readChalOutbox(), out = [];
+      for (const o of cur) { const r = res.get(chalOutKey(o)); if (r !== 'drop') out.push(r || o); }
+      writeChalOutbox(out);
+      _chalOutboxBusy = false;
+    }
   }
+  if (window.ARC_TEST) window.ARC_TEST.chalOutbox = { queue: c => queueChalSend(c), flush: () => flushChalOutbox(), read: () => readChalOutbox() };
   async function finishChallenge(c, quiet) {
     if (_activeChal === c) _activeChal = null;
     c.done = true;
