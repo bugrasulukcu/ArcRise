@@ -2368,6 +2368,11 @@
       cursor: pointer; transition: filter .15s, transform .12s;
     }
     .core-buy:hover { filter: brightness(1.08); }
+    /* Sahip olunan seviyeye ücretsiz dönüş: dolgusuz çerçeve + FREE (ücretli = dolgulu yeşil + fiyat) */
+    .core-buy.free { background: rgba(124,255,122,.07); border: 1.5px solid rgba(124,255,122,.6); color: #9fffa0; box-shadow: none; }
+    .core-buy-price.free { background: rgba(10,30,14,.95); color: #9fffa0; border-color: rgba(124,255,122,.55); box-shadow: none; letter-spacing: .8px; font-size: 7.5px; }
+    .core-card-next { font-size: 8px; letter-spacing: .9px; color: rgba(255,255,255,.5); text-align: center; white-space: nowrap; margin-top: -3px; }
+    .core-card-next b { color: #b9f5c0; font-weight: 700; }
     .core-buy:active { transform: scale(0.94); }
     .core-buy[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; filter: grayscale(.45); box-shadow: none; }
     .core-buy.maxed {
@@ -13098,6 +13103,14 @@ const ARC_DB = (() => {
   } catch(_) {}
   upgInfoModal.addEventListener('click', e => { if (e.target === upgInfoModal) closeUpgInfo(); });
 
+  // Kart üstünde satın almadan ÖNCE etki önizlemesi: ne değişir + şimdiki → sonraki değer
+  const CORE_EFFECT = { profit: 'SCORE', radius: 'TURN SIZE', speed: 'BALL SPEED', timer: 'ENERGY', comboWin: 'COMBO WINDOW',
+    comboMax: 'COMBO CAP', wallSoft: 'WALL GRACE', magnetRange: 'PICKUP REACH' };
+  function coreNextHTML(key, plus) {
+    const eff = CORE_EFFECT[key] || '';
+    if (plus.mode === 'max') return `${eff} <b>${coreValueLabel(key)}</b> · MAX`;
+    return `${eff} ${coreValueLabel(key)} → <b>${coreValueText(key, coreLevel(key) + 1)}</b>`;
+  }
   function buildCoreCard(t) {
     const key = t.key;
     const card = document.createElement('div');
@@ -13106,7 +13119,7 @@ const ARC_DB = (() => {
     const mkBtn = (info, sign, cls) => {
       if (info.mode === 'max')   return `<button class="core-buy maxed">MAX</button>`;
       if (info.mode === 'empty') return `<button class="core-buy ${cls} empty" aria-hidden="true"></button>`;
-      if (info.mode === 'free')  return `<button class="core-buy ${cls}" data-act="${cls}-free">${sign}</button>`;
+      if (info.mode === 'free')  return `<button class="core-buy ${cls} free" data-act="${cls}-free" aria-label="${sign} (owned, free)"><span class="core-buy-price free">FREE</span>${sign}</button>`;
       return `<button class="core-buy ${cls}" data-act="${cls}-buy" data-price="${info.price}" ${coins < info.price ? 'disabled' : ''}>`
         + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
     };
@@ -13118,6 +13131,7 @@ const ARC_DB = (() => {
           <span class="core-card-title">${t.title}</span>
           <span class="core-card-val">${coreValueLabel(key)}</span>
         </div>
+        <div class="core-card-next">${coreNextHTML(key, plus)}</div>
         <div class="core-card-buys">
           ${mkBtn(minus, '−', 'minus')}
           ${mkBtn(plus,  '+', 'plus')}
@@ -13206,7 +13220,7 @@ const ARC_DB = (() => {
   function coreMkBtn(info, sign, cls) {
     if (info.mode === 'max')   return `<button class="core-buy maxed">MAX</button>`;
     if (info.mode === 'empty') return `<button class="core-buy ${cls} empty" aria-hidden="true"></button>`;
-    if (info.mode === 'free')  return `<button class="core-buy ${cls}" data-act="${cls}-free">${sign}</button>`;
+    if (info.mode === 'free')  return `<button class="core-buy ${cls} free" data-act="${cls}-free" aria-label="${sign} (owned, free)"><span class="core-buy-price free">FREE</span>${sign}</button>`;
     return `<button class="core-buy ${cls}" data-act="${cls}-buy" data-price="${info.price}" ${coins < info.price ? 'disabled' : ''}>`
       + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
   }
