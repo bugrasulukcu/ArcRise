@@ -1,8 +1,8 @@
 # Cross-check brief: ArcRise, everything since v25
 
-You are reviewing ArcRise, a mobile arcade game, at commit `1fbcb9a`. The previous review covered v25 (`61b5f7d`, the ×1 economy). About 70 commits have landed since then. Find bugs in them and report back. **Do not refactor, rebalance or "improve" numbers.** The numbers are deliberate design decisions. Report anything that looks wrong; do not change it.
+You are reviewing ArcRise, a mobile arcade game, at commit `90ce218`. The previous review covered v25 (`61b5f7d`, the ×1 economy). About 70 commits have landed since then. Find bugs in them and report back. **Do not refactor, rebalance or "improve" numbers.** The numbers are deliberate design decisions. Report anything that looks wrong; do not change it.
 
-`git diff 61b5f7d 1fbcb9a -- arcrise.html firestore.rules` is the review scope (~5,300 lines changed in `arcrise.html`). `DEVELOPMENT_LOG.md` (Turkish) has one entry per change, newest first, if you need the intent behind a change.
+`git diff 61b5f7d 90ce218 -- arcrise.html firestore.rules` is the review scope (~5,300 lines changed in `arcrise.html`). `DEVELOPMENT_LOG.md` (Turkish) has one entry per change, newest first, if you need the intent behind a change.
 
 ## Safety rules (read first)
 
@@ -152,7 +152,7 @@ Headless notes: App Check logs `appCheck/recaptcha-error` on `127.0.0.1`; that i
 
 ## Known open issues (do not fix, but you may comment)
 
-- `index.html` cache-bust is still `?v=20261001e`, but the last three commits changed `arcrise.html`. Say whether returning players would keep a stale build.
+- `index.html` cache-bust is still `?v=20261001e`, but the last four commits changed `arcrise.html`. Say whether returning players would keep a stale build.
 - Scores, coins and challenge results are client-side. App Check is not enforced yet. Rules only range-check values.
 - With full upgrades, score per metre is still high (time ×4 × combo ×7 × Profit × boosters). Pending design decision.
 - New players mostly die at 1–3 m, before the first big coin (5 m).
