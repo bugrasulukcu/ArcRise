@@ -220,19 +220,6 @@
     /* Küçük avatar renk noktası YOUR BEST yanında */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
-    /* Leaderboard sidebar — sağ duvarın içinde */
-    #lb {
-      position: absolute; top: 0;
-      right: calc(3.4% + 10px);
-      width: 108px; height: 100%;
-      display: flex; flex-direction: column;
-      justify-content: center; gap: 3px;
-      padding: 60px 0 20px 0;
-      overflow: hidden;
-    }
-    .lb-row   { font-size: 7px; color: rgba(255,255,255,.28); text-align: right; white-space: nowrap; }
-    .lb-row.you { font-size: 8px; }
-
     /* ══════════ PROFILE (Settings içinde) ══════════ */
     .profile-sect {
       border-bottom: 1px solid rgba(255,255,255,.08);
@@ -4174,7 +4161,6 @@
         <div class="hud-sub-lbl">BEST</div>
         <div class="hud-sub-num" id="h-dist-best">0</div>
       </div>
-      <div id="lb"></div>
       <!-- Combo indicator -->
       <div id="combo-hud">
         <div id="combo-pill">&times;<span id="combo-val">1</span><div id="combo-fx"></div></div>
@@ -6608,7 +6594,6 @@ const ARC_DB = (() => {
   const hScore     = document.getElementById('h-score');
   const hBest      = document.getElementById('h-best');
   const hudAvDot   = document.getElementById('hud-av');
-  const lbEl       = document.getElementById('lb');
   const homeEl     = document.getElementById('home');
   const settingsEl = document.getElementById('settings');
   const gameoverEl = document.getElementById('gameover');
@@ -9242,34 +9227,6 @@ const ARC_DB = (() => {
     ctx.restore();
   }
 
-  // ── Leaderboard ──────────────────────────────────────────
-  const LB_NAMES = ['ALEXXX','BYTE','NEXUS','STORM','VOID','ECHO','PULSE','ORBIT','FLUX','NOVA','ZERO','SIGMA'];
-  let lbFrame = 0;
-
-  // Oyun içi sağ liste: oyuncunun ÜSTÜNDEKİ oyunculardan bir havuz (en yakından başlayarak).
-  // Oyuncu yükseldikçe geçtikleri altta kalır; üstte 20'den az kişi kalınca bir sonraki parti çekilir.
-  const LB_BATCH = 40, LB_WIN = 31;
-  let lbPool = new Map(), lbTopDone = false, lbFetching = false, lbRunTok = 0;
-  async function lbFetchMore(fromScore) {
-    if (lbFetching || lbTopDone) return;
-    lbFetching = true; const tok = lbRunTok, mode = gameMode;
-    let rows = null; try { rows = await ARC_DB.getScoresAbove(mode, fromScore, LB_BATCH); } catch(_) {}
-    if (tok !== lbRunTok) return;   // yeni run başladı → bu cevap bayat (lbFetching yeni run'da sıfırlandı)
-    lbFetching = false;
-    if (!rows) {   // ulaşılamadı → havuz boşsa sahte NPC'ler
-      lbTopDone = true;
-      if (!lbPool.size) LB_NAMES.forEach((n, i) => lbPool.set('npc' + i, { n, s: 2 + Math.floor(Math.random() * 18) }));
-      return;
-    }
-    const myT = myTag();
-    for (const r of rows) if (!(r.name === playerName && (!r.tag || r.tag === myT))) lbPool.set(r.docId, { n: r.name, s: r.score });
-    if (rows.length < LB_BATCH) lbTopDone = true;   // liderliğin tepesine ulaşıldı
-  }
-  function fetchLiveScores() {
-    lbRunTok++; lbPool = new Map(); lbTopDone = false; lbFetching = false;
-    return lbFetchMore(0);
-  }
-
   // Cross-player ghost trails for current mode — own ghost excluded.
   // Uses ARC_DB.getCrossPlayerGhosts which reuses the leaderboard cache.
   async function fetchCrossPlayerGhosts() {
@@ -9287,31 +9244,6 @@ const ARC_DB = (() => {
     } catch(e) {
       crossPlayerGhosts = [];
     }
-  }
-
-  function refreshLB() {
-    lbFrame++;
-    if (lbFrame % 30 !== 0) return; // update every 30 frames
-    const sc  = Math.floor(score);
-    const avc = AVATAR_COLORS[avatarIdx];
-    // Üstte 20'den az kişi kaldıysa bir sonraki partiyi çek (en yüksek bilinen skorun üstü)
-    if (!lbTopDone && !lbFetching) {
-      let above = 0, max = 0;
-      for (const v of lbPool.values()) { if (v.s > sc) above++; if (v.s > max) max = v.s; }
-      if (above < 20) lbFetchMore(max);
-    }
-    const rows = [...lbPool.values(), { n: playerName, s: sc, you: true }];
-    rows.sort((a, b) => b.s - a.s || (a.you ? 1 : b.you ? -1 : 0));   // eşitlikte oyuncu altta
-    // 31 satırlık pencere: başta üstte 30 kişi; yükseldikçe oyuncu ortada (15 üst / 15 alt);
-    // tepeye yaklaşınca pencere durur, oyuncu yukarı kayar ve altta 30 kişi kalır.
-    const youIdx = rows.findIndex(r => r.you);
-    const start = Math.max(0, Math.min(youIdx - 15, rows.length - LB_WIN));
-    const slice = rows.slice(start, start + LB_WIN);
-    lbEl.innerHTML = slice.map(r =>
-      r.you
-        ? `<div class="lb-row you" style="color:${avc}">▶ ${esc(r.n)}</div>`
-        : `<div class="lb-row">${esc(r.n)}</div>`
-    ).join('');
   }
 
   // ── World helpers ─────────────────────────────────────────
@@ -9384,7 +9316,7 @@ const ARC_DB = (() => {
     nextSpawnY = player.y - firstSlot; lastBonusY = player.y - firstSlot;
     score = 0; maxAscend = 0; distancePx = 0; energy = 1; scoreBonus = 0; distScore = 0; _prevDistPx = 0; _startCrossed = false; _startFlashAt = 0;
     graceTimer = 0; pbCrossed = false; pbFadeT = 0;
-    started = false; running = false; lbFrame = 0;
+    started = false; running = false;
     _reviveOffered = false; _lastSafePos = null;
     dyingT = -1; cancelRoulette(); _deathInfo = null;
     _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
@@ -9400,9 +9332,6 @@ const ARC_DB = (() => {
     goldFlashAlpha = 0;
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
-    // Firestore'dan gerçek skorları arka planda çek — ilk çağrı dışında
-    // ARC_DB'nin 5dk TTL cache'ine düşer, yani okuma yapmadan döner.
-    fetchLiveScores();
     fetchCrossPlayerGhosts();
     initBgArcs();
     // Engel/enerji buffer'ını hemen doldur — bir ekran yukarıda hazır beklesin
@@ -10973,7 +10902,6 @@ const ARC_DB = (() => {
         const bd = bestDistanceM || 0;
         dBestEl.textContent = fmtDist(bd);
       }
-      refreshLB();
     }
 
     requestAnimationFrame(loop);
