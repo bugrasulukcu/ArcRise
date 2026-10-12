@@ -5522,12 +5522,12 @@ const ARC_DB = (() => {
             { fieldFilter: { field: { fieldPath: 'score' }, op, value: { integerValue: String(Math.max(0, Math.floor(S))) } } },
           ] } },
           orderBy: [{ field: { fieldPath: 'score' }, direction: dir }],
-          limit,
+          limit: limit + 1,   // kendi dokümanımız sonuçta olabilir → elendikten sonra yine `limit` kayıt kalsın
         }}),
       });
       if (!res.ok) throw new Error('range ' + res.status);
       const mine = getUid() ? `${getUid()}_${mode}` : '';
-      return parseRows(await res.json()).filter(r => r.docId !== mine);
+      return parseRows(await res.json()).filter(r => r.docId !== mine).slice(0, limit);
     } catch (e) { console.warn('[ArcDB] range failed', e); return null; }
   }
   // Skoru S'den büyük olanlar, en yakından başlayarak (artan)
@@ -6912,6 +6912,10 @@ const ARC_DB = (() => {
   // Günlük meydan okuma: aynı gün herkese aynı pist. spawnAhead tohumlu rastgele (srand) kullanır.
   let _dailyRun = false, _dailyRng = null, _dailyPrevMode = null;
   const srand = () => _dailyRng ? _dailyRng() : Math.random();
+  // Olay anındaki rastgele ödüller (Mystery, kristal CLOSE booster'ı) pist RNG'sinden AYRI tohumlu akış:
+  // pist sırası bozulmaz, aynı olay sırası iki oyuncuya aynı ödülü verir.
+  let _fxRng = null;
+  const frand = () => _fxRng ? _fxRng() : Math.random();
   // Tohumlu pist: günlük koşu ya da meydan okuma (iki oyuncu aynı pisti oynar; eşya yok, sandık/büyük coin yok)
   const _seeded = () => _dailyRun || !!_activeChal;
   const CHAL_TRIES = 3;   // meydan okumada deneme hakkı — en yüksek skor sayılır
@@ -7003,7 +7007,7 @@ const ARC_DB = (() => {
   function activateBooster(type, durOverride) {
     if (type === 'mystery') {
       const pool = ['wide','narrow','magnet','xmult','ghost','speed'];
-      const final = resolveBoosterType(pool[Math.floor(Math.random() * pool.length)]);
+      const final = resolveBoosterType(pool[Math.floor(frand() * pool.length)]);
       startMysteryRoulette(final);
       return;
     }
@@ -9303,6 +9307,7 @@ const ARC_DB = (() => {
     camY = 0; trail.length = 0; ghostSampled.length = 0;
     _pbRec.length = 0; _pbT = 0; _pbIdx = 0; _pbStartY = player.y;
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
+    _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
     _pbGhost = (gameMode !== 'wife' && upg.pbGhost !== false) ? loadPbGhost(gameMode) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
@@ -9396,7 +9401,7 @@ const ARC_DB = (() => {
 
         // ── Büyük coin: slotun kendi mesafesi (başlangıç çizgisinden) 5 m işaretini geçti mi ──
         const slotCm = (distOriginY() - nextSpawnY) / H_REF * CM_PER_SCREEN;
-        if (!_seeded() && slotCm >= _nextBigCoinCm) {
+        if (!_seeded() && gameMode !== 'wife' && slotCm >= _nextBigCoinCm) {   // Wife: coin yok → sandık hakkı da yanmasın
           const mark = _nextBigCoinCm;
           _nextBigCoinCm = mark < BIG_COIN_EVERY_CM ? BIG_COIN_EVERY_CM : mark + BIG_COIN_EVERY_CM;
           if (!_distChestsOpened.has(mark)) { spawnDistChest(mark); nextSpawnY -= gap; continue; }
@@ -9458,6 +9463,9 @@ const ARC_DB = (() => {
             ob.mang  = srand() * Math.PI * 2;
             ob.mnext = 1.5 + srand() * 2;
             ob.mct   = 0;
+            // Tohumlu pistte yön yenilemesi de deterministik olsun: engelin kendi RNG'si, pist RNG'sini tüketmeden
+            // spawn değerlerinden türetilir (kare sayısına bağlı tüketim pisti bozardı).
+            if (_dailyRng) ob.mrng = mulberry32(Math.floor(ob.mang * 1e8) ^ Math.floor(ob.mnext * 1e6) ^ Math.floor(ob.x * 1e3));
           } else if (ob.mk === 'diag') {
             ob.mang = srand() * Math.PI * 2;
           }
@@ -9683,6 +9691,9 @@ const ARC_DB = (() => {
     distancePx = Math.max(distancePx, distOriginY() - player.y);
     if (!_startCrossed && !tutActive && player.y <= distOriginY()) {
       _startCrossed = true; _startFlashAt = performance.now();
+      // Meydan okuma (alan taraf): çizgiyi geçen deneme hemen kalıcı olarak düşülür — yoksa run ortasında
+      // sayfayı yenileyip kötü giden denemeyi bedavaya iptal etmek mümkündü. Run sonu aynı değeri yazar.
+      if (_activeChal && _activeChal.role === 'recv') saveChalProg({ id: _activeChal.id, tries: _activeChal.tries + 1, best: _activeChal.best });
       spawnFloatText(player.x, player.y - 30, 'GO!', 120, 1.6); haptic(25);
       // Çizgi boyunca yukarı fırlayan yeşil-beyaz kıvılcımlar
       for (let k = 0; k < 26; k++) {
@@ -9832,7 +9843,7 @@ const ARC_DB = (() => {
         else if (ob.mk === 'diag') { ob._ox = ob.x + Math.cos(ob.mang) * s;        ob._oy = ob.y + Math.sin(ob.mang) * s; }
         else { // rand
           ob.mct += dt;
-          if (ob.mct >= ob.mnext) { ob.mang = Math.random() * Math.PI * 2; ob.mnext = 1.5 + Math.random() * 2; ob.mct = 0; }
+          if (ob.mct >= ob.mnext) { const mr = ob.mrng || Math.random; ob.mang = mr() * Math.PI * 2; ob.mnext = 1.5 + mr() * 2; ob.mct = 0; }
           ob._ox = ob.x + Math.cos(ob.mang) * s; ob._oy = ob.y + Math.sin(ob.mang) * s;
         }
       } else { ob._ox = ob.x; ob._oy = ob.y; }
@@ -9868,7 +9879,7 @@ const ARC_DB = (() => {
           f._py = player.y;
           if (f.done && (f.doneT += dt) > 0.6) feats.splice(i, 1);
         } else if (f.kind === 'chest') {
-          if (!f.done && _distChestsOpened.has(f.cm)) { f.done = true; f.doneT = 0.9; }   // zaten açılmış (savunma)
+          if (!f.done && (_distChestsOpened.has(f.cm) || gameMode === 'wife')) { f.done = true; f.doneT = 0.9; }   // zaten açılmış / Wife (savunma)
           if (!f.done && Math.hypot(player.x - f.x, player.y - f.y) < player.r + f.r + magGrabF * 0.5) {
             f.done = true; f.doneT = 0;
             _distChestsOpened.add(f.cm); try { localStorage.setItem(DIST_CHEST_KEY, JSON.stringify([..._distChestsOpened])); } catch(_) {}
@@ -10005,7 +10016,7 @@ const ARC_DB = (() => {
             if (ob.crystal && !tutActive) {
               if (!boosterType) {
                 const pool = ['wide', 'magnet', 'xmult', 'ghost', 'speed'];
-                const bt = pool[Math.floor(Math.random() * pool.length)];
+                const bt = pool[Math.floor(frand() * pool.length)];
                 activateBooster(bt);
                 spawnFloatText(player.x, player.y - 44, 'CRYSTAL · ' + BOOSTER_INFO[bt].name, 190, 1.25);
                 spawnShards(ob._ox, ob._oy, 190);
@@ -10309,6 +10320,7 @@ const ARC_DB = (() => {
   let _comboPot       = 0;        // biriken combo puanı — zincir kırılınca patlayıp skora eklenir
   function offerRevive() {
     if (_reviveOffered) return false;
+    if (_seeded()) return false;   // günlük / meydan okuma: eşyasız kural — Revive de ikinci hayat sayılır
     if ((upg.inv?.revive?.count || 0) <= 0) return false;
     _reviveOffered = true;
     running = false;
@@ -10470,7 +10482,7 @@ const ARC_DB = (() => {
     // ADS_ENABLED false iken (v1) hiç gösterilmez — sahte reklam yok.
     const adBtn = document.getElementById('btn-continue-ad');
     if (adBtn) adBtn.style.display =
-      (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && _lastSafePos) ? '' : 'none';
+      (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && !_seeded() && _lastSafePos) ? '' : 'none';
     try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
@@ -11004,7 +11016,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_dist_chests','arc_chest_pending',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_dist_chests','arc_chest_pending','arc_chal_outbox',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
@@ -14273,8 +14285,11 @@ const ARC_DB = (() => {
       try { applyProfile(); } catch(_){}
       try { ensureAccount(); } catch(_){}
     }
-    resetGame();
+    // Eşya bayrakları ilk spawn'dan ÖNCE kurulmalı: resetGame ilk pist tamponunu üretir ve Gold Rush
+    // (runCoinRainActive) spawn olasılıklarını değiştirir — önceki run'ın bayrağı günlük pistin RNG
+    // sırasını bozuyordu.
     consumeArmedConsumables();
+    resetGame();
     showScene('play');
     playBgMusic();                     // kural scene==='play' ister → ekran değiştikten sonra
     // Oyun hemen başlasın — ilk dokunuş bekleme
@@ -15322,6 +15337,7 @@ const ARC_DB = (() => {
         try { showRewardToast({ icon: 'hearts', title: 'FRIEND ADDED', sub: `**${parseId(e.to).name}** accepted your request` }); } catch(_){}
     }
     await loadChallenges();
+    try { await flushChalOutbox(); } catch(_) {}
     // Benim davet linkimle gelenlerin istekleri → otomatik kabul (doğrudan arkadaş listesine)
     const mine = myFriendCode();
     for (const e of socialEdges) {
@@ -15448,6 +15464,37 @@ const ARC_DB = (() => {
       localStorage.setItem(CHAL_PROG_KEY, JSON.stringify(o)); } catch(_) {}
   }
   // Meydan okuma bitti: gönderen → en iyi skoru hedef olarak gönder; alan → iki en iyiyi kıyasla, sonucu yaz
+  // Gönderilemeyen meydan okuma (çevrimdışı vb.) kaybolmasın: kuyruğa alınır, sosyal tazelemede yeniden denenir.
+  // Belge kimliği from__to__ts sabit (create-only) → önceki deneme aslında gittiyse listede görülür ve kuyruktan düşer.
+  const CHAL_OUTBOX_KEY = 'arc_chal_outbox', CHAL_OUTBOX_MAX_AGE = 3 * 864e5, CHAL_OUTBOX_MAX_TRIES = 6;
+  const readChalOutbox = () => { try { const a = JSON.parse(localStorage.getItem(CHAL_OUTBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch(_) { return []; } };
+  const writeChalOutbox = a => { try { if (a.length) localStorage.setItem(CHAL_OUTBOX_KEY, JSON.stringify(a)); else localStorage.removeItem(CHAL_OUTBOX_KEY); } catch(_) {} };
+  function queueChalSend(c) {
+    const a = readChalOutbox().filter(o => !(o.to === c.to && o.seed === c.seed));
+    a.push({ to: c.to, mode: c.mode, best: c.best, seed: c.seed, n: 0 });
+    writeChalOutbox(a.slice(-10));
+  }
+  let _chalOutboxBusy = false;
+  async function flushChalOutbox() {
+    const me = myId(); if (!me || _chalOutboxBusy) return;
+    const a = readChalOutbox(); if (!a.length) return;
+    _chalOutboxBusy = true;
+    const keep = [];
+    try {
+      for (const o of a) {
+        const id0 = `${me}__${o.to}__${Math.round(Number(o.seed) || 0)}`;
+        if (challenges.some(x => x.id === id0)) continue;                         // önceki deneme gitmiş
+        if (!(o.best > 0) || Date.now() - (Number(o.seed) || 0) > CHAL_OUTBOX_MAX_AGE) continue;   // bayat
+        let id = false; try { id = await ARC_DB.sendChallenge(me, o.to, _sanId(playerName), myTag(), o.mode, o.best, o.seed); } catch(_) {}
+        if (id) {
+          challenges.unshift({ id, from: me, to: o.to, fromName: _sanId(playerName), mode: o.mode, target: o.best, status: 'open', result: 0, ts: o.seed });
+          try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
+          _markSeen(id + ':open');
+          try { showRewardToast({ icon: 'bolt', title: 'CHALLENGE SENT', sub: `**${parseId(o.to).name}** has ${CHAL_TRIES} tries to beat **${o.best}**` }); } catch(_) {}
+        } else if (++o.n < CHAL_OUTBOX_MAX_TRIES) keep.push(o);
+      }
+    } finally { writeChalOutbox(keep); _chalOutboxBusy = false; }
+  }
   async function finishChallenge(c, quiet) {
     if (_activeChal === c) _activeChal = null;
     c.done = true;
@@ -15455,7 +15502,7 @@ const ARC_DB = (() => {
     if (c.role === 'send') {
       if (c.best <= 0) { if (!quiet) try { showToast('Challenge cancelled — no score to send'); } catch(_) {} return; }
       let id = false; try { id = await ARC_DB.sendChallenge(me, c.to, _sanId(playerName), myTag(), c.mode, c.best, c.seed); } catch(_) {}
-      if (!id) { c.sendFailed = true; try { showToast('Could not send the challenge — check your connection'); renderGoChal(c); } catch(_) {} return; }
+      if (!id) { c.sendFailed = true; queueChalSend(c); try { showToast('Could not send the challenge — will retry when you are online'); renderGoChal(c); } catch(_) {} return; }
       challenges.unshift({ id, from: me, to: c.to, fromName: _sanId(playerName), mode: c.mode, target: c.best, status: 'open', result: 0, ts: c.seed });
       try { localStorage.setItem(CHAL_KEY, JSON.stringify(challenges)); } catch(_){}
       _markSeen(id + ':open');

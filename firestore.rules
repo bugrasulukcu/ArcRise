@@ -195,7 +195,9 @@ service cloud.firestore {
         && resource.data.status == 'open'
         && request.resource.data.status in ['won', 'lost']
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'result', 'rts'])
-        && request.resource.data.result is int && request.resource.data.result >= 0 && request.resource.data.result <= 50000000;
+        && request.resource.data.result is int && request.resource.data.result >= 0 && request.resource.data.result <= 50000000
+        // Sonuç kendi içinde tutarlı olmalı (eşitlikte meydan okuyan tutar → won yalnız hedefi GEÇİNCE)
+        && (request.resource.data.status == 'won') == (request.resource.data.result > resource.data.target);
       allow delete: if request.auth != null
         && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
     }

@@ -696,7 +696,11 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   await ev(`document.getElementById('chal-start-btn').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'play' && ARC_TEST.chal && ARC_TEST.chal.role === 'send'`, 5000), 'meydan okuma oyunu başlamadı');
   const sigA = await ev('ARC_TEST.layoutSig(10)');
-  await ev(`ARC_BOT.start(); ARC_TEST.ghost(4); true`); await sleep(4500); await ev(`ARC_BOT.stop(); true`);
+  await ev(`ARC_BOT.start(); ARC_TEST.ghost(4); true`);
+  // Pist her seferinde farklı (tohum = ts): kısa bot run'ı bazen 0 skorla biter → çizgi geçilince
+  // olduğu yerde bir kapı açılır, skor kesin > 0 (eskiden test rastgele düşüyordu)
+  check(await waitFor(`ARC_TEST.scene === 'play' && ARC_TEST.startCrossed`, 4000), 'ALICE başlangıç çizgisini geçmedi');
+  await ev(`ARC_TEST.spawnFeatHere('gate'); true`); await sleep(3500); await ev(`ARC_BOT.stop(); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'ALICE run bitmedi'); await sleep(800);
   const goA = await ev(`({ again: document.getElementById('btn-again').textContent, strip: !document.getElementById('go-chal').hidden, best: ARC_TEST.chal && ARC_TEST.chal.best })`);
   check(goA.again === 'TRY 2/3' && goA.strip && goA.best > 0, `game over meydan okuma durumu: ${JSON.stringify(goA)}`);
@@ -716,7 +720,15 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   check(JSON.stringify(await ev('ARC_TEST.layoutSig(10)')) === JSON.stringify(sigA), 'alan taraf aynı pisti oynamıyor');
   for (let tr = 1; tr <= 3; tr++) {
     if (tr > 1) { await ev(`document.getElementById('wrap-again').click(); true`); check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${tr}. deneme başlamadı`); }
-    await ev(`ARC_BOT.start(); ARC_TEST.ghost(2); true`); await sleep(1800); await ev(`ARC_BOT.stop(); true`);
+    await ev(`ARC_BOT.start(); ARC_TEST.ghost(2); true`);
+    // başlangıç çizgisini geçen deneme run bitmeden kalıcı düşülür (yarıda yenileyip hak kurtarılamaz)
+    if (tr === 1) {
+      const pk = JSON.stringify(decodeURIComponent(chKey.slice('challenges/'.length)));
+      await waitFor(`ARC_TEST.startCrossed || ARC_TEST.scene !== 'play'`, 3000);
+      const mid = await ev(`({ play: ARC_TEST.scene === 'play', tries: (JSON.parse(localStorage.getItem('arc_chal_prog') || '{}')[${pk}] || {}).tries })`);
+      check(!mid.play || mid.tries === 1, 'çizgiyi geçen deneme run sırasında kalıcı yazılmadı: ' + JSON.stringify(mid));
+    }
+    await sleep(1800); await ev(`ARC_BOT.stop(); true`);
     check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), `${tr}. deneme bitmedi`); await sleep(600);
     if (tr < 3) check(await ev(`document.getElementById('btn-again').textContent`) === `TRY ${tr + 1}/3`, `${tr}. denemeden sonra AGAIN etiketi: ${await ev(`document.getElementById('btn-again').textContent`)}`);
   }
@@ -727,6 +739,50 @@ test('arkadaşlık: istek ve kabul bildirimi, meydan okuma gönder → oyna → 
   // 5) ALICE: sonuç bildirimi
   await asUser(A2);
   check(await toastHas(st === 'won' ? 'CHALLENGE BEATEN' : 'CHALLENGE HELD'), 'ALICE\'e sonuç bildirimi düşmedi');
+});
+
+test('review düzeltmeleri: günlükte Revive yok, Gold Rush günlük pisti bozmaz, komşu sorgusu kendi kaydını saymaz, Wife sandık açmaz', async () => {
+  fbReset();
+  // 1) Günlük koşuda Revive önerilmez, bilet harcanmaz
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { revive: { count: 1 } } } });
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
+  check((await ev('ARC_TEST.daily')).on, 'günlük mod açılmadı');
+  const sigClean = await ev('ARC_TEST.layoutSig(12)');
+  check(await waitFor(`ARC_TEST.scene === 'over' || document.getElementById('revive-modal').classList.contains('open')`, 30000), 'run bitmedi');
+  check(!await ev(`document.getElementById('revive-modal').classList.contains('open')`), 'günlük koşuda Revive önerildi');
+  check((await lsJSON('arc_upg_v1')).inv.revive.count === 1, 'günlük koşuda Revive bileti harcandı');
+  // 2) Gold Rush'lı normal run'dan sonra açılan günlük pist, temiz başlangıçla aynı
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { coinrain: { count: 1, armed: true } } } });
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'Gold Rush run\'ı başlamadı'); await sleep(300);
+  await ev(`ARC_TEST.toScene('home'); true`); await sleep(400);
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
+  const sigAfter = await ev('ARC_TEST.layoutSig(12)');
+  check(sigAfter === sigClean, `Gold Rush sonrası günlük pist farklı:\n${sigClean}\n${sigAfter}`);
+  // 3) getScoresBelow(…, 1): kendi dokümanım elense de alttaki oyuncu döner
+  fbReset();
+  await fresh();
+  check(await waitFor(`!!ARC_DB.getUid()`, 8000), 'hesap yok');
+  const uid = await ev('ARC_DB.getUid()');
+  const doc = (id, n, sc) => ({ name: `projects/p/databases/(default)/documents/scores/${id}`,
+    fields: { name: { stringValue: n }, owner: { stringValue: id === uid + '_normal' ? uid : 'X' }, tag: { stringValue: '1234' }, score: { integerValue: String(sc) },
+      mode: { stringValue: 'normal' }, ts: { integerValue: String(Date.now()) }, avatar: { integerValue: '1' } } });
+  fb.docs.set(`scores/${uid}_normal`, doc(`${uid}_normal`, 'ARC', 500));
+  fb.docs.set('scores/OTHER_normal', doc('OTHER_normal', 'OTHER', 499));
+  fb.docs.set('scores/TOP_normal', doc('TOP_normal', 'TOP', 501));
+  const below = await ev(`ARC_DB.getScoresBelow('normal', 500, 1).then(r => r && r.map(x => x.name))`);
+  check(JSON.stringify(below) === '["OTHER"]', `alttaki komşu: ${JSON.stringify(below)}`);
+  const above = await ev(`ARC_DB.getScoresAbove('normal', 499, 1).then(r => r && r.map(x => x.name))`);
+  check(JSON.stringify(above) === '["TOP"]', `üstteki komşu: ${JSON.stringify(above)}`);
+  // 4) Wife modunda sandık hakkı yanmaz, bekleyen coin oluşmaz
+  await fresh({ arc_mode: 'wife' });
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'Wife run\'ı başlamadı');
+  await ev(`ARC_TEST.spawnFeatHere('chest'); true`); await sleep(600);
+  check(await ls('arc_chest_pending') === null && (await lsJSON('arc_dist_chests') || []).length === 0,
+    `Wife'ta sandık açıldı: pending=${await ls('arc_chest_pending')} opened=${await ls('arc_dist_chests')}`);
 });
 
 // ── Koştur ───────────────────────────────────────────────────

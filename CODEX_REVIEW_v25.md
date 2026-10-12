@@ -39,7 +39,7 @@ ArcRise is a one-touch, endless vertical arcade game for phones (portrait). **Th
 - **Extreme**: base speed 800, accelerating with distance, coins per metre ×2. Unlocked by reaching a distance/score target, or bought.
 - **Wife mode**: a hidden casual mode at half speed. It earns no coins and saves no records.
 - **Daily Run**: the same seeded track for everyone today, Chill rules, no items, unlimited tries, its own daily table.
-- **Challenge**: a friend-vs-friend duel on a shared seeded track, 3 tries each, best try counts.
+- **Challenge**: a friend-vs-friend duel on a shared seeded track in the sender's mode (Chill or Extreme), 3 tries each, best try counts.
 
 **Progression**
 - Coins come from distance (1 per metre, ×2 in Extreme, reduced after 25 a day), big coins every 5 m, one-time distance chests, daily login, 3 daily quests, a login-streak chest cycle and invites.
@@ -98,7 +98,7 @@ The Doubler consumable costs 6 and now doubles coins for the next 5 runs.
 - `gained` is an integer ≥ 0 and `0 ≤ coinCarry < 1` after every run, including runs with a chest.
 - A chest is never credited twice: not by the pending key plus the run end, not by ad-continue (`_runChestBanked`), and not by a second chest spawn at the same mark.
 - `arc_coin_day_amt` grows only by non-chest income. `gained - deltaChest` cannot go negative.
-- Chests, big coins and the soft cap are all disabled in seeded runs (daily run and challenge, see §3). Wife mode earns nothing.
+- Chests and big coins are disabled in seeded runs (daily run and challenge, see §3) and in Wife mode. Distance coins in seeded runs still go through the soft cap. Wife mode earns nothing.
 - `nextCoinLeft()` (≈ line 13780) gives the same "NEXT COIN · X TO GO" in the Coins window and on game over, including Extreme ×2 and the soft cap.
 - Game-over coin animation (`_coinAnimFrom` / `_coinAnimTo`, ≈ line 10594) ends on the real carry, and the token that cancels pending steps works when AGAIN is pressed mid-animation.
 
@@ -117,7 +117,7 @@ The Doubler consumable costs 6 and now doubles coins for the next 5 runs.
 ### 3. Seeded runs: Daily Run and challenges
 
 - `_seeded()` (≈ line 6931) is true in the Daily Run and in an active challenge. Then `srand()` uses `mulberry32(dailySeed(...))` (≈ line 9373), difficulty uses each slot's own height, and the first slot starts from `H_REF` instead of `H`. The track must be identical on every screen size and upgrade level.
-- Seeded runs: Normal mode only (the player's mode is saved and restored), no items, no chests, no big coins.
+- Seeded runs: no items (including Revive), no chests, no big coins. The Daily Run is always Chill; a challenge uses the sender's mode. The player's own mode is saved and restored.
 - Daily scores go to `daily/{YYYYMMDD}/scores/{uid}` (`submitDaily`), never to the normal leaderboard. `_proceedEndGame` captures `wasDaily` at the top to avoid a race with the next run.
 
 **Verify:** no `Math.random()` left in spawn code that runs during a seeded run (it would desync the track). Items cannot be consumed in a seeded run, including through the tutorial-to-run transition. The player's real mode is restored on every exit path (game over → menu, quit mid-run, app reload).
@@ -192,7 +192,6 @@ Headless notes: App Check logs `appCheck/recaptcha-error` on `127.0.0.1`; that i
 
 ## Known open issues (do not fix, but you may comment)
 
-- `index.html` cache-bust is still `?v=20261001e`, but the last four commits changed `arcrise.html`. Say whether returning players would keep a stale build.
 - Scores, coins and challenge results are client-side. App Check is not enforced yet. Rules only range-check values.
 - With full upgrades, score per metre is still high (time ×4 × combo ×7 × Profit × boosters). Pending design decision.
 - New players mostly die at 1–3 m, before the first big coin (5 m).
