@@ -8521,10 +8521,6 @@ const ARC_DB = (() => {
       g.addColorStop(1, 'rgba(60,255,60,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, glowR, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#7CFF7A'; ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
-      // Şekil ipucu (renkten bağımsız): enerji = "+". Mor toplarda ikon, kırmızı engeller düz.
-      const pl = b.r * 0.52;
-      ctx.strokeStyle = 'rgba(6,48,10,0.8)'; ctx.lineWidth = Math.max(2, b.r * 0.24); ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(b.x - pl, sy); ctx.lineTo(b.x + pl, sy); ctx.moveTo(b.x, sy - pl); ctx.lineTo(b.x, sy + pl); ctx.stroke();
       ctx.restore();
     }
   }
