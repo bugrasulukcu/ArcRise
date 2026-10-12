@@ -8434,6 +8434,10 @@ const ARC_DB = (() => {
       g.addColorStop(1, 'rgba(60,255,60,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, sy, glowR, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#7CFF7A'; ctx.beginPath(); ctx.arc(b.x, sy, b.r, 0, Math.PI*2); ctx.fill();
+      // Şekil ipucu (renkten bağımsız): enerji = "+". Mor toplarda ikon, kırmızı engeller düz.
+      const pl = b.r * 0.52;
+      ctx.strokeStyle = 'rgba(6,48,10,0.8)'; ctx.lineWidth = Math.max(2, b.r * 0.24); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(b.x - pl, sy); ctx.lineTo(b.x + pl, sy); ctx.moveTo(b.x, sy - pl); ctx.lineTo(b.x, sy + pl); ctx.stroke();
       ctx.restore();
     }
   }
@@ -9156,11 +9160,9 @@ const ARC_DB = (() => {
     else if (countdown >= cdMax - 5) { glowR = 255; glowG = 140; glowB = 60;  }   // orange
     else                             { glowR = 255; glowG = 60;  glowB = 60;  }   // red
 
-    // Ghost efekti — mor renk, yarı saydam
-    if (isGhost) { glowR = 160; glowG = 80; glowB = 255; }
-
-    const glowCol = `rgb(${glowR},${glowG},${glowB})`;
-    const glowA   = isGhost ? 0.5 : 1;
+    // Ghost: top artık soluklaşmıyor (merkez + enerji rakamı her durumda net); Ghost dışarıdaki dönen
+    // kesikli mor halkayla anlatılır (aşağıda). Parıltı hafifçe mora kayar.
+    const glowA   = isGhost ? 0.7 : 1;
 
     // Büyük glow (r*4.5)
     let g = ctx.createRadialGradient(px, py, 0, px, py, r * 4.5);
@@ -9168,15 +9170,19 @@ const ARC_DB = (() => {
     g.addColorStop(0.4, `rgba(${glowR},${glowG},${glowB},${.30 * energy * glowA})`);
     g.addColorStop(0.75,`rgba(${glowR},${glowG},${glowB},${.10 * energy * glowA})`);
     g.addColorStop(1,   `rgba(${glowR},${glowG},${glowB},0)`);
-    ctx.globalAlpha = isGhost ? 0.65 : 1;
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 4.5, 0, Math.PI*2); ctx.fill();
+    if (isGhost) {
+      const gg = ctx.createRadialGradient(px, py, r, px, py, r * 3.2);
+      gg.addColorStop(0, 'rgba(170,110,255,0.35)'); gg.addColorStop(1, 'rgba(170,110,255,0)');
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, r * 3.2, 0, Math.PI * 2); ctx.fill();
+    }
 
     // Siyah gövde
-    ctx.fillStyle = isGhost ? 'rgba(40,0,80,0.7)' : '#000';
+    ctx.fillStyle = '#000';
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
 
-    // Ring stroke — glow rengiyle aynı renk
-    ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${.95 * energy})`;
+    // Ring stroke — glow rengiyle aynı renk. Düşük enerjide de görünür kalır (en kritik an).
+    ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${.95 * Math.max(0.65, energy)})`;
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
 
@@ -9194,7 +9200,6 @@ const ARC_DB = (() => {
     // Countdown — bold + 2× larger than before, in the main brand font.
     const countCol = `rgba(${glowR},${glowG},${glowB},0.95)`;
     ctx.fillStyle = countCol;
-    ctx.globalAlpha = isGhost ? 0.65 : 1;
     // -20% from the doubled size; Timer upgrade'i rakamı çift haneye çıkarınca
     // (10..12) topun içine sığması için ayrıca daraltılır.
     const cdText = (gameMode === 'wife') ? '∞' : String(countdown);
@@ -9203,6 +9208,14 @@ const ARC_DB = (() => {
     ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(cdText, px, py);
+    if (isGhost) {                        // Ghost: topun dışında dönen kesikli mor halka
+      ctx.save();
+      ctx.strokeStyle = 'rgba(190,140,255,0.95)'; ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 5]); ctx.lineDashOffset = -performance.now() / 40;
+      ctx.shadowColor = '#aa88ff'; ctx.shadowBlur = LOWFX ? 0 : 10;
+      ctx.beginPath(); ctx.arc(px, py, r + 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
     if (runShield) {                      // Shield eşyası: topun etrafında balon
       const k = 0.5 + 0.5 * Math.sin(performance.now() / 260);
       ctx.strokeStyle = `rgba(120,190,255,${0.55 + 0.3 * k})`; ctx.lineWidth = 2.5;
@@ -11317,6 +11330,7 @@ const ARC_DB = (() => {
     get bounces() { return runBounces; },
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
+    spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
