@@ -2371,7 +2371,9 @@
     /* Sahip olunan seviyeye ücretsiz dönüş: dolgusuz çerçeve + FREE (ücretli = dolgulu yeşil + fiyat) */
     .core-buy.free { background: rgba(124,255,122,.07); border: 1.5px solid rgba(124,255,122,.6); color: #9fffa0; box-shadow: none; }
     .core-buy-price.free { background: rgba(10,30,14,.95); color: #9fffa0; border-color: rgba(124,255,122,.55); box-shadow: none; letter-spacing: .8px; font-size: 7.5px; }
-    .core-card-next { font-size: 8px; letter-spacing: .9px; color: rgba(255,255,255,.5); text-align: center; white-space: nowrap; margin-top: -3px; }
+    .core-card-next { font-size: 8px; letter-spacing: .9px; color: rgba(255,255,255,.5); text-align: center; margin-top: -3px;
+      display: flex; flex-wrap: wrap; justify-content: center; column-gap: 4px; row-gap: 1px; }   /* dar kartta etki adı / değer iki satıra iner */
+    .core-card-next > span { white-space: nowrap; }
     .core-card-next b { color: #b9f5c0; font-weight: 700; }
     .core-buy:active { transform: scale(0.94); }
     .core-buy[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; filter: grayscale(.45); box-shadow: none; }
@@ -10572,6 +10574,7 @@ const ARC_DB = (() => {
     if (_runMaxCombo >= COMBO_START) return ['#5ad8ff', `Best combo this run **×${cm}** — max is ×${comboCap()}`];
     return null;
   }
+  let _goCountTok = 0;
   // Rekor kutlaması (game over): değer altına döner + büyüyüp oturur, çevresine altın kıvılcım, panel kısa parlar.
   function celebrateRecord(els) {
     const panel = document.querySelector('#gameover .panel');
@@ -10733,7 +10736,12 @@ const ARC_DB = (() => {
     const animStart = performance.now();
     const bestLine = document.getElementById('go-best-line'), bestDistLine = document.getElementById('go-bestdist-line');
     bestLine.classList.remove('is-new'); bestDistLine.classList.remove('is-new');
+    // Önceki run'ın rekor kutlaması bu oyun sonuna taşınmasın (altın renk / panel parlaması)
+    scoreValEl.classList.remove('rec'); if (distValEl) distValEl.classList.remove('rec');
+    document.querySelector('#gameover .panel')?.classList.remove('go-rec');
+    const cntTok = ++_goCountTok;   // bu sayım bayatsa (yeni run / yeni oyun sonu) NEW BEST ve kutlama uygulanmaz
     function animScore() {
+      if (cntTok !== _goCountTok || scene !== 'over') return;
       const elapsed = performance.now() - animStart;
       const t = Math.min(1, elapsed / animDur);
       const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
@@ -13194,8 +13202,8 @@ const ARC_DB = (() => {
     comboMax: 'COMBO CAP', wallSoft: 'WALL GRACE', magnetRange: 'PICKUP REACH' };
   function coreNextHTML(key, plus) {
     const eff = CORE_EFFECT[key] || '';
-    if (plus.mode === 'max') return `${eff} <b>${coreValueLabel(key)}</b> · MAX`;
-    return `${eff} ${coreValueLabel(key)} → <b>${coreValueText(key, coreLevel(key) + 1)}</b>`;
+    if (plus.mode === 'max') return `<span>${eff}</span> <span><b>${coreValueLabel(key)}</b> · MAX</span>`;
+    return `<span>${eff}</span> <span>${coreValueLabel(key)} → <b>${coreValueText(key, coreLevel(key) + 1)}</b></span>`;
   }
   function buildCoreCard(t) {
     const key = t.key;

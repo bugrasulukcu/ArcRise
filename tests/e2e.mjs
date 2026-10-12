@@ -816,6 +816,31 @@ test('meydan okuma kuyruğu: çevrimdışılık kaydı silmez, süresi dolan bil
   fb.offline = false;
 });
 
+test('ux: rekor rengi sonraki runa taşınmaz; 320 pxte yükseltme önizlemesi kırpılmaz', async () => {
+  fbReset();
+  await fresh({ arc_score_v26: '1', arc_best: '1', arc_bestdist: '1', arc_bestdist_unit: 'cm', arc_stats_v1: { bestNormal: 1, bestDistNormal: 1, gamesTotal: 9 } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); ARC_TEST.ghost(4); true`);
+  check(await waitFor(`ARC_TEST.startCrossed`, 4000), 'başlangıç çizgisi geçilmedi');
+  await ev(`ARC_TEST.spawnFeatHere('gate'); true`); await sleep(2500); await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '1. run bitmedi');
+  check(await waitFor(`document.getElementById('go-score-val').classList.contains('rec') || document.getElementById('go-dist-val').classList.contains('rec')`, 5000), 'rekor kutlaması yok: ' + JSON.stringify(await ev(`({ lr: ARC_TEST.lastRun, best: localStorage.getItem('arc_best') })`)));
+  // 2. run: hemen öl (rekor değil) → altın renk kalmamalı
+  await ev(`document.getElementById('btn-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), '2. run başlamadı');
+  await ev(`ARC_TEST.obstacleAhead(40, 30); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '2. run bitmedi'); await sleep(2500);
+  const r = await ev(`({ s: document.getElementById('go-score-val').className, d: document.getElementById('go-dist-val').className, p: document.querySelector('#gameover .panel').classList.contains('go-rec') })`);
+  check(!/\brec\b/.test(r.s) && !/\brec\b/.test(r.d) && !r.p, `rekor görünümü taşındı: ${JSON.stringify(r)}`);
+  // 320 px: önizleme satırlarının hiçbir parçası taşmaz
+  await send('Emulation.setDeviceMetricsOverride', { width: 320, height: 568, deviceScaleFactor: 1, mobile: true });
+  await ev(`ARC_TEST.toScene('home'); true`); await sleep(300);
+  await ev(`document.getElementById('prof-upgrade-btn').click(); true`); await sleep(700);
+  const over = await ev(`[...document.querySelectorAll('.core-card-next')].map(n => { const c = n.closest('.core-card').getBoundingClientRect();
+    return [...n.children].filter(sp => { const b = sp.getBoundingClientRect(); return b.left < c.left - 0.5 || b.right > c.right + 0.5 || sp.scrollWidth > sp.clientWidth + 1; }).map(sp => sp.textContent); }).flat()`);
+  await send('Emulation.clearDeviceMetricsOverride');
+  check(over.length === 0, `320 px'te taşan önizleme: ${JSON.stringify(over)}`);
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
