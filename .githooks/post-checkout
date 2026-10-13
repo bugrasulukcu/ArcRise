@@ -1,0 +1,4 @@
+#!/bin/sh
+# $3=1 sadece branch degisiminde calis
+[ "$3" = "1" ] || exit 0
+exec "$(dirname "$0")/sync-native.sh" "$1" "$2"
