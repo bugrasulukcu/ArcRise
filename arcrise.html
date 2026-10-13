@@ -8689,6 +8689,18 @@ const ARC_DB = (() => {
     }
     _greenHomeArrived = false;
   }
+  // Altın toplama: aynı patlama → parçacıklar BİRER BİRER (≈45 ms arayla, karışık sırayla) izli dönüşle topa gelir;
+  // varan her parçacık topu kısa bir altın parlamayla yakar.
+  let _goldHitAt = -1, _goldHitN = 0;
+  function spawnGoldHome(wx, wy) {
+    const count = LOWFX ? 12 : 22, order = [...Array(count).keys()].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4, spd = 1100 + Math.random() * 1800;
+      particles.push({ home: true, gold: true, age: 0, homeAt: 0.28 + order[i] * 0.045, x: wx, y: wy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        r: 2.2 + Math.random() * 4.2, life: 1, hue: 44 + Math.random() * 16, sides: 3 + Math.floor(Math.random() * 4),
+        rot: Math.random() * Math.PI * 2, trail: [] });
+    }
+  }
   function spawnGreenParticles(wx, wy) {
     const count = 48; // more particles
     for (let i = 0; i < count; i++) {
@@ -8797,15 +8809,17 @@ const ARC_DB = (() => {
       const p = particles[i];
       if (p.home) {   // yeşil: önce patlar (eski fizik), sonra hızlanarak topa döner, arkasında iz
         p.age += dt; p.rot += dt * 4;
-        if (p.age < GREEN_BURST_S) {
+        const t0 = p.homeAt ?? GREEN_BURST_S;   // altında her parçacığın kendi dönüş anı var
+        if (p.age < t0) {
           p.vx *= Math.pow(0.86, dt * 60); p.vy *= Math.pow(0.86, dt * 60);
         } else {
           const dx = player.x - p.x, dy = player.y - p.y, d = Math.hypot(dx, dy) || 1;
-          if (d < player.r + 10 || d < Math.hypot(p.vx, p.vy) * dt || p.age > GREEN_BURST_S + 0.7) {   // bu karede varır / takıldı
-            if (!_greenHomeArrived) { _greenHomeArrived = true; _ringFillAt = performance.now(); }
+          if (d < player.r + 10 || d < Math.hypot(p.vx, p.vy) * dt || p.age > t0 + 0.7) {   // bu karede varır / takıldı
+            if (p.gold) { _goldHitAt = performance.now(); _goldHitN++; }
+            else if (!_greenHomeArrived) { _greenHomeArrived = true; _ringFillAt = performance.now(); }
             particles.splice(i, 1); continue;
           }
-          const k = Math.min(1, (p.age - GREEN_BURST_S) / 0.25), sp = 500 + 2600 * k * k;   // yumuşak başlar, hızlanır
+          const k = Math.min(1, (p.age - t0) / 0.25), sp = 500 + 2600 * k * k;   // yumuşak başlar, hızlanır
           const tvx = dx / d * sp, tvy = dy / d * sp, steer = Math.min(1, dt * (8 + 30 * k));
           p.vx += (tvx - p.vx) * steer; p.vy += (tvy - p.vy) * steer;
           p.trail.push(p.x, p.y); if (p.trail.length > 16) p.trail.splice(0, 2);
@@ -8853,7 +8867,7 @@ const ARC_DB = (() => {
         ctx.strokeStyle = `hsla(${p.hue},100%,72%,0.6)`; ctx.lineWidth = Math.max(1, p.r * 0.9);
         ctx.beginPath(); ctx.moveTo(T[T.length - 2], W2S(T[T.length - 1])); ctx.lineTo(p.x, sy); ctx.stroke();
       }
-      const gR = p.r * (p.home && p.age >= GREEN_BURST_S ? 2.0 : 2.8);
+      const gR = p.r * (p.home && p.age >= (p.homeAt ?? GREEN_BURST_S) ? 2.0 : 2.8);
       // Soft glow halo behind the polygon
       const sat = p.sat ?? 100, lt = p.light ?? 75;
       const g = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, gR * 1.5);
@@ -9372,6 +9386,17 @@ const ARC_DB = (() => {
       ctx.save(); ctx.strokeStyle = `rgba(150,255,140,${0.95 * fade})`; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
       if (!LOWFX) { ctx.shadowColor = '#7CFF7A'; ctx.shadowBlur = 10; }
       ctx.beginPath(); ctx.arc(px, py, r + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke(); ctx.restore();
+    }
+    if (_goldHitAt >= 0 && nowMs - _goldHitAt < 170 && scene === 'play') {   // altın parçacık topa vardı: kısa parlama
+      const k = 1 - (nowMs - _goldHitAt) / 170;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const gg = ctx.createRadialGradient(px, py, r * 0.6, px, py, r * 2.6);
+      gg.addColorStop(0, `rgba(255,228,110,${0.55 * k})`); gg.addColorStop(1, 'rgba(255,190,40,0)');
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, r * 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = `rgba(255,236,150,${0.95 * k})`; ctx.lineWidth = 2 + 2.5 * k;
+      if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 14 * k; }
+      ctx.beginPath(); ctx.arc(px, py, r + 1 + (1 - k) * 4, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
     }
     if (isGhost) {                        // Ghost: topun dışında dönen kesikli mor halka
       ctx.save();
@@ -10281,7 +10306,7 @@ const ARC_DB = (() => {
         triggerGoldFlash(0.18 + Math.min(0.25, finalPts / 160));
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×çarpan → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul * comboMul(), finalPts);
-        spawnGoldParticles(b.x, b.y);
+        spawnGoldHome(b.x, b.y);
         goldBalls.splice(i, 1);
         stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
         _runGolds++;                                  // coin kazancı (run sonunda ödenir)
@@ -11549,6 +11574,7 @@ const ARC_DB = (() => {
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
+    spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
