@@ -8689,6 +8689,14 @@ const ARC_DB = (() => {
     }
     _greenHomeArrived = false;
   }
+  // Dönen parçacıkların yumuşak halesi: bir kez offscreen'e çizilir, her karede yalnız drawImage (gradyan yok)
+  function makeHalo(r, g, b) {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, `rgba(${r},${g},${b},0.9)`); gr.addColorStop(0.4, `rgba(${r},${g},${b},0.35)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return c;
+  }
+  const _haloGold = makeHalo(255, 200, 60), _haloGreen = makeHalo(124, 255, 122);
   // Altın toplama: aynı patlama → parçacıklar BİRER BİRER (≈45 ms arayla, karışık sırayla) izli dönüşle topa gelir;
   // varan her parçacık topu kısa bir altın parlamayla yakar.
   let _goldHitAt = -1, _goldHitN = 0;
@@ -8858,15 +8866,18 @@ const ARC_DB = (() => {
       if (sy < -80 || sy > H + 80) continue;
       const a  = Math.max(0, p.life);
       if (p.home) {   // geri dönen parçacık: ucuz çizim — tek yollu iz + düz çokgen (gradyanlı hale yok)
-        const T = p.trail, col = p.gold ? '#ffe27a' : '#9dff9b';
+        const T = p.trail, col = p.gold ? '#ffc93a' : '#7CFF7A';
         if (T.length >= 4) {
           ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = Math.max(1, p.r * 0.75); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
           ctx.beginPath(); ctx.moveTo(T[0], W2S(T[1]));
           for (let j = 2; j < T.length; j += 2) ctx.lineTo(T[j], W2S(T[j + 1]));
           ctx.lineTo(p.x, sy); ctx.stroke();
         }
-        ctx.globalAlpha = 0.92; ctx.fillStyle = col;
-        drawPolygon(p.x, sy, p.r * (p.age >= (p.homeAt ?? GREEN_BURST_S) ? 2.0 : 2.6), p.sides, p.rot); ctx.fill();
+        const pr = p.r * (p.age >= (p.homeAt ?? GREEN_BURST_S) ? 2.0 : 2.6);
+        ctx.fillStyle = col;
+        if (!LOWFX) { const hs = p.gold ? _haloGold : _haloGreen, hr = pr * 2.4; ctx.globalAlpha = 0.55; ctx.drawImage(hs, p.x - hr, sy - hr, hr * 2, hr * 2); }   // yumuşak hale: önceden çizilmiş sprite
+        ctx.globalAlpha = 0.95; ctx.fillStyle = p.gold ? '#fff0a8' : '#c4ffc2';
+        drawPolygon(p.x, sy, pr, p.sides, p.rot); ctx.fill();
         ctx.globalAlpha = 1;
         continue;
       }
