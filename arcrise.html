@@ -8857,17 +8857,20 @@ const ARC_DB = (() => {
       const sy = W2S(p.y);
       if (sy < -80 || sy > H + 80) continue;
       const a  = Math.max(0, p.life);
-      if (p.home && p.trail.length >= 4) {   // dönüş izi: kuyruğa doğru incelip sönen çizgi
-        const T = p.trail; ctx.lineCap = 'round';
-        for (let j = 2; j < T.length; j += 2) {
-          const f = j / T.length;
-          ctx.strokeStyle = `hsla(${p.hue},100%,70%,${0.55 * f})`; ctx.lineWidth = Math.max(1, p.r * 0.9 * f);
-          ctx.beginPath(); ctx.moveTo(T[j - 2], W2S(T[j - 1])); ctx.lineTo(T[j], W2S(T[j + 1])); ctx.stroke();
+      if (p.home) {   // geri dönen parçacık: ucuz çizim — tek yollu iz + düz çokgen (gradyanlı hale yok)
+        const T = p.trail, col = p.gold ? '#ffe27a' : '#9dff9b';
+        if (T.length >= 4) {
+          ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = Math.max(1, p.r * 0.75); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.beginPath(); ctx.moveTo(T[0], W2S(T[1]));
+          for (let j = 2; j < T.length; j += 2) ctx.lineTo(T[j], W2S(T[j + 1]));
+          ctx.lineTo(p.x, sy); ctx.stroke();
         }
-        ctx.strokeStyle = `hsla(${p.hue},100%,72%,0.6)`; ctx.lineWidth = Math.max(1, p.r * 0.9);
-        ctx.beginPath(); ctx.moveTo(T[T.length - 2], W2S(T[T.length - 1])); ctx.lineTo(p.x, sy); ctx.stroke();
+        ctx.globalAlpha = 0.92; ctx.fillStyle = col;
+        drawPolygon(p.x, sy, p.r * (p.age >= (p.homeAt ?? GREEN_BURST_S) ? 2.0 : 2.6), p.sides, p.rot); ctx.fill();
+        ctx.globalAlpha = 1;
+        continue;
       }
-      const gR = p.r * (p.home && p.age >= (p.homeAt ?? GREEN_BURST_S) ? 2.0 : 2.8);
+      const gR = p.r * 2.8;
       // Soft glow halo behind the polygon
       const sat = p.sat ?? 100, lt = p.light ?? 75;
       const g = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, gR * 1.5);
@@ -9372,11 +9375,12 @@ const ARC_DB = (() => {
       const ca = Math.atan2(player.cy - player.y, player.cx - player.x), rr = r + 6 + 6 * e, span = 0.75;
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
       // dış hale: geniş, bulanık, enerji renginde
-      if (!LOWFX) { ctx.shadowColor = `rgb(${glowR},${glowG},${glowB})`; ctx.shadowBlur = 18; }
-      ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${0.45 * k})`; ctx.lineWidth = 9;
-      ctx.beginPath(); ctx.arc(px, py, rr, ca - span, ca + span); ctx.stroke();
-      // çekirdek: ince, beyaza yakın, hafif bulanık
-      if (!LOWFX) ctx.shadowBlur = 8;
+      // shadowBlur yerine üst üste incelen yarı saydam katmanlar (aynı yumuşaklık, mobilde ucuz)
+      for (const [w, a] of (LOWFX ? [[9, 0.4]] : [[18, 0.12], [12, 0.2], [7, 0.32]])) {
+        ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${a * k})`; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.arc(px, py, rr, ca - span, ca + span); ctx.stroke();
+      }
+      // çekirdek: ince, beyaza yakın
       ctx.strokeStyle = `rgba(255,255,255,${0.85 * k})`; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(px, py, rr, ca - span * 0.85, ca + span * 0.85); ctx.stroke();
       ctx.restore();
@@ -9384,8 +9388,9 @@ const ARC_DB = (() => {
     if (_ringFillAt >= 0 && nowMs - _ringFillAt < RING_FILL_MS * 1.6 && scene === 'play') {   // yeşil: enerji halkası dolar
       const t = (nowMs - _ringFillAt) / RING_FILL_MS, f = Math.min(1, t), fade = t <= 1 ? 1 : Math.max(0, 1 - (t - 1) / 0.6);
       ctx.save(); ctx.strokeStyle = `rgba(150,255,140,${0.95 * fade})`; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
-      if (!LOWFX) { ctx.shadowColor = '#7CFF7A'; ctx.shadowBlur = 10; }
-      ctx.beginPath(); ctx.arc(px, py, r + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(px, py, r + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
+      if (!LOWFX) { ctx.strokeStyle = `rgba(124,255,122,${0.25 * fade})`; ctx.lineWidth = 9; ctx.stroke(); }   // hale (shadowBlur yerine)
+      ctx.restore();
     }
     if (_goldHitAt >= 0 && nowMs - _goldHitAt < 170 && scene === 'play') {   // altın parçacık topa vardı: kısa parlama
       const k = 1 - (nowMs - _goldHitAt) / 170;
@@ -9393,9 +9398,11 @@ const ARC_DB = (() => {
       const gg = ctx.createRadialGradient(px, py, r * 0.6, px, py, r * 2.6);
       gg.addColorStop(0, `rgba(255,228,110,${0.55 * k})`); gg.addColorStop(1, 'rgba(255,190,40,0)');
       ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, r * 2.6, 0, Math.PI * 2); ctx.fill();
+      const rr = r + 1 + (1 - k) * 4;
+      ctx.strokeStyle = `rgba(255,200,60,${0.35 * k})`; ctx.lineWidth = 8 * k + 2;   // geniş yumuşak hale (shadowBlur yerine, ucuz)
+      ctx.beginPath(); ctx.arc(px, py, rr, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = `rgba(255,236,150,${0.95 * k})`; ctx.lineWidth = 2 + 2.5 * k;
-      if (!LOWFX) { ctx.shadowColor = '#ffcc33'; ctx.shadowBlur = 14 * k; }
-      ctx.beginPath(); ctx.arc(px, py, r + 1 + (1 - k) * 4, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(px, py, rr, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
     if (isGhost) {                        // Ghost: topun dışında dönen kesikli mor halka
