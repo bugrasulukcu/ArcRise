@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ITEMS = ['arcrise.html', 'index.html', 'AUDIO', 'PNG'];
+const ITEMS = ['arcrise.html', 'index.html', 'AUDIO', 'PNG', 'FONTS'];
 
 // Dosyayi silip yeniden olusturmak yerine yerinde uzerine yazar (bazi
 // senkron/izinli klasorlerde silme engelli olabilir); degismeyenleri atlar.

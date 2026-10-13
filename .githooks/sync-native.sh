@@ -11,7 +11,7 @@ else
   CHANGED=$(git diff-tree --no-commit-id --name-only -r "$NEW" 2>/dev/null)
 fi
 
-echo "$CHANGED" | grep -Eq '^(arcrise\.html|index\.html|AUDIO/|PNG/|capacitor\.config\.json)' || exit 0
+echo "$CHANGED" | grep -Eq '^(arcrise\.html|index\.html|AUDIO/|PNG/|FONTS/|capacitor\.config\.json)' || exit 0
 
 echo "[ArcRise] Oyun dosyalari degisti -> Android/iOS kopyalari guncelleniyor..."
 if node sync-www.js >/dev/null && npx --no-install cap copy android >/dev/null 2>&1 \
