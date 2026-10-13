@@ -1,5 +1,55 @@
 # Cross-check brief: ArcRise, everything since v25
 
+## Current request (2026-10-13): review the effect and performance changes after `3b3568f`
+
+Your general review (`CODEX_REVIEW_GENERAL_2026-10-13.md`) covered everything up to `3b3568f` and spot-checked `68083c8`. This round covers the commits it did not fully test. Review only these; the rest of this file is background. The safety rules below still apply.
+
+**Scope:** `git diff 3b3568f HEAD -- arcrise.html tools/fps-bench.mjs`
+
+| Commit | Change |
+|---|---|
+| `68083c8` | Returning green and gold particles (`p.home`) draw cheaply: the trail is one path with one stroke, and there is no per-particle radial gradient. The gold arrival flash, tap arc and green ring fill use layered translucent strokes instead of `shadowBlur`. |
+| `8c1c81c` | The soft halo behind returning particles is a 64 px pre-rendered sprite per colour (`makeHalo`, `_haloGold`, `_haloGreen`) drawn with `drawImage`. It is skipped in LOWFX. |
+| (this commit) | `tools/fps-bench.mjs`: frame-time benchmark. Headless Chrome, 390×844 at DPR 3, CPU throttled, bot plays with Ghost on, Firebase blocked. |
+
+Earlier in this session, `28de15b` (tap arc) and `3b3568f` (gold one-by-one return) were already in your general review.
+
+**What the effects should look like**
+- **Green pickup:** the old wide burst (40 particles, 20 in LOWFX). After 0.3 s every particle steers back into the ball with a trail. The first arrival fills the energy ring.
+- **Gold pickup:** the same burst (22 particles, 12 in LOWFX). Each particle has its own `homeAt` (0.28 s + shuffled index × 45 ms), so they come back one at a time. Every arrival triggers a 170 ms gold flash on the ball.
+- **Tap:** a short arc (~1.5 rad) on the ball's turn side, with a soft halo in the energy colour and a thin white core. It lasts 200 ms.
+
+**Verify**
+1. **Look:** at 390 and 320 px, in High and Low graphics, the particles and flashes look soft, not like hard-edged discs. Compare a screenshot against `3b3568f`; the look should be close.
+2. **Leaks:** no `p.home` particle survives (each is removed on arrival or after `homeAt + 0.7 s`). `particles` returns to its baseline after a burst, including when the run ends mid-burst or AGAIN is pressed. LOWFX still caps `particles` at 40.
+3. **State bleed:** `_goldHitAt`, `_ringFillAt` and `_tapFxAt` cannot draw on the game-over screen or carry into the next run.
+4. **Performance:** reproduce the numbers below with `tools/fps-bench.mjs`, and say whether the method is sound. Is headless with CPU ×4 a fair proxy? Is the stress case realistic?
+5. **Hot paths:** with `PROF=1`, find the next most expensive per-frame work in a busy pickup moment, such as `triggerGoldFlash`, `spawnFlyScore`, `drawFloatTexts` or the trail. Report it with numbers; do not change it.
+
+**Measured here** (headless, 390×844 @3, CPU ×4, 15 s, two runs each)
+
+| Scenario | `3fa0593` (before the UX round) | `3b3568f` | `8c1c81c` (HEAD) |
+|---|---|---|---|
+| Normal play (bot + Ghost) | 54 fps | 57 fps | 56 fps |
+| Stress (one green + one gold every 0.7 s) | 30 fps | 31 fps | 33–34 fps |
+
+```bash
+python3 -m http.server 8765 --bind 127.0.0.1          # repo root
+node tools/fps-bench.mjs "http://127.0.0.1:8765/arcrise.html?debug=1" 4 15 0   # normal
+node tools/fps-bench.mjs "http://127.0.0.1:8765/arcrise.html?debug=1" 4 15 1   # stress
+PROF=1 node tools/fps-bench.mjs "http://127.0.0.1:8765/arcrise.html?debug=1" 4 10 1
+```
+
+To benchmark an older commit, write it to a temporary file in the repo root, for example `git show 3fa0593:arcrise.html > __old.html`, and delete the file afterwards. For the stress case on commits older than `3b3568f`, add the two `ARC_TEST` spawn helpers.
+
+**Still open from your general review (do not fix, re-check only)**
+- At 320 px, the home profile card's SCORE and DIST values run under the UPG button. That is still the case at HEAD.
+- Two e2e tests (`mesafe sandığı` and `arkadaşlık:`) failed while native builds ran in parallel, then passed alone. If you see why they are timing-sensitive, say so.
+
+**Report:** the same format as before: confirmed bugs versus suspicions, a reproduction for each, and severity. Put performance findings in their own section, with numbers.
+
+---
+
 You are reviewing ArcRise, a mobile arcade game, at commit `90ce218`. The previous review covered v25 (`61b5f7d`, the ×1 economy). About 70 commits have landed since then. Find bugs in them and report back. **Do not refactor, rebalance or "improve" numbers.** The numbers are deliberate design decisions. Report anything that looks wrong; do not change it.
 
 `git diff 61b5f7d 90ce218 -- arcrise.html firestore.rules` is the review scope (~5,300 lines changed in `arcrise.html`). `DEVELOPMENT_LOG.md` (Turkish) has one entry per change, newest first, if you need the intent behind a change.
