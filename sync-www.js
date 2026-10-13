@@ -1,5 +1,5 @@
 // Root'taki kaynak dosyaları www/ (Capacitor webDir) içine kopyalar.
-// Kullanım: npm run sync   (ardından: npx cap sync android)
+// Kullanım: npm run sync   (www/ + Android + iOS kopyalarını günceller ve doğrular)
 // Amaç: root ↔ www kopyalarının sessizce ayrışmasını (drift) önlemek.
 const fs = require('fs');
 const path = require('path');
@@ -13,4 +13,4 @@ for (const it of ITEMS) {
   fs.cpSync(src, dst, { recursive: true });
   console.log(`kopyalandı: ${it} -> www/${it}`);
 }
-console.log('\nwww/ güncel. Android build öncesi: npx cap sync android');
+console.log('\nwww/ güncel. Native kopyalar: npx cap sync android && npx cap sync ios');

@@ -1,4 +1,4 @@
-// Root kaynak dosyaları ile üretilmiş kopyaların (www/ ve Android assets)
+// Root kaynak dosyaları ile üretilmiş kopyaların (www/, Android assets, iOS public)
 // gerçekten aynı olduğunu doğrular. Fark varsa 1 ile çıkar.
 //
 // NEDEN VAR: www/ ve android/app/src/main/assets/public/ .gitignore'da olduğu
@@ -16,6 +16,7 @@ const FILES = ['arcrise.html', 'index.html'];
 const TARGETS = [
   ['www', 'www'],
   ['Android assets', path.join('android', 'app', 'src', 'main', 'assets', 'public')],
+  ['iOS public', path.join('ios', 'App', 'App', 'public')],
 ];
 
 const md5 = f => crypto.createHash('md5').update(fs.readFileSync(f)).digest('hex');
@@ -35,12 +36,16 @@ for (const file of FILES) {
 
 // Capacitor runtime config'i assets'ten okur — root'taki ile aynı olmalı.
 const capSrc = path.join(__dirname, 'capacitor.config.json');
-const capDst = path.join(__dirname, 'android', 'app', 'src', 'main', 'assets', 'capacitor.config.json');
-if (fs.existsSync(capSrc) && fs.existsSync(capDst)) {
-  // cap sync JSON'u tab'la yeniden yazıyor → byte değil içerik karşılaştır.
-  const capJson = p => JSON.stringify(JSON.parse(fs.readFileSync(p, 'utf8')));
-  if (capJson(capSrc) !== capJson(capDst)) { console.error('FARKLI  Android assets/capacitor.config.json'); bad++; }
-  else console.log('ayni    Android assets/capacitor.config.json');
+// cap sync JSON'u tab'la yeniden yazıyor → byte değil içerik karşılaştır.
+// iOS kopyasına Capacitor kendi packageClassList alanını ekler → karşılaştırmada yok sayılır.
+const capJson = p => { const o = JSON.parse(fs.readFileSync(p, 'utf8')); delete o.packageClassList; return JSON.stringify(o); };
+for (const [label, dst] of [
+  ['Android assets', path.join(__dirname, 'android', 'app', 'src', 'main', 'assets', 'capacitor.config.json')],
+  ['iOS App', path.join(__dirname, 'ios', 'App', 'App', 'capacitor.config.json')],
+]) {
+  if (!fs.existsSync(capSrc) || !fs.existsSync(dst)) continue;
+  if (capJson(capSrc) !== capJson(dst)) { console.error(`FARKLI  ${label}/capacitor.config.json`); bad++; }
+  else console.log(`ayni    ${label}/capacitor.config.json`);
 }
 
 if (bad) {
