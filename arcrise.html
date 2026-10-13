@@ -8673,7 +8673,7 @@ const ARC_DB = (() => {
   // ── Green Particles (polygonal, very wide spread, small size) ──
   // Kısa geri bildirimler (≈120–200 ms): dokunuşta dönüş yönü yayı, yeşilde topa çekilen parçacık + dolan halka
   let _tapFxAt = -1, _ringFillAt = -1;
-  const TAP_FX_MS = 260, RING_FILL_MS = 200;
+  const TAP_FX_MS = 200, RING_FILL_MS = 200;
   function markTapFx() { _tapFxAt = performance.now(); }
   // Yeşil toplama: eski geniş patlama (aynı hız/sürtünme) → ~0.3 sn sonra parçacıklar arkalarında iz bırakarak
   // topa geri çekilir; ilk parçacık topa varınca enerji halkası dolar.
@@ -9353,34 +9353,18 @@ const ARC_DB = (() => {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(cdText, px, py);
     const nowMs = performance.now();
-    if (_tapFxAt >= 0 && nowMs - _tapFxAt < TAP_FX_MS && scene === 'play') {   // dokunuş: dönüş yönüne fışkıran ışık
-      const t = (nowMs - _tapFxAt) / TAP_FX_MS, k = 1 - t, e = 1 - (1 - t) * (1 - t);   // e: hızlı çıkıp yavaşlar
-      const ca = Math.atan2(player.cy - player.y, player.cx - player.x);
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(px, py); ctx.rotate(ca);
-      // ışık hüzmesi: topun kenarından o yöne uzanan yumuşak elips
-      const fx = r + 8 + 20 * e, fl = 26 + 40 * e, fw = 13 + 6 * e;
-      ctx.save(); ctx.translate(fx, 0); ctx.scale(fl / fw, 1);
-      const fg = ctx.createRadialGradient(0, 0, 0, 0, 0, fw);
-      fg.addColorStop(0, `rgba(255,255,255,${Math.min(1, 1.2 * k)})`);
-      fg.addColorStop(0.3, `rgba(${glowR},${glowG},${glowB},${0.85 * k})`);
-      fg.addColorStop(1, `rgba(${glowR},${glowG},${glowB},0)`);
-      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, 0, fw, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-      // ince ışınlar: aynı yöne yelpaze gibi fırlar, uçları incelir
-      if (!LOWFX) {
-        ctx.lineCap = 'round';
-        ctx.shadowColor = `rgb(${glowR},${glowG},${glowB})`; ctx.shadowBlur = 8;
-        for (const [da, len, w] of [[0, 1, 3.6], [-0.38, 0.75, 2.6], [0.38, 0.75, 2.6], [-0.75, 0.5, 1.8], [0.75, 0.5, 1.8]]) {
-          const r0 = r + 4 + 12 * e, r1 = r0 + (22 + 46 * e) * len;
-          const lg = ctx.createLinearGradient(Math.cos(da) * r0, Math.sin(da) * r0, Math.cos(da) * r1, Math.sin(da) * r1);
-          lg.addColorStop(0, `rgba(255,255,255,${0.9 * k})`); lg.addColorStop(1, `rgba(${glowR},${glowG},${glowB},0)`);
-          ctx.strokeStyle = lg; ctx.lineWidth = w * (0.55 + 0.45 * k);
-          ctx.beginPath(); ctx.moveTo(Math.cos(da) * r0, Math.sin(da) * r0); ctx.lineTo(Math.cos(da) * r1, Math.sin(da) * r1); ctx.stroke();
-        }
-      }
-      // topun o yöndeki kenarında kısa parlama
-      ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      if (!LOWFX) { ctx.shadowColor = `rgb(${glowR},${glowG},${glowB})`; ctx.shadowBlur = 16; }
-      ctx.beginPath(); ctx.arc(0, 0, r + 1, -0.65, 0.65); ctx.stroke();
+    if (_tapFxAt >= 0 && nowMs - _tapFxAt < TAP_FX_MS && scene === 'play') {   // dokunuş: dönüş yönünde kısa, ışık saçan yay
+      const t = (nowMs - _tapFxAt) / TAP_FX_MS, k = 1 - t, e = 1 - k * k;
+      const ca = Math.atan2(player.cy - player.y, player.cx - player.x), rr = r + 6 + 6 * e, span = 0.75;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      // dış hale: geniş, bulanık, enerji renginde
+      if (!LOWFX) { ctx.shadowColor = `rgb(${glowR},${glowG},${glowB})`; ctx.shadowBlur = 18; }
+      ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${0.45 * k})`; ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.arc(px, py, rr, ca - span, ca + span); ctx.stroke();
+      // çekirdek: ince, beyaza yakın, hafif bulanık
+      if (!LOWFX) ctx.shadowBlur = 8;
+      ctx.strokeStyle = `rgba(255,255,255,${0.85 * k})`; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(px, py, rr, ca - span * 0.85, ca + span * 0.85); ctx.stroke();
       ctx.restore();
     }
     if (_ringFillAt >= 0 && nowMs - _ringFillAt < RING_FILL_MS * 1.6 && scene === 'play') {   // yeşil: enerji halkası dolar
