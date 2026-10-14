@@ -13382,7 +13382,7 @@ const ARC_DB = (() => {
       + `<span class="core-buy-price">${iconHTML('coin', { size: 9 })}${info.price}</span>${sign}</button>`;
   }
   // Ability kartı — CORE formu: kilitliyse UNLOCK; açıksa sadece SÜRE (saniye) yükseltilir.
-  // Cooldown sabit 20sn (gösterilmez). − ücretsiz geri al · + ücretli uzat.
+  // Cooldown sabit 20sn, Brake 12sn (gösterilmez). − ücretsiz geri al · + ücretli uzat.
   function buildAbilityCard(meta) {
     const key = meta.key, cfg = ABILITY_CFG[key];
     const inv = upg.inv[key] || (upg.inv[key] = { owned: false, durLvl: 0, cdLvl: 0 });
@@ -13662,7 +13662,8 @@ const ARC_DB = (() => {
     filter:    { price: 5, max: 3, autoArm: false, desc: 'Arm it before a run: every booster you pick up that run lasts twice as long.' },
   };
   const ABILITY_CFG = {
-    // Cooldown SABİT 20sn (tüm yetenekler). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
+    // Cooldown SABİT 20sn (Brake hariç: 12sn — yalnız topu yavaşlatan ucuz, sık fren; Time Slow tüm oyunu
+    // yavaşlattığı için daha güçlü ve seyrek). Sadece SÜRE yükseltilir (durBase + durLvl*durStep).
     // Anlık (noDur) yetenekler: yükseltme yok, açıldı→hazır.
     // Süre merdiveni 10 → 4 SEVİYE: 30 adet +0.5s'lik adım okunmuyordu ve
     // kataloğun %35'ini tek başına yutuyordu. Adım büyütüldü (+1.0s/sv).
@@ -13671,7 +13672,7 @@ const ARC_DB = (() => {
     phaseburst: { durBase: 1, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 1→5s
     // Anlık yetenekler: yükseltme ekseni ETKİ ÇAPI (radBase + lvl×radStep, dünya px) — aynı merdiven fiyatı
     coinpull:   { durBase: 0, durStep: 0, cdBase: 20, noDur: true, radBase: 560, radStep: 160, durPrices: [7,40,230,1350] },  // ~7.9→16.9cm
-    brake:      { durBase: 2, durStep: 1, cdBase: 20, durPrices: [7,40,230,1350] },  // 2→6s
+    brake:      { durBase: 2, durStep: 1, cdBase: 12, durPrices: [7,40,230,1350] },  // 2→6s, cooldown 12s
     shock:      { durBase: 0, durStep: 0, cdBase: 20, noDur: true, radBase: 260, radStep: 60,  durPrices: [7,40,230,1350] },  // ~3.7→7.0cm
     anchor:     { durBase: 0, durStep: 0, cdBase: 20, noDur: true, durPrices: [] },
   };
@@ -13694,7 +13695,7 @@ const ARC_DB = (() => {
   })();
   function abilityCooldown(key) {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 20;
-    return cfg.cdBase;   // sabit 20sn
+    return cfg.cdBase;   // sabit (20sn; Brake 12sn)
   }
   function abilityDuration(key) {
     const cfg = ABILITY_CFG[key]; if (!cfg) return 1;
@@ -13829,10 +13830,10 @@ const ARC_DB = (() => {
     return card;
   }
   const ABILITY_DESC = {
-    timeslow:   'Slows the whole game to half speed for a few seconds, so you can line up tight gaps.',
+    timeslow:   'Slows the whole game to half speed for a few seconds: you, moving obstacles and your energy timer. Line up tight gaps.',
     phaseburst: 'Makes you untouchable for a moment: you fly straight through red obstacles. The side walls still bounce you back.',
     coinpull:   'Instantly pulls every green, gold and purple ball within its radius into your ball. Upgrade to widen the radius.',
-    brake:      'Halves your speed for a few seconds. Handy when things get tight.',
+    brake:      'Halves only your own speed for a few seconds. Obstacles keep moving and energy drains as usual, but it recharges much faster.',
     shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes. Upgrade to widen its reach.',
     anchor:     'First use drops a marker where you are. Use it again after it recharges to teleport back to the marker.',
   };
