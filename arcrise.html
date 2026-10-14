@@ -303,10 +303,14 @@
     @property --a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
     .rb-wrap {
       padding: 2.5px; border-radius: 16px;
-      background: conic-gradient(from var(--a), #ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
-      animation: spinA 3s linear infinite;
       cursor: pointer;
     }
+    /* Dönen gökkuşağı çerçeve: kırpılmış katmanda konik gradyan transform ile döner (GPU). Eskiden
+       --a animasyonu ana menü açıkken her karede stil hesabı + 300×82 px boyama yaptırıyordu. */
+    .rb-ring { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; z-index: 0; pointer-events: none; }
+    .rb-ring i { position: absolute; left: 50%; top: 50%; width: calc(100% + 40px); aspect-ratio: 1; margin: 0; translate: -50% -50%;
+      background: conic-gradient(#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255);
+      animation: spinRot 3s linear infinite; will-change: transform; }
     @keyframes spinA { to { --a: 360deg; } }
     /* Profil stroke — kalp atışı (lub-dub) efekti */
     @keyframes profHeartBeat {
@@ -355,7 +359,7 @@
     html.theme-gameboy .rb-wrap::before, html.theme-gameboy .rb-inner::after { display: none; }
     /* ══ Düşük efekt modu (iPhone düşük güç modu / zayıf cihaz — otomatik, bkz. LOWFX) ══ */
     html.lowfx .rb-wrap::before, html.lowfx .rb-inner::after, html.lowfx .mode-deco { display: none !important; }
-    html.lowfx .rb-wrap, html.lowfx #home-av-wrap::before, html.lowfx .seg-ind { animation: none !important; }
+    html.lowfx .rb-wrap, html.lowfx .rb-ring i, html.lowfx #home-av-wrap::before, html.lowfx .seg-ind { animation: none !important; }
     /* Blur yalnız oyun/game over sırasında kapanır (canvas her kare akıyor). Menüler statik olduğu için
        cam efekti orada kalır — eskiden bir kez düşük moda düşünce tüm menüler oturum boyu camsız kalıyordu. */
     html.lowfx.in-play * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -1066,9 +1070,11 @@
       border-radius: 50%;
       /* trace rengi/gradyeni — JS --home-ring ile set eder, yoksa gökkuşağı */
       background: var(--home-ring, conic-gradient(from var(--a,0deg),#ff2255,#ff7700,#ffe000,#7CFF7A,#00ccff,#8844ff,#ff2255));
-      animation: spinA 3s linear infinite;
+      /* Döndürme transform ile (GPU'da): --a animasyonu her karede stil hesabı + konik gradyan boyaması yaptırıyordu */
+      animation: spinRot 3s linear infinite;
       z-index: 0;
     }
+    @keyframes spinRot { to { transform: rotate(360deg); } }
     #home-av-wrap::after {
       content: '';
       position: absolute; inset: 1px;
@@ -3623,13 +3629,13 @@
         inset 0  0 20px rgba(255,130,20,0.35),
         inset 0  0 55px rgba(255,60,10,0.20),
         inset 0  0 110px rgba(200,30,0,0.10);
-      animation: flameFrameBreathe 2.6s ease-in-out infinite;
     }
+    /* Nefes: box-shadow animasyonu (her karede tam ekran boyama) yerine güçlü gölgeli katmanın opaklığı (GPU) */
+    #home-flame-frame::after { content: ''; position: absolute; inset: 0; opacity: 0;
+      box-shadow: inset 0 0 30px rgba(255,170,40,0.45), inset 0 0 75px rgba(255,80,20,0.28), inset 0 0 140px rgba(220,40,0,0.15); }
     #home.extreme-mode #home-flame-frame { opacity: 1; }
-    @keyframes flameFrameBreathe {
-      0%,100% { box-shadow: inset 0 0 20px rgba(255,130,20,0.35), inset 0 0 55px rgba(255,60,10,0.20), inset 0 0 110px rgba(200,30,0,0.10); }
-      50%     { box-shadow: inset 0 0 30px rgba(255,170,40,0.45), inset 0 0 75px rgba(255,80,20,0.28), inset 0 0 140px rgba(220,40,0,0.15); }
-    }
+    #home.extreme-mode #home-flame-frame::after { animation: frameBreathe 2.6s ease-in-out infinite; }
+    @keyframes frameBreathe { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
     /* Soft pink edge-glow that fades in when Wife Mode is selected */
     #home-flower-frame {
@@ -3642,13 +3648,14 @@
         inset 0 0 20px rgba(255,130,200,0.30),
         inset 0 0 55px rgba(255,80,170,0.18),
         inset 0 0 110px rgba(220,40,140,0.08);
-      animation: flowerFrameBreathe 3.0s ease-in-out infinite;
     }
+    #home-flower-frame::after { content: ''; position: absolute; inset: 0; opacity: 0;
+      box-shadow: inset 0 0 30px rgba(255,170,220,.42), inset 0 0 75px rgba(255,110,190,.26), inset 0 0 140px rgba(240,60,150,.13); }
     #home.wife-mode #home-flower-frame { opacity: 1; }
-    @keyframes flowerFrameBreathe {
-      0%,100% { box-shadow: inset 0 0 20px rgba(255,130,200,.30), inset 0 0 55px rgba(255,80,170,.18),  inset 0 0 110px rgba(220,40,140,.08); }
-      50%     { box-shadow: inset 0 0 30px rgba(255,170,220,.42), inset 0 0 75px rgba(255,110,190,.26), inset 0 0 140px rgba(240,60,150,.13); }
-    }
+    #home.wife-mode #home-flower-frame::after { animation: frameBreathe 3.0s ease-in-out infinite; }
+    /* Ana menünün üstünde bir pencere açıkken arkadaki menü animasyonları durur (görünmüyor, boşa çalışıyordu) */
+    html:has([id$="-modal"].open) #home *, html:has([id$="-modal"].open) #home *::before, html:has([id$="-modal"].open) #home *::after,
+    html:has([id$="-modal"].open) #home-flame-frame::after, html:has([id$="-modal"].open) #home-flower-frame::after { animation-play-state: paused !important; }
 
     /* Floating decoration particles (ice crystals + flames around buttons) */
     .mode-deco {
@@ -3906,6 +3913,7 @@
       pointer-events: auto;
     }
     #hud.active #slot-hud { display: block; }
+    html.daily-run #hud.active #slot-hud { display: none; }   /* günlük: herkes aynı koşulda — yetenek yok */
     .slot {
       position: absolute;
       width: 66px; height: 66px;
@@ -4336,7 +4344,7 @@
   </div>
   </div><!-- /home-logo-wrap -->
   <div class="menu" style="margin-top:14px">
-    <div class="rb-wrap" id="wrap-start">
+    <div class="rb-wrap" id="wrap-start"><span class="rb-ring" aria-hidden="true"><i></i></span>
       <div class="rb-inner" id="btn-start"><svg class="start-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>START<span class="start-mode" id="start-mode"> · CHILL</span></div>
     </div>
     <!-- Alt aksiyon satırı: High Scores (kupa) · Quests · Settings -->
@@ -4459,23 +4467,6 @@
         <div class="tog">
           <button class="tog-btn active-on"  id="fb-on">On</button>
           <button class="tog-btn active-off" id="fb-off">Off</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── PB Ghost (oyun sırasında kişisel en iyi run'ın hayaleti) ── -->
-    <div class="srow">
-      <span class="sicon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 21V11a7 7 0 0 1 14 0v10l-2.3-1.8-2.3 1.8-2.4-1.8-2.3 1.8-2.4-1.8z"/>
-          <circle cx="9.5" cy="11" r="1"/><circle cx="14.5" cy="11" r="1"/>
-        </svg>
-      </span>
-      <span class="slbl">PB Ghost</span>
-      <div class="sctl">
-        <div class="tog">
-          <button class="tog-btn active-on"  id="pbg-on">On</button>
-          <button class="tog-btn active-off" id="pbg-off">Off</button>
         </div>
       </div>
     </div>
@@ -4632,7 +4623,7 @@
           WATCH AD &middot; CONTINUE RUN
         </span>
       </button>
-      <div class="rb-wrap" id="wrap-again">
+      <div class="rb-wrap" id="wrap-again"><span class="rb-ring" aria-hidden="true"><i></i></span>
         <div class="rb-inner" id="btn-again">AGAIN!</div>
       </div>
       <div style="display:flex;gap:10px">
@@ -7032,14 +7023,10 @@ const ARC_DB = (() => {
   const CHAL_TRIES = 3;   // meydan okumada deneme hakkı — en yüksek skor sayılır
   const dailyDay = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
   const dailySeed = day => { let h = 2166136261; for (const c of 'arcrise-daily-' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
-  // Kendi en iyi run'ının hayaleti: run boyunca 0.1 sn'de bir [t×10, x, başlangıçtan yükseklik];
-  // mesafe rekoru kırılınca mod başına saklanır, sonraki run'larda aynı zamanlamayla oynatılır.
-  const _pbRec = [];
-  let _pbT = 0, _pbStartY = 0, _pbGhost = null, _pbIdx = 0;
-  const PB_GHOST_KEY = m => 'arc_pb_ghost_' + m;
-  function loadPbGhost(m) {
-    try { const g = JSON.parse(localStorage.getItem(PB_GHOST_KEY(m)) || 'null'); return g && Array.isArray(g.p) && g.p.length > 3 ? g : null; } catch(_) { return null; }
-  }   // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
+  // PB hayaleti kaldırıldı: eski sürümlerin kaydettiği hayalet verisi depodan temizlenir
+  try { localStorage.removeItem('arc_pb_ghost_normal'); localStorage.removeItem('arc_pb_ghost_extreme'); } catch(_) {}
+  let _runStartY = 0;   // run başında topun dünya y'si (günlük pist slot mesafesi, test özetleri)
+  // son run özeti (testler/ölçüm için ARC_TEST.lastRun)
   // firstPlay flag removed — no tutorial anymore
   let score = 0, maxAscend = 0, camY = 0, energy = 1;
   // Once energy hits 0 the countdown shows "0" for this many seconds before
@@ -7618,16 +7605,21 @@ const ARC_DB = (() => {
   }
 
   // Gold vignette flash only — beat-synced background removed for now
+  let _flashSpr = null;
   function drawBgFlash() {
     if (goldFlashAlpha <= 0.005) return;
     const gA = goldFlashAlpha * energy;
+    // Tam ekran vinyet: her karede gradyan yerine düşük çözünürlüklü hazır sprite (yumuşak geçiş, ölçekte bozulmaz)
+    if (!_flashSpr || _flashSpr._k !== W + 'x' + H) {
+      const c = document.createElement('canvas'); c.width = Math.ceil(W / 4); c.height = Math.ceil(H / 4); c._k = W + 'x' + H;
+      const x = c.getContext('2d'), w = c.width, h = c.height;
+      const gr = x.createRadialGradient(w/2, h/2, w * 0.25, w/2, h/2, w * 0.9);
+      gr.addColorStop(0, 'rgba(255,220,80,0)'); gr.addColorStop(0.55, 'rgba(255,210,60,0.35)'); gr.addColorStop(1, 'rgba(255,180,30,1)');
+      x.fillStyle = gr; x.fillRect(0, 0, w, h); _flashSpr = c;
+    }
     bctx.save();
-    const gr = bctx.createRadialGradient(W/2, H/2, W * 0.25, W/2, H/2, W * 0.9);
-    gr.addColorStop(0,    'rgba(255,220,80,0)');
-    gr.addColorStop(0.55, `rgba(255,210,60,${gA * 0.35})`);
-    gr.addColorStop(1,    `rgba(255,180,30,${gA})`);
-    bctx.fillStyle = gr;
-    bctx.fillRect(0, 0, W, H);
+    bctx.globalAlpha = Math.min(1, gA);
+    bctx.drawImage(_flashSpr, 0, 0, W, H);
     bctx.restore();
     goldFlashAlpha *= 0.90;
   }
@@ -7638,12 +7630,19 @@ const ARC_DB = (() => {
   //   2) MULTIPLY — combo multiplier is applied; the value snaps from basePts → finalPts
   //                 with a brief scale pulse + "× N" badge so the player feels the bonus.
   //   3) FLY     — the final value eases toward the score HUD at the top-left.
+  // HUD skorunun canvas'taki yeri: ekran boyutu değişmedikçe aynı → bir kez ölçülür (her altında
+  // getBoundingClientRect oyun ortasında zorunlu yerleşim hesabı yaptırıyordu)
+  let _flyTgt = null;
   function spawnFlyScore(sx, sy, basePts, mul, finalPts) {
-    const hudRect    = hScore.getBoundingClientRect();
-    const canvasRect = gc.getBoundingClientRect();
-    if (canvasRect.width < 1) return; // not yet laid out
-    const tx = (hudRect.left + hudRect.width  * 0.5 - canvasRect.left) * (W / canvasRect.width);
-    const ty = (hudRect.top  + hudRect.height * 0.5 - canvasRect.top ) * (H / canvasRect.height);
+    const key = W + 'x' + H + ':' + innerWidth + 'x' + innerHeight;
+    if (!_flyTgt || _flyTgt.key !== key) {
+      const hudRect    = hScore.getBoundingClientRect();
+      const canvasRect = gc.getBoundingClientRect();
+      if (canvasRect.width < 1) return; // not yet laid out
+      _flyTgt = { key, tx: (hudRect.left + hudRect.width  * 0.5 - canvasRect.left) * (W / canvasRect.width),
+                       ty: (hudRect.top  + hudRect.height * 0.5 - canvasRect.top ) * (H / canvasRect.height) };
+    }
+    const { tx, ty } = _flyTgt;
     // Center of the play area, slightly above midline so it reads as "in your face"
     const cx = W * 0.5, cy = H * 0.45;
     flyScores.push({
@@ -8687,8 +8686,15 @@ const ARC_DB = (() => {
   // topa geri çekilir; ilk parçacık topa varınca enerji halkası dolar.
   const GREEN_BURST_S = 0.3;
   let _greenHomeArrived = true;
+  // Dönen (izli) parçacıklara toplam üst sınır: yeşil + hemen ardından altın üst üste binince
+  // sayı ~60'ı aşıp kare atlatıyordu. Bütçe azsa yeni patlama daha az parçacıkla oluşur.
+  const HOME_MAX = () => LOWFX ? 30 : 56;
+  function homeRoom(want) {
+    let n = 0; for (const p of particles) if (p.home) n++;
+    return Math.max(Math.min(8, want), Math.min(want, HOME_MAX() - n));
+  }
   function spawnGreenPull(wx, wy) {
-    const count = LOWFX ? 20 : 40;
+    const count = homeRoom(LOWFX ? 20 : 36);
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4, spd = 1200 + Math.random() * 1600;
       particles.push({ home: true, age: -Math.random() * 0.06, x: wx, y: wy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
@@ -8709,7 +8715,7 @@ const ARC_DB = (() => {
   // varan her parçacık topu kısa bir altın parlamayla yakar.
   let _goldHitAt = -1, _goldHitN = 0;
   function spawnGoldHome(wx, wy) {
-    const count = LOWFX ? 12 : 22, order = [...Array(count).keys()].sort(() => Math.random() - 0.5);
+    const count = homeRoom(LOWFX ? 12 : 20), order = [...Array(count).keys()].sort(() => Math.random() - 0.5);
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4, spd = 1100 + Math.random() * 1800;
       particles.push({ home: true, gold: true, age: 0, homeAt: 0.28 + order[i] * 0.045, x: wx, y: wy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
@@ -9104,27 +9110,6 @@ const ARC_DB = (() => {
   // All traces start at spawn (H - 200) because ghostSampled never shifts.
   // Per-trace opacity is low so 80 stacked traces add up to visible motion
   // history without overpowering the live trail.
-  // PB hayaleti: yarı saydam top + "PB" etiketi, kayıttaki zamanlamayla (doğrusal ara değer)
-  function drawPbGhost() {
-    if (!_pbGhost || scene !== 'play' || tutActive) return;
-    const P = _pbGhost.p, tk = _pbT * 10;
-    if (tk > P[P.length - 1][0]) return;                       // hayalet run'ını bitirdi
-    while (_pbIdx < P.length - 2 && P[_pbIdx + 1][0] <= tk) _pbIdx++;
-    const a = P[_pbIdx], b = P[Math.min(P.length - 1, _pbIdx + 1)];
-    const f = b[0] > a[0] ? Math.max(0, Math.min(1, (tk - a[0]) / (b[0] - a[0]))) : 0;
-    const x = a[1] + (b[1] - a[1]) * f, y = _pbStartY - (a[2] + (b[2] - a[2]) * f), sy = W2S(y);
-    if (sy < -30 || sy > H + 30) return;
-    const r = player.r;
-    ctx.save();
-    ctx.globalAlpha = 0.42;
-    ctx.fillStyle = '#0b0e16'; ctx.beginPath(); ctx.arc(x, sy, r, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#bfe8ff'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.arc(x, sy, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    ctx.globalAlpha = 0.75; ctx.fillStyle = '#bfe8ff';
-    ctx.font = "bold 10px 'Press Start 2P', monospace"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('PB', x, sy + 1);
-    ctx.restore();
-  }
   function drawGhostTrail() {
     if (LOWFX) return;   // sade mod: geçmiş run izleri çizilmez (en pahalı katmanlardan)
     if (!allGhosts.length && !crossPlayerGhosts.length) return;
@@ -9577,10 +9562,9 @@ const ARC_DB = (() => {
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
     camY = 0; trail.length = 0; ghostSampled.length = 0;
-    _pbRec.length = 0; _pbT = 0; _pbIdx = 0; _pbStartY = player.y;
+    _runStartY = player.y;
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
-    _pbGhost = (gameMode !== 'wife' && upg.pbGhost !== false) ? loadPbGhost(gameMode) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
     // Load ghost traces fresh each game so the next save shows up next run.
@@ -9622,7 +9606,7 @@ const ARC_DB = (() => {
       // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
       // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
       const distCm = _seeded()
-        ? Math.max(0, _pbStartY - nextSpawnY - 2200 - START_PX) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
+        ? Math.max(0, _runStartY - nextSpawnY - 2200 - START_PX) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
         : (distancePx / H_REF) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 500));
       const tMove = Math.max(0, (distCm - 100) / 400); // movement after ~1m
@@ -9855,7 +9839,7 @@ const ARC_DB = (() => {
     const host = document.getElementById('combo-fx');
     if (!host) return;
     for (let k = 0; k < n; k++) {
-      if (host.childElementCount > 40) return;
+      if (host.childElementCount > 18) return;   // DOM parçacığı: oyun ortasında stil/katman maliyeti
       const el = document.createElement('i'), a = Math.random() * Math.PI * 2, d = 38 + Math.random() * (30 + cm * 8);
       el.style.cssText = `--dx:${(Math.cos(a) * d * 1.6).toFixed(1)}px;--dy:${(Math.sin(a) * d).toFixed(1)}px;--s:${(2 + Math.random() * 3).toFixed(1)}px;--t:${(0.5 + Math.random() * 0.5).toFixed(2)}s`;
       el.addEventListener('animationend', () => el.remove());
@@ -9928,13 +9912,6 @@ const ARC_DB = (() => {
     // No shift, so the trace keeps its true start at H - 200 (spawn).
     if (!ghostSampled.length || (ghostSampled.at(-1).y - player.y) > 20) {
       ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
-    }
-    // PB hayaleti kaydı (0.1 sn'de bir; en fazla ~6.5 dk)
-    if (!tutActive) {
-      _pbT += dt;
-      const tk = Math.round(_pbT * 10);
-      if ((!_pbRec.length || tk > _pbRec.at(-1)[0]) && _pbRec.length < 4000)
-        _pbRec.push([tk, Math.round(player.x), Math.round(_pbStartY - player.y)]);
     }
 
     // Yeşil bantta (üst 2 kademe) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
@@ -10039,7 +10016,7 @@ const ARC_DB = (() => {
       // Partiküller: combo seviyesine göre sıklık; seri yükselince patlama (LOWFX'te yok)
       if (!LOWFX && cm >= 2 && Math.random() < dt * (3 + cm * 3)) comboFx(1, cm);
       if (_comboHudPop) {
-        if (cm >= 2 && !LOWFX) comboFx(8 + cm * 3, cm);
+        if (cm >= 2 && !LOWFX) comboFx(6 + cm * 2, cm);
         _comboHudPop = false;
         const pill = document.getElementById('combo-pill');
         pill.classList.remove('pop'); void pill.offsetWidth; pill.classList.add('pop');
@@ -10633,8 +10610,6 @@ const ARC_DB = (() => {
     const next = marks.find(m => m > distCm && !_distChestsOpened.has(m));
     if (next && next - distCm <= Math.max(100, distCm * 0.5))
       return ['#ffcc44', `Next chest **+${distChestValue(next)}** at **${fmtDist(next)}** — **${fmtDist(next - distCm)}** to go`];
-    const cm = Math.min(Math.max(1, _runMaxCombo - (COMBO_START - 2)), comboCap());
-    if (_runMaxCombo >= COMBO_START) return ['#5ad8ff', `Best combo this run **×${cm}** — max is ×${comboCap()}`];
     return null;
   }
   let _goCountTok = 0;
@@ -10745,11 +10720,6 @@ const ARC_DB = (() => {
           stats.streak = (stats.lastPlayDate === ydStr) ? (stats.streak || 0) + 1 : 1;
           stats.lastPlayDate = todayStr;
         }
-      }
-      // Mesafe rekoru → bu run PB hayaleti olur (rekor güncellenmeden ÖNCE kıyasla)
-      const _prevBestD = gameMode === 'extreme' ? (stats.bestDistExtreme || 0) : (stats.bestDistNormal || 0);
-      if (runDistCm > _prevBestD && _pbRec.length > 5) {
-        try { localStorage.setItem(PB_GHOST_KEY(gameMode), JSON.stringify({ d: Math.round(runDistCm), p: _pbRec })); } catch(_) {}
       }
       if (gameMode === 'extreme') {
         if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
@@ -10964,7 +10934,7 @@ const ARC_DB = (() => {
       const HINTS = { energy: ['#ffb13b', '**Energy ran out** — every green refills it'], obstacle: ['#ff4664', '**Hit a red ball** — tap earlier to curve around it'],
         wall: ['#ff4664', '**Hit the wall** — tap to turn before the edge'], crystal: ['#8fe6ff', '**Crystal** — break it with Shockwave, Shield or Ghost'] };
       let h = di && gameMode !== 'wife' && (stats.gamesTotal || 0) <= 5 ? HINTS[di.cause] : null;
-      // Yoksa tek bir kişisel "bir daha" nedeni: rekora kalan → sıradaki sandık → en iyi combo (rekor kırıldıysa kutlama yeter)
+      // Yoksa tek bir kişisel "bir daha" nedeni: rekora kalan → sıradaki sandık (rekor kırıldıysa kutlama yeter)
       if (!h && gameMode !== 'wife' && !wasDaily && !chal && !newBest && !newBestDist) h = runGoalLine(runDistCm, bestDistBefore);
       if (hEl) { hEl.hidden = !h; if (h) { hEl.style.setProperty('--hc', h[0]); hEl.innerHTML = richTxt(h[1]); } }
       // Coin kazanılmayan kısa run: büyük "+0" yerine ilerleme çubuğu / "NEXT COIN" öne çıkar
@@ -11210,7 +11180,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawPbGhost(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -11607,8 +11577,7 @@ const ARC_DB = (() => {
     // Test: pistin ilk N engelinin konumu (tohum eşitliği için)
     // Test: pistin engel konumları (tohum eşitliği için) — başlangıca göre, yukarıdan sıralı
     layoutSig: n => [...obstacles.map(o => ['o', o]), ...bonuses.map(o => ['b', o]), ...goldBalls.map(o => ['g', o])]
-      .map(([k, o]) => [k, Math.round(o.x), Math.round(_pbStartY - o.y)]).sort((a, b) => a[2] - b[2] || a[1] - b[1]).slice(0, n || 12).map(q => q.join(':')).join(','),
-    get pbGhost() { return _pbGhost ? { d: _pbGhost.d, n: _pbGhost.p.length } : null; },
+      .map(([k, o]) => [k, Math.round(o.x), Math.round(_runStartY - o.y)]).sort((a, b) => a[2] - b[2] || a[1] - b[1]).slice(0, n || 12).map(q => q.join(':')).join(','),
     finishTutorial: () => { _tutWantsPlay = true; endTutorial(); },   // tutorial'ın "GO!" sonu
     get threads() { return _runThreads; },
     // oyuncunun bulunduğu yere dönen ikili koy (merkez oyuncuda → dışarı çıkınca THREAD)
@@ -11770,15 +11739,6 @@ const ARC_DB = (() => {
   fbOff.addEventListener('click', () => setFeedback(false));
   setFeedback(feedbackOn);
 
-  // PB Ghost: upg.pbGhost (false → hayalet yüklenmez; bkz. resetGame)
-  function setPbGhost(v) {
-    upg.pbGhost = v; try { saveUpg(); } catch(_) {}
-    document.getElementById('pbg-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
-    document.getElementById('pbg-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
-  }
-  document.getElementById('pbg-on').addEventListener('click',  () => setPbGhost(true));
-  document.getElementById('pbg-off').addEventListener('click', () => setPbGhost(false));
-  setPbGhost(upg.pbGhost !== false);
 
   // Graphics: Auto / High / Low
   function setGfx(v) {
@@ -12711,6 +12671,7 @@ const ARC_DB = (() => {
   function triggerAbility(slotIdx) {
     const item = slotItems[slotIdx];
     if (!item || item.type !== 'ability') return;
+    if (_dailyRun) return;   // günlük: eşya gibi yetenekler de kapalı (aynı pist, aynı koşul)
     if (slotCD[slotIdx] > 0) return;
     if (scene !== 'play' || !running) return;
     const key = item.key;
@@ -14596,6 +14557,7 @@ const ARC_DB = (() => {
   }
   function startDailyRun() {
     if (!_dailyRun) { _dailyPrevMode = gameMode; _dailyRun = true; }
+    document.documentElement.classList.add('daily-run');
     gameMode = 'normal';
     try { document.getElementById('quests-modal').classList.remove('open'); } catch(_) {}
     startGame('gated');
@@ -14604,6 +14566,7 @@ const ARC_DB = (() => {
   function endDailyMode() {
     if (!_dailyRun) return;
     _dailyRun = false; _dailyRng = null;
+    document.documentElement.classList.remove('daily-run');
     if (_dailyPrevMode) gameMode = _dailyPrevMode;
     _dailyPrevMode = null;
   }
@@ -15451,7 +15414,7 @@ const ARC_DB = (() => {
         </svg>
         <span class="dl-txt">
           <span class="dl-title">DAILY RUN</span>
-          <span class="dl-sub">${dl.best ? `BEST <b>${dl.best}</b> · <span id="dl-rank">TODAY</span>` : '<span id="dl-rank">NO ITEMS · UNLIMITED TRIES</span>'}</span>
+          <span class="dl-sub">${dl.best ? `BEST <b>${dl.best}</b> · <span id="dl-rank">TODAY</span>` : '<span id="dl-rank">NO ITEMS · NO ABILITIES</span>'}</span>
           <span class="dl-time">NEW COURSE IN <b>${left}</b></span>
         </span>
         <button class="dl-play" type="button"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>PLAY</button>

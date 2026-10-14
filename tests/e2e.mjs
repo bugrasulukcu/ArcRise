@@ -402,24 +402,26 @@ test('rozetler: THREADER / GATEKEEPER / CRYSTAL / MAESTRO açılır', async () =
     check(earned.includes(id), `${id} açılmadı (açılanlar: ${earned.join(',')})`);
 });
 
-test('PB hayaleti: rekor run kaydedilir, sonraki run\'da oynatılır', async () => {
-  await fresh();
-  await playRun(5000);   // başlangıç çizgisini geçecek kadar
-  const g = await lsJSON('arc_pb_ghost_normal');
-  check(g && g.p.length > 5, 'rekor run hayaleti kaydedilmedi');
-  await ev(`document.getElementById('btn-again').click(); true`); await sleep(500);
-  const pg = await ev('ARC_TEST.pbGhost');
-  check(pg && pg.n === g.p.length, `2. run'da hayalet yüklenmedi: ${JSON.stringify(pg)}`);
+test('PB hayaleti kaldırıldı: rekor run kaydedilmez, eski kayıt silinir, ayar satırı yok', async () => {
+  await fresh({ arc_pb_ghost_normal: { d: 100, p: [[0, 1, 1], [1, 1, 2], [2, 1, 3], [3, 1, 4]] } });
+  check(await ls('arc_pb_ghost_normal') === null, 'eski PB hayaleti kaydı silinmedi');
+  await playRun(5000);
+  check(await ls('arc_pb_ghost_normal') === null, 'rekor run yine hayalet olarak kaydedildi');
+  check(await ev(`!document.getElementById('pbg-on')`), 'Settings\'te PB Ghost satırı duruyor');
 });
 
-test('günlük meydan okuma: aynı pist, eşyasız, normal mod, skor günlük tabloya', async () => {
+test('günlük meydan okuma: aynı pist, eşyasız ve yeteneksiz, normal mod, skor günlük tabloya', async () => {
   fbReset();
-  await fresh({ arc_mode: 'extreme', arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true } } } });
+  await fresh({ arc_mode: 'extreme', arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
+    arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true }, shock: { owned: true, durLvl: 0 } } } });
   await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
   await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
   const d1 = await ev('ARC_TEST.daily');
   check(d1.on && d1.mode === 'normal', `günlük mod açılmadı: ${JSON.stringify(d1)}`);
   check((await lsJSON('arc_upg_v1')).inv.shield.count === 3, 'günlük koşuda eşya harcandı');
+  check(await ev(`getComputedStyle(document.getElementById('slot-hud')).display === 'none'`), 'günlükte yetenek slotları görünüyor');
+  await ev(`ARC_TEST.trigger(0); true`);
+  check((await ev('ARC_TEST.slotCD'))[0] === 0, 'günlükte yetenek tetiklendi');
   const sig1 = await ev('ARC_TEST.layoutSig(10)');
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
   await sleep(2500);
