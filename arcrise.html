@@ -6291,7 +6291,7 @@ const ARC_DB = (() => {
   }
   // ── Düşük efekt modu ───────────────────────────────────────────
   // iPhone düşük güç modu rAF'ı ~30 fps'e indirir ve CPU'yu kısar; ışıma (shadowBlur) ve arka plan
-  // bulanıklaştırma o zaman kasıyor. Kare hızı 42'nin altına inerse (ya da sistem "reduced motion"
+  // bulanıklaştırma o zaman kasıyor. Kare hızı düşer/kare atlarsa (ya da sistem "reduced motion"
   // istiyorsa) html.lowfx açılır: CSS dekorları kapanır, canvas shadowBlur 0'a iner. Oynanış aynı.
   // Settings → Graphics: 'auto' (FPS düşerse otomatik) | 'high' (asla düşürme) | 'low' (her zaman sade)
   let GFX = 'auto';
@@ -6317,20 +6317,22 @@ const ARC_DB = (() => {
   })();
   // Açılışın ilk 4 saniyesi sayılmaz (font/ses çözme, ilk çizimler ortalamayı düşürüp iyi
   // telefonu da oturum boyu düşük moda sokabiliyordu). Açılması için ART ARDA iki düşük
-  // 3 sn'lik ölçüm gerekir; tek bir takılma yetmez.
-  let _fpsT = 0, _fpsN = 0, _fpsLow = 0, _fpsWarm = 4;
+  // 2 sn'lik ölçüm gerekir; tek bir takılma yetmez. Ölçüm "düşük" sayılır: ortalama < 50 fps YA DA
+  // karelerin %10'undan fazlası 25 ms'yi aşıyor (ortalaması iyi görünüp sürekli kare atlayan
+  // 90–120 Hz Android telefonlar eski 42 fps eşiğine hiç takılmıyordu).
+  let _fpsT = 0, _fpsN = 0, _fpsLong = 0, _fpsLow = 0, _fpsWarm = 4;
   function trackFps(dtReal) {      // loop'tan her kare; sekme gizliyken büyük dt'ler atlanır
     if (LOWFX || GFX !== 'auto' || dtReal <= 0 || dtReal > 0.25) return;
     if (_fpsWarm > 0) { _fpsWarm -= dtReal; return; }
-    _fpsT += dtReal; _fpsN++;
-    if (_fpsT >= 3) {
-      _fpsLow = (_fpsN / _fpsT < 42) ? _fpsLow + 1 : 0;
+    _fpsT += dtReal; _fpsN++; if (dtReal > 0.025) _fpsLong++;
+    if (_fpsT >= 2) {
+      _fpsLow = (_fpsN / _fpsT < 50 || _fpsLong / _fpsN > 0.1) ? _fpsLow + 1 : 0;
       if (_fpsLow >= 2) enableLowFx();
-      _fpsT = 0; _fpsN = 0;
+      _fpsT = 0; _fpsN = 0; _fpsLong = 0;
     }
   }
   // Uygulama arka plandan dönünce ısınma yeniden (dönüşteki ilk kareler de takılır)
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { _fpsWarm = 2; _fpsT = 0; _fpsN = 0; _fpsLow = 0; } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { _fpsWarm = 2; _fpsT = 0; _fpsN = 0; _fpsLong = 0; _fpsLow = 0; } });
   const gc = document.getElementById('gc');
   const bg = document.getElementById('bg');
   const ctx = gc.getContext('2d');
@@ -7729,21 +7731,27 @@ const ARC_DB = (() => {
       const size = baseSize * s;
       if (size < 2) continue;
 
+      // Yazı sabit boyutta rasterlanır, büyüklük scale ile (her karede değişen font boyutu glif önbelleğini
+      // bozuyordu); parıltı shadowBlur yerine hazır altın hale sprite'ı (mobil GPU'da ucuz).
       ctx.save();
-      ctx.translate(f.x, f.y);
+      ctx.translate(f.x, f.y); ctx.scale(s, s);
+      const txt = '+' + f.shownPts;
+      ctx.font = `bold ${baseSize}px 'Press Start 2P', monospace`;
+      if (!LOWFX) {
+        const tw = (f._tw && f._twTxt === txt && f._twSz === baseSize) ? f._tw : (f._twTxt = txt, f._twSz = baseSize, f._tw = ctx.measureText(txt).width);
+        const hw = tw * 0.5 + baseSize * 0.55, hh = baseSize * 1.05;
+        ctx.globalAlpha = a * 0.5; ctx.drawImage(_haloGold, -hw, -hh, hw * 2, hh * 2);
+      }
       ctx.globalAlpha = a;
-      ctx.shadowColor = '#ffcc44';
-      ctx.shadowBlur = (f.stage === 'fly') ? 12 : 22;
       ctx.fillStyle = '#fff0a0';
-      ctx.font = `bold ${size.toFixed(1)}px 'Press Start 2P', monospace`;
-      ctx.fillText('+' + f.shownPts, 0, 0);
+      ctx.fillText(txt, 0, 0);
 
       // Multiplier badge during the multiply stage
       if (f.stage === 'multiply' && Math.abs(f.mul - 1) > 0.05 && f.pulse > 0.02) {
-        ctx.shadowColor = '#ff6'; ctx.shadowBlur = 18;
+        ctx.font = `bold 14px 'Press Start 2P', monospace`;
+        if (!LOWFX) { ctx.globalAlpha = a * f.pulse * 0.6; ctx.drawImage(_haloGold, -48, baseSize * 0.95 - 22, 96, 44); ctx.globalAlpha = a; }
         ctx.fillStyle = `rgba(255,210,80,${f.pulse})`;
-        ctx.font = `bold ${(14 * s).toFixed(1)}px 'Press Start 2P', monospace`;
-        ctx.fillText('× ' + f.mul.toFixed(1), 0, size * 0.95);
+        ctx.fillText('× ' + f.mul.toFixed(1), 0, baseSize * 0.95);
       }
       ctx.restore();
     }
@@ -9260,8 +9268,13 @@ const ARC_DB = (() => {
     // görünümü bu. (Opak çekirdek / tek-yol ışıltı denendi: iz düzleşip grafik hatası gibi durdu → geri alındı.)
     ctx.lineCap = 'round';
     // 1) IŞILTI — toplamsal (lighter), geniş & soluk: yalnız hafif hale, beyazlaştırmaz.
+    // Ekran dışı parçalar atlanır: iz 600 noktaya kadar uzar ama genelde ~100'ü görünür. Pay (60 px)
+    // en kalın ışıltı katmanından geniş → görünen kenarda kesik olmaz; görünen kısmın çizimi aynı.
+    const CULL = 60, offY = i => { const ya = W2S(trail[i-1].y), yb = W2S(trail[i].y);
+      return (ya < -CULL && yb < -CULL) || (ya > H + CULL && yb > H + CULL); };
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 1; i < trail.length; i++) {
+      if (offY(i)) continue;
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
       const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.16 + 0.12 * comboT) * mul * glowBoost;
@@ -9272,6 +9285,7 @@ const ARC_DB = (() => {
     // 2) ÇEKİRDEK — normal harman (source-over): üst üste binince TOPLANMAZ → beyazlaşma yok.
     ctx.globalCompositeOperation = 'source-over';
     for (let i = 1; i < trail.length; i++) {
+      if (offY(i)) continue;
       const a = trail[i-1], b = trail[i], t = i / (trail.length - 1);
       const mul = animBright * waveAt(W2S(a.y));
       const al = Math.pow(t, 1.4) * (0.85 + 0.15 * comboT) * mul;
@@ -9316,6 +9330,22 @@ const ARC_DB = (() => {
   };
 
   // ── Player ───────────────────────────────────────────────
+  // Topun parıltısı: enerji rengi 4 sabit renkten biri → her renk için bir kez offscreen'e çizilir
+  const _plGlow = {};
+  function plGlowSprite(R, G, B) {
+    const key = R + ',' + G + ',' + B;
+    if (_plGlow[key]) return _plGlow[key];
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, `rgba(${key},.65)`); g.addColorStop(0.4, `rgba(${key},.30)`); g.addColorStop(0.75, `rgba(${key},.10)`); g.addColorStop(1, `rgba(${key},0)`);
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return (_plGlow[key] = c);
+  }
+  const _ghostGlow = (() => {   // Ghost'un mor parıltısı (r → 3.2r arası söner; içi düz)
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    const g = x.createRadialGradient(64, 64, 64 / 3.2, 64, 64, 64);
+    g.addColorStop(0, 'rgba(170,110,255,0.35)'); g.addColorStop(1, 'rgba(170,110,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return c;
+  })();
   function drawPlayer() {
     if (dyingT >= 0 || scene === 'over') return; // patlama anında ve skor ekranında top görünmez (patlamış)
     ctx.save();
@@ -9336,18 +9366,11 @@ const ARC_DB = (() => {
     // kesikli mor halkayla anlatılır (aşağıda). Parıltı hafifçe mora kayar.
     const glowA   = isGhost ? 0.7 : 1;
 
-    // Büyük glow (r*4.5)
-    let g = ctx.createRadialGradient(px, py, 0, px, py, r * 4.5);
-    g.addColorStop(0,   `rgba(${glowR},${glowG},${glowB},${.65 * energy * glowA})`);
-    g.addColorStop(0.4, `rgba(${glowR},${glowG},${glowB},${.30 * energy * glowA})`);
-    g.addColorStop(0.75,`rgba(${glowR},${glowG},${glowB},${.10 * energy * glowA})`);
-    g.addColorStop(1,   `rgba(${glowR},${glowG},${glowB},0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r * 4.5, 0, Math.PI*2); ctx.fill();
-    if (isGhost) {
-      const gg = ctx.createRadialGradient(px, py, r, px, py, r * 3.2);
-      gg.addColorStop(0, 'rgba(170,110,255,0.35)'); gg.addColorStop(1, 'rgba(170,110,255,0)');
-      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, r * 3.2, 0, Math.PI * 2); ctx.fill();
-    }
+    // Büyük glow (r*4.5): renk başına bir kez çizilmiş sprite, parlaklık globalAlpha ile (her karede gradyan yok)
+    ctx.globalAlpha = Math.max(0, Math.min(1, energy * glowA));
+    ctx.drawImage(plGlowSprite(glowR, glowG, glowB), px - r * 4.5, py - r * 4.5, r * 9, r * 9);
+    ctx.globalAlpha = 1;
+    if (isGhost) ctx.drawImage(_ghostGlow, px - r * 3.2, py - r * 3.2, r * 6.4, r * 6.4);
 
     // Siyah gövde
     ctx.fillStyle = '#000';
@@ -9387,7 +9410,7 @@ const ARC_DB = (() => {
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
       // dış hale: geniş, bulanık, enerji renginde
       // shadowBlur yerine üst üste incelen yarı saydam katmanlar (aynı yumuşaklık, mobilde ucuz)
-      for (const [w, a] of (LOWFX ? [[9, 0.4]] : [[18, 0.12], [12, 0.2], [7, 0.32]])) {
+      for (const [w, a] of (LOWFX ? [[9, 0.4]] : [[16, 0.16], [8, 0.32]])) {
         ctx.strokeStyle = `rgba(${glowR},${glowG},${glowB},${a * k})`; ctx.lineWidth = w;
         ctx.beginPath(); ctx.arc(px, py, rr, ca - span, ca + span); ctx.stroke();
       }
@@ -9406,9 +9429,7 @@ const ARC_DB = (() => {
     if (_goldHitAt >= 0 && nowMs - _goldHitAt < 170 && scene === 'play') {   // altın parçacık topa vardı: kısa parlama
       const k = 1 - (nowMs - _goldHitAt) / 170;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const gg = ctx.createRadialGradient(px, py, r * 0.6, px, py, r * 2.6);
-      gg.addColorStop(0, `rgba(255,228,110,${0.55 * k})`); gg.addColorStop(1, 'rgba(255,190,40,0)');
-      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, r * 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.6 * k; ctx.drawImage(_haloGold, px - r * 2.6, py - r * 2.6, r * 5.2, r * 5.2); ctx.globalAlpha = 1;   // hazır sprite (gradyan yok)
       const rr = r + 1 + (1 - k) * 4;
       ctx.strokeStyle = `rgba(255,200,60,${0.35 * k})`; ctx.lineWidth = 8 * k + 2;   // geniş yumuşak hale (shadowBlur yerine, ucuz)
       ctx.beginPath(); ctx.arc(px, py, rr, 0, Math.PI * 2); ctx.stroke();
@@ -9419,9 +9440,10 @@ const ARC_DB = (() => {
     if (isGhost) {                        // Ghost: topun dışında dönen kesikli mor halka
       ctx.save();
       ctx.strokeStyle = 'rgba(190,140,255,0.95)'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(px, py, r + 8, 0, Math.PI * 2);
+      if (!LOWFX) { ctx.strokeStyle = 'rgba(170,136,255,0.22)'; ctx.lineWidth = 8; ctx.stroke(); ctx.strokeStyle = 'rgba(190,140,255,0.95)'; ctx.lineWidth = 2.5; }   // hale (shadowBlur yerine)
       ctx.setLineDash([6, 5]); ctx.lineDashOffset = -performance.now() / 40;
-      ctx.shadowColor = '#aa88ff'; ctx.shadowBlur = LOWFX ? 0 : 10;
-      ctx.beginPath(); ctx.arc(px, py, r + 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.stroke();
       ctx.restore();
     }
     if (runShield) {                      // Shield eşyası: topun etrafında balon
@@ -9998,7 +10020,7 @@ const ARC_DB = (() => {
       // Hapta TOPLAM çarpan (süre × combo × booster); altında COMBO ×n + pencere çizgisi
       const cm = comboMul(), win = comboWindowFrac(), cap = comboCap();
       const totM = timeMulHud * cm * getBoostScoreMul();
-      comboVal.textContent = String(totM);
+      setTxt(comboVal, String(totM));
       comboEl.classList.toggle('on', cm >= 2);
       comboEl.classList.toggle('max', cm >= cap);
       comboEl.classList.toggle('win', cm >= 2 && win > 0);   // COMBO satırı + çizgi yalnız combo başlayınca
@@ -10010,10 +10032,10 @@ const ARC_DB = (() => {
         pillS.setProperty('--tc', tier.c);
         pillS.fontSize = (17 * (1 + Math.min(0.65, Math.log2(Math.max(1, totM)) * 0.13))).toFixed(1) + 'px';
       }
-      document.getElementById('combo-cm').textContent = '×' + cm + (cm >= cap ? ' MAX' : '');
-      document.getElementById('combo-bar-fill').style.transform = `scaleX(${win.toFixed(3)})`;
-      const pillEl = document.getElementById('combo-pill');
-      pillEl.style.setProperty('--cg', cm >= 2 ? ((cm - 1) / Math.max(1, cap - 1)).toFixed(2) : 0);
+      // Her adımda çağrılır → yalnız değişen değer DOM'a yazılır (gereksiz stil/yerleşim hesabı olmasın)
+      setTxt(document.getElementById('combo-cm'), '×' + cm + (cm >= cap ? ' MAX' : ''));
+      setStyle(document.getElementById('combo-bar-fill'), 'transform', `scaleX(${win.toFixed(3)})`);
+      setStyle(document.getElementById('combo-pill'), '--cg', cm >= 2 ? ((cm - 1) / Math.max(1, cap - 1)).toFixed(2) : '0');
       // Partiküller: combo seviyesine göre sıklık; seri yükselince patlama (LOWFX'te yok)
       if (!LOWFX && cm >= 2 && Math.random() < dt * (3 + cm * 3)) comboFx(1, cm);
       if (_comboHudPop) {
@@ -10037,7 +10059,8 @@ const ARC_DB = (() => {
       boosterTime -= dt;
       if (boosterTime <= 0) { clearBooster(); }
       else {
-        BOOSTER_BAR.style.width = Math.round(boosterTime / boosterDur * 100) + '%';
+        const bw = Math.round(boosterTime / boosterDur * 100) + '%';
+        if (BOOSTER_BAR.style.width !== bw) BOOSTER_BAR.style.width = bw;
       }
     }
 
@@ -11103,9 +11126,16 @@ const ARC_DB = (() => {
   let lastT = 0;
   // Rolling FPS sample for the debug overlay (no allocs in the hot path).
   let _fpsAccDt = 0, _fpsAccFr = 0, _fpsCur = 0, _dbgAccTime = 0;
+  // Her karede yazılan HUD metinleri: değer değişmediyse DOM'a dokunma (gereksiz stil/yerleşim hesabı)
+  function setTxt(el, v) { if (el.textContent !== v) el.textContent = v; }
+  // Yalnız tek yerden yazılan stiller için (son yazılan değer elemanda tutulur; tarayıcı değeri normalize ettiğinden geri okunmaz)
+  function setStyle(el, prop, v) { const c = el._st || (el._st = {}); if (c[prop] !== v) { c[prop] = v; el.style.setProperty(prop, v); } }
   function loop(ts) {
-    trackFps((ts - lastT) / 1000);
-    const dtRaw = Math.min(.033, (ts - lastT) / 1000 || 0); lastT = ts;
+    const realDt = (ts - lastT) / 1000 || 0;   // gerçek kare süresi (FPS ölçümleri bununla; oyun dt'si aşağıda kırpılır)
+    trackFps(realDt);
+    // Üst sınır 50 ms: 20–30 fps'te oyun ağır çekime girmesin (eskiden 33 ms → 30 fps altı yavaşlıyordu).
+    // Uzun karelerde step iki yarım adımda koşar (çarpışma atlaması olmasın).
+    const dtRaw = Math.min(.05, realDt); lastT = ts;
     // Time Slow ability simülasyonu yavaşlatır.
     let slow = 1.0;
     if (activeAbility && activeAbility.key === 'timeslow') slow *= 0.5;
@@ -11125,7 +11155,7 @@ const ARC_DB = (() => {
     for (let i = 0; i < slotCD.length; i++) if (slotCD[i] > 0) slotCD[i] = Math.max(0, slotCD[i] - dtRaw);
     if (scene === 'play') updateSlotCooldownUI();
     const time = ts / 1000;
-    _fpsAccDt += dt; _fpsAccFr++;
+    if (realDt > 0 && realDt < 0.25) { _fpsAccDt += realDt; _fpsAccFr++; }   // debug FPS: kırpılmış/Time Slow dt'si değil
     if (_fpsAccDt >= 0.5) {
       _fpsCur = Math.round(_fpsAccFr / _fpsAccDt);
       _fpsAccDt = 0; _fpsAccFr = 0;
@@ -11196,8 +11226,8 @@ const ARC_DB = (() => {
     }
 
     if (scene === 'play' && running) {
-      step(dt);
-      hScore.textContent = pad(Math.floor(score));
+      if (dt > 0.025) { step(dt / 2); step(dt / 2); } else step(dt);
+      setTxt(hScore, pad(Math.floor(score)));
       if (_activeChal) {   // meydan okuma: alanda hedef (gelen) ya da şimdiye kadarki en iyi (gönderen); geçilince yeşil
         const cn = document.getElementById('chal-num'), c = _activeChal;
         const ref = c.role === 'recv' ? c.target : c.best;
@@ -11205,15 +11235,15 @@ const ARC_DB = (() => {
             l.textContent = `⚔ ${c.role === 'recv' ? 'TARGET' : 'BEST'} · ${c.tries + 1}/${CHAL_TRIES}`; cn.textContent = pad(ref); }
           cn.classList.toggle('beat', ref > 0 && score > ref); }
       }
-      hBest.textContent  = pad(best);
+      setTxt(hBest, pad(best));
       // Distance: 1 screen height = 15cm. (Spawn-relative, cm 1 decimal)
       const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
       const dEl = document.getElementById('h-dist');
-      if (dEl) dEl.textContent = fmtDist(distCm);
+      if (dEl) setTxt(dEl, fmtDist(distCm));
       const dBestEl = document.getElementById('h-dist-best');
       if (dBestEl) {
         const bd = bestDistanceM || 0;
-        dBestEl.textContent = fmtDist(bd);
+        setTxt(dBestEl, fmtDist(bd));
       }
     }
 
@@ -12623,28 +12653,20 @@ const ARC_DB = (() => {
       ensureSlotRing(el);
     });
   }
+  // Her karede çağrılır: slot düğmeleri sabit (HTML'de 4 tane) → bir kez bulunur; halka/sınıf
+  // yalnızca değer değişince yazılır (her karede setAttribute SVG'yi boş yere yeniden çizdiriyordu).
+  let _slotEls = null;
   function updateSlotCooldownUI() {
-    document.querySelectorAll('.slot').forEach(el => {
-      const i = Number(el.dataset.slot);
-      const ring = el.querySelector('.slot-ring circle');
-      if (!ring) return;
-      const item = slotItems[i];
-      if (!item || item.type !== 'ability') {
-        el.classList.remove('cooling');
-        ring.setAttribute('stroke-dashoffset', '289');
-        return;
-      }
-      const baseCD = slotAbilityCooldown(i, item.key);
-      const cd = slotCD[i];
-      if (cd <= 0) {
-        el.classList.remove('cooling');
-        ring.setAttribute('stroke-dashoffset', '289');
-      } else {
-        el.classList.add('cooling');
-        const t = Math.min(1, cd / baseCD);
-        ring.setAttribute('stroke-dashoffset', String(289 * (1 - t)));
-      }
-    });
+    if (!_slotEls) _slotEls = [...document.querySelectorAll('.slot')];
+    for (const el of _slotEls) {
+      const ring = el._ring || (el._ring = el.querySelector('.slot-ring circle'));
+      if (!ring) continue;
+      const i = Number(el.dataset.slot), item = slotItems[i], cd = slotCD[i];
+      const cooling = !!item && item.type === 'ability' && cd > 0;
+      const dash = cooling ? (289 * (1 - Math.min(1, cd / slotAbilityCooldown(i, item.key)))).toFixed(1) : '289';
+      if (el._cool !== cooling) { el._cool = cooling; el.classList.toggle('cooling', cooling); }
+      if (el._dash !== dash) { el._dash = dash; ring.setAttribute('stroke-dashoffset', dash); }
+    }
   }
   // abilityCooldown / abilityDuration ABILITY_CFG'den hesaplanır (sonraki bölümde tanımlı).
   // Aktif ability (anlık efekt): {key, t} — t saniye azalır
