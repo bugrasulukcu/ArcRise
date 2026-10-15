@@ -3654,8 +3654,9 @@
     #home.wife-mode #home-flower-frame { opacity: 1; }
     #home.wife-mode #home-flower-frame::after { animation: frameBreathe 3.0s ease-in-out infinite; }
     /* Ana menünün üstünde bir pencere açıkken arkadaki menü animasyonları durur (görünmüyor, boşa çalışıyordu) */
-    html:has([id$="-modal"].open) #home *, html:has([id$="-modal"].open) #home *::before, html:has([id$="-modal"].open) #home *::after,
-    html:has([id$="-modal"].open) #home-flame-frame::after, html:has([id$="-modal"].open) #home-flower-frame::after { animation-play-state: paused !important; }
+    /* html.modal-open JS'te pencerelerin class değişiminden tutulur (geniş html:has() oyun sırasında her DOM
+       değişiminde yeniden değerlendirilip stil maliyetini ikiye katlıyordu) */
+    html.modal-open #home *, html.modal-open #home *::before, html.modal-open #home *::after { animation-play-state: paused !important; }
 
     /* Floating decoration particles (ice crystals + flames around buttons) */
     .mode-deco {
@@ -8689,9 +8690,17 @@ const ARC_DB = (() => {
   // Dönen (izli) parçacıklara toplam üst sınır: yeşil + hemen ardından altın üst üste binince
   // sayı ~60'ı aşıp kare atlatıyordu. Bütçe azsa yeni patlama daha az parçacıkla oluşur.
   const HOME_MAX = () => LOWFX ? 30 : 56;
+  // Her toplama en az 8 parçacık alır (yeşil halka / altın parlaması ilk varışla tetiklenir); bütçe doluysa
+  // yer en eski dönüş parçacıklarından açılır → toplam HOME_MAX'ı aşmaz.
   function homeRoom(want) {
     let n = 0; for (const p of particles) if (p.home) n++;
-    return Math.max(Math.min(8, want), Math.min(want, HOME_MAX() - n));
+    const k = Math.min(want, Math.max(HOME_MAX() - n, 8));
+    let over = n + k - HOME_MAX();
+    if (over > 0) {
+      const drop = new Set(particles.filter(p => p.home).sort((a, b) => b.age - a.age).slice(0, over));
+      for (let i = particles.length - 1; i >= 0; i--) if (drop.has(particles[i])) particles.splice(i, 1);
+    }
+    return k;
   }
   function spawnGreenPull(wx, wy) {
     const count = homeRoom(LOWFX ? 20 : 36);
@@ -11300,6 +11309,16 @@ const ARC_DB = (() => {
     updateAllSegs();
   }
 
+  // Herhangi bir pencere açıkken html.modal-open (arkadaki menü animasyonları durur). Pencerelerin hepsi
+  // HTML'de sabit; gözlemci yalnız onların class değişiminde çalışır, oyun DOM'unu izlemez.
+  (() => {
+    const modals = [...document.querySelectorAll('[id$="-modal"]')];
+    const sync = () => document.documentElement.classList.toggle('modal-open', modals.some(m => m.classList.contains('open')));
+    const mo = new MutationObserver(sync);
+    for (const m of modals) mo.observe(m, { attributes: true, attributeFilter: ['class'] });
+    sync();
+  })();
+
   // İlk açılışta profil oluşturma ekranını göster
   if (!localStorage.getItem('arc_name')) {
     showScene('profile-setup');
@@ -11591,6 +11610,7 @@ const ARC_DB = (() => {
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
+    get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),

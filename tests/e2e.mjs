@@ -410,6 +410,21 @@ test('PB hayaleti kaldırıldı: rekor run kaydedilmez, eski kayıt silinir, aya
   check(await ev(`!document.getElementById('pbg-on')`), 'Settings\'te PB Ghost satırı duruyor');
 });
 
+test('perf: dönüş parçacıkları üst sınırı aşmaz; pencere açıkken html.modal-open', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(300);
+  check(await ev(`document.documentElement.classList.contains('modal-open')`), 'pencere açıkken modal-open yok');
+  await ev(`document.getElementById('quests-modal').classList.remove('open'); true`); await sleep(100);
+  check(!(await ev(`document.documentElement.classList.contains('modal-open')`)), 'pencere kapanınca modal-open kalkmadı');
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); ARC_TEST.ghost(20); true`); await sleep(1500);
+  let peak = 0;
+  for (let k = 0; k < 4; k++) {
+    await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); ARC_TEST.spawnBonusHere(0, 0, 14); ARC_TEST.spawnGoldHere(0, 0); ARC_TEST.spawnGoldHere(0, 0); true`);
+    for (let j = 0; j < 6; j++) { await sleep(50); peak = Math.max(peak, await ev('ARC_TEST.homeParticles')); }
+  }
+  check(peak > 0 && peak <= 56, `dönüş parçacığı tepe sayısı ${peak} (sınır 56)`);
+});
+
 test('günlük meydan okuma: aynı pist, eşyasız ve yeteneksiz, normal mod, skor günlük tabloya', async () => {
   fbReset();
   await fresh({ arc_mode: 'extreme', arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
