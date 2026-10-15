@@ -3157,36 +3157,43 @@
     @media (max-width: 360px) { .st-title { font-size: 8.5px; letter-spacing: 1px; } .st-title b { font-size: 12px; } .st-login { font-size: 7.5px; } }
     .st-hint { font-size: 7.5px; letter-spacing: .6px; line-height: 1.5; color: rgba(255,255,255,.32); text-align: center; }
 
-    /* ── Günlük koşu kartı: dönen camgöbeği–mor kenar, akan mini parkur, sayaç, parlayan PLAY ── */
-    @property --dlA { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    /* ── Günlük koşu kartı: mor–mavi gradyan zemin, gün halkası (tarih + günün geçen kısmı + dönen top),
+       günün birincisi ve oyuncunun skoru/sırası, parlayan PLAY. Tüm hareketler transform ile (GPU). ── */
     .daily-box {
       position: relative; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 14px;
       border: 1.5px solid transparent;
       background:
-        radial-gradient(120% 140% at 0% 0%, rgba(90,216,255,.20), transparent 55%) padding-box,
-        radial-gradient(120% 140% at 100% 100%, rgba(170,110,255,.18), transparent 55%) padding-box,
-        linear-gradient(180deg, #0e1622, #0a0d16) padding-box,
-        conic-gradient(from var(--dlA), rgba(90,216,255,.95), rgba(170,110,255,.6), rgba(90,216,255,.15) 45%, rgba(170,110,255,.6) 70%, rgba(90,216,255,.95)) border-box;
-      box-shadow: 0 0 22px rgba(90,216,255,.16);
-      animation: dlSpin 5s linear infinite;
+        radial-gradient(90% 120% at 0% 0%, rgba(90,216,255,.28), transparent 60%) padding-box,
+        radial-gradient(100% 140% at 100% 100%, rgba(150,90,255,.30), transparent 60%) padding-box,
+        linear-gradient(135deg, #1b2a6b 0%, #24175e 55%, #1a0f45 100%) padding-box,
+        linear-gradient(135deg, rgba(120,225,255,.9), rgba(170,110,255,.55) 50%, rgba(120,225,255,.35)) border-box;
+      box-shadow: 0 0 22px rgba(110,140,255,.22), inset 0 1px 0 rgba(255,255,255,.08);
     }
-    @keyframes dlSpin { to { --dlA: 360deg; } }
-    .dl-course { flex: 0 0 auto; width: 52px; height: 40px; overflow: visible; }
-    .dl-c-path { fill: none; stroke: #bff4ff; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 4; animation: dlFlow 1.1s linear infinite;
-      filter: drop-shadow(0 0 2px rgba(90,216,255,.9)); }
-    @keyframes dlFlow { to { stroke-dashoffset: -14; } }
-    .dl-c-red { fill: #ff4664; filter: drop-shadow(0 0 2.5px rgba(255,70,100,.8)); }
-    .dl-c-grn { fill: #7CFF7A; filter: drop-shadow(0 0 2.5px rgba(124,255,122,.8)); }
-    .dl-c-ball { fill: #0a0d16; stroke: #7CFF7A; stroke-width: 1.6; }
-    .dl-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .dl-day { position: relative; flex: 0 0 auto; width: 48px; height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .dl-day svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .dl-d-track { fill: rgba(22,12,70,.75); stroke: rgba(255,255,255,.12); stroke-width: 3; }
+    .dl-d-fill { fill: none; stroke: #8fe6ff; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(143,230,255,.8)); }
+    .dl-d-orbit { position: absolute; inset: 0; animation: dlOrbit 6s linear infinite; will-change: transform; }
+    .dl-d-orbit i { position: absolute; left: 50%; top: 0; width: 9px; height: 9px; margin: -3px 0 0 -4.5px; border-radius: 50%; box-sizing: border-box;
+      background: #0a0d16; border: 2px solid #7CFF7A; box-shadow: 0 0 6px rgba(124,255,122,.85); }
+    @keyframes dlOrbit { to { transform: rotate(360deg); } }
+    .dl-d-num { position: relative; font-size: 15px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: .5px; }
+    .dl-d-mon { position: relative; font-size: 6.5px; font-weight: 700; letter-spacing: 1.2px; color: #c9a6ff; margin-top: 1px; }
+    .dl-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .dl-title { display: flex; align-items: baseline; gap: 7px; font-size: 12px; font-weight: 800; letter-spacing: 2px;
       background: linear-gradient(90deg, #8fe6ff, #c9a6ff); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
-    .dl-tag { font-size: 7px; font-weight: 400; letter-spacing: 1px; color: rgba(255,255,255,.42); -webkit-text-fill-color: rgba(255,255,255,.42);
+    .dl-tag { font-size: 7px; font-weight: 600; letter-spacing: 1px; color: rgba(255,255,255,.5); -webkit-text-fill-color: rgba(255,255,255,.5);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-    .dl-sub { font-size: 8.5px; letter-spacing: .9px; color: rgba(255,255,255,.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dl-sub b { color: #fff; font-weight: 700; font-size: 10px; }
-    .dl-time { font-size: 7.5px; letter-spacing: 1px; color: rgba(255,255,255,.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dl-time b { color: #c9a6ff; font-weight: 600; }
+    .dl-row { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 8.5px; letter-spacing: .9px; white-space: nowrap; color: rgba(255,255,255,.7); }
+    .dl-row b { color: #fff; font-weight: 700; font-size: 10px; letter-spacing: .6px; }
+    .dl-lead svg { flex: 0 0 auto; color: #ffd24a; }
+    .dl-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #ffe9a8; font-weight: 600; }
+    .dl-lead b { margin-left: auto; color: #ffd24a; }
+    .dl-lbl { color: rgba(201,166,255,.85); font-weight: 600; }
+    .dl-you b { color: #8fe6ff; }
+    .dl-act { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .dl-left { font-size: 7px; font-weight: 600; letter-spacing: 1px; color: rgba(255,255,255,.5); white-space: nowrap; }
+    .dl-rk { margin-left: auto; color: #fff; font-weight: 700; font-size: 9.5px; }
     .dl-play { position: relative; overflow: hidden; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
       font-family: var(--font); font-size: 10.5px; font-weight: 800; letter-spacing: 1.6px; padding: 9px 14px; border-radius: 11px; cursor: pointer;
       color: #041a24; border: 1px solid rgba(160,240,255,.8); background: linear-gradient(180deg, #a6efff, #3bb8e0);
@@ -3196,14 +3203,13 @@
     @keyframes dlShine { 0%, 60% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
     .dl-play:active { transform: scale(.95); }
     html#arc .dl-play svg, html#arc .dl-play svg [fill="currentColor"] { fill: #041a24 !important; stroke: none; filter: none; }
-    @media (max-width: 360px) {   /* dar ekran: parkur çizimi ve PLAY küçülür, başlık sığar */
+    @media (max-width: 360px) {   /* dar ekran: gün halkası ve PLAY küçülür, başlık sığar */
       .daily-box { gap: 8px; padding: 9px 10px; }
-      .dl-course { width: 36px; height: 30px; }
+      .dl-day { width: 40px; height: 40px; } .dl-d-num { font-size: 13px; }
       .dl-title { font-size: 11px; letter-spacing: 1.4px; }
       .dl-play { padding: 8px 10px; font-size: 9.5px; letter-spacing: 1.2px; }
     }
-    @media (max-height: 640px) { .dl-time { display: none; } }   /* kısa ekran: görev listesi kaydırmasız kalsın */
-    html.lowfx .daily-box, html.lowfx .dl-c-path, html.lowfx .dl-play::after { animation: none; }
+    html.lowfx .dl-d-orbit, html.lowfx .dl-play::after { animation: none; }
     /* ── Görev kartı: eksen ikonu/rengi + coin çipi ── */
     .quest-card { --ax: #5ad8ff; border-left: 3px solid var(--ax); padding: 10px 12px; gap: 7px; }
     .quest-card .quest-bottom { gap: 10px; }
@@ -8525,9 +8531,17 @@ const ARC_DB = (() => {
     }
     ctx.restore();
   }
+  // Ghost'ta engeller (kırmızı toplar, kristaller, yörünge ipuçları) %50 opaklığa yumuşakça (~0.15 sn) iner
+  let _obsA = 1, _obsAt = 0;
   function drawObstacles() {
+    const nowA = performance.now(), dtA = Math.min(0.1, (nowA - (_obsAt || nowA)) / 1000); _obsAt = nowA;
+    const targetA = (isGhost && scene === 'play') ? 0.5 : 1;
+    _obsA += (targetA - _obsA) * Math.min(1, dtA * 20);
+    if (Math.abs(targetA - _obsA) < 0.01) _obsA = targetA;
+    ctx.save(); ctx.globalAlpha = _obsA;
     drawOrbitHints();
-    ctx.save();
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha = _obsA;
     // Duvarın dışına taşan kısmı kırp — siyah duvar görünsün
     ctx.beginPath();
     ctx.rect(walls.left, 0, walls.right - walls.left, H);
@@ -8568,7 +8582,7 @@ const ARC_DB = (() => {
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.arc(sx, sy, glowR, 0, Math.PI*2); ctx.fill();
           ctx.fillStyle = '#ff3355';
-          ctx.globalAlpha = 0.6 + 0.4 * p;
+          ctx.globalAlpha = _obsA * (0.6 + 0.4 * p);
           ctx.beginPath(); ctx.arc(sx, sy, ob.r, 0, Math.PI*2); ctx.fill();
           ctx.restore();
         } else if (ob.crystal) {
@@ -11667,6 +11681,7 @@ const ARC_DB = (() => {
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
+    get obstacleAlpha() { return _obsA; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
@@ -15483,19 +15498,25 @@ const ARC_DB = (() => {
     const dl = dailyLocal();
     const left = (() => { const n = new Date(), m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n;
       const h = Math.floor(m / 36e5), mi = Math.floor(m % 36e5 / 6e4); return h ? `${h}H ${mi}M` : `${mi}M`; })();
+    // Gün halkası: günün geçen kısmı dolu (gece yarısı yeni parkur), ortada bugünün tarihi, etrafında top döner
+    const now = new Date(), dayFrac = (now - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5;
+    const RING_C = 2 * Math.PI * 18;
     const loginCard = renderStreakTrack(anim(0)) + `<div class="daily-box"${anim(1)}>
-        <svg class="dl-course" viewBox="0 0 60 44" aria-hidden="true">
-          <path class="dl-c-path" d="M6 40 C 12 26, 24 30, 26 22 S 18 10, 30 8 S 52 14, 54 3"/>
-          <circle cx="40" cy="27" r="4.2" class="dl-c-red"/><circle cx="13" cy="15" r="3.4" class="dl-c-red"/>
-          <circle cx="26" cy="22" r="2.4" class="dl-c-grn"/><circle cx="44" cy="10" r="2.4" class="dl-c-grn"/>
-          <circle cx="6" cy="40" r="3" class="dl-c-ball"/>
-        </svg>
+        <span class="dl-day" aria-hidden="true">
+          <svg viewBox="0 0 44 44"><circle class="dl-d-track" cx="22" cy="22" r="18"/>
+            <circle class="dl-d-fill" cx="22" cy="22" r="18" stroke-dasharray="${(dayFrac * RING_C).toFixed(1)} ${RING_C.toFixed(1)}" transform="rotate(-90 22 22)"/></svg>
+          <span class="dl-d-orbit"><i></i></span>
+          <span class="dl-d-num">${now.getDate()}</span><span class="dl-d-mon">${now.toLocaleString('en-US', { month: 'short' }).toUpperCase()}</span>
+        </span>
         <span class="dl-txt">
           <span class="dl-title">DAILY RUN</span>
-          <span class="dl-sub">${dl.best ? `BEST <b>${dl.best}</b> · <span id="dl-rank">TODAY</span>` : '<span id="dl-rank">NO ITEMS · NO ABILITIES</span>'}</span>
-          <span class="dl-time">NEW COURSE IN <b>${left}</b></span>
+          <span class="dl-row dl-lead">${iconHTML('crown', { size: 11 })}<span class="dl-nm" id="dl-lead-name">…</span><b id="dl-lead-score"></b></span>
+          <span class="dl-row dl-you">${dl.best ? `<span class="dl-lbl">YOU</span><b>${_fmtN(dl.best)}</b><span class="dl-rk" id="dl-rank"></span>` : '<span class="dl-lbl">NO ITEMS · NO ABILITIES</span>'}</span>
         </span>
-        <button class="dl-play" type="button"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>PLAY</button>
+        <span class="dl-act">
+          <button class="dl-play" type="button"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>PLAY</button>
+          <span class="dl-left">${left} LEFT</span>
+        </span>
       </div>`;
     const questCards = questState.quests.map((q, i) => {
       const done = questDone(q);
@@ -15521,12 +15542,18 @@ const ARC_DB = (() => {
     list.querySelectorAll('.quest-claim[data-qi]').forEach(b => b.addEventListener('click', () => claimQuest(Number(b.dataset.qi))));
     list.querySelector('.st-open')?.addEventListener('click', openStreakChest);
     list.querySelector('.dl-play')?.addEventListener('click', startDailyRun);
-    // Sıra: günün tablosundan (arka planda)
-    if (dl.best) ARC_DB.getDailyTop(dailyDay(), 100).then(rows => {
-      const el = document.getElementById('dl-rank'); if (!el || !rows) return;
-      const uid = ARC_DB.getUid(), i = rows.findIndex(r => r.owner === uid);
-      el.textContent = i >= 0 ? `#${i + 1} OF ${rows.length}` : `${rows.length} PLAYER${rows.length === 1 ? '' : 'S'} TODAY`;
-    }).catch(() => {});
+    // Günün birincisi + senin sıran: günün tablosundan (arka planda)
+    const setLead = (nm, sc) => { const a = document.getElementById('dl-lead-name'), b = document.getElementById('dl-lead-score');
+      if (a) a.textContent = nm; if (b) b.textContent = sc; };
+    ARC_DB.getDailyTop(dailyDay(), 100).then(rows => {
+      if (!rows) { setLead('OFFLINE', ''); return; }
+      if (!rows.length) { setLead('BE TODAY\'S FIRST', ''); return; }
+      const top = rows[0], uid = ARC_DB.getUid();
+      setLead(top.owner === uid ? 'YOU' : top.name.toUpperCase(), _fmtN(top.score));
+      const el = document.getElementById('dl-rank'); if (!el) return;
+      const i = rows.findIndex(r => r.owner === uid);
+      el.textContent = i >= 0 ? `#${i + 1}/${rows.length}` : `#${rows.length}+`;
+    }).catch(() => setLead('OFFLINE', ''));
   }
   function claimQuest(i) {
     const q = questState.quests[i];

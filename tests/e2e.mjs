@@ -425,6 +425,16 @@ test('perf: dönüş parçacıkları üst sınırı aşmaz; pencere açıkken ht
   check(peak > 0 && peak <= 56, `dönüş parçacığı tepe sayısı ${peak} (sınır 56)`);
 });
 
+test('ghost: engeller %50 opaklığa iner, ghost bitince geri gelir', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(1500);
+  check(await ev('ARC_TEST.obstacleAlpha') === 1, 'ghost yokken engeller saydam');
+  await ev(`ARC_TEST.ghost(1.2); true`); await sleep(500);
+  const a = await ev('ARC_TEST.obstacleAlpha');
+  check(Math.abs(a - 0.5) < 0.02, `ghost'ta engel opaklığı ${a}`);
+  check(await waitFor(`ARC_TEST.obstacleAlpha === 1`, 4000), 'ghost bitince engeller tam opak olmadı');
+});
+
 test('günlük meydan okuma: aynı pist, eşyasız ve yeteneksiz, normal mod, skor günlük tabloya', async () => {
   fbReset();
   await fresh({ arc_mode: 'extreme', arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
