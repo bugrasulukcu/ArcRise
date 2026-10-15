@@ -99,7 +99,7 @@
   <!-- CSP: XSS'e ikinci savunma hattı — enjekte kod dış script yükleyemez /
        veri sızdıramaz. Yeni bir dış servis eklersen buraya da eklemen gerekir!
        (gstatic/google.com script+frame: ileride App Check reCAPTCHA için hazır.) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com; frame-src https://www.google.com https://recaptcha.google.com; object-src 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.google-analytics.com https://www.googletagmanager.com; media-src 'self' blob: data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-src https://www.google.com https://recaptcha.google.com; object-src 'none'; base-uri 'self'">
   <link rel="icon" type="image/png" href="PNG/GAME_ICON.png">
   <link rel="apple-touch-icon" href="PNG/GAME_ICON.png">
   <!-- Sarpanch (OFL-1.1) uygulamanin icinde: FONTS/. Google Fonts'tan cekilince
@@ -5193,7 +5193,58 @@ const FIREBASE_CONFIG = {
   //      → @capacitor-firebase/app-check plugin'i gerekir (reCAPTCHA WebView'de de çalışır ama zayıftır).
   appId:           '1:66023331166:web:d36b4175459b490061ebcf',
   appCheckSiteKey: '6Ldd75ktAAAAAK4z8ZKA05YpR12EmVdyb370ckje',   // reCAPTCHA v3 site key (public)
+  // ── Analytics (GA4) — boşken hiçbir şey yüklenmez ──
+  // console.firebase.google.com > Project Settings > Integrations > Google Analytics'i aç,
+  // sonra General > Web app config'teki measurementId'yi (G-XXXXXXX) buraya yaz.
+  measurementId:   '',
 };
+
+// ── Oyun analitiği (GA4 / gtag) ─────────────────────────────
+// Neden çerez yok: iOS'ta sayfa capacitor:// üzerinden açılıyor ve WKWebView orada
+// çerezi kalıcı tutmuyor → her açılış "yeni oyuncu" sayılır, D1/D7 retention ölçülemezdi.
+// Bu yüzden client_id localStorage'da tutulur ve gtag'e elle verilir (client_storage:'none').
+// Reklam kişiselleştirme / Google Signals kapalı; kişisel veri (isim vb.) gönderilmez.
+// Kapatmak için: localStorage.setItem('arc_analytics_off','1')
+const ArcAn = (() => {
+  const id = FIREBASE_CONFIG.measurementId;
+  let off = !id;
+  try { if (localStorage.getItem('arc_analytics_off') === '1') off = true; } catch(_){}
+  const noop = { track(){}, runStart(){}, runEnd(){}, enabled: false };
+  if (off) return noop;
+  let platform = 'web';
+  try { platform = (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'web'; } catch(_){}
+  const newCid = () => Math.floor(Math.random() * 2147483647) + '.' + Math.floor(Date.now() / 1000);
+  let cid;
+  try {
+    cid = localStorage.getItem('arc_ga_cid');
+    if (!cid) { cid = newCid(); localStorage.setItem('arc_ga_cid', cid); }
+  } catch(_){ cid = newCid(); }
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', id, {
+    client_storage: 'none', client_id: cid,
+    allow_google_signals: false, allow_ad_personalization_signals: false,
+    page_title: 'ArcRise', page_location: 'https://bugrasulukcu.github.io/ArcRise/' + platform,
+  });
+  gtag('set', 'user_properties', { platform: platform });
+  // Script'i sayfa yüklendikten sonra boşta yükle — açılışı yavaşlatmasın. Olaylar o ana kadar kuyrukta bekler.
+  const load = () => {
+    const sc = document.createElement('script');
+    sc.async = true; sc.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    document.head.appendChild(sc);
+  };
+  if (document.readyState === 'complete') setTimeout(load, 1500);
+  else window.addEventListener('load', () => setTimeout(load, 1500), { once: true });
+
+  let runT0 = 0;
+  const track = (name, params) => { try { gtag('event', name, Object.assign({ platform }, params || {})); } catch(_){} };
+  return {
+    enabled: true, track,
+    runStart(p) { runT0 = Date.now(); track('run_start', p); },
+    runEnd(p) { track('run_end', Object.assign({ duration_s: runT0 ? Math.round((Date.now() - runT0) / 1000) : 0 }, p)); },
+  };
+})();
 
 // ── HTML escape — Firestore'dan gelen HER string innerHTML'e bununla girer ──
 // (isimler sunucu kuralında A-Z0-9'a kısıtlı ama defense-in-depth: eski/bozuk
@@ -6889,6 +6940,7 @@ const ARC_DB = (() => {
     localStorage.setItem('arc_name', playerName);
     localStorage.setItem('arc_avatar', avatarIdx);
     applyProfile();
+    try { ArcAn.track('profile_created', { avatar: avatarIdx }); } catch(_){}
     try { ensureAccount().then(() => sendPendingReferralFriend()).catch(() => {}); } catch(_){} // name#tag hesabını oluştur + yayınla (+ davet edene istek)
     // Profil oluştur → her zaman home'a git. Tutorial ilk START tıklamasında açılacak.
     showScene('home');
@@ -10388,6 +10440,7 @@ const ARC_DB = (() => {
       try { applyProfile(); } catch(_){}
     }
     tutActive = true;
+    try { ArcAn.track('tutorial_begin'); } catch(_){}
     resetGame();
     showScene('play');
     document.getElementById('tut-overlay').classList.add('active');
@@ -10486,6 +10539,7 @@ const ARC_DB = (() => {
   function endTutorial() {
     tutClearTimers();
     const wasActive = tutActive;
+    try { if (wasActive) ArcAn.track(_tutWantsPlay ? 'tutorial_complete' : 'tutorial_skip', { stage: tutStage }); } catch(_){}
     tutActive = false;
     tutStage = 0;
     tutReady = false;
@@ -10509,6 +10563,7 @@ const ARC_DB = (() => {
       beginArc(-player.dir || 1, getRadius());
       spawnAhead(); // buffer'ı hemen doldur
       started = true; running = true;
+      try { ArcAn.runStart({ mode: gameMode, daily: 0, challenge: 0, after_tutorial: 1 }); } catch(_){}
       if (_runPreboostPending) {
         activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
         _runPreboostPending = null;
@@ -10665,6 +10720,7 @@ const ARC_DB = (() => {
     lastScore = Math.floor(score);
     localStorage.setItem('arc_last', String(lastScore));
     const runDistCm = (distancePx / H_REF) * CM_PER_SCREEN;
+    try { ArcAn.runEnd({ mode: gameMode, daily: wasDaily ? 1 : 0, challenge: chal ? 1 : 0, score: lastScore, distance_cm: Math.round(runDistCm) }); } catch(_){}
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
@@ -11340,6 +11396,7 @@ const ARC_DB = (() => {
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
+     'arc_ga_cid',   // analitik kimliği de sıfırlanır → silmeden sonra yeni, bağlantısız kimlik
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
     walletPurchased = 0;   // bulut cüzdanı deleteMyData ile zaten silindi
@@ -14616,6 +14673,7 @@ const ARC_DB = (() => {
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
+    try { ArcAn.runStart({ mode: gameMode, daily: _dailyRun ? 1 : 0, challenge: _activeChal ? 1 : 0 }); } catch(_){}
     // Pre-Booster: rastgele (işe yarar) bir booster, normal sürenin 2 katı
     if (_runPreboostPending) {
       activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
@@ -15475,6 +15533,7 @@ const ARC_DB = (() => {
     if (!q || q.claimed || !questDone(q)) return;
     q.claimed = true;
     grantCoins(q.reward);
+    try { ArcAn.track('quest_claim', { reward: q.reward }); } catch(_){}
     // 3 görevin hepsi alındıysa +1 bonus (günde bir kez)
     if (!questState.allBonusClaimed && questState.quests.every(x => x.claimed)) {
       questState.allBonusClaimed = true;

@@ -55,6 +55,7 @@ Simple to learn, hard to put down. How far can you rise?
 - **Target audience / age**: Genel (13+ önerilir çünkü online leaderboard + kullanıcı adı + arkadaş sistemi var — "Designed for Families" programına girmeyin, karma sosyal özellikler var).
 - **Data safety anketi**:
   - Toplanan veri: kullanıcı adı (App info bölümünde public), oyun içi skor/mesafe (App activity), cihaz için anonim kimlik (App info).
+  - **Analitik (measurementId doldurulunca aktif)**: App activity → *App interactions* (run başlangıç/bitiş, eğitim, görev) + Device or other IDs → *rastgele analitik kimliği* (`arc_ga_cid`). Amaç: **Analytics**. Google Analytics = data processor → "collected", "shared" değil. Reklam kişiselleştirme/Google Signals kapalı. App Store "App Privacy" formunda: *Usage Data → Product Interaction*, "Not linked to you", "Not used for tracking".
   - Toplanmayan: gerçek ad, e-posta, telefon, konum, kişiler, fotoğraf galerisi.
   - Veri paylaşımı: 3. taraf ile paylaşım yok (Firebase = data processor, Google altyapısı, "shared" değil "processed" olarak işaretlenir).
   - Silme: Uygulama içi hesap silme mevcut → "Users can request data deletion" = Evet.
