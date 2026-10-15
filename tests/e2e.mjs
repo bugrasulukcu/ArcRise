@@ -435,16 +435,21 @@ test('ghost: engeller %50 opaklığa iner, ghost bitince geri gelir', async () =
   check(await waitFor(`ARC_TEST.obstacleAlpha === 1`, 4000), 'ghost bitince engeller tam opak olmadı');
 });
 
-test('günlük meydan okuma: aynı pist, eşyasız ve yeteneksiz, normal mod, skor günlük tabloya', async () => {
+test('günlük meydan okuma: aynı pist, eşyasız, yeteneksiz ve yükseltmesiz, normal mod, skor günlük tabloya', async () => {
   fbReset();
   await fresh({ arc_mode: 'extreme', arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
-    arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true }, shock: { owned: true, durLvl: 0 } } } });
+    arc_upg_v1: { comboSplitV22: true, timer: 4, comboWin: 4, comboMax: 4, speedPos: 2, speedActive: 2,
+      coreOwned: { timer: 4, comboWin: 4, comboMax: 4 }, inv: { shield: { count: 3, armed: true }, shock: { owned: true, durLvl: 0 } } } });
+  const fx0 = await ev('ARC_TEST.coreFx');
+  check(fx0.timer === 12 && fx0.win === 4, `yükseltmeler normalde etkin değil: ${JSON.stringify(fx0)}`);
   await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
   await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
   const d1 = await ev('ARC_TEST.daily');
   check(d1.on && d1.mode === 'normal', `günlük mod açılmadı: ${JSON.stringify(d1)}`);
   check((await lsJSON('arc_upg_v1')).inv.shield.count === 3, 'günlük koşuda eşya harcandı');
   check(await ev(`getComputedStyle(document.getElementById('slot-hud')).display === 'none'`), 'günlükte yetenek slotları görünüyor');
+  const fx1 = await ev('ARC_TEST.coreFx');
+  check(fx1.timer === 8 && fx1.win === 2 && fx1.cap === fx0.cap - 4 && fx1.speed === 400, `günlükte yükseltmeler çalışıyor: ${JSON.stringify(fx1)}`);
   await ev(`ARC_TEST.trigger(0); true`);
   check((await ev('ARC_TEST.slotCD'))[0] === 0, 'günlükte yetenek tetiklendi');
   const sig1 = await ev('ARC_TEST.layoutSig(10)');
@@ -468,6 +473,8 @@ test('günlük meydan okuma: aynı pist, eşyasız ve yeteneksiz, normal mod, sk
   check(await ev('ARC_TEST.scene') === 'home', 'menüye dönülmedi');
   const d3 = await ev('ARC_TEST.daily');
   check(!d3.on && d3.mode === 'extreme', `menüde günlük mod kapanmadı / mod geri gelmedi: ${JSON.stringify(d3)}`);
+  const fx2 = await ev('ARC_TEST.coreFx');
+  check(fx2.timer === 12 && fx2.cap === fx0.cap, `günlükten sonra yükseltmeler geri gelmedi: ${JSON.stringify(fx2)}`);
 });
 
 test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {

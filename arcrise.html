@@ -7079,6 +7079,9 @@ const ARC_DB = (() => {
   const frand = () => _fxRng ? _fxRng() : Math.random();
   // Tohumlu pist: günlük koşu ya da meydan okuma (iki oyuncu aynı pisti oynar; eşya yok, sandık/büyük coin yok)
   const _seeded = () => _dailyRun || !!_activeChal;
+  // Oynanışı etkileyen CORE yükseltme seviyesi: günlükte herkes aynı koşulda → 0 (kayıtlı seviye değişmez,
+  // günlük bitince geri gelir). Görsel yükseltmeler (iz rengi/kalınlığı vb.) bundan geçmez.
+  function gUpg(k) { if (_dailyRun) return 0; try { return (upg && upg[k]) || 0; } catch (_) { return 0; } }
   const CHAL_TRIES = 3;   // meydan okumada deneme hakkı — en yüksek skor sayılır
   const dailyDay = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
   const dailySeed = day => { let h = 2166136261; for (const c of 'arcrise-daily-' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -7201,7 +7204,7 @@ const ARC_DB = (() => {
     if (boosterType === 'wide')        base = W / 3;
     else if (boosterType === 'narrow') base = W / 5;
     else                                base = W / 4;
-    const mult = 1 + ((upg && upg.radiusActive) || 0) * 0.10;
+    const mult = 1 + gUpg('radiusActive') * 0.10;
     return base * mult;
   }
 
@@ -7362,7 +7365,7 @@ const ARC_DB = (() => {
     if (gameMode === 'extreme')   base = 800;
     else if (gameMode === 'wife') base = 400 * 0.5; // 50% of Chill speed
     else                          base = 400;
-    const mult = 1 + ((upg && upg.speedActive) || 0) * 0.10;
+    const mult = 1 + gUpg('speedActive') * 0.10;
     return base * mult;
   }
   // İki ayrı CORE upgrade'i geri sayımı yönetir:
@@ -7371,8 +7374,8 @@ const ARC_DB = (() => {
   //              kalma süresi + altın toplarda daha büyük çarpan (countdown/2).
   //   comboWin → yeşil combo PENCERESİ (üstteki 2 kademe): 2.0s taban, +0.5s/sv.
   //              Kademe süresini ölçekler, rakamı değiştirmez.
-  function comboDisplayMax() { return 8 + ((upg && upg.timer) || 0); }
-  function comboWindowSec()  { return 2 + ((upg && upg.comboWin) || 0) * 0.5; }
+  function comboDisplayMax() { return 8 + gUpg('timer'); }
+  function comboWindowSec()  { return 2 + gUpg('comboWin') * 0.5; }
   // Toplam enerji süresi = kademe sayısı × kademe süresi (= pencere / 2 kademe).
   function comboTimerSec()   { return comboDisplayMax() * (comboWindowSec() / 2); }
   // comboMax → zincirin TAVANI (kaç yeşil üst üste sayılır): taban ×3, satın alınarak
@@ -7380,7 +7383,7 @@ const ARC_DB = (() => {
   // Zincir toplamı 5·n·(n+1) olduğundan tavan doğrudan skor eksenidir:
   //   ×3 → 60/zincir   ×4 → 100   ×5 → 150   ×6 → 210   ×7 → 280
   const COMBO_CAP_BASE = 3;
-  function comboCap() { return COMBO_CAP_BASE + ((upg && upg.comboMax) || 0); }
+  function comboCap() { return COMBO_CAP_BASE + gUpg('comboMax'); }
   // v26 SKOR: tüm kazançlar ×0.2 (skorlar çok hızlı büyüyordu, 6 hane çabuk doluyordu) ve
   // COMBO ÇARPANI — seri yaptıkça ×2, ×3 … tavana kadar yükselir, tavanda kalır ve seri
   // sürdükçe kazanılan HER skoru (mesafe dahil) çarpar. Yeşil banttan çıkınca ×1'e döner.
@@ -8672,30 +8675,16 @@ const ARC_DB = (() => {
   }
 
 
-  // ── CLOSE CALL: sıyrıldığı yerde belirgin yazı + 2 sn'de sönen kırmızı vignette ──────────
-  // Vignette bir kez offscreen'e çizilir; her karede yalnız globalAlpha ile basılır (gradyan maliyeti yok).
-  const CC_VIG_DUR = 2.0;
-  let _ccVigT = 0, _ccCool = 0, _wallNm = false, _ccVigCv = null;
-  function ccVignette() {
-    if (_ccVigCv && _ccVigCv.width === W && _ccVigCv.height === H) return _ccVigCv;
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const x = c.getContext('2d');
-    const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.75);
-    g.addColorStop(0, 'rgba(255,20,40,0)'); g.addColorStop(0.6, 'rgba(255,20,40,0.19)'); g.addColorStop(1, 'rgba(220,0,30,0.55)');
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-    return (_ccVigCv = c);
-  }
+  // ── CLOSE CALL: sıyrıldığı yerde belirgin yazı (2 sn bekleme). Kırmızı ekran vinyeti kaldırıldı:
+  // ilerledikçe kıl payı kaçışlar sıklaşınca ekran neredeyse sürekli kırmızı kalıyordu.
+  let _ccCool = 0, _wallNm = false;
   function triggerCloseCall(pts) {
-    _ccVigT = CC_VIG_DUR; _ccCool = 2.0;
+    _ccCool = 2.0;
     floatTexts.push({ x: player.x, y: player.y - 22, text: pts > 0 ? 'CLOSE! +' + pts : 'CLOSE!', hue: 15, life: 1, scale: 1.6, pop: true });
   }
-  function resetCloseCall() { _ccVigT = _ccCool = 0; _wallNm = false; }
+  function resetCloseCall() { _ccCool = 0; _wallNm = false; }
   function drawCloseCall(dt) {
     if (_ccCool > 0) _ccCool -= dt;
-    if (_ccVigT <= 0) return;
-    const k = _ccVigT / CC_VIG_DUR;
-    ctx.save(); ctx.globalAlpha = k * k * (3 - 2 * k); ctx.drawImage(ccVignette(), 0, 0); ctx.restore();
-    _ccVigT = Math.max(0, _ccVigT - dt);
   }
 
   // ── Float Texts (combo bonuses) ──────────────────────────
@@ -10054,7 +10043,7 @@ const ARC_DB = (() => {
       GAME_SPEED = player.speed;
     }
     // Score: base altitude + scoreBonus (combo points from greens)
-    const profitMul = 1 + (upg.profit || 0) * 0.10;   // CORE upgrade — artık SKOR çarpanı (coin değil)
+    const profitMul = 1 + gUpg('profit') * 0.10;   // CORE upgrade — artık SKOR çarpanı (coin değil)
     // Score now tracks distancePx (spawn-relative). Previously used maxAscend
     // which only goes above 0 once player.y < 0 (~866 px climb). Short
     // Extreme runs that died early ended with score=0 and skipped Firestore.
@@ -10177,7 +10166,7 @@ const ARC_DB = (() => {
     // ── FEATS: kapı / ×2 halkası / koridor kıvılcımları
     if (_ringMulT > 0) _ringMulT = Math.max(0, _ringMulT - dt);
     if (dyingT < 0 && !tutActive) {
-      const magGrabF = (upg.magnetRange || 0) * MAG_PX_PER_LVL;
+      const magGrabF = gUpg('magnetRange') * MAG_PX_PER_LVL;
       for (let i = feats.length - 1; i >= 0; i--) {
         const f = feats[i];
         if (f.kind === 'ring') {
@@ -10289,7 +10278,7 @@ const ARC_DB = (() => {
     }
     if (!isGhost && !tutActive && dyingT < 0) {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
-      const wallTol = (upg.wallSoft || 0);
+      const wallTol = gUpg('wallSoft');
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
         if (runBounces > 0) {                 // Bounce eşyası: duvardan aynalı seker
           useBounce(player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y);
@@ -10358,7 +10347,7 @@ const ARC_DB = (() => {
       _lastSafePos = { x: player.x, y: player.y };
     }
     // MAGNET (pasif): her seviye toplama menzilini büyütür → değmeden, yaklaşınca toplar.
-    const magGrab = (upg.magnetRange || 0) * MAG_PX_PER_LVL;
+    const magGrab = gUpg('magnetRange') * MAG_PX_PER_LVL;
     for (let i = bonuses.length - 1; i >= 0; i--) {
       const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
       if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
@@ -11682,6 +11671,7 @@ const ARC_DB = (() => {
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
     get obstacleAlpha() { return _obsA; },
+    get coreFx() { return { timer: comboDisplayMax(), cap: comboCap(), win: comboWindowSec(), speed: getBaseSpeed() }; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },
     get coinAnim() { return { from: _coinAnimFrom, to: _coinAnimTo, carry: coinCarry, earned: coinsEarned, today: coinsEarnedToday() }; },
@@ -15511,7 +15501,7 @@ const ARC_DB = (() => {
         <span class="dl-txt">
           <span class="dl-title">DAILY RUN</span>
           <span class="dl-row dl-lead">${iconHTML('crown', { size: 11 })}<span class="dl-nm" id="dl-lead-name">…</span><b id="dl-lead-score"></b></span>
-          <span class="dl-row dl-you">${dl.best ? `<span class="dl-lbl">YOU</span><b>${_fmtN(dl.best)}</b><span class="dl-rk" id="dl-rank"></span>` : '<span class="dl-lbl">NO ITEMS · NO ABILITIES</span>'}</span>
+          <span class="dl-row dl-you">${dl.best ? `<span class="dl-lbl">YOU</span><b>${_fmtN(dl.best)}</b><span class="dl-rk" id="dl-rank"></span>` : '<span class="dl-lbl">NO ITEMS · NO UPGRADES</span>'}</span>
         </span>
         <span class="dl-act">
           <button class="dl-play" type="button"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>PLAY</button>
