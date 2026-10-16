@@ -344,6 +344,20 @@ test('tutorial: gerçek run\'a geçişte takılı item harcanır', async () => {
   check(n === 2, `tutorial sonrası run: shield 3 → ${n} (beklenen 2)`);
 });
 
+test('tutorial: ekranın altına inen top yukarı seker, görünür kalır', async () => {
+  await fresh({}, { firstplay: false });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(800);
+  check(await ev('ARC_TEST.tutActive'), 'tutorial başlamadı');
+  await ev(`document.getElementById('gc').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 300 })); true`); await sleep(300);
+  check(await ev('ARC_TEST.running'), 'tutorial dokunuşla akmaya başlamadı');
+  await ev(`ARC_TEST.tutDrop(); true`); await sleep(400);
+  const vis = await ev(`(() => { const p = ARC_TEST.player, c = document.getElementById('gc'); return { y: p.y, sy: p.y - ARC_TEST.camY, H: c.height }; })()`);
+  check(vis.sy < vis.H, `top ekranın altında kaldı: ${JSON.stringify(vis)}`);
+  await sleep(1200);
+  const v2 = await ev(`(() => { const p = ARC_TEST.player; return p.y - ARC_TEST.camY; })()`);
+  check(v2 < vis.H, `top yine ekran dışına çıktı: ${v2}`);
+});
+
 test('credits: alert yerine oyun penceresi', async () => {
   await fresh();
   await ev(`document.getElementById('btn-credits').click(); true`); await sleep(300);

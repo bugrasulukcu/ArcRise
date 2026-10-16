@@ -10519,6 +10519,13 @@ const ARC_DB = (() => {
     if (player.x - player.r < walls.left || player.x + player.r > walls.right) {
       bounceOffWall();                             // duvarda ölüm yok → geri sek
     }
+    // Ekranın altı da duvar: kamera aşağı inmediği için aşağı dönen top görünmez alanda kalıyordu → yukarı sek
+    if (W2S(player.y) + player.r > H - 4) {
+      player.y = S2W(H - 4 - player.r - 1);
+      if (Math.sin(player.heading) > 0) player.heading = -player.heading;   // y bileşeni aynalanır (yukarı)
+      beginArc(awaySign(0, -1), getRadius());      // yay alt kenardan uzağa (yukarı) kıvrılır
+      haptic(20);
+    }
     if (tutStage === 2) {
       const b = bonuses[0];
       if (b && player.y < b.y - 140) {             // kaçırdı → yenisi, ipucuyla
@@ -11681,6 +11688,8 @@ const ARC_DB = (() => {
     get trailInfo() { return { n: trail.length, headD: Math.round(trail.at(-1)?.d || 0), tailD: Math.round(trail[0]?.d || 0) }; },
     // Test: topun gidiş yönünde, çarpacağı mesafeye engel koy
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
+    get tutActive() { return tutActive; }, get camY() { return camY; }, get running() { return running; },
+    tutDrop: () => { const d = S2W(H + 20) - player.y; player.y += d; player.cy += d; },   // test: topu ekran altına it
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
     tap: () => { if (running) { beginArc(-player.dir, getRadius()); markTapFx(); } },
     // Test: kristali topun DIŞ yanına (yay merkezinin tersi), kenarlar arası 12 px koy → çarpmadan sıyırır
