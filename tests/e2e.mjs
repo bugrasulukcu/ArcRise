@@ -431,6 +431,30 @@ test('reklam: geçiş reklamı koşullar sağlanınca AGAIN\'de çıkar, 90 sn d
   check(await ev('__ads.inter') === 1, '90 sn dolmadan ikinci geçiş reklamı gösterildi');
 });
 
+test('reklam: web test modu (?fakeads) — sayaçlı sahte reklam, ✕ erken çıkış ödülsüz, hızlı modda geçiş', async () => {
+  await fresh({ arc_fakeads: 'fast', arc_coin_carry: '0.95' });
+  check(await waitFor('ARC_TEST.ads.ready', 4000), 'web test modunda reklam hazır olmadı');
+  await playRun(5000);
+  check(!(await ev(`document.getElementById('btn-coin-x2').hidden`)), 'test modunda ×2 düğmesi görünmüyor');
+  const c0 = await ev('ARC_TEST.coins');
+  await ev(`document.getElementById('btn-coin-x2').click(); true`); await sleep(300);
+  check(await ev(`!!document.getElementById('fake-ad')`), 'sahte reklam ekranı açılmadı');
+  await ev(`document.querySelector('#fake-ad .fa-x').click(); true`); await sleep(200);
+  check(!(await ev(`!!document.getElementById('fake-ad')`)) && await ev('ARC_TEST.coins') === c0, '✕ ile erken çıkış ödül verdi / ekran kapanmadı');
+  await ev(`document.getElementById('btn-coin-x2').click(); true`);
+  check(await waitFor(`!document.querySelector('#fake-ad .fa-claim').hidden`, 7000), 'sayaç bitince CLAIM çıkmadı');
+  await ev(`document.querySelector('#fake-ad .fa-claim').click(); true`); await sleep(200);
+  check(await ev('ARC_TEST.coins') > c0, 'CLAIM ödül vermedi');
+  // bu ekranda ödüllü izlendi → AGAIN'de geçiş yok; yeni oyun sonunda (10 sn dolunca) hızlı modda çıkar, kendi kapanır
+  await ev(`document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 2000) && !(await ev(`!!document.getElementById('fake-ad')`)), 'ödüllü sonrası AGAIN\'de reklam çıktı');
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  await sleep(10500);
+  await ev(`ARC_TEST.setInterRuns(1); document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`!!document.getElementById('fake-ad')`, 2000), 'hızlı modda geçiş reklamı çıkmadı');
+  check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('fake-ad')`, 6000), 'geçiş reklamı kapanıp oyun başlamadı');
+});
+
 test('credits: alert yerine oyun penceresi', async () => {
   await fresh();
   await ev(`document.getElementById('btn-credits').click(); true`); await sleep(300);

@@ -3793,6 +3793,20 @@
     #btn-coin-x2:disabled { opacity: .55; }
     #btn-coin-x2:not([hidden]) ~ #go-coin-progress, #go-coin-top:has(#btn-coin-x2:not([hidden])) #go-coin-progress { display: none; }
     html#arc #btn-coin-x2 svg { fill: #2a1a00 !important; stroke: none; filter: none; }
+    /* Web TEST reklamı (?fakeads=1): gerçek reklamın yerini tutan sayaç ekranı */
+    #fake-ad { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(80% 60% at 50% 40%, #2a1d63, #0b0820 70%); font-family: var(--font); color: #fff; }
+    #fake-ad .fa-x { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 14px; width: 40px; height: 40px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.5); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; cursor: pointer; }
+    #fake-ad .fa-card { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(78vw, 300px); }
+    #fake-ad .fa-tag { font-size: 10px; letter-spacing: 2px; color: #ffd24a; border: 1px solid rgba(255,210,74,.6); padding: 4px 10px; border-radius: 6px; }
+    #fake-ad .fa-num { font-size: 64px; font-weight: 800; line-height: 1; }
+    #fake-ad .fa-bar { width: 100%; height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+    #fake-ad .fa-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8fe6ff, #c9a6ff); transform-origin: left; transform: scaleX(0); }
+    #fake-ad .fa-sub { font-size: 9px; letter-spacing: 1px; color: rgba(255,255,255,.55); text-align: center; }
+    #fake-ad .fa-claim { padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(160,240,255,.8); cursor: pointer;
+      background: linear-gradient(180deg, #a6efff, #3bb8e0); color: #041a24; font-family: var(--font); font-weight: 800; letter-spacing: 1.5px; }
+    #fake-ad .fa-claim[hidden] { display: none; }
     #go-coin-lbl { display: inline-flex; align-items: center; gap: 7px; color: #ffcc44; }
     #go-coin-ico { display: inline-flex; width: 22px; height: 22px; flex: 0 0 auto; }
     html#arc #go-coin-ico svg { width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,200,60,.5)); }
@@ -6234,12 +6248,49 @@ const ARC_DB = (() => {
     const plat = (() => { try { return (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'web'; } catch (_) { return 'web'; } })();
     const P = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
     let ready = false, privacyRequired = false, rwLoaded = false, inLoaded = false, busy = false, lastAdTs = 0;
+    // Web TEST modu (gerçek oyuncular görmez): ?fakeads=1 → sahte sayaçlı reklam ekranı, gerçek kurallar;
+    // ?fakeads=fast → geçiş reklamı kuralları gevşek; ?fakeads=0 → kapat. Seçim tarayıcıda hatırlanır.
+    const FAKE = (() => {
+      if (plat !== 'web') return '';
+      try {
+        const q = new URLSearchParams(location.search).get('fakeads');
+        if (q === '0') localStorage.removeItem('arc_fakeads');
+        else if (q === '1' || q === 'fast') localStorage.setItem('arc_fakeads', q);
+        return localStorage.getItem('arc_fakeads') || '';
+      } catch (_) { return ''; }
+    })();
+    // Sahte reklam: tam ekran "TEST AD" sayacı. ✕ her an çıkar; ödüllüde sayaç bitmeden çıkmak ödülsüzdür.
+    function fakeShow(kind, done) {
+      const secs = kind === 'rewarded' ? 5 : 3;
+      const ov = document.createElement('div');
+      ov.id = 'fake-ad';
+      ov.innerHTML = `<button class="fa-x" type="button" aria-label="Close ad">✕</button>
+        <div class="fa-card"><div class="fa-tag">TEST AD · ${kind === 'rewarded' ? 'REWARDED' : 'INTERSTITIAL'}</div>
+        <div class="fa-num">${secs}</div><div class="fa-bar"><i></i></div>
+        <div class="fa-sub">${kind === 'rewarded' ? 'Watch to the end to get the reward' : 'Ad between games'}</div>
+        <button class="fa-claim" type="button" hidden>CLAIM REWARD</button></div>`;
+      document.body.appendChild(ov);
+      const num = ov.querySelector('.fa-num'), bar = ov.querySelector('.fa-bar i'), claim = ov.querySelector('.fa-claim');
+      const t0 = performance.now(); let finished = false, closed = false;
+      const tick = () => {
+        if (closed) return;
+        const t = (performance.now() - t0) / 1000, left = Math.max(0, secs - t);
+        num.textContent = String(Math.ceil(left)); bar.style.transform = `scaleX(${Math.min(1, t / secs)})`;
+        if (left <= 0 && !finished) { finished = true; num.textContent = '✓'; if (kind === 'rewarded') claim.hidden = false; else close(); return; }
+        if (!finished) requestAnimationFrame(tick);
+      };
+      const close = () => { if (closed) return; closed = true; ov.remove(); done(kind === 'rewarded' && finished); };
+      ov.querySelector('.fa-x').addEventListener('click', close);
+      claim.addEventListener('click', close);
+      requestAnimationFrame(tick);
+    }
     const opts = k => ({ adId: ((AD_UNITS[plat] || {})[k]) || '', isTesting: AD_TESTING });
     const load = {
       rewarded: () => { if (!ready || rwLoaded) return; P().prepareRewardVideoAd(opts('rewarded')).then(() => { rwLoaded = true; }, () => { rwLoaded = false; }); },
       interstitial: () => { if (!ready || inLoaded) return; P().prepareInterstitial(opts('interstitial')).then(() => { inLoaded = true; }, () => { inLoaded = false; }); },
     };
     async function init() {
+      if (ADS_ENABLED && FAKE) { ready = true; console.log('[Ads] web TEST modu:', FAKE); return; }
       if (!ADS_ENABLED || plat === 'web' || !P()) return;
       try {
         let ci = await P().requestConsentInfo();
@@ -6260,6 +6311,7 @@ const ARC_DB = (() => {
     function show(kind, finish) {
       if (!ready || busy) { finish(false); return; }
       busy = true;
+      if (FAKE) { fakeShow(kind, ok => { busy = false; lastAdTs = Date.now(); finish(ok); }); return; }
       let got = false; const hs = [];
       const ev = kind === 'rewarded'
         ? { dis: 'onRewardedVideoAdDismissed', fail: 'onRewardedVideoAdFailedToShow', rew: 'onRewardedVideoAdReward' }
@@ -6283,6 +6335,8 @@ const ARC_DB = (() => {
     return {
       init,
       available: () => ready,
+      // Geçiş reklamı eşikleri (web hızlı test modunda gevşek)
+      rules: () => FAKE === 'fast' ? { minGames: 0, runs: 1, gapMs: 10000 } : { minGames: 5, runs: 3, gapMs: 90000 },
       busy: () => busy,
       sinceLastMs: () => Date.now() - lastAdTs,
       showRewarded: onDone => show('rewarded', ok => onDone(!!ok)),
@@ -10623,7 +10677,8 @@ const ARC_DB = (() => {
   // bu ekranda ödüllü reklam izlenmemiş; Wife modunda yok. Aksi halde then() hemen çalışır.
   function maybeInterstitial(then) {
     const ok = AdProvider.available() && !AdProvider.busy() && gameMode !== 'wife' && !_adRewardedThisOver
-      && (stats.gamesTotal || 0) >= 5 && _interRuns >= 3 && AdProvider.sinceLastMs() >= 90000;
+      && (stats.gamesTotal || 0) >= AdProvider.rules().minGames && _interRuns >= AdProvider.rules().runs
+      && AdProvider.sinceLastMs() >= AdProvider.rules().gapMs;
     if (!ok) { then(); return; }
     _interRuns = 0;
     AdProvider.showInterstitial(() => then());
