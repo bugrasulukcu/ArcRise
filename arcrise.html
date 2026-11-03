@@ -1142,7 +1142,7 @@
     }
     .chip-val.len4 { font-size: 11px; letter-spacing: .4px; }
     .chip-val.len5 { font-size: 9.5px; letter-spacing: .2px; }
-    /* Coin variant — mirrors .coins-buy in the coins popup */
+    /* Coin variant — altın coin çipi */
     .chip-coin {
       border: 1.5px solid rgba(255,210,80,.5);
       background:
@@ -1268,49 +1268,6 @@
               background-clip: text;
       color: transparent;
       text-shadow: 0 0 16px rgba(255,180,40,.45);
-    }
-
-    /* Purchase tier buttons */
-    #coins-buy-row {
-      display: flex; gap: 8px; width: 100%;
-    }
-    #coins-buy-row[hidden] { display: none; }   /* id kuralı UA hidden'ı ezmesin */
-    .coins-buy {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 10px 6px;
-      border-radius: 12px;
-      border: 1.5px solid rgba(255,210,80,.5);
-      background:
-        radial-gradient(120% 80% at 50% 0%, rgba(255,238,68,.16), transparent 60%),
-        linear-gradient(180deg, rgba(60,40,8,.78), rgba(28,18,4,.85));
-      color: #ffd866; font-family: var(--font);
-      cursor: pointer;
-      box-shadow:
-        0 0 12px rgba(255,170,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.16);
-      transition: transform .2s ease-out, box-shadow .2s ease-out, border-color .2s ease-out;
-    }
-    .coins-buy:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255,210,80,.9);
-      box-shadow: 0 0 22px rgba(255,170,0,.50), 0 4px 10px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.26);
-    }
-    .coins-buy:active {
-      transform: translateY(0) scale(0.98);
-      border-color: rgba(255,220,100,1);
-      box-shadow: 0 0 30px rgba(255,190,0,.65), inset 0 1px 0 rgba(255,255,255,.20);
-      transition-duration: .08s;
-    }
-    .coins-buy-amount {
-      font-size: 14px; letter-spacing: 1.4px;
-      background: linear-gradient(180deg, #fff6b3 0%, #ffd866 60%, #b8860b 100%);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent;
-    }
-    .coins-buy-price {
-      font-size: 9px; letter-spacing: 1.2px;
-      color: rgba(255,210,140,.7);
     }
 
     /* UPGRADES jumper — primary action, bigger than Close. */
@@ -4801,29 +4758,6 @@
       </div>
     </div>
 
-    <!-- Purchase tier buttons — v1'de IAP kapalı (IAP_ENABLED ile açılır) -->
-    <!-- Tier'lar v23 ölçeğine göre: giriş ~3 casual gün, üst tier kataloğun
-         ~%75'i. Coin/$ oranı 505 → 770 (1.5× yayılım) — orta tier "akıllı
-         seçim" gibi dursun, üst tier zorunlu gibi durmasın. -->
-    <div id="coins-buy-row" hidden>
-      <button class="coins-buy" data-amount="55">
-        <span class="coins-buy-amount">+55</span>
-        <span class="coins-buy-price">$0.99</span>
-      </button>
-      <button class="coins-buy" data-amount="200">
-        <span class="coins-buy-amount">+200</span>
-        <span class="coins-buy-price">$2.99</span>
-      </button>
-      <button class="coins-buy" data-amount="450">
-        <span class="coins-buy-amount">+450</span>
-        <span class="coins-buy-price">$5.99</span>
-      </button>
-      <button class="coins-buy" data-amount="1100">
-        <span class="coins-buy-amount">+1100</span>
-        <span class="coins-buy-price">$12.99</span>
-      </button>
-    </div>
-
     <button id="coins-to-upgrades">UPGRADES</button>
   </div>
 </div>
@@ -6174,8 +6108,8 @@ const ARC_DB = (() => {
 
   // ── Cüzdan (wallets/{uid}) ───────────────────────────────────────
   // İki güven seviyesi (bkz. firestore.rules):
-  //   purchased            → sunucu yazar (RevenueCat webhook), client okur.
   //   earnedSync/spentSync → client yazar; amacı CİHAZ DEĞİŞİMİNDE GERİ YÜKLEME.
+  //   (purchased alanı: eski IAP planından kaldı; oyun satın alma içermez, okunmaz.)
   // Rules monotonluk dayattığı için bayat bir cihaz buluttaki ilerlemeyi ezemez.
   async function fetchWallet() {
     if (!projectId || projectId.startsWith('BURAYA')) return null;
@@ -6183,15 +6117,14 @@ const ARC_DB = (() => {
     if (!uid) return null;
     try {
       const res = await fbFetch(`${BASE}/wallets/${uid}?key=${apiKey}`);
-      if (res.status === 404) return { earnedSync: 0, spentSync: 0, purchased: 0, isNew: true };
+      if (res.status === 404) return { earnedSync: 0, spentSync: 0, isNew: true };
       if (!res.ok) return null;
       const f = (await res.json()).fields || {};
       const num = k => Number(f[k]?.integerValue ?? f[k]?.doubleValue ?? 0) || 0;
-      return { earnedSync: num('earnedSync'), spentSync: num('spentSync'), purchased: num('purchased'), isNew: false };
+      return { earnedSync: num('earnedSync'), spentSync: num('spentSync'), isNew: false };
     } catch(_) { return null; }
   }
-  // Yerel defterleri buluta yaz. purchased ALANI GÖNDERİLMEZ — rules zaten
-  // client'ın ona dokunmasını reddeder; göndermemek update'i basit tutar.
+  // Yerel defterleri buluta yaz (rules client'ın purchased alanına dokunmasını zaten reddeder).
   async function syncWallet(earned, spent) {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     await ensureAuth(); const uid = getUid();
@@ -6280,9 +6213,8 @@ const ARC_DB = (() => {
   // ── Canvas setup ──────────────────────────────────────────
   const W = 600;
   // ── Yayın özellik bayrakları ──────────────────────────────
-  // v1 (web build): gerçek IAP/reklam SDK'sı yok → kapalı. Native (Capacitor) pakete
-  // billing/AdMob eklenip mağaza test kanalında doğrulandıktan sonra true yap.
-  const IAP_ENABLED = false;   // COINS ekranındaki fiyatlı satın-alma tier'ları
+  // Oyun yalnız reklamla gelir sağlar (uygulama içi satın alma yok). Reklam SDK'sı native
+  // pakete eklenip mağaza test kanalında doğrulandıktan sonra true yap.
   const ADS_ENABLED = false;   // ölünce "reklam izle · devam et" ödüllü reklam
   const H_REF = 1066;   // mesafe/zorluk hesapları için SABİT referans (cihazdan bağımsız adalet)
   let H = 1066;         // GÖRÜNÜM yüksekliği — ekran oranına göre değişir (uzun ekranı doldurur)
@@ -7495,17 +7427,15 @@ const ARC_DB = (() => {
       localStorage.setItem('arc_denom_v23', '1');
     } catch(_){}
   }
-  // Parayla alınan coin — sunucu-otoriter (wallets/{uid}.purchased). Client bunu
-  // yalnızca OKUR; yerel kopya sadece çevrimdışı gösterim için tutulur.
-  let walletPurchased = Number(localStorage.getItem('arc_wallet_purchased') || 0) || 0;
-  let coins = Math.max(0, coinsEarned + walletPurchased - coinsSpent);
+  // Bakiye = kazanılan − harcanan (uygulama içi satın alma yok). Eski IAP planının yerel anahtarı temizlenir.
+  try { localStorage.removeItem('arc_wallet_purchased'); } catch(_) {}
+  let coins = Math.max(0, coinsEarned - coinsSpent);
   // Bakiyeyi defterlerden yeniden türet + yerel anahtarları yaz.
   const syncCoins = () => {
-    coins = Math.max(0, coinsEarned + walletPurchased - coinsSpent);
+    coins = Math.max(0, coinsEarned - coinsSpent);
     try {
       localStorage.setItem('arc_coins_earned',    String(coinsEarned));
       localStorage.setItem('arc_coins_spent',     String(coinsSpent));
-      localStorage.setItem('arc_wallet_purchased', String(walletPurchased));
       localStorage.setItem('arc_coins',           String(coins));
     } catch(_){}
     pushWallet();
@@ -7529,8 +7459,8 @@ const ARC_DB = (() => {
     if (!w) return;
     const newEarned = Math.max(coinsEarned, w.earnedSync);
     const newSpent  = Math.max(coinsSpent,  w.spentSync);
-    const changed = (newEarned !== coinsEarned) || (newSpent !== coinsSpent) || (w.purchased !== walletPurchased);
-    coinsEarned = newEarned; coinsSpent = newSpent; walletPurchased = w.purchased;
+    const changed = (newEarned !== coinsEarned) || (newSpent !== coinsSpent);
+    coinsEarned = newEarned; coinsSpent = newSpent;
     if (changed) { syncCoins(); try { applyProfile(); } catch(_){} }
     else pushWallet();   // bulutta yoksa/geride ise yerel durumu yükle
   }
@@ -11398,7 +11328,7 @@ const ARC_DB = (() => {
     try { await ARC_DB.deleteMyData(playerName, myTag()); } catch(_){}
     // 2) Local tüm anahtarlar (kimlik token'ı dahil → taze anonim kimlik).
     ['arc_best','arc_sfx','arc_mus','arc_fb','arc_gfx','arc_aa','arc_bestdist','arc_firstplay','arc_name','arc_avatar',
-     'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt','arc_wallet_purchased',
+     'arc_coins','arc_coins_spent','arc_coins_earned','arc_coin_day','arc_coin_day_amt',
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
@@ -11409,7 +11339,6 @@ const ARC_DB = (() => {
      'arc_ga_cid',   // analitik kimliği de sıfırlanır → silmeden sonra yeni, bağlantısız kimlik
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
-    walletPurchased = 0;   // bulut cüzdanı deleteMyData ile zaten silindi
     bestDistanceM = 0;
     stats = loadStats();
     allGhosts = [];
@@ -14140,20 +14069,6 @@ const ARC_DB = (() => {
   });
   document.getElementById('coins-modal-close').addEventListener('click', () => coinsModal.classList.remove('open'));
   coinsModal.addEventListener('click', e => { if (e.target === coinsModal) coinsModal.classList.remove('open'); });
-  // Satın-alma tier'ları: IAP açıkken göster + bağla. v1'de kapalı (gizli).
-  (function initCoinIAP() {
-    const row = document.getElementById('coins-buy-row');
-    if (row) row.hidden = !IAP_ENABLED;
-    if (!IAP_ENABLED) return;   // kapalıysa dinleyici bağlama
-    document.querySelectorAll('.coins-buy').forEach(b => {
-      b.addEventListener('click', () => {
-        const amt = Number(b.dataset.amount) || 0;
-        // TODO: gerçek IAP — Capacitor billing / RevenueCat çağrısı → başarılıysa grantCoins(amt)
-        console.log('[Coins] purchase', { amount: amt });
-        alert(`In-app purchase — ${amt} coins.`);
-      });
-    });
-  })();
   // Jump from Coins to Upgrades (closes coins, opens upgrades)
   document.getElementById('coins-to-upgrades').addEventListener('click', () => {
     coinsModal.classList.remove('open');

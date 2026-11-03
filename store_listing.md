@@ -51,7 +51,7 @@ Simple to learn, hard to put down. How far can you rise?
 ## App content anketi notları
 
 - **Ads**: Hayır (şu an `ADS_ENABLED=false`) — açıldığında bu cevap güncellenmeli.
-- **In-app purchases**: Hayır (şu an `IAP_ENABLED=false`) — açıldığında güncellenmeli, fiyat aralığı girilmeli.
+- **In-app purchases**: Hayır — oyun yalnızca reklamla gelir sağlar (IAP kodu kaldırıldı, Kasım 2026).
 - **Target audience / age**: Genel (13+ önerilir çünkü online leaderboard + kullanıcı adı + arkadaş sistemi var — "Designed for Families" programına girmeyin, karma sosyal özellikler var).
 - **Data safety anketi**:
   - Toplanan veri: kullanıcı adı (App info bölümünde public), oyun içi skor/mesafe (App activity), cihaz için anonim kimlik (App info).
