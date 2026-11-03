@@ -50,14 +50,16 @@ Simple to learn, hard to put down. How far can you rise?
 
 ## App content anketi notları
 
-- **Ads**: Hayır (şu an `ADS_ENABLED=false`) — açıldığında bu cevap güncellenmeli.
+- **Ads**: **Evet** — Google AdMob (ödüllü: devam + coin ×2; sınırlı geçiş reklamı). Yalnız Android/iOS; web'de reklam yok. Play'de "Contains ads" etiketi.
+- **Advertising ID (Play Console → App content)**: **Evet**, kullanılıyor — amaç *Advertising or marketing* (+ Analytics/Fraud prevention). `play-services-ads` `AD_ID` iznini manifest'e kendisi ekler.
 - **In-app purchases**: Hayır — oyun yalnızca reklamla gelir sağlar (IAP kodu kaldırıldı, Kasım 2026).
 - **Target audience / age**: Genel (13+ önerilir çünkü online leaderboard + kullanıcı adı + arkadaş sistemi var — "Designed for Families" programına girmeyin, karma sosyal özellikler var).
 - **Data safety anketi**:
   - Toplanan veri: kullanıcı adı (App info bölümünde public), oyun içi skor/mesafe (App activity), cihaz için anonim kimlik (App info).
   - **Analitik (measurementId doldurulunca aktif)**: App activity → *App interactions* (run başlangıç/bitiş, eğitim, görev) + Device or other IDs → *rastgele analitik kimliği* (`arc_ga_cid`). Amaç: **Analytics**. Google Analytics = data processor → "collected", "shared" değil. Reklam kişiselleştirme/Google Signals kapalı. App Store "App Privacy" formunda: *Usage Data → Product Interaction*, "Not linked to you", "Not used for tracking".
-  - Toplanmayan: gerçek ad, e-posta, telefon, konum, kişiler, fotoğraf galerisi.
-  - Veri paylaşımı: 3. taraf ile paylaşım yok (Firebase = data processor, Google altyapısı, "shared" değil "processed" olarak işaretlenir).
+  - **Reklam (AdMob SDK)** — Play Data safety: *Device or other IDs* (Advertising ID), *Approximate location* (IP'den), *App interactions* + *Diagnostics*; amaç **Advertising or marketing**, **Analytics**, **Fraud prevention, security**; **Shared** = Evet (Google AdMob, bağımsız denetleyici); zorunlu değil — kullanıcı AB'de onay verir. App Store "App Privacy": *Identifiers → Device ID*, *Usage Data → Advertising Data*, *Location → Coarse Location*, *Diagnostics*; **Used for tracking** = Evet (ATT izni verilirse kişiselleştirilmiş reklam) → ATT penceresi zorunlu (eklendi).
+  - Toplanmayan: gerçek ad, e-posta, telefon, kesin konum, kişiler, fotoğraf galerisi.
+  - Veri paylaşımı: oyun verisi 3. tarafla paylaşılmaz (Firebase = data processor). Reklam verisi AdMob ile paylaşılır (yukarıda).
   - Silme: Uygulama içi hesap silme mevcut → "Users can request data deletion" = Evet.
 - **Privacy policy URL**: `https://bugrasulukcu.github.io/ArcRise/privacy.html` (canlı, doğrulandı ✓)
 - **Content rating anketi**: Şiddet/kumar/kullanıcı üretimi müstehcen içerik yok → muhtemelen PEGI 3 / Everyone çıkacak. Anket sırasında "kullanıcılar birbirleriyle etkileşime girebilir mi" sorusuna (arkadaş/leaderboard nedeniyle) **Evet** denmeli.
@@ -85,3 +87,21 @@ Simple to learn, hard to put down. How far can you rise?
 4. Signed **AAB** yükle (bkz. `android/keystore.properties` + `keystore/` klasörü — Android Studio'da `Build → Generate Signed Bundle`).
 5. Internal testing track'e yükle, test e-postalarını ekle (kendi hesabın + varsa test kullanıcıları).
 6. Test linkini açıp cihazda/emülatörde kur, temel akışı doğrula.
+
+
+---
+
+## Reklam yayın kontrol listesi (AdMob)
+
+Kod tarafı hazır (`arcrise.html` → `AD_TESTING`, `AD_UNITS`; Google TEST kimlikleriyle). Yayından önce:
+
+1. **AdMob hesabı**: Android ve iOS için ayrı uygulama oluştur; her birinde **Ödüllü** ve **Geçiş** reklam birimi aç.
+2. **Uygulama kimlikleri** (`ca-app-pub-…~…`): Android → `android/app/src/main/res/values/strings.xml` (`admob_app_id`), iOS → `ios/App/App/Info.plist` (`GADApplicationIdentifier`). Şu an Google'ın test kimlikleri yazılı.
+3. **Reklam birimleri** (`ca-app-pub-…/…`): `arcrise.html` → `AD_UNITS`; ardından `AD_TESTING = false`.
+4. **iOS SKAdNetwork**: `Info.plist` → `SKAdNetworkItems`'a Google'ın iOS kurulum kılavuzundaki tam listeyi ekle (şu an yalnız Google'ın kendi kimliği var).
+5. **Onay mesajı (AB/UK)**: AdMob → Privacy & messaging → GDPR mesajı oluştur ve yayınla (UMP formu buradan gelir). İsteğe bağlı: iOS için ATT öncesi açıklama mesajı.
+6. **app-ads.txt**: Market listesindeki **geliştirici web sitesi alan adının kökünde** yayınlanmalı (alt klasör geçmez). GitHub Pages için `bugrasulukcu.github.io` adlı ayrı bir repo açıp köküne `app-ads.txt` koy; içerik:
+   `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0` (pub kimliği AdMob hesabından). Play ve App Store'daki "Website" alanına `https://bugrasulukcu.github.io` yaz.
+7. **Market formları**: yukarıdaki *Ads*, *Advertising ID*, *Data safety* / *App Privacy* cevaplarını gir.
+8. **Test**: gerçek cihazda test cihazı kimliğiyle dene; kendi reklamına asla tıklama (hesap kapatılabilir). AB onay akışı için `requestConsentInfo({ debugGeography: EEA, testDeviceIdentifiers })`.
+9. **Ödemeler**: AdMob → Payments: vergi ve banka bilgileri.
