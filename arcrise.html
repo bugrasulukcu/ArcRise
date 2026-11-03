@@ -3785,6 +3785,14 @@
     #go-coin-row.done { animation: goCoinDone 1s ease-out; }
     @keyframes goCoinDone { 25% { border-color: rgba(255,214,90,.65); box-shadow: 0 0 24px rgba(255,200,60,.3), inset 0 1px 0 rgba(255,255,255,.08); } }
     #go-coin-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    /* Ödüllü reklam: bu oyunun coin'ini ikiye katla (görünürken ilerleme yazısının yerini alır) */
+    #btn-coin-x2 { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; cursor: pointer;
+      font-family: var(--font); font-size: 9.5px; font-weight: 800; letter-spacing: 1.2px; color: #2a1a00;
+      border: 1px solid rgba(255,230,140,.9); background: linear-gradient(180deg, #ffe58a, #f5b42a); box-shadow: 0 0 12px rgba(255,190,60,.45); }
+    #btn-coin-x2[hidden] { display: none; }
+    #btn-coin-x2:disabled { opacity: .55; }
+    #btn-coin-x2:not([hidden]) ~ #go-coin-progress, #go-coin-top:has(#btn-coin-x2:not([hidden])) #go-coin-progress { display: none; }
+    html#arc #btn-coin-x2 svg { fill: #2a1a00 !important; stroke: none; filter: none; }
     #go-coin-lbl { display: inline-flex; align-items: center; gap: 7px; color: #ffcc44; }
     #go-coin-ico { display: inline-flex; width: 22px; height: 22px; flex: 0 0 auto; }
     html#arc #go-coin-ico svg { width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(255,200,60,.5)); }
@@ -4485,11 +4493,12 @@
       <span class="modal-head-spacer"></span>
     </div>
     <div id="privacy-body">
-      <p><b>ArcRise Privacy Policy</b> · Last updated 2026-06</p>
+      <p><b>ArcRise Privacy Policy</b> · Last updated 2026-11</p>
       <p><b>What we collect.</b> A randomly generated anonymous ID (to save your progress and online identity), the username and avatar you pick, your scores &amp; distances, your drawn trail, and any friend connections you create. We do <b>not</b> collect your real name, email, phone, precise location or contacts.</p>
       <p><b>How it's used.</b> Only to run the game: leaderboards, your profile shown to friends, cross-player ghost trails and on-map death markers. Your chosen username is <b>public</b> on leaderboards.</p>
       <p><b>Where it's stored.</b> On Google Firebase (Cloud Firestore + Anonymous Authentication). Their handling is governed by Google's privacy terms. Settings live on your device.</p>
-      <p><b>Ads &amp; payments.</b> No third-party ads or in-app purchases are active in this version. If added later, this policy will be updated.</p>
+      <p><b>Ads.</b> The mobile app is free and shows ads through Google AdMob: optional rewarded videos (continue a run, double your coins) and occasional full-screen ads between games. AdMob may use your device's advertising ID and approximate location to show and measure ads. In the EEA/UK you are asked for consent first, and on iOS ads are only personalised if you allow tracking. There are no in-app purchases. Google's practices: policies.google.com/technologies/ads</p>
+      <button id="privacy-ads-btn" class="btn-gray" type="button" hidden style="width:100%;font-size:10.5px;margin:4px 0 10px">AD PRIVACY CHOICES</button>
       <p><b>Your control.</b> You can permanently delete <b>all</b> your data — on this device and online (scores, profile, friends) — anytime via <b>Settings → Delete Account &amp; Data</b>.</p>
       <p><b>Children.</b> No personal information is required to play.</p>
       <p><b>Contact.</b> bugrasulukcu@gmail.com</p>
@@ -4501,7 +4510,7 @@
 <div id="reset-modal">
   <div id="reset-modal-box" class="gl gl-red gl-glass">
     <div id="reset-modal-title">DELETE ACCOUNT & DATA?</div>
-    <div id="reset-modal-sub">This permanently deletes <b>all your data and purchases</b> — coins, gear, abilities, badges, quests, progress — and your <b>online data</b>: leaderboard scores, profile and friend connections. This cannot be undone.</div>
+    <div id="reset-modal-sub">This permanently deletes <b>all your data and progress</b> — coins, gear, abilities, badges, quests, progress — and your <b>online data</b>: leaderboard scores, profile and friend connections. This cannot be undone.</div>
     <div id="reset-modal-actions">
       <button id="reset-cancel" type="button">CANCEL</button>
       <button id="reset-confirm-btn" type="button">CONTINUE</button>
@@ -4575,6 +4584,7 @@
       <div id="go-coin-top">
         <span id="go-coin-lbl"><span id="go-coin-ico" class="ic-coin"></span><span id="go-coin-earned">+0</span><span id="go-coin-word">COINS</span></span>
         <span id="go-coin-progress"></span>
+        <button id="btn-coin-x2" type="button" hidden><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3.5v17a1 1 0 0 0 1.54.84l13-8.5a1 1 0 0 0 0-1.68l-13-8.5A1 1 0 0 0 5 3.5z"/></svg>AD · ×2</button>
       </div>
       <div id="go-coin-bar-wrap"><div id="go-coin-bar"></div><i id="go-coin-tip"></i></div>
     </div>
@@ -4605,12 +4615,6 @@
           </span>
         </button>
       </div>
-    </div>
-    <!-- Rewarded ad stub overlay — gerçek SDK entegre edilene kadar sahte 3sn "reklam" -->
-    <div id="ad-stub-overlay" style="display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column;gap:18px">
-      <div style="font-size:22px;letter-spacing:4px;color:rgba(255,255,255,.85)">AD</div>
-      <div id="ad-stub-count" style="font-size:48px;color:var(--green)">3</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.4)">REWARDED AD PLACEHOLDER</div>
     </div>
   </div>
 </div>
@@ -6212,10 +6216,80 @@ const ARC_DB = (() => {
 
   // ── Canvas setup ──────────────────────────────────────────
   const W = 600;
-  // ── Yayın özellik bayrakları ──────────────────────────────
-  // Oyun yalnız reklamla gelir sağlar (uygulama içi satın alma yok). Reklam SDK'sı native
-  // pakete eklenip mağaza test kanalında doğrulandıktan sonra true yap.
-  const ADS_ENABLED = false;   // ölünce "reklam izle · devam et" ödüllü reklam
+  // ── Reklam (AdMob — yalnız native Android/iOS; web'de reklam yok) ──────────
+  // Oyun yalnız reklamla gelir sağlar (uygulama içi satın alma yok).
+  //   Ödüllü: ölünce "devam et" (run başına 1), oyun sonu "coin ×2" (run başına 1).
+  //   Geçiş: oyun sonunda AGAIN / MENU'de, sıkı sınırla (bkz. maybeInterstitial).
+  // Yayından ÖNCE: AD_TESTING=false yap ve AD_UNITS'e AdMob hesabındaki gerçek reklam birimlerini yaz
+  // (uygulama kimlikleri ayrıca AndroidManifest/strings.xml ve iOS Info.plist'te).
+  const ADS_ENABLED = true;
+  const AD_TESTING  = true;   // true: Google test reklamları (eklenti kendi test birimlerini kullanır)
+  const AD_UNITS = {
+    android: { rewarded: 'ca-app-pub-0000000000000000/0000000000', interstitial: 'ca-app-pub-0000000000000000/0000000000' },
+    ios:     { rewarded: 'ca-app-pub-0000000000000000/0000000000', interstitial: 'ca-app-pub-0000000000000000/0000000000' },
+  };
+  // Sözleşme: showRewarded(onDone) → reklam kapanınca onDone(ödül kazanıldı mı); showInterstitial(onDone) → kapanınca onDone().
+  // Hazır değilse (web, onay yok, yüklenemedi) hemen onDone(false)/onDone() — oyun asla reklam bekleyip takılmaz.
+  const AdProvider = (() => {
+    const plat = (() => { try { return (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'web'; } catch (_) { return 'web'; } })();
+    const P = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+    let ready = false, privacyRequired = false, rwLoaded = false, inLoaded = false, busy = false, lastAdTs = 0;
+    const opts = k => ({ adId: ((AD_UNITS[plat] || {})[k]) || '', isTesting: AD_TESTING });
+    const load = {
+      rewarded: () => { if (!ready || rwLoaded) return; P().prepareRewardVideoAd(opts('rewarded')).then(() => { rwLoaded = true; }, () => { rwLoaded = false; }); },
+      interstitial: () => { if (!ready || inLoaded) return; P().prepareInterstitial(opts('interstitial')).then(() => { inLoaded = true; }, () => { inLoaded = false; }); },
+    };
+    async function init() {
+      if (!ADS_ENABLED || plat === 'web' || !P()) return;
+      try {
+        let ci = await P().requestConsentInfo();
+        if (ci.isConsentFormAvailable && ci.status === 'REQUIRED') ci = await P().showConsentForm();
+        privacyRequired = ci.privacyOptionsRequirementStatus === 'REQUIRED';
+        if (ci.canRequestAds) {
+          if (plat === 'ios') {   // ATT: yalnız henüz sorulmadıysa
+            try { const t = await P().trackingAuthorizationStatus(); if (t.status === 'notDetermined') await P().requestTrackingAuthorization(); } catch (_) {}
+          }
+          await P().initialize({});
+          ready = true;
+          load.rewarded(); load.interstitial();
+        }
+      } catch (e) { console.warn('[Ads] init', e); }
+      try { document.getElementById('privacy-ads-btn').hidden = !privacyRequired; } catch (_) {}
+    }
+    // Tam ekran reklamı göster; kapanınca/başarısız olunca finish(ödül) bir kez çağrılır.
+    function show(kind, finish) {
+      if (!ready || busy) { finish(false); return; }
+      busy = true;
+      let got = false; const hs = [];
+      const ev = kind === 'rewarded'
+        ? { dis: 'onRewardedVideoAdDismissed', fail: 'onRewardedVideoAdFailedToShow', rew: 'onRewardedVideoAdReward' }
+        : { dis: 'interstitialAdDismissed', fail: 'interstitialAdFailedToShow' };
+      const done = ok => {
+        if (!busy) return; busy = false;
+        hs.forEach(h => Promise.resolve(h).then(x => x && x.remove && x.remove()).catch(() => {}));
+        lastAdTs = Date.now();
+        if (kind === 'rewarded') rwLoaded = false; else inLoaded = false;
+        load[kind]();   // bir sonrakini önceden yükle
+        finish(ok);
+      };
+      if (ev.rew) hs.push(P().addListener(ev.rew, () => { got = true; }));
+      hs.push(P().addListener(ev.dis, () => done(got)));
+      hs.push(P().addListener(ev.fail, () => done(false)));
+      const loaded = kind === 'rewarded' ? rwLoaded : inLoaded;
+      const prep = loaded ? Promise.resolve() : (kind === 'rewarded' ? P().prepareRewardVideoAd(opts(kind)) : P().prepareInterstitial(opts(kind)));
+      prep.then(() => kind === 'rewarded' ? P().showRewardVideoAd() : P().showInterstitial())
+          .then(r => { if (kind === 'rewarded' && r) got = true; }, () => done(false));
+    }
+    return {
+      init,
+      available: () => ready,
+      busy: () => busy,
+      sinceLastMs: () => Date.now() - lastAdTs,
+      showRewarded: onDone => show('rewarded', ok => onDone(!!ok)),
+      showInterstitial: onDone => show('interstitial', () => onDone()),
+      showPrivacyOptions: () => { try { return P().showPrivacyOptionsForm(); } catch (_) { return Promise.resolve(); } },
+    };
+  })();
   const H_REF = 1066;   // mesafe/zorluk hesapları için SABİT referans (cihazdan bağımsız adalet)
   let H = 1066;         // GÖRÜNÜM yüksekliği — ekran oranına göre değişir (uzun ekranı doldurur)
   // ── Tema stili (canvas) ─────────────────────────────────────
@@ -9574,7 +9648,7 @@ const ARC_DB = (() => {
     started = false; running = false;
     _reviveOffered = false; _lastSafePos = null;
     dyingT = -1; cancelRoulette(); _deathInfo = null;
-    _statsCounted = false; _adContinueUsed = false; resumeCountdown = 0;
+    _statsCounted = false; _adContinueUsed = false; _adDoubleUsed = false; resumeCountdown = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
     _nextBigCoinCm = 250; _runBigCoins = 0; _runBigBanked = 0; _runChestCoins = 0; _runChestBanked = 0;
@@ -10541,6 +10615,19 @@ const ARC_DB = (() => {
   let _lastSafePos = null;        // son güvenli oyuncu pozisyonu (her safe frame güncellenir)
   let _statsCounted   = false;    // gamesTotal bu run için sayıldı mı (ad-continue çift saymasın)
   let _adContinueUsed = false;    // reklamla devam bu run'da kullanıldı mı (tek hak)
+  let _adDoubleUsed = false, _x2Amount = 0;   // oyun sonu "coin ×2" ödüllü reklamı (run başına tek hak)
+  let _adRewardedThisOver = false;            // bu oyun sonu ekranında ödüllü reklam izlendi → geçiş reklamı yok
+  let _interRuns = 0;                         // son geçiş reklamından beri sayılan (≥10 sn) run
+  // Geçiş reklamı: oyun sonundan AGAIN/MENU'ye geçerken, yalnız şu koşullarda — en az 5 oyun oynanmış,
+  // son geçişten beri ≥3 run (10 sn'den kısa run'lar sayılmaz), herhangi bir reklamdan ≥90 sn geçmiş,
+  // bu ekranda ödüllü reklam izlenmemiş; Wife modunda yok. Aksi halde then() hemen çalışır.
+  function maybeInterstitial(then) {
+    const ok = AdProvider.available() && !AdProvider.busy() && gameMode !== 'wife' && !_adRewardedThisOver
+      && (stats.gamesTotal || 0) >= 5 && _interRuns >= 3 && AdProvider.sinceLastMs() >= 90000;
+    if (!ok) { then(); return; }
+    _interRuns = 0;
+    AdProvider.showInterstitial(() => then());
+  }
   let resumeCountdown = 0;        // reklamla dönünce top üzerinde 3→1 geri sayım (sn)
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
@@ -10735,6 +10822,7 @@ const ARC_DB = (() => {
       }
       // Badge koşulları için run metrikleri
       const runTimeS = (performance.now() - _runStartTs) / 1000;
+      if (firstDeathThisRun && runTimeS >= 10) _interRuns++;   // geçiş reklamı sayacı: kısa ölümler sayılmaz
       if (runDistCm >= 500 && runTimeS <= 60 && !stats.speedrunDone) stats.speedrunDone = true;
       // Survivor: hiçbir "ikinci şans" olmadan (revive / reklamla devam / Shield eşyası)
       if (runDistCm >= 800 && !_runUsedRevive && !_adContinueUsed && !_runShieldArmed && !stats.survivorDone) stats.survivorDone = true;
@@ -10756,11 +10844,16 @@ const ARC_DB = (() => {
     if (goBestInline) goBestInline.textContent = pad(newBest ? bestBefore : best);
     const goBestDistInline = document.getElementById('go-bestdist-val-inline');
     if (goBestDistInline) goBestDistInline.textContent = fmtDist((newBestDist ? bestDistBefore : bestDistanceM) || 0);
-    // Reklamla devam: run başına tek hak, wife mode'da ve güvenli nokta yoksa kapalı.
-    // ADS_ENABLED false iken (v1) hiç gösterilmez — sahte reklam yok.
+    // Reklamla devam: run başına tek hak; Wife, günlük/meydan okuma ve güvenli nokta yoksa kapalı.
+    // Reklam hazır değilse (web, onay yok) düğmeler hiç görünmez.
+    _adRewardedThisOver = false;
     const adBtn = document.getElementById('btn-continue-ad');
-    if (adBtn) adBtn.style.display =
-      (ADS_ENABLED && !_adContinueUsed && gameMode !== 'wife' && !_seeded() && _lastSafePos) ? '' : 'none';
+    if (adBtn) { adBtn.disabled = false; adBtn.style.display =
+      (AdProvider.available() && !_adContinueUsed && gameMode !== 'wife' && !_seeded() && _lastSafePos) ? '' : 'none'; }
+    // Coin ×2: bu oyun sonunda kazanılan coin kadar ek (run başına tek hak)
+    _x2Amount = (gameMode !== 'wife') ? Math.max(0, earned) : 0;
+    const x2Btn = document.getElementById('btn-coin-x2');
+    if (x2Btn) { x2Btn.disabled = false; x2Btn.hidden = !(AdProvider.available() && !_adDoubleUsed && _x2Amount >= 1); }
     try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
@@ -11321,6 +11414,8 @@ const ARC_DB = (() => {
   } else {
     showScene('home');
   }
+  // Reklam: arayüz açıldıktan sonra onay (AB/UK) → iOS takip izni → SDK başlat → reklamları önceden yükle (web'de hiçbir şey yapmaz)
+  setTimeout(() => { AdProvider.init(); }, 1200);
 
   // ── Reset Data ────────────────────────────────────────────
   async function doReset() {
@@ -11607,6 +11702,9 @@ const ARC_DB = (() => {
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
     spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
     get obstacleAlpha() { return _obsA; },
+    get coins() { return coins; },
+    get ads() { return { ready: AdProvider.available(), interRuns: _interRuns, cont: _adContinueUsed, dbl: _adDoubleUsed }; },
+    setInterRuns: n => { _interRuns = n; },
     get coreFx() { return { timer: comboDisplayMax(), cap: comboCap(), win: comboWindowSec(), speed: getBaseSpeed() }; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },
@@ -14937,6 +15035,8 @@ const ARC_DB = (() => {
   document.getElementById('btn-privacy').addEventListener('click', () => {
     try { openSub('privacy-modal'); } catch(_){}
   });
+  // AB/UK: reklam onayını sonradan değiştirme (Google UMP gizlilik seçenekleri formu; gerekmiyorsa düğme gizli)
+  document.getElementById('privacy-ads-btn').addEventListener('click', () => { AdProvider.showPrivacyOptions(); });
 
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
@@ -14947,31 +15047,11 @@ const ARC_DB = (() => {
     showScene('home');
   });
 
-  document.getElementById('wrap-again').addEventListener('click', () => startGame());   // iç düğme dinlemez (çift başlatma)
+  document.getElementById('wrap-again').addEventListener('click', () => {   // iç düğme dinlemez (çift başlatma)
+    if (scene === 'over') maybeInterstitial(() => { if (scene === 'over') startGame(); });
+    else startGame();
+  });
 
-  // ── Rewarded ad stub ──────────────────────────────────────
-  // v1'de ADS_ENABLED=false → "reklam izle · devam et" butonu hiç gösterilmez,
-  // bu sahte overlay çağrılmaz. Reklamı AÇARKEN: (1) aşağıdaki showRewarded gövdesini
-  // gerçek AdMob rewarded çağrısıyla değiştir, (2) ADS_ENABLED=true yap. Yalnız bayrağı
-  // açmak sahte "AD" ekranını gösterir — önce SDK'yı bağla.
-  // Sözleşme: showRewarded(onDone) — reklam tamamlanırsa onDone(true), iptalde onDone(false).
-  const AdProvider = {
-    showRewarded(onDone) {
-      const ov = document.getElementById('ad-stub-overlay');
-      const cnt = document.getElementById('ad-stub-count');
-      let left = 3;
-      cnt.textContent = String(left);
-      ov.style.display = 'flex';
-      const iv = setInterval(() => {
-        left--;
-        if (left <= 0) {
-          clearInterval(iv);
-          ov.style.display = 'none';
-          onDone(true);
-        } else cnt.textContent = String(left);
-      }, 1000);
-    },
-  };
 
   // Reklam sonrası run'a devam — son güvenli noktadaki dar koridor yerine
   // ekranın ortasında, etraftaki engeller temizlenmiş ferah bir alanda
@@ -15010,9 +15090,30 @@ const ARC_DB = (() => {
     try { playBgMusic(); } catch(_){}
     haptic(40);
   }
-  document.getElementById('btn-continue-ad').addEventListener('click', () => {
-    if (_adContinueUsed) return;
-    AdProvider.showRewarded(ok => { if (ok) continueAfterAd(); });
+  document.getElementById('btn-continue-ad').addEventListener('click', e => {
+    if (_adContinueUsed || AdProvider.busy()) return;
+    const b = e.currentTarget; b.disabled = true;
+    AdProvider.showRewarded(ok => {
+      b.disabled = false;
+      if (!ok) return;
+      _adRewardedThisOver = true;
+      if (scene === 'over') continueAfterAd();
+    });
+  });
+  document.getElementById('btn-coin-x2').addEventListener('click', e => {
+    if (_adDoubleUsed || AdProvider.busy() || _x2Amount < 1) return;
+    const b = e.currentTarget; b.disabled = true;
+    AdProvider.showRewarded(ok => {
+      b.disabled = false;
+      if (!ok) return;
+      _adDoubleUsed = true; _adRewardedThisOver = true; b.hidden = true;
+      grantCoins(_x2Amount);
+      ++_goAnimTok;   // süren coin sayaç animasyonu yeni değeri ezmesin
+      const el = document.getElementById('go-coin-earned');
+      if (el) { el.textContent = '+' + (_x2Amount * 2); el.classList.remove('zero');
+        el.animate([{ transform: 'scale(1.5)', color: '#fff6c2' }, { transform: 'scale(1)', color: '#ffcc44' }], { duration: 450, easing: 'cubic-bezier(.2,.8,.3,1)' }); }
+      try { playCoinTing(0); haptic([15, 30, 15]); } catch (_) {}
+    });
   });
 
   // ── Share: skor kartı görseli + Web Share API (desteklenmezse indir) ──
@@ -16041,7 +16142,7 @@ const ARC_DB = (() => {
         btn.classList.remove('holding');
         fill.style.transition = 'width 0.2s ease';
         fill.style.width = '0%';
-        showScene('home');
+        maybeInterstitial(() => { if (scene === 'over') showScene('home'); });
       }, HOLD_MS);
       if (e && e.preventDefault) e.preventDefault();
     }

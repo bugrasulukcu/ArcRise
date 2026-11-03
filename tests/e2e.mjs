@@ -135,7 +135,24 @@ await send('Page.enable'); await send('Runtime.enable');
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__music = 0;
   const _st = AudioBufferSourceNode.prototype.start, _sp = AudioBufferSourceNode.prototype.stop;
   AudioBufferSourceNode.prototype.start = function(...a) { if (this.loop) { window.__music++; this.__m = 1; } return _st.apply(this, a); };
-  AudioBufferSourceNode.prototype.stop  = function(...a) { if (this.__m) { window.__music--; this.__m = 0; } return _sp.apply(this, a); };` });
+  AudioBufferSourceNode.prototype.stop  = function(...a) { if (this.__m) { window.__music--; this.__m = 0; } return _sp.apply(this, a); };
+  // Sahte AdMob (yalnız arc_test_fakeads=1 profilinde): native Capacitor eklentisini taklit eder.
+  // __ads.skip=true → reklam ödülsüz kapanır. Sayaçlar: rewarded / inter / privacy.
+  try { if (localStorage.getItem('arc_test_fakeads') === '1') {
+    const L = {}; const emit = n => (L[n] || []).slice().forEach(f => f({}));
+    window.__ads = { rewarded: 0, inter: 0, privacy: 0, skip: false };
+    window.Capacitor = { getPlatform: () => 'android', Plugins: { AdMob: {
+      requestConsentInfo: async () => ({ status: 'OBTAINED', isConsentFormAvailable: false, canRequestAds: true, privacyOptionsRequirementStatus: 'REQUIRED' }),
+      showConsentForm: async () => ({ status: 'OBTAINED', canRequestAds: true }),
+      trackingAuthorizationStatus: async () => ({ status: 'authorized' }), requestTrackingAuthorization: async () => {},
+      initialize: async () => {}, prepareRewardVideoAd: async () => ({}), prepareInterstitial: async () => ({}),
+      showRewardVideoAd: () => new Promise(res => { __ads.rewarded++; setTimeout(() => {
+        if (!__ads.skip) { emit('onRewardedVideoAdReward'); res({ type: 'coin', amount: 1 }); } emit('onRewardedVideoAdDismissed'); }, 60); }),
+      showInterstitial: () => new Promise(res => { __ads.inter++; setTimeout(() => { emit('interstitialAdDismissed'); res(); }, 60); }),
+      showPrivacyOptionsForm: async () => { __ads.privacy++; },
+      addListener: (n, f) => { (L[n] = L[n] || []).push(f); return Promise.resolve({ remove: () => { L[n] = (L[n] || []).filter(x => x !== f); } }); },
+    } } };
+  } } catch (_) {}` });
 
 // ── Yardımcılar ──────────────────────────────────────────────
 const nav = async url => { await send('Page.navigate', { url: 'about:blank' }); await sleep(100); await send('Page.navigate', { url }); };
@@ -356,6 +373,62 @@ test('tutorial: ekranın altına inen top yukarı seker, görünür kalır', asy
   await sleep(1200);
   const v2 = await ev(`(() => { const p = ARC_TEST.player; return p.y - ARC_TEST.camY; })()`);
   check(v2 < vis.H, `top yine ekran dışına çıktı: ${v2}`);
+});
+
+test('reklam: web\'de reklam düğmeleri hiç görünmez', async () => {
+  await fresh();
+  await sleep(1500);
+  check(!(await ev('ARC_TEST.ads.ready')), 'web\'de reklam hazır görünüyor');
+  await playRun(5000);
+  check(await ev(`getComputedStyle(document.getElementById('btn-continue-ad')).display === 'none'`), 'web\'de devam düğmesi görünüyor');
+  check(await ev(`document.getElementById('btn-coin-x2').hidden`), 'web\'de ×2 düğmesi görünüyor');
+});
+
+test('reklam: ×2 coin, ödülsüz kapatma, devam (tek hak), geçiş reklamı kuralları, gizlilik düğmesi', async () => {
+  await fresh({ arc_test_fakeads: '1', arc_stats_v1: { gamesTotal: 10 }, arc_coin_carry: '0.95' });   // kısa run da ≥1 coin versin
+  check(await waitFor('ARC_TEST.ads.ready', 5000), 'sahte AdMob ile reklam hazır olmadı');
+  check(!(await ev(`document.getElementById('privacy-ads-btn').hidden`)), 'AB gizlilik seçenekleri düğmesi görünmüyor');
+  await playRun(6000);
+  check(!(await ev(`document.getElementById('btn-coin-x2').hidden`)), `×2 düğmesi görünmüyor: ${JSON.stringify(await ev('({ ads: ARC_TEST.ads, anim: ARC_TEST.coinAnim, lbl: document.getElementById("go-coin-earned").textContent })'))}`);
+  // ödülsüz kapatma → coin değişmez
+  const c0 = await ev('ARC_TEST.coins');
+  await ev(`__ads.skip = true; document.getElementById('btn-coin-x2').click(); true`); await sleep(400);
+  check(await ev('ARC_TEST.coins') === c0 && !(await ev('ARC_TEST.ads.dbl')), 'ödülsüz kapatılan reklam coin verdi');
+  // izlenince → kazanılan kadar ek coin, düğme gizlenir
+  const amt = await ev(`parseInt(document.getElementById('go-coin-earned').textContent.replace('+', '')) || 0`);
+  await ev(`__ads.skip = false; document.getElementById('btn-coin-x2').click(); true`); await sleep(400);
+  const c1 = await ev('ARC_TEST.coins');
+  check(c1 > c0 && await ev('ARC_TEST.ads.dbl') && await ev(`document.getElementById('btn-coin-x2').hidden`), `×2 çalışmadı: ${c0} → ${c1} (kazanç ${amt})`);
+  // ödüllü izlenen ekranda AGAIN → geçiş reklamı YOK
+  await ev(`ARC_TEST.setInterRuns(5); true`);
+  // devam: izlenince run sürer, ikinci ölümde devam düğmesi yok
+  check(await ev(`getComputedStyle(document.getElementById('btn-continue-ad')).display !== 'none'`), 'devam düğmesi görünmüyor');
+  await ev(`document.getElementById('btn-continue-ad').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'reklamla devam oyuna dönmedi');
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'devam sonrası run bitmedi');
+  await sleep(1500);
+  check(await ev(`getComputedStyle(document.getElementById('btn-continue-ad')).display === 'none'`), 'devam hakkı ikinci kez sunuldu');
+  // ödüllü reklamlar az önce izlendi → 90 sn dolmadan AGAIN'de geçiş reklamı YOK
+  const i0 = await ev('__ads.inter');
+  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
+  check(await ev('__ads.inter') === i0, 'ödüllü reklamdan hemen sonra geçiş reklamı gösterildi');
+});
+
+test('reklam: geçiş reklamı koşullar sağlanınca AGAIN\'de çıkar, 90 sn dolmadan tekrar çıkmaz', async () => {
+  await fresh({ arc_test_fakeads: '1', arc_stats_v1: { gamesTotal: 10 } });
+  check(await waitFor('ARC_TEST.ads.ready', 5000), 'sahte AdMob ile reklam hazır olmadı');
+  await playRun(4000);
+  await ev(`ARC_TEST.setInterRuns(2); document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
+  check(await ev('__ads.inter') === 0, '3 run dolmadan geçiş reklamı gösterildi');
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'geçiş reklamından sonra oyun başlamadı');
+  check(await ev('__ads.inter') === 1, 'koşullar sağlanınca geçiş reklamı gösterilmedi');
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`); await sleep(500);
+  check(await ev('__ads.inter') === 1, '90 sn dolmadan ikinci geçiş reklamı gösterildi');
 });
 
 test('credits: alert yerine oyun penceresi', async () => {

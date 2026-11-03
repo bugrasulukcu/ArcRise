@@ -4,4 +4,6 @@
     <string name="title_activity_main">ArcRise</string>
     <string name="package_name">com.bugrasulukcu.arcrise</string>
     <string name="custom_url_scheme">com.bugrasulukcu.arcrise</string>
+    <!-- AdMob uygulama kimliği — Google TEST kimliği; yayından önce gerçek kimlikle değiştir -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>

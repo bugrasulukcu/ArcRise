@@ -14,6 +14,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- AdMob uygulama kimliği (strings.xml → admob_app_id). Şu an Google'ın TEST kimliği;
+             yayından önce AdMob hesabındaki gerçek uygulama kimliğiyle değiştir. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
