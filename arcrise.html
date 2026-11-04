@@ -8299,6 +8299,93 @@ const ARC_DB = (() => {
     ctx2.restore();
   }
 
+  // ── Uzay bükülmesi: şok dalgası, blob, topun çekimi ──────────────────────
+  // Izgara (oyun alanı) bu kaynaklarla bükülür; yalnız çizim — çarpışmaya etkisi yok.
+  //   shock: ölümde, merkezden yayılan güçlü halka · ring: toplamada küçük halka
+  //   blob : toplamada yerel şişme (önce kabarır, söner) · hole: topun çevresinde sürekli içe çekim
+  const WARP = { shock: { T: 1.3, A: 34, sp: 820, sg: 46 }, ring: { T: 0.7, A: 9, sp: 400, sg: 20 }, blob: { T: 0.6, A: 15, sg: 44 } };
+  const warps = [], _wl = [];
+  let _hole = null;   // bu karenin kara delik kaynağı (topun çevresi) — nesneler de ona doğru çekilir
+  function addWarp(kind, x, wy) {
+    if (LOWFX) return;
+    warps.push({ kind, x, wy, t: 0 });
+    if (warps.length > 12) warps.shift();
+  }
+  // Bu karenin kaynakları ekran koordinatında (grid de ekran koordinatında çizilir)
+  function prepWarps(dt) {
+    _wl.length = 0; _hole = null;
+    for (let i = warps.length - 1; i >= 0; i--) if ((warps[i].t += dt) >= WARP[warps[i].kind].T) warps.splice(i, 1);
+    if (LOWFX || (scene !== 'play' && scene !== 'over')) { warps.length = 0; return; }
+    for (const w of warps) {
+      const P = WARP[w.kind], u = w.t / P.T, y = W2S(w.wy);
+      if (w.kind === 'blob') _wl.push({ k: 1, x: w.x, y, A: P.A * Math.sin(Math.PI * Math.min(1, u * 1.6)) * (1 - u), sg: P.sg, reach: P.sg * 3 });
+      else { const R = P.sp * w.t; _wl.push({ k: 0, x: w.x, y, A: P.A * Math.pow(1 - u, 1.6), R, sg: P.sg, reach: R + P.sg * 3, glow: w.kind === 'shock' ? 1 - u : 0 }); }
+    }
+    if (scene === 'play' && dyingT < 0) _wl.push(_hole = { k: 2, x: player.x, y: W2S(player.y), A: 22, sg: 70, reach: 210 });   // kara delik
+  }
+  // q·e^(−q²) en çok q≈0.71'de 0.43 → ×2.33 ile tepe = A. Çekimde 2.33·A/sg < 1 → çizgi merkezi geçmez.
+  function warpPt(x, y, out) {
+    let dx = 0, dy = 0;
+    for (const w of _wl) {
+      const ex = x - w.x, ey = y - w.y, r2 = ex * ex + ey * ey;
+      if (r2 > w.reach * w.reach) continue;
+      const r = Math.sqrt(r2) || 1e-3;
+      let d;
+      if (w.k === 0) { const q = (r - w.R) / w.sg; d = w.A * Math.exp(-q * q); }
+      else { const q = r / w.sg; d = (w.k === 1 ? 1 : -1) * w.A * 2.33 * q * Math.exp(-q * q); }
+      dx += ex / r * d; dy += ey / r * d;
+    }
+    out.x = x + dx; out.y = y + dy;
+  }
+  // Kara deliğin nesnelere etkisi (engeller ve duvarlar HARİÇ — çarpılacak şeyin yeri yanıltmasın): yeşil / altın /
+  // mor toplar, parçacıklar, yazılar, halka/sandık/kıvılcım, dalgalar, başlangıç ve metre çizgileri, ölüm işaretleri
+  // ızgarayla aynı formülle topa doğru kayar. Yalnız çizim; toplama mesafesi gerçek konumdan hesaplanır.
+  // Toplanabilirler (enerji / altın / mor / sandık, coin, ×2 halkası) yalnız %25 çekilir: tam güçte "toplanmış
+  // ama alınamamış" gibi duruyorlardı (kullanıcı geri bildirimi). k: çekim katsayısı.
+  const HOLE_PICKUP_K = 0.25;
+  const _HO = { x: 0, y: 0 };
+  function holeOff(x, y, k = 1) {
+    _HO.x = 0; _HO.y = 0;
+    const w = _hole; if (!w) return _HO;
+    const ex = x - w.x, ey = y - w.y, r2 = ex * ex + ey * ey;
+    if (r2 > w.reach * w.reach || r2 < 1e-6) return _HO;
+    const r = Math.sqrt(r2), q = r / w.sg, d = -k * w.A * 2.33 * q * Math.exp(-q * q);
+    _HO.x = ex / r * d; _HO.y = ey / r * d;
+    return _HO;
+  }
+  // Döngü içinde: bir önceki nesnenin kaydırmasını geri alıp bunu uygular; döngü sonunda holeReset()
+  let _hx = 0, _hy = 0;
+  function holeShift(x, sy, k = 1) { const o = holeOff(x, sy, k); if (o.x !== _hx || o.y !== _hy) { ctx.translate(o.x - _hx, o.y - _hy); _hx = o.x; _hy = o.y; } }
+  function holeReset() { if (_hx || _hy) ctx.translate(-_hx, -_hy); _hx = _hy = 0; }
+  // Kesintisiz yatay çizgi (başlangıç / metre çizgisi) kara deliğin yakınında bükülerek
+  function holeHLine(x0, x1, sy) {
+    const w = _hole;
+    if (!w || Math.abs(sy - w.y) > w.reach) { ctx.moveTo(x0, sy); ctx.lineTo(x1, sy); return; }
+    for (let x = x0, i = 0; ; x = Math.min(x1, x + 10), i++) { const o = holeOff(x, sy); i ? ctx.lineTo(x + o.x, sy + o.y) : ctx.moveTo(x + o.x, sy + o.y); if (x >= x1) break; }
+  }
+  // Şok cephesinde hafif ışık halkası + topun arkasında kara delik: koyu, geniş, yumuşak sönen hale ve ince cam kenar
+  function drawWarpFx() {
+    const TAU = Math.PI * 2;
+    for (const w of _wl) {
+      if (!w.glow || w.R < 4) continue;
+      const g = ctx.createRadialGradient(w.x, w.y, Math.max(0, w.R - w.sg), w.x, w.y, w.R + w.sg);
+      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(220,235,255,${(0.13 * w.glow).toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(w.x, w.y, w.R + w.sg, 0, TAU); ctx.fill();
+    }
+    if (scene !== 'play' || dyingT >= 0) return;
+    const px = player.x, py = W2S(player.y), R = 160, pr = player.r;
+    const g = ctx.createRadialGradient(px, py, pr * 0.8, px, py, R);
+    g.addColorStop(0, 'rgba(0,0,0,.66)'); g.addColorStop(0.3, 'rgba(2,3,10,.34)'); g.addColorStop(0.65, 'rgba(4,6,16,.10)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, R, 0, TAU); ctx.fill();
+    if (LOWFX) return;
+    const rr = pr * 2.7, lg = ctx.createLinearGradient(px - rr, py - rr, px + rr, py + rr);
+    lg.addColorStop(0, 'rgba(255,255,255,.26)'); lg.addColorStop(0.45, 'rgba(170,200,255,.04)'); lg.addColorStop(1, 'rgba(200,160,255,.18)');
+    ctx.lineWidth = 1.2; ctx.strokeStyle = lg; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.stroke();
+    const ig = ctx.createRadialGradient(px - rr * 0.35, py - rr * 0.45, 0, px, py, rr);
+    ig.addColorStop(0, 'rgba(255,255,255,.07)'); ig.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = ig; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.fill();
+  }
+
   // ── Grid ─────────────────────────────────────────────────
   // Grid çizimi — fluid hissi için:
   //   - Yatay çizgiler, kaydırma offset'inin kesirini de kullanır (alt-piksel)
@@ -8312,6 +8399,24 @@ const ARC_DB = (() => {
     const off = ((oy % sz) + sz) % sz;
     // Edge fade: ekran üstünde ve altında 80px'lik bölgede alpha taper
     const fadeBand = 80;
+    // Bükülme (şok dalgası / blob / topun çekimi) etkisindeki çizgiler 12 px'lik parçalarla bükülerek çizilir
+    // Bükülen parçalar sapma miktarına göre 3 kademede parlar (bükülme seçilsin): kademe başına tek Path2D
+    const wl = ctx2 === bctx ? _wl : [], WS = 12, P = { x: 0, y: 0 };
+    const hit = (v, axis) => wl.some(w => Math.abs(v - (axis ? w.x : w.y)) < w.reach);
+    const glowP = wl.length ? [new Path2D(), new Path2D(), new Path2D()] : null, glowA = [0, 0, 0];
+    const bent = (x0, y0, x1, y1, n, a) => {   // (x0,y0)→(x1,y1) n parça; düz kısım ctx2'ye, sapanlar kademe yoluna
+      let px = 0, py = 0;
+      for (let i = 0; i <= n; i++) {
+        const fx = x0 + (x1 - x0) * i / n, fy = y0 + (y1 - y0) * i / n;
+        warpPt(fx, fy, P);
+        if (i) {
+          const d = Math.hypot(P.x - fx, P.y - fy), b = d < 2 ? -1 : d < 7 ? 0 : d < 15 ? 1 : 2;
+          if (b < 0) ctx2.lineTo(P.x, P.y);
+          else { ctx2.moveTo(P.x, P.y); glowP[b].moveTo(px, py); glowP[b].lineTo(P.x, P.y); glowA[b] = Math.max(glowA[b], a); }
+        } else ctx2.moveTo(P.x, P.y);
+        px = P.x; py = P.y;
+      }
+    };
     for (let y = -sz + off; y < H + sz; y += sz) {
       const yy = y + half;
       // Vertical alpha taper
@@ -8321,16 +8426,19 @@ const ARC_DB = (() => {
       if (a <= 0.001) continue;
       ctx2.globalAlpha = a;
       ctx2.beginPath();
-      ctx2.moveTo(0, yy); ctx2.lineTo(W, yy);
+      if (wl.length && hit(yy, 0)) bent(0, yy, W, yy, Math.ceil(W / WS), a);
+      else { ctx2.moveTo(0, yy); ctx2.lineTo(W, yy); }
       ctx2.stroke();
     }
     // Dikey çizgiler — sabit, alpha sabit (yatay edge'lere değer)
     ctx2.globalAlpha = alpha * 0.75;
     for (let x = 0; x < W; x += sz) {
       ctx2.beginPath();
-      ctx2.moveTo(x + half, 0); ctx2.lineTo(x + half, H);
+      if (wl.length && hit(x + half, 1)) bent(x + half, 0, x + half, H, Math.ceil(H / WS), alpha * 0.75);
+      else { ctx2.moveTo(x + half, 0); ctx2.lineTo(x + half, H); }
       ctx2.stroke();
     }
+    if (glowP) for (let b = 0; b < 3; b++) if (glowA[b] > 0) { ctx2.globalAlpha = Math.min(0.6, glowA[b] * (1.9 + b * 1.1)); ctx2.stroke(glowP[b]); }
     ctx2.restore();
   }
 
@@ -8352,11 +8460,11 @@ const ARC_DB = (() => {
       ctx.globalAlpha = 0.18;
       ctx.strokeStyle = '#9fd8ff';
       ctx.setLineDash([6, 9]);
-      ctx.beginPath(); ctx.moveTo(walls.left + 4, sy); ctx.lineTo(walls.right - 4, sy); ctx.stroke();
+      ctx.beginPath(); holeHLine(walls.left + 4, walls.right - 4, sy); ctx.stroke();
       ctx.setLineDash([]);
       ctx.globalAlpha = 0.40;
       ctx.fillStyle = '#9fd8ff';
-      ctx.fillText(k + 'M', walls.right - 10, sy - 10);
+      { const o = holeOff(walls.right - 10, sy - 10); ctx.fillText(k + 'M', walls.right - 10 + o.x, sy - 10 + o.y); }
     }
     ctx.restore();
   }
@@ -8568,14 +8676,15 @@ const ARC_DB = (() => {
     ctx.save();
     ctx.globalAlpha = _startCrossed ? 0.35 : 0.85;
     for (let x = L, i = 0; x < R; x += sq, i++) {
+      const o = holeOff(x + sq / 2, sy), ox = o.x, oy = o.y;   // kareler kara deliğe doğru tek tek kayar
       ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.9)' : 'rgba(20,24,34,0.9)';
-      ctx.fillRect(x, sy - sq, Math.min(sq, R - x), sq);
+      ctx.fillRect(x + ox, sy - sq + oy, Math.min(sq, R - x), sq);
       ctx.fillStyle = i % 2 ? 'rgba(20,24,34,0.9)' : 'rgba(255,255,255,0.9)';
-      ctx.fillRect(x, sy, Math.min(sq, R - x), sq);
+      ctx.fillRect(x + ox, sy + oy, Math.min(sq, R - x), sq);
     }
     ctx.fillStyle = '#fff'; ctx.font = "bold 12px 'Press Start 2P', monospace";
     ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.fillText(_startCrossed ? 'START' : 'START ▲', L + 8, sy - sq - 6);
+    { const o = holeOff(L + 30, sy - sq - 12); ctx.fillText(_startCrossed ? 'START' : 'START ▲', L + 8 + o.x, sy - sq - 6 + o.y); }
     ctx.restore();
   }
   function drawFeats() {
@@ -8585,6 +8694,7 @@ const ARC_DB = (() => {
     for (const f of feats) {
       const sy = W2S(f.y);
       if (sy < -80 || sy > H + 80) continue;
+      holeShift(f.x, sy, f.kind === 'gate' ? 0 : HOLE_PICKUP_K);   // kapı iki engelin arasına hizalı → kaymaz
       if (f.kind === 'gate') {
         const a = f.done ? Math.max(0, 1 - f.doneT / 0.6) : 1;
         const col = f.hit ? '124,255,122' : '255,210,74';
@@ -8654,6 +8764,7 @@ const ARC_DB = (() => {
         ctx.shadowBlur = 0; ctx.globalAlpha = 1;
       }
     }
+    holeReset();
     // ×2 aktifken oyuncunun etrafında kalan süre halkası
     if (_ringMulT > 0 && scene === 'play') {
       const sy = W2S(player.y), k = _ringMulT / 5;
@@ -8735,6 +8846,7 @@ const ARC_DB = (() => {
       const sy = W2S(b.y);
       if (sy < -100 || sy > H + 100) continue;
       ctx.save();
+      { const o = holeOff(b.x, sy, HOLE_PICKUP_K); ctx.translate(o.x, o.y); }
       const glowR = b.r * 2.8 * (tutGlow3 < 1 ? (1 + (tutGlow3 - 0.55) * 0.6) : 1);
       let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, glowR);
       g.addColorStop(0, `rgba(124,255,122,${0.9 * tutGlow3})`);
@@ -8752,6 +8864,7 @@ const ARC_DB = (() => {
       const sy = W2S(b.y);
       if (sy < -80 || sy > H + 80) continue;
       ctx.save();
+      { const o = holeOff(b.x, sy, HOLE_PICKUP_K); ctx.translate(o.x, o.y); }
       // Büyük glow (görünür olmaları için r çok küçük, glow geniş tutulur)
       const glowR = Math.max(12, b.r * 9);
       const pulse = 0.8 + 0.2 * Math.sin(now * 5 + b.x);
@@ -8781,6 +8894,7 @@ const ARC_DB = (() => {
       if (sy < -80 || sy > H + 80) continue;
       const pulse = 0.85 + 0.15 * Math.sin(now * 4);
       ctx.save();
+      { const o = holeOff(b.x, sy, HOLE_PICKUP_K); ctx.translate(o.x, o.y); }
       // Mor glow
       let g = ctx.createRadialGradient(b.x, sy, 0, b.x, sy, b.r * 3);
       g.addColorStop(0, `rgba(180,80,255,${.85 * pulse})`);
@@ -8843,6 +8957,7 @@ const ARC_DB = (() => {
     for (const t of floatTexts) {
       const sy = W2S(t.y);
       if (sy < -40 || sy > H + 40) continue;
+      holeShift(t.x, sy);
       const a = Math.max(0, t.life);
       const age = 1 - t.life;
       // pop (CLOSE!): ilk ~0.1 sn'de büyüyüp hafif aşar, sonra sabit; diğerleri soldukça hafif büyür
@@ -8857,6 +8972,7 @@ const ARC_DB = (() => {
       ctx.fillStyle = `hsl(${t.hue},100%,80%)`;
       ctx.fillText(t.text, t.x, sy);
     }
+    holeReset();
     ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -9070,6 +9186,7 @@ const ARC_DB = (() => {
     for (const p of particles) {
       const sy = W2S(p.y);
       if (sy < -80 || sy > H + 80) continue;
+      holeShift(p.x, sy);
       const a  = Math.max(0, p.life);
       if (p.home) {   // geri dönen parçacık: ucuz çizim — tek yollu iz + düz çokgen (gradyanlı hale yok)
         const T = p.trail, col = p.gold ? '#ffc93a' : '#7CFF7A';
@@ -9100,6 +9217,7 @@ const ARC_DB = (() => {
       drawPolygon(p.x, sy, gR, p.sides, p.rot);
       ctx.fill();
     }
+    holeReset();
     ctx.restore();
   }
 
@@ -9221,6 +9339,7 @@ const ARC_DB = (() => {
     const mx = (walls.left + walls.right) / 2;
     const showAv = upg.deathAvatar, showName = upg.deathName && !!playerName;
     ctx.save();
+    { const o = holeOff(mx, sy - 20); ctx.translate(o.x, o.y); }
     if (showAv) {
       const r = 16, cy = sy - r - 14;
       const img = ensureAvatarImg();
@@ -9270,6 +9389,7 @@ const ARC_DB = (() => {
       const mx = walls.left + 40 + (hh % 1000) / 1000 * Math.max(0, walls.right - walls.left - 80);
       const showAv = g.dAv, showName = g.dName && !!g.name;
       ctx.save();
+      { const o = holeOff(mx, sy - 20); ctx.translate(o.x, o.y); }
       ctx.globalAlpha = 0.85;
       if (showAv) {
         const r = 13, cy = sy - r - 12;
@@ -9563,6 +9683,7 @@ const ARC_DB = (() => {
     for (const rp of ripples) {
       const age = now - rp.t; if (age < 0 || age > 1) continue;
       ctx.save();
+      { const o = holeOff(rp.x, W2S(rp.y)); ctx.translate(o.x, o.y); }
       const col = rp.col || '124,255,122';
       const big = !!rp.col; // ölüm şok dalgaları daha hızlı/geniş açılır
       ctx.strokeStyle = `rgba(${col},${(1-age)*(big?.7:.45)})`;
@@ -10553,6 +10674,7 @@ const ARC_DB = (() => {
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 120, timeMul * boostMul);
         bonuses.splice(i, 1); energy = 1;
         spawnGreenPull(b.x, b.y);
+        addWarp('blob', b.x, b.y); addWarp('ring', b.x, b.y);
       }
     }
     // Altın top toplama — combo çarpanlı + flying score + sahne flash
@@ -10572,6 +10694,7 @@ const ARC_DB = (() => {
         // 3-aşamalı altın animasyonu: merkezde büyük "+base" → ×çarpan → HUD'a uç
         spawnFlyScore(b.x, W2S(b.y), b.pts, totalMul * comboMul(), finalPts);
         spawnGoldHome(b.x, b.y);
+        addWarp('blob', b.x, b.y); addWarp('ring', b.x, b.y);
         goldBalls.splice(i, 1);
         stats.goldTotal = (stats.goldTotal || 0) + 1; // badge sayacı (save endGame'de)
         _runGolds++;                                  // coin kazancı (run sonunda ödenir)
@@ -10588,6 +10711,7 @@ const ARC_DB = (() => {
         const finalPts = gainScore(10 * timeMul * boostMul);
         spawnFloatText(b.x, b.y - b.r - 8, '+' + finalPts, 280, timeMul * boostMul);
         spawnPurpleParticles(b.x, b.y);
+        addWarp('blob', b.x, b.y); addWarp('ring', b.x, b.y);
         purpleBalls.splice(i, 1);
         stats.purpleTotal = (stats.purpleTotal || 0) + 1; // badge sayacı
         activateBooster(b.type);
@@ -10784,6 +10908,7 @@ const ARC_DB = (() => {
     dyingT = 0;
     running = false;                              // oyuncuyu dondur
     spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
+    addWarp('shock', player.x, player.y);         // oyun alanını büken şok dalgası
     fadeOutMusic();                               // müzik sönerken patlama sesi öne çıkar
     if (sfxOn) {
       playSfx(deadBuffer, 'AUDIO/ArcRiseDead.wav', 1.0);
@@ -11450,6 +11575,7 @@ const ARC_DB = (() => {
     }
 
     // BG canvas: grid + arcs + beat flash
+    prepWarps(dtRaw);
     bctx.clearRect(0, 0, W, H);
     // Grid: play/over'da parallax (kamera hızının %45'i + üst/alt edge fade);
     // diğer sahnelerde yavaş zaman tabanlı kayma.
@@ -11471,7 +11597,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }

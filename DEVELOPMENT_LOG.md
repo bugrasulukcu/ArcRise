@@ -405,6 +405,14 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Deneme: oyun alanı bükülmesi (şok dalgası / blob) + topun arkasında kara delik (2026-11-04)
+
+- Kullanıcı isteği (beğenmezse geri alınacak): ölümde oyun alanını büken şok dalgası, toplamada yerel blob; topun arkasında büyük çaplı, sönen cam / kara delik efekti. (Instagram örnekleri açılamadı; tarife göre yapıldı.)
+- `WARP` / `addWarp` / `prepWarps` / `warpPt`: arka plan ızgarası etkilenen çizgilerde 12 px parçalarla bükülür. shock (ölüm: 820 px/sn yayılan halka, 34 px sapma, 1.3 sn), ring + blob (yeşil / altın / mor toplama: küçük halka + kabarıp sönen şişme), hole (top çevresinde sürekli içe çekim, 70 px σ; 2.33·A/σ < 1 → çizgi merkezi geçmez). Sapan parçalar sapma miktarına göre 3 kademede parlar (Path2D kademe başına bir stroke).
+- `drawWarpFx`: şok cephesinde hafif ışık halkası; topun arkasında 160 px koyu, sönen hale + ince gradyan cam kenar ve iç parıltı. Yalnız çizim, çarpışmaya etkisi yok. LOWFX'te bükülme yok (yalnız koyu hale).
+- Ölçüm (`tools/fps-bench.mjs`, CPU ×4, yoğun toplama): önceki ve yeni sürüm aynı — 60 fps, p99 16.8 ms, ağır kare yok.
+- Kara delik nesnelere de uygulandı (kullanıcı: engeller hariç tüm nesneler): `holeOff` / `holeShift` / `holeReset` / `holeHLine` ile yeşil / altın / mor toplar, parçacıklar, uçan yazılar, kapı / ×2 halkası / sandık / büyük coin / kıvılcım, toplama dalgaları, başlangıç (kareler tek tek) ve metre çizgileri (bükülen kesikli çizgi), kendi ve diğer oyuncuların ölüm işaretleri topa doğru kayar. Engeller ve duvarlar kaymaz (çarpışacağın yer yanıltmasın). Diğer oyuncu çizgileri (bölüm önbelleği) ve topun kendi izi kaymaz. Yalnız çizim; toplama gerçek konumdan. Ölçüm yine 60 fps. Geri bildirim ("mıknatısla çekilmiş ama alınamamış gibi") → toplanabilirler (enerji, altın, mor, sandık, büyük coin, ×2 halkası, kıvılcım) yalnız %25 çekilir (`HOLE_PICKUP_K`), kapı (engel arasına hizalı) hiç kaymaz; parçacık / yazı / çizgiler tam güçte.
+
 ### Rozet: üst kademe kazanılınca takılı eskisi çıkarılamıyordu; sol / sağ slot seçimi (2026-11-04)
 
 - **Hata:** takılı rozet eski kademe kimliğiyle (`score-1`) kalıyor, ızgara ise yeni kademeyi (`score-2`) gösteriyordu → hücre takılı görünmüyor, dokununca ikinci slota ikinci kez takılıyor, eskisi çıkarılamıyordu. Terfi yalnız açılışta, yeni kademe açılmadan ÖNCE yapılıyordu. Düzeltme: `promoteEquipped()` artık `checkBadgeUnlocks` yeni rozet açınca da çalışır (aynı ailenin iki slotta kalmış kademelerini teke indirir); ızgara takılı durumu aile bazında eşler (`eqIdx`).
