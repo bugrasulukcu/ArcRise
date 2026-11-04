@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Firestore okumaları ~520 → ~15–20 / run; çizgiler 100 (2026-11-04)
+
+- Ölçüm (sahte sunucu: 400 skor + 250 çizgi, fetch sayacı = dönen belge): run başına ~520 okuma. Sebep: her oyun sonunda `invalidateTopCache()` tüm okuma önbelleğini siliyordu → her run ölüm işaretleri (300 skor kaydı) + oyun sonu sıralaması (150) yeniden; çizgilerin "yeni" sorgusundaki 60 sn pay son dakikanın tüm çizgilerini her run yeniden okutuyordu.
+- Düzeltme: oyun sonunda önbellek silinmez (sıralama kendi satırını bu elin skoruyla zaten düzeltir); `getTopScores` mod süzgecini sunucuda yapar (mode+score DESC indeksi; yoksa eski geniş sorgu) → n+5 okuma; ölüm işaretleri 25 (≤105 kayıt) ve 15 dk önbellek; diğer oyuncu çizgileri 200 → **100**, tam yenileme 5 → 15 dk; yeni çizgi sorgusu 3 sn pay + en çok 15 kayıt.
+- Sonuç (aynı ölçüm): ilk run 47, sonrakiler 14–19 okuma; yazma 2–4 / run.
+
 ### Canlı sıra (HUD): solda skor, sağda mesafe sırası; okuma tavanlı (2026-11-04)
 
 - BEST'in altında RANK: run başında o moddaki oyuncu sayısından başlar, geçtikçe birinciliğe iner; her geçilen oyuncuda yeşil nabız, #1'de altın. Normal / Extreme'de; Daily, meydan okuma, Wife, tutorial ve çevrimdışında gizli. Kendi eski rekorun sayılmaz.

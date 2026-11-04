@@ -5583,14 +5583,14 @@ const ARC_DB = (() => {
   // so the cheapest call serves the larger one too if available.
   const CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes
   const _memCache = new Map();
-  function _cacheGet(key) {
+  function _cacheGet(key, ttl = CACHE_TTL_MS) {
     const m = _memCache.get(key);
-    if (m && Date.now() - m.ts < CACHE_TTL_MS) return m.rows;
+    if (m && Date.now() - m.ts < ttl) return m.rows;
     try {
       const raw = sessionStorage.getItem('arc_topcache_' + key);
       if (raw) {
         const obj = JSON.parse(raw);
-        if (Date.now() - obj.ts < CACHE_TTL_MS) {
+        if (Date.now() - obj.ts < ttl) {
           _memCache.set(key, obj);
           return obj.rows;
         }
@@ -5611,23 +5611,21 @@ const ARC_DB = (() => {
     // Overfetch for mode filter: top-N by score globally might be dominated
     // by one mode, starving the other. ×6 + 30 buffer captures plenty.
     // (Cache TTL keeps the cost down on repeats.)
-    const fetchN = target ? Math.min(n * 6 + 30, 250) : n;
-    const key = `${target || 'all'}:${fetchN}`;
+    // Mod süzgeci sunucuda (mode + score DESC bileşik indeksi) → n okuma. İndeks yoksa eski yol: geniş çek, istemcide süz.
+    const key = `${target || 'all'}:m${n}`;
     // Cache hit: zero reads.
     const cached = _cacheGet(key);
     if (cached) {
       return target ? cached.filter(r => r.mode === target).slice(0, n) : cached.slice(0, n);
     }
+    const q = (where, limit) => fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'scores' }], ...(where ? { where } : {}),
+        orderBy: [{ field: { fieldPath: 'score' }, direction: 'DESCENDING' }], limit } }),
+    });
     try {
-      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ structuredQuery: {
-          from:    [{ collectionId: 'scores' }],
-          orderBy: [{ field: { fieldPath: 'score' }, direction: 'DESCENDING' }],
-          limit:   fetchN,
-        }}),
-      });
+      let res = await q(target ? { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: target } } } : null, n + 5);
+      if (!res.ok && target) res = await q(null, Math.min(n * 6 + 30, 250));
       if (!res.ok) throw new Error('runQuery ' + res.status);  // hata cevabı boş liste olarak cache'lenmesin
       // Dedupe at the read layer — only each player's best per mode survives,
       // even if the doc store somehow contains historical duplicates.
@@ -5814,7 +5812,7 @@ const ARC_DB = (() => {
     // Overfetch for mode filter (one mode could dominate recent submits).
     const fetchN = target ? Math.min(limit * 3 + 30, 300) : limit;
     const key = `ghosts:${target || 'all'}:${fetchN}`;
-    const cached = _cacheGet(key);
+    const cached = _cacheGet(key, 15 * 60 * 1000);   // ölüm işaretleri yavaş değişir: 15 dk
     let parsed;
     if (cached) {
       parsed = cached;
@@ -9759,7 +9757,7 @@ const ARC_DB = (() => {
   // Uses ARC_DB.getCrossPlayerGhosts which reuses the leaderboard cache.
   async function fetchCrossPlayerGhosts() {
     try {
-      const list = await ARC_DB.getCrossPlayerGhosts(gameMode, 100);
+      const list = await ARC_DB.getCrossPlayerGhosts(gameMode, 25);   // en çok ~105 okuma, 15 dk'da bir
       crossPlayerGhosts = list.filter(g => g.name !== playerName);
     } catch(e) {
       crossPlayerGhosts = [];
@@ -9770,7 +9768,8 @@ const ARC_DB = (() => {
   // Normal: iz göstermeyi açanlardan → en uzun run'ın sahibi (o run'ı), arkadaşlar, başlangıç çizgisini geçmiş
   // son oyunlar (oyuncu başına son oyun). Daily: günün en yüksek skoru, arkadaşlar, son oyunlar (herkes).
   // Toplam en çok 200. Noktalar ilk noktaya (oyuncunun başlangıcı) göre yükseklik olarak saklanır.
-  const OTHER_TRACES_MAX = 200, TR_TILE = 1024, TR_TILES_MAX = 8, TR_CACHE_MS = 5 * 60e3;
+  // 100 çizgi; tam yenileme 15 dk'da bir (arada her run başında yalnız yeni çizgiler — ucuz sorgu)
+  const OTHER_TRACES_MAX = 100, TR_TILE = 1024, TR_TILES_MAX = 8, TR_CACHE_MS = 15 * 60e3;
   let otherTraces = [], _trTiles = new Map(), _trTok = 0;
   const _trCache = {};
   // Çizgi biçimi "v2:" + parçalar (';' ile): her parça "x,y,dx,dy,dx,dy…" — x mutlak, y ilk noktaya
@@ -9843,7 +9842,7 @@ const ARC_DB = (() => {
     const daily = _dailyRun, day = daily ? dailyDay() : null, mode = gameMode;
     const ck = daily ? 'd' + day : 'm' + mode;
     const me = `${_sanId(playerName)}_${myTag()}`;
-    const recentQ = since => daily ? ARC_DB.getDailyRecentTraces(day, OTHER_TRACES_MAX, since) : ARC_DB.getRecentTraces(mode, OTHER_TRACES_MAX, since);
+    const recentQ = (since, n = OTHER_TRACES_MAX) => daily ? ARC_DB.getDailyRecentTraces(day, n, since) : ARC_DB.getRecentTraces(mode, n, since);
     // Sıra: en uzun run / günün birincisi → arkadaşlar → son oyunlar; anahtar başına tek çizgi, ben hariç
     const build = c => {
       const seen = new Set([me]), list = [];
@@ -9860,9 +9859,10 @@ const ARC_DB = (() => {
       // başka oyuncunun az önce bitirdiği oyun bir sonraki run'da görünür.
       setOtherTraces(hit.list);
       try {
-        // 60 sn pay: saati biraz geride olan cihazın yazdığı da kaçmasın; zaten bilineni ayıkla
+        // 3 sn pay (saat farkı); en çok 15 yeni çizgi — pay büyükse son dakikanın bütün çizgileri her run yeniden
+        // okunuyordu (okuma oyuncu sayısıyla büyürdü). Saati çok geride cihazın çizgisi 15 dk'lık tam yenilemede gelir.
         const known = new Set([...hit.recent, ...hit.fr].map(t => t.key + '@' + t.ts));
-        const newer = (await recentQ(Math.max(0, (hit.maxTs || 0) - 60e3))).filter(t => !known.has(t.key + '@' + t.ts));
+        const newer = (await recentQ(Math.max(0, (hit.maxTs || 0) - 3000), 15)).filter(t => !known.has(t.key + '@' + t.ts));
         if (tok !== _trTok || !newer.length) return;
         const nk = new Set(newer.map(t => t.key));
         hit.fr = hit.fr.map(t => newer.find(n => n.key === t.key) || t);   // arkadaşın yeni oyunu eskisinin yerine
@@ -11454,7 +11454,8 @@ const ARC_DB = (() => {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
       const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
       await ARC_DB.submitScore(playerName, avatarIdx, sc, gameMode, runDistCm, traceData, eqBadges, myTag());
-      if (sc > 0) ARC_DB.invalidateTopCache();
+      // Önbellek SİLİNMEZ: her elden sonra silmek sıralama (150) + ölüm işaretleri (300) okumasını her run'da
+      // yeniden çekiyordu (~520 okuma/run). Aşağıdaki sıralama kendi satırını bu elin skoruyla zaten düzeltir.
     }
 
     // Yeterli satır çek — 20 yeter, sıralama görmek için. Günlük koşuda günün tablosu.
