@@ -7351,18 +7351,13 @@ const ARC_DB = (() => {
 
   // ── Multi-trace ghosts ───────────────────────────────────
   // ghostSampled = current game's sparsely-sampled trail (no shift), used
-  // to capture a ghost at endGame. Sampling cadence ~every 20 world-px
+  // for the run's shared trace (traces / daily traces) at endGame. Sampling cadence ~every 20 world-px
   // upward — keeps each saved trace under ~150 points.
   const ghostSampled = [];
-  // allGhosts = up to GHOSTS_STORE_MAX traces from prior games, loaded at game start.
-  let allGhosts = [];
   let crossPlayerGhosts = []; // diğer oyuncuların ölüm işaretleri (ad/avatar + en iyi mesafe), moda göre
-  // Performance cap for the per-frame render — last N most-recent traces.
-  const GHOSTS_RENDER_MAX = 80;
-  // Çizim yalnız son 80'i kullanır; 1000 iz ~1 MB+ localStorage (kota dolunca coin/upgrade
-  // kaydı da düşebilir) ve her açılışta pahalı JSON.parse demekti.
-  const GHOSTS_STORE_MAX  = 120;
+  // Oyuncunun kendi geçmiş run izleri kaldırıldı: eski sürümlerin biriktirdiği depo temizlenir
   const GHOSTS_KEY        = 'arc_traces_v1';
+  try { localStorage.removeItem(GHOSTS_KEY); } catch(_) {}
 
   // ── Upgrade state (kalıcı upgrade & GEAR envanteri) ─────────────
   const UPG_KEY = 'arc_upg_v1';
@@ -7453,37 +7448,6 @@ const ARC_DB = (() => {
   // v22 timer/comboWin ayrımı satın alma beklemeden kalıcı olsun (migrasyon idempotent
   // ama depoyu hemen yazmak eski 'timer' değerinin ortalıkta kalmasını önler).
   saveUpg();
-
-  function loadGhostTraces() {
-    try {
-      const raw = localStorage.getItem(GHOSTS_KEY);
-      const arr = raw ? (JSON.parse(raw) || []) : [];
-      if (arr.length > GHOSTS_STORE_MAX) {           // eski sürümden kalan büyük depo → bir kez kırp
-        arr.splice(0, arr.length - GHOSTS_STORE_MAX);
-        try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); } catch(_){}
-      }
-      return arr;
-    } catch(_) { return []; }
-  }
-  function saveGhostTrace(trace) {
-    // Add bounding y so off-screen traces can be skipped cheaply on render.
-    let yMin = Infinity, yMax = -Infinity;
-    for (const p of trace.points) {
-      if (p.y < yMin) yMin = p.y;
-      if (p.y > yMax) yMax = p.y;
-    }
-    trace.yMin = yMin; trace.yMax = yMax;
-    const arr = loadGhostTraces();
-    arr.push(trace);
-    if (arr.length > GHOSTS_STORE_MAX) arr.splice(0, arr.length - GHOSTS_STORE_MAX);
-    // localStorage might quota-error on very large payloads; drop oldest
-    // half and retry once before giving up silently.
-    try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); }
-    catch(_) {
-      arr.splice(0, Math.floor(arr.length / 2));
-      try { localStorage.setItem(GHOSTS_KEY, JSON.stringify(arr)); } catch(__){}
-    }
-  }
 
   // LB NPC sabit skorları (her oyun başında yeniden çekilir)
 
@@ -9303,79 +9267,6 @@ const ARC_DB = (() => {
     }
   }
 
-  // ── Ghost Trails — render last N stored traces from prior games ───────
-  // All traces start at spawn (H - 200) because ghostSampled never shifts.
-  // Per-trace opacity is low so 80 stacked traces add up to visible motion
-  // history without overpowering the live trail.
-  function drawGhostTrail() {
-    if (LOWFX) return;   // sade mod: geçmiş run izleri çizilmez (en pahalı katmanlardan)
-    if (!allGhosts.length) return;
-    ctx.save();
-    ctx.lineCap   = 'round';
-    ctx.lineJoin  = 'round';
-    ctx.globalCompositeOperation = 'lighter';
-
-    // Helper: stroke a trace's points with quadratic smoothing.
-    // Cross-player ghosts are downsampled to ~150 pts so a raw polyline
-    // looks polygonal; midpoint-quadratic smoothing hides that.
-    // Gap guard: if two consecutive samples are too far apart (bad recording
-    // or downsampling artefact), break the path so we don't draw a huge
-    // sweeping arc across the screen.
-    const MAX_SEG = 180; // px in screen space
-    function strokeTrace(pts) {
-      ctx.beginPath();
-      let buf = [];
-      const flush = () => {
-        if (buf.length < 2) { buf = []; return; }
-        ctx.moveTo(buf[0].x, buf[0].sy);
-        if (buf.length === 2) {
-          ctx.lineTo(buf[1].x, buf[1].sy);
-        } else {
-          for (let i = 1; i < buf.length - 1; i++) {
-            const a = buf[i], b = buf[i + 1];
-            ctx.quadraticCurveTo(a.x, a.sy, (a.x + b.x) * 0.5, (a.sy + b.sy) * 0.5);
-          }
-          const last = buf[buf.length - 1];
-          ctx.lineTo(last.x, last.sy);
-        }
-        buf = [];
-      };
-      let prev = null;
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        const sy = W2S(p.y);
-        if (sy < -80 || sy > H + 80) { flush(); prev = null; continue; }
-        if (prev) {
-          const dx = p.x - prev.x, dy = sy - prev.sy;
-          if (dx * dx + dy * dy > MAX_SEG * MAX_SEG) { flush(); }
-        }
-        const node = { x: p.x, sy };
-        buf.push(node);
-        prev = node;
-      }
-      flush();
-      ctx.stroke();
-    }
-
-    // 1) Local own ghosts (faint, mode-tinted, neutral thickness)
-    const start = Math.max(0, allGhosts.length - GHOSTS_RENDER_MAX);
-    for (let gi = start; gi < allGhosts.length; gi++) {
-      const g = allGhosts[gi];
-      const pts = g.points;
-      if (!pts || pts.length < 2) continue;
-      const topY = W2S(g.yMin ?? -1e9);
-      const botY = W2S(g.yMax ?? 1e9);
-      if (botY < -80 || topY > H + 80) continue;
-      const recent = (gi >= allGhosts.length - 10);
-      ctx.globalAlpha = recent ? 0.045 : 0.03;
-      ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
-      ctx.lineWidth = 1.2;
-      strokeTrace(pts);
-    }
-
-    ctx.restore();
-  }
-
   // ── Trail ────────────────────────────────────────────────
   function drawTrail(time) {
     if (trail.length < 2) return;
@@ -9828,8 +9719,6 @@ const ARC_DB = (() => {
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
     shockWaves.length = 0; brakeT = 0; anchorPoint = null;
-    // Load ghost traces fresh each game so the next save shows up next run.
-    allGhosts = loadGhostTraces();
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
@@ -10924,18 +10813,6 @@ const ARC_DB = (() => {
     const chal = _activeChal;   // meydan okuma: 3 deneme, en iyisi sayılır — aşağıda
     // Müzik fade + ölüm SFX'i artık beginDeath'te patlama anında tetikleniyor.
     haptic(2000); // çarpışma titreşimi — 2 saniye
-    // Ghost: save this run's sparse sample into the persistent ring buffer
-    // (max 1000 traces, oldest dropped). All traces include the spawn point.
-    if (ghostSampled.length >= 2) {
-      saveGhostTrace({
-        mode:   gameMode,
-        score:  Math.floor(score),
-        ts:     Date.now(),
-        points: ghostSampled.slice(), // shallow copy
-      });
-      // Refresh allGhosts so the next render includes the just-played run.
-      allGhosts = loadGhostTraces();
-    }
     running = false; started = false;
     // Run coin kazancı: mesafe × COIN_PER_M + toplanan altın × COIN_PER_GOLD,
     // günlük yumuşak tavandan geçirilir. Sönümlü lifetime eğrisi kaldırıldı.
@@ -11444,7 +11321,6 @@ const ARC_DB = (() => {
           ['distance',  fmtDist(distCm)],
           ['combo',     Math.max(0, Math.ceil(energy * comboDisplayMax()))],
           ['trail',     trail.length],
-          ['ghosts',    allGhosts.length],
           ['audio',     (a => `${a.ctx} m:${a.music} ${a.playing ? '▶' : '■'} g${a.gain} ${a.musOn ? 'on' : 'off'} ${a.session}`)(_audioDiag())],
           ['obstacles', obstacles.length],
           ['particles', particles.length],
@@ -11481,7 +11357,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawGhostTrail(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -11639,7 +11515,6 @@ const ARC_DB = (() => {
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
     bestDistanceM = 0;
     stats = loadStats();
-    allGhosts = [];
     playerName = ''; avatarIdx = 0; customAvatarSrc = null;
     // Bellekteki satın alma/ilerleme durumunu da sıfırla (reload beklemeden)
     upg = loadUpg();

@@ -273,12 +273,12 @@ test('reset: sürüm kapısı eski hesabı tazelemez, yeni anonim hesap açar', 
   check(await ls('arc_debug') === '1', 'reset arc_debug bayrağını sildi');
 });
 
-test('izler: depo 120 izle sınırlı, eski büyük depo kırpılır', async () => {
+test('izler: oyuncunun kendi geçmiş izleri saklanmaz, eski depo silinir', async () => {
   const traces = Array.from({ length: 300 }, (_, i) => ({ points: [{ x: 0, y: -i }, { x: 5, y: -i - 50 }], yMin: -i - 50, yMax: -i, mode: 'normal' }));
   await fresh({ arc_traces_v1: traces });
-  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
-  const n = (await lsJSON('arc_traces_v1')).length;
-  check(n === 120, `iz sayısı ${n} (beklenen 120)`);
+  check(await ls('arc_traces_v1') === null, 'eski iz deposu silinmedi');
+  await playRun(4000);
+  check(await ls('arc_traces_v1') === null, 'run sonunda kendi izi yine kaydedildi');
 });
 
 test('liderlik: çevrimdışıyken "LOADING"de takılmaz, mesaj gösterir', async () => {
