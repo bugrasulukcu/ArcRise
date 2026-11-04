@@ -65,7 +65,7 @@ const ev = async expr => {
 
 // ── Sahte Firebase ───────────────────────────────────────────
 const fb = { docs: new Map(), writes: [], authCalls: [], offline: false, uidN: 0 };
-const fbReset = () => { fb.docs.clear(); fb.writes = []; fb.authCalls = []; fb.offline = false; };
+const fbReset = () => { fb.docs.clear(); fb.writes = []; fb.authCalls = []; fb.offline = false; fb.rejectTrace = false; };
 const reply = (requestId, status, body) => send('Fetch.fulfillRequest', { requestId, responseCode: status,
   responseHeaders: [{ name: 'Content-Type', value: 'application/json' }, { name: 'Access-Control-Allow-Origin', value: '*' },
     { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: '*' }],
@@ -95,7 +95,10 @@ function onFirebase({ requestId, request }) {
     const val = v => v == null ? undefined : v.integerValue != null ? Number(v.integerValue) : v.doubleValue != null ? Number(v.doubleValue) : v.stringValue;
     const OPS = { EQUAL: (a, b) => a === b, GREATER_THAN: (a, b) => a > b, LESS_THAN_OR_EQUAL: (a, b) => a <= b, GREATER_THAN_OR_EQUAL: (a, b) => a >= b, LESS_THAN: (a, b) => a < b };
     const filters = q.where ? (q.where.compositeFilter ? q.where.compositeFilter.filters : [q.where]).map(f => f.fieldFilter).filter(Boolean) : [];
-    let rows = [...fb.docs.entries()].filter(([k]) => k.split('/')[0] === coll).map(([, d]) => d)
+    // Üst yol (ör. daily/20261104) + koleksiyon: yalnız o koleksiyonun doğrudan dokümanları
+    const parent = decodeURIComponent((url.pathname.split('/documents')[1] || '').replace(/:run(Aggregation)?Query$/, '')).replace(/^\//, '');
+    const prefix = (parent ? parent + '/' : '') + coll, depth = prefix.split('/').length + 1;
+    let rows = [...fb.docs.entries()].filter(([k]) => k.startsWith(prefix + '/') && k.split('/').length === depth).map(([, d]) => d)
       .filter(d => filters.every(f => { const a = val(d.fields[f.field.fieldPath]); return a !== undefined && OPS[f.op] && OPS[f.op](a, val(f.value)); }));
     const ob = q.orderBy?.[0];
     const sf = ob ? ob.field.fieldPath : 'score', dir = ob && ob.direction === 'ASCENDING' ? 1 : -1;
@@ -112,6 +115,7 @@ function onFirebase({ requestId, request }) {
       mustNotExist: url.searchParams.get('currentDocument.exists') === 'false', status: 200 };
     fb.writes.push(w);
     if (!authed) { w.status = 403; return reply(requestId, 403, { error: { code: 403, message: 'PERMISSION_DENIED' } }); }
+    if (fb.rejectTrace && target.startsWith('daily/') && target.includes('/scores/') && body.fields?.tracePts) { w.status = 403; return reply(requestId, 403, { error: { code: 403 } }); }   // yayın öncesi kurallar
     if (w.mustNotExist && fb.docs.has(target)) { w.status = 409; return reply(requestId, 409, { error: { code: 409 } }); }
     const cur = fb.docs.get(target) || { name: `projects/p/databases/(default)/documents/${target}`, fields: {} };
     cur.fields = { ...cur.fields, ...(body.fields || {}) };
@@ -175,6 +179,7 @@ async function fresh(seed = {}, { firstplay = true, name = 'ARC', keepReset = tr
   if (!await waitFor(`!!window.ARC_TEST`)) throw new Error('sayfa hazır olmadı');
   await sleep(600);
   await ev(`document.querySelectorAll('#reward-toast').forEach(e => e.classList.remove('show')); true`);
+  if (process.env.E2E_PROBE) console.log('    PROBE', await ev(`new Promise(r => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 500) requestAnimationFrame(f); else r(JSON.stringify({ raf: n, vis: document.visibilityState, focus: document.hasFocus(), traces: ARC_TEST.otherTraces.length })); }; requestAnimationFrame(f); })`));
 }
 const ls = k => ev(`localStorage.getItem(${JSON.stringify(k)})`);
 const lsJSON = async k => JSON.parse(await ls(k) || 'null');
@@ -453,6 +458,52 @@ test('reklam: web test modu (?fakeads) — sayaçlı sahte reklam, ✕ erken ç�
   await ev(`ARC_TEST.setInterRuns(1); document.getElementById('wrap-again').click(); true`);
   check(await waitFor(`!!document.getElementById('fake-ad')`, 2000), 'hızlı modda geçiş reklamı çıkmadı');
   check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('fake-ad')`, 6000), 'geçiş reklamı kapanıp oyun başlamadı');
+});
+
+test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç); iz açıkken son oyun gönderilir', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  const pts = JSON.stringify([[300, 866], [320, 700], [280, 500]]);
+  doc('scores/LONG', { name: S('LONGEST'), tag: S('1111'), mode: S('normal'), score: I(10), distance: D(900), ts: I(1), avatar: I(0), tracePts: S(pts) });
+  doc('traces/BOB_2222_normal', { name: S('BOB'), tag: S('2222'), mode: S('normal'), ts: I(200), dist: D(50), pts: S(pts) });
+  doc('traces/CAN_3333_normal', { name: S('CAN'), tag: S('3333'), mode: S('normal'), ts: I(300), dist: D(60), pts: S(pts) });
+  doc('traces/DEV_4444_extreme', { name: S('DEV'), tag: S('4444'), mode: S('extreme'), ts: I(400), dist: D(70), pts: S(pts) });
+  doc('traces/LONGEST_1111_normal', { name: S('LONGEST'), tag: S('1111'), mode: S('normal'), ts: I(100), dist: D(10), pts: S(pts) });
+  await fresh({ arc_tag: '1234', arc_upg_v1: { comboSplitV22: true, traceOwned: true, traceShown: true } });
+  doc('traces/ARC_1234_normal', { name: S('ARC'), tag: S('1234'), mode: S('normal'), ts: I(500), dist: D(5), pts: S(pts) });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`ARC_TEST.otherTraces.length > 0`, 6000), 'diğer oyuncu çizgileri yüklenmedi');
+  const keys = await ev('ARC_TEST.otherTraces');
+  check(JSON.stringify(keys) === JSON.stringify(['LONGEST_1111', 'CAN_3333', 'BOB_2222']), `sıra/seçim yanlış: ${JSON.stringify(keys)}`);
+  await sleep(4000); await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  const w = fb.writes.filter(x => x.path === 'traces/ARC_1234_normal' && x.status === 200);
+  check(w.length === 1, `son oyun çizgisi gönderilmedi: ${JSON.stringify(fb.writes.map(x => x.path))}`);
+  const f = fb.docs.get('traces/ARC_1234_normal').fields;
+  check(JSON.parse(f.pts.stringValue).length >= 2 && f.owner?.stringValue, 'çizgi kaydı eksik');
+});
+
+test('diğer oyuncu çizgileri: iz kapalıyken normal oyunda gönderilmez; Daily\'de herkes gönderir, günün skoru çizgiyi taşır', async () => {
+  fbReset();
+  await fresh({ arc_tag: '1234' });
+  await playRun(4000);
+  check(!fb.writes.some(x => x.path.startsWith('traces/')), 'iz kapalıyken çizgi gönderildi');
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); ARC_BOT.start(); true`); await sleep(4000);
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'günlük run bitmedi'); await sleep(2000);
+  const day = await ev(`(() => { const d = new Date(); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); })()`);
+  check(fb.docs.has(`daily/${day}/traces/ARC_1234`), `günlük son oyun çizgisi yok: ${JSON.stringify(fb.writes.map(x => x.path))}`);
+  const sc = [...fb.docs.entries()].find(([k]) => k.startsWith(`daily/${day}/scores/`));
+  check(!sc || !!sc[1].fields.tracePts, 'günün skoru çizgiyi taşımıyor');
+  // Kurallar henüz yayınlanmadıysa (çizgili skor reddedilir) skor yine çizgisiz kaydedilmeli
+  fb.rejectTrace = true; [...fb.docs.keys()].filter(k => k.startsWith(`daily/${day}/scores/`)).forEach(k => fb.docs.delete(k));
+  await ev(`document.getElementById('btn-again').click(); ARC_BOT.start(); true`); await sleep(4000);
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '2. günlük run bitmedi'); await sleep(2000);
+  fb.rejectTrace = false;
+  const sc2 = [...fb.docs.entries()].find(([k]) => k.startsWith(`daily/${day}/scores/`));
+  const sc2Score = await ev('ARC_TEST.daily.local.best');
+  check(sc2Score === 0 || (sc2 && !sc2[1].fields.tracePts), `kurallar yayınlanmadan günlük skor kaydedilmedi (yerel en iyi ${sc2Score})`);
 });
 
 test('credits: alert yerine oyun penceresi', async () => {

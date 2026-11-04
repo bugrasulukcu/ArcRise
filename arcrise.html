@@ -5768,17 +5768,10 @@ const ARC_DB = (() => {
     const rows = target ? parsed.filter(r => r.mode === target) : parsed;
     const out = [];
     for (const r of rows) {
-      if (!r.tracePts) continue;
-      let pts = null;
-      try { pts = JSON.parse(r.tracePts); } catch(_){}
-      if (!Array.isArray(pts) || pts.length < 2) continue;
-      out.push({
-        name: r.name, mode: r.mode, distance: r.distance, score: r.score, ts: r.ts,
-        points: pts,
-        color: r.traceColor || null,
-        thickness: r.traceThickness || 0,
-        avatar: r.avatar | 0, dName: r.dName, dAv: r.dAv,
-      });
+      // Yalnız ölüm işareti (ad/avatar) açık oyuncular, en iyi mesafeleriyle — işaret mesafeden konumlanır.
+      // (Çizgiler ayrı: getRecentTraces / getLongestTrace.)
+      if ((!r.dName && !r.dAv) || !(r.distance > 0)) continue;
+      out.push({ name: r.name, mode: r.mode, distance: r.distance, avatar: r.avatar | 0, dName: r.dName, dAv: r.dAv });
       if (out.length >= limit) break;
     }
     return out;
@@ -6096,6 +6089,10 @@ const ARC_DB = (() => {
         const del = await fbFetch(`${BASE}/players/${encodeURIComponent(myId)}?key=${apiKey}`, { method: 'DELETE' });
         if (del.ok) prof++;
       } catch(_){}
+      // 2b) Son oyun çizgileri (traces/{AD_ETİKET_mod})
+      for (const m of ['normal', 'extreme']) {
+        try { await fbFetch(`${BASE}/traces/${_trId(name, tag)}_${m}?key=${apiKey}`, { method: 'DELETE' }); } catch(_){}
+      }
     }
     // 3) Bu uid'e ait skor kayıtları
     if (uid) {
@@ -6163,7 +6160,7 @@ const ARC_DB = (() => {
   }
 
   // ── Günlük meydan okuma: daily/{YYYYMMDD}/scores/{uid} — oyuncu başına günün en iyisi ──
-  async function submitDaily(day, name, avatar, score, badges, tag) {
+  async function submitDaily(day, name, avatar, score, badges, tag, tracePts) {
     if (!projectId || projectId.startsWith('BURAYA')) return false;
     score = Number(score) || 0; if (score <= 0 || score > MAX_SUBMIT_SCORE || !/^[0-9]{8}$/.test(day)) return false;
     await ensureAuth(); const uid = getUid();
@@ -6177,9 +6174,12 @@ const ARC_DB = (() => {
         avatar: { integerValue: String(Number(avatar) || 0) }, score: { integerValue: String(Math.round(score)) },
         ts: { integerValue: String(Date.now()) }, badges: { stringValue: String(badges || '').slice(0, 64) } };
       if (/^[0-9]{4}$/.test(tag || '')) fields.tag = { stringValue: tag };
-      const mask = Object.keys(fields).map(k => 'updateMask.fieldPaths=' + k).join('&');
-      const w = await fbFetch(g.status === 200 ? `${url}&${mask}` : `${url}&currentDocument.exists=false`,
+      if (typeof tracePts === 'string' && tracePts.length <= 19000) fields.tracePts = { stringValue: tracePts };   // günün en iyi run'ının çizgisi
+      const write = () => fbFetch(g.status === 200 ? `${url}&${Object.keys(fields).map(k => 'updateMask.fieldPaths=' + k).join('&')}` : `${url}&currentDocument.exists=false`,
         { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) });
+      let w = await write();
+      // Sunucu kuralları çizgi alanını henüz tanımıyorsa (yayın öncesi): skoru çizgisiz yine kaydet
+      if (!w.ok && fields.tracePts && (w.status === 400 || w.status === 403)) { delete fields.tracePts; w = await write(); }
       if (!w.ok) console.warn('[ArcDB] daily write', w.status);
       return w.ok;
     } catch (e) { console.warn('[ArcDB] daily submit failed', e); return false; }
@@ -6196,12 +6196,88 @@ const ARC_DB = (() => {
       return (await res.json()).filter(r => r.document?.fields?.name?.stringValue).map(r => {
         const f = r.document.fields;
         return { name: f.name.stringValue, avatar: parseInt(f.avatar?.integerValue ?? 3), score: parseInt(f.score?.integerValue ?? 0) || 0,
-          badges: f.badges?.stringValue || '', tag: f.tag?.stringValue || '', owner: r.document.name.split('/').pop() };
+          badges: f.badges?.stringValue || '', tag: f.tag?.stringValue || '', owner: r.document.name.split('/').pop(), tracePts: f.tracePts?.stringValue || null };
       });
     } catch (_) { return null; }
   }
 
-  const api = { getScoresAbove, getScoresBelow, countAbove, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  // ── Diğer oyuncu çizgileri ───────────────────────────────────────────────
+  // Her oyuncunun SON oyununun çizgisi: traces/{AD_ETİKET_mod} (iz göstermeyi açanlar) ve
+  // daily/{gün}/traces/{AD_ETİKET} (Daily: herkes). Noktalar mutlak dünya koordinatı [x, y]; okuyan taraf
+  // ilk noktayı (oyuncunun başlangıcı) referans alıp kendi ekranına hizalar → ekran boyutundan bağımsız.
+  const _trId = (name, tag) => `${_sanName(name)}_${tag}`;
+  function _trDoc(doc) {
+    const f = doc?.fields; if (!f || !f.pts?.stringValue) return null;
+    return { key: `${f.name?.stringValue || ''}_${f.tag?.stringValue || ''}`, name: f.name?.stringValue || '', tag: f.tag?.stringValue || '',
+      ts: parseInt(f.ts?.integerValue ?? 0) || 0, pts: f.pts.stringValue, color: f.color?.stringValue || null,
+      thickness: parseInt(f.thickness?.integerValue ?? 0) || 0 };
+  }
+  async function _putTrace(path, name, tag, mode, dist, pts, color, thickness) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    if (!/^[0-9]{4}$/.test(String(tag || '')) || !_sanName(name) || typeof pts !== 'string' || pts.length > 19000) return false;
+    await ensureAuth(); const uid = getUid(); if (!uid) return false;
+    const fields = { owner: { stringValue: uid }, name: { stringValue: _sanName(name) }, tag: { stringValue: String(tag) }, mode: { stringValue: mode },
+      ts: { integerValue: String(Date.now()) }, dist: { doubleValue: Math.max(0, Math.min(100000, Number(dist) || 0)) }, pts: { stringValue: pts },
+      thickness: { integerValue: String(Math.max(0, Math.min(20, thickness | 0))) } };
+    if (typeof color === 'string' && color.length <= 64) fields.color = { stringValue: color };
+    try {   // PATCH: yoksa oluşturur, varsa üzerine yazar (kural: sahibi yazar)
+      const w = await fbFetch(`${BASE}/${path}?key=${apiKey}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }) });
+      if (!w.ok) console.warn('[ArcDB] trace write', w.status);
+      return w.ok;
+    } catch (_) { return false; }
+  }
+  const submitTrace = (name, tag, mode, dist, pts, color, thickness) =>
+    (mode === 'normal' || mode === 'extreme') ? _putTrace(`traces/${_trId(name, tag)}_${mode}`, name, tag, mode, dist, pts, color, thickness) : Promise.resolve(false);
+  const submitDailyTrace = (day, name, tag, dist, pts, color, thickness) =>
+    /^[0-9]{8}$/.test(day) ? _putTrace(`daily/${day}/traces/${_trId(name, tag)}`, name, tag, 'daily', dist, pts, color, thickness) : Promise.resolve(false);
+  async function _runQ(parent, sq) {
+    const res = await fbFetch(`${BASE}${parent}:runQuery?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: sq }) });
+    if (!res.ok) throw new Error('query ' + res.status);
+    return (await res.json()).filter(r => r.document);
+  }
+  // Son oynanan oyunların çizgileri (oyuncu başına son oyun), en yeniden eskiye.
+  async function getRecentTraces(mode, n = 200) {
+    if (!projectId || projectId.startsWith('BURAYA')) return [];
+    const desc = [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }];
+    try {
+      return (await _runQ('', { from: [{ collectionId: 'traces' }], where: { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: mode } } },
+        orderBy: desc, limit: n })).map(r => _trDoc(r.document)).filter(Boolean);
+    } catch (_) {   // bileşik indeks henüz yoksa: süzgeçsiz çek, istemcide ayıkla
+      try { return (await _runQ('', { from: [{ collectionId: 'traces' }], orderBy: desc, limit: Math.min(400, n * 2) }))
+        .filter(r => r.document.fields?.mode?.stringValue === mode).map(r => _trDoc(r.document)).filter(Boolean).slice(0, n); } catch (_) { return []; }
+    }
+  }
+  async function getDailyRecentTraces(day, n = 200) {
+    if (!projectId || projectId.startsWith('BURAYA') || !/^[0-9]{8}$/.test(day)) return [];
+    try { return (await _runQ(`/daily/${day}`, { from: [{ collectionId: 'traces' }], orderBy: [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }], limit: n }))
+      .map(r => _trDoc(r.document)).filter(Boolean); } catch (_) { return []; }
+  }
+  // Belirli oyuncuların (arkadaşlar) son oyun çizgileri: ids = [{name, tag}]
+  async function getTracesFor(players, mode, day) {
+    if (!projectId || projectId.startsWith('BURAYA') || !players.length) return [];
+    const path = p => day ? `daily/${day}/traces/${_trId(p.name, p.tag)}` : `traces/${_trId(p.name, p.tag)}_${mode}`;
+    const docs = await Promise.all(players.slice(0, 60).map(async p => {
+      try { const r = await fbFetch(`${BASE}/${path(p)}?key=${apiKey}`); return r.ok ? _trDoc(await r.json()) : null; } catch (_) { return null; }
+    }));
+    return docs.filter(Boolean);
+  }
+  // En uzun run'ın sahibinin o run'daki çizgisi (scores.tracePts; yalnız iz göstermeyi açanlar yazar)
+  async function getLongestTrace(mode) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    try {
+      const rows = parseRows(await _runQ('', { from: [{ collectionId: 'scores' }], orderBy: [{ field: { fieldPath: 'distance' }, direction: 'DESCENDING' }], limit: 40 }));
+      const r = rows.find(x => x.mode === mode && x.tracePts);
+      return r ? { key: `${_sanName(r.name)}_${r.tag}`, name: r.name, tag: r.tag, pts: r.tracePts, color: r.traceColor, thickness: r.traceThickness } : null;
+    } catch (_) { return null; }
+  }
+  // Günün en yüksek skorunun çizgisi
+  async function getDailyTopTrace(day) {
+    const rows = await getDailyTop(day, 10);
+    const r = (rows || []).find(x => x.tracePts);
+    return r ? { key: `${_sanName(r.name)}_${r.tag}`, name: r.name, tag: r.tag, pts: r.tracePts, color: null, thickness: 0 } : null;
+  }
+
+  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -7280,7 +7356,7 @@ const ARC_DB = (() => {
   const ghostSampled = [];
   // allGhosts = up to GHOSTS_STORE_MAX traces from prior games, loaded at game start.
   let allGhosts = [];
-  let crossPlayerGhosts = []; // others' best traces from Firestore, mode-filtered
+  let crossPlayerGhosts = []; // diğer oyuncuların ölüm işaretleri (ad/avatar + en iyi mesafe), moda göre
   // Performance cap for the per-frame render — last N most-recent traces.
   const GHOSTS_RENDER_MAX = 80;
   // Çizim yalnız son 80'i kullanır; 1000 iz ~1 MB+ localStorage (kota dolunca coin/upgrade
@@ -9192,13 +9268,12 @@ const ARC_DB = (() => {
   function drawRemoteDeathMarkers() {
     if (!crossPlayerGhosts.length) return;
     for (const g of crossPlayerGhosts) {
-      if ((!g.dName && !g.dAv) || !g.points || g.points.length < 2) continue;
-      // En uzak nokta = en küçük y (yukarı)
-      let fp = g.points[0];
-      for (const p of g.points) if (p.y < fp.y) fp = p;
-      const sy = W2S(fp.y);
+      if ((!g.dName && !g.dAv) || !(g.distance > 0)) continue;
+      // En iyi mesafeden konum: kendi rekor işaretinle aynı formül → ekran boyutundan bağımsız doğru yükseklik.
+      const sy = W2S(distOriginY() - g.distance * (H_REF / CM_PER_SCREEN));
       if (sy < -50 || sy > H + 50) continue;
-      const mx = fp.x;
+      let hh = 0; for (const c of String(g.name || '')) hh = (hh * 31 + c.charCodeAt(0)) >>> 0;   // aynı oyuncu hep aynı yerde
+      const mx = walls.left + 40 + (hh % 1000) / 1000 * Math.max(0, walls.right - walls.left - 80);
       const showAv = g.dAv, showName = g.dName && !!g.name;
       ctx.save();
       ctx.globalAlpha = 0.85;
@@ -9234,7 +9309,7 @@ const ARC_DB = (() => {
   // history without overpowering the live trail.
   function drawGhostTrail() {
     if (LOWFX) return;   // sade mod: geçmiş run izleri çizilmez (en pahalı katmanlardan)
-    if (!allGhosts.length && !crossPlayerGhosts.length) return;
+    if (!allGhosts.length) return;
     ctx.save();
     ctx.lineCap   = 'round';
     ctx.lineJoin  = 'round';
@@ -9295,20 +9370,6 @@ const ARC_DB = (() => {
       ctx.globalAlpha = recent ? 0.045 : 0.03;
       ctx.strokeStyle = (g.mode === 'extreme') ? '#ff8866' : '#88bbff';
       ctx.lineWidth = 1.2;
-      strokeTrace(pts);
-    }
-
-    // 2) Cross-player ghosts (10% alpha, custom color & thickness)
-    for (const g of crossPlayerGhosts) {
-      const pts = g.points;
-      if (!pts || pts.length < 2) continue;
-      const topY = W2S(g.yMin ?? -1e9);
-      const botY = W2S(g.yMax ?? 1e9);
-      if (botY < -80 || topY > H + 80) continue;
-      ctx.globalAlpha = 0.10;
-      ctx.strokeStyle = g.color || ((g.mode === 'extreme') ? '#ff8866' : '#88bbff');
-      // thickness level 0..20 → 1.2px base, +0.12px per level → max 3.6px
-      ctx.lineWidth = 1.2 + (g.thickness || 0) * 0.12;
       strokeTrace(pts);
     }
 
@@ -9615,18 +9676,96 @@ const ARC_DB = (() => {
   async function fetchCrossPlayerGhosts() {
     try {
       const list = await ARC_DB.getCrossPlayerGhosts(gameMode, 100);
-      crossPlayerGhosts = list
-        .filter(g => g.name !== playerName)
-        .map(g => {
-          // Re-shape points and pre-compute y bounds for the cull
-          const pts = g.points.map(p => ({ x: p[0], y: p[1] }));
-          let yMin = Infinity, yMax = -Infinity;
-          for (const p of pts) { if (p.y < yMin) yMin = p.y; if (p.y > yMax) yMax = p.y; }
-          return { ...g, points: pts, yMin, yMax };
-        });
+      crossPlayerGhosts = list.filter(g => g.name !== playerName);
     } catch(e) {
       crossPlayerGhosts = [];
     }
+  }
+
+  // ── Diğer oyuncuların çizgileri ─────────────────────────────────────
+  // Normal: iz göstermeyi açanlardan → en uzun run'ın sahibi (o run'ı), arkadaşlar, başlangıç çizgisini geçmiş
+  // son oyunlar (oyuncu başına son oyun). Daily: günün en yüksek skoru, arkadaşlar, son oyunlar (herkes).
+  // Toplam en çok 200. Noktalar ilk noktaya (oyuncunun başlangıcı) göre yükseklik olarak saklanır.
+  const OTHER_TRACES_MAX = 200, TR_TILE = 1024, TR_TILES_MAX = 8, TR_CACHE_MS = 5 * 60e3;
+  let otherTraces = [], _trTiles = new Map(), _trTok = 0;
+  const _trCache = {};
+  function setOtherTraces(list) {
+    otherTraces = [];
+    for (const t of list) {
+      let raw = null; try { raw = JSON.parse(t.pts); } catch (_) {}
+      if (!Array.isArray(raw) || raw.length < 2) continue;
+      const y0 = raw[0][1]; let hMin = Infinity, hMax = -Infinity;
+      const pts = raw.map(p => { const h = y0 - p[1]; if (h < hMin) hMin = h; if (h > hMax) hMax = h; return { x: p[0], h }; });
+      const col = typeof t.color === 'string' && t.color.charAt(0) === '#' ? t.color : (gameMode === 'extreme' && !_dailyRun ? '#ff8866' : '#88bbff');
+      otherTraces.push({ key: t.key, pts, hMin, hMax, color: col, w: 1.2 + Math.max(0, Math.min(20, t.thickness | 0)) * 0.12 });
+    }
+    _trTiles.clear();
+    if (!LOWFX) { _trTile(0); _trTile(1); }   // başlangıç bölgesini önceden çiz (ilk karede takılma olmasın)
+  }
+  async function loadOtherTraces() {
+    const tok = ++_trTok;
+    if (gameMode === 'wife' || _activeChal || !playerName) { otherTraces = []; _trTiles.clear(); return; }
+    const daily = _dailyRun, day = daily ? dailyDay() : null, mode = gameMode;
+    const ck = daily ? 'd' + day : 'm' + mode;
+    const hit = _trCache[ck];
+    if (hit && Date.now() - hit.t < TR_CACHE_MS) { setOtherTraces(hit.list); return; }
+    const me = `${_sanId(playerName)}_${myTag()}`;
+    const friends = acceptedFriends().map(e => parseId(e.from === myId() ? e.to : e.from)).filter(p => p.name && /^\d{4}$/.test(p.tag));
+    try {
+      const [first, fr, recent] = await Promise.all([
+        daily ? ARC_DB.getDailyTopTrace(day) : ARC_DB.getLongestTrace(mode),
+        ARC_DB.getTracesFor(friends, mode, day),
+        daily ? ARC_DB.getDailyRecentTraces(day, OTHER_TRACES_MAX) : ARC_DB.getRecentTraces(mode, OTHER_TRACES_MAX),
+      ]);
+      if (tok !== _trTok) return;   // bu arada yeni run başladı
+      const seen = new Set([me]), list = [];
+      for (const t of [first, ...fr, ...recent]) {
+        if (!t || seen.has(t.key) || list.length >= OTHER_TRACES_MAX) continue;
+        seen.add(t.key); list.push(t);
+      }
+      _trCache[ck] = { t: Date.now(), list };
+      setOtherTraces(list);
+    } catch (_) { if (tok === _trTok) { otherTraces = []; _trTiles.clear(); } }
+  }
+  // Karo: başlangıçtan yükseklik [k·T, (k+1)·T) bandındaki bütün çizgiler bir kez çizilir; her karede yalnız kopyalanır.
+  function _trTile(k) {
+    let c = _trTiles.get(k);
+    if (c) { _trTiles.delete(k); _trTiles.set(k, c); return c; }   // LRU
+    c = document.createElement('canvas'); c.width = W; c.height = TR_TILE;
+    const x = c.getContext('2d'), h0 = k * TR_TILE, h1 = h0 + TR_TILE, M = 200, MAX_SEG = 180;
+    x.lineCap = 'round'; x.lineJoin = 'round'; x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.10;
+    for (const t of otherTraces) {
+      if (t.hMax < h0 - M || t.hMin > h1 + M) continue;
+      x.strokeStyle = t.color; x.lineWidth = t.w; x.beginPath();
+      let buf = [];
+      const flush = () => {
+        if (buf.length >= 2) {
+          x.moveTo(buf[0].x, buf[0].y);
+          for (let i = 1; i < buf.length - 1; i++) x.quadraticCurveTo(buf[i].x, buf[i].y, (buf[i].x + buf[i + 1].x) / 2, (buf[i].y + buf[i + 1].y) / 2);
+          x.lineTo(buf[buf.length - 1].x, buf[buf.length - 1].y);
+        }
+        buf = [];
+      };
+      for (const p of t.pts) {
+        if (p.h < h0 - M || p.h > h1 + M) { flush(); continue; }
+        const y = h1 - p.h, prev = buf[buf.length - 1];
+        if (prev && (p.x - prev.x) ** 2 + (y - prev.y) ** 2 > MAX_SEG * MAX_SEG) flush();
+        buf.push({ x: p.x, y });
+      }
+      flush(); x.stroke();
+    }
+    _trTiles.set(k, c);
+    if (_trTiles.size > TR_TILES_MAX) _trTiles.delete(_trTiles.keys().next().value);
+    return c;
+  }
+  function drawOtherTraces() {
+    if (LOWFX || !otherTraces.length) return;
+    const spawn = H - 200, hTop = spawn - camY, hBot = spawn - (camY + H);
+    if (hTop < 0) return;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let k = Math.max(0, Math.floor(hBot / TR_TILE)); k <= Math.floor(hTop / TR_TILE); k++)
+      ctx.drawImage(_trTile(k), 0, W2S(spawn - (k + 1) * TR_TILE));
+    ctx.restore();
   }
 
   // ── World helpers ─────────────────────────────────────────
@@ -9716,6 +9855,7 @@ const ARC_DB = (() => {
     clearBooster();
     document.getElementById('combo-hud').classList.remove('active');
     fetchCrossPlayerGhosts();
+    loadOtherTraces();
     initBgArcs();
     // Engel/enerji buffer'ını hemen doldur — bir ekran yukarıda hazır beklesin
     spawnAhead();
@@ -11069,7 +11209,9 @@ const ARC_DB = (() => {
       dName: !!upg.deathName,              // kullanıcı adı işaretçisi açık mı
       dAv:   !!upg.deathAvatar,            // avatar (tomb) işaretçisi açık mı
     };
-    if (upg.traceShown && ghostSampled.length >= 4) {  // sadece "show to others" satın alınıp açıksa yayılır
+    // Bu run'ın çizgisi (~150 nokta). İlk nokta başlangıç: okuyan taraf onu referans alıp kendi ekranına hizalar.
+    let runPts = null;
+    if (_startCrossed && ghostSampled.length >= 4) {
       const src  = ghostSampled;
       const step = Math.max(1, Math.floor(src.length / 150));
       const out  = [];
@@ -11077,9 +11219,15 @@ const ARC_DB = (() => {
       // Always include last point so the trace ends at the death spot
       const last = src[src.length - 1];
       if (out.length === 0 || out[out.length - 1][1] !== (last.y | 0)) out.push([last.x | 0, last.y | 0]);
-      traceData.pts = JSON.stringify(out);
-      // firestore.rules limiti 20KB — normalde ~2KB üretilir; taşarsa trace'siz gönder.
-      if (traceData.pts.length > 19000) delete traceData.pts;
+      runPts = JSON.stringify(out);
+      if (runPts.length > 19000) runPts = null;   // firestore.rules limiti 20KB — normalde ~2KB
+    }
+    if (upg.traceShown && runPts) traceData.pts = runPts;   // en iyi mesafe çizgisi (scores): yalnız "show to others" açıksa
+    // Diğer oyunculara son oyun çizgisi: normalde "show to others" açıksa, Daily'de herkes (aynı parkur)
+    if (runPts && !chal && gameMode !== 'wife') {
+      const col = upg.traceColor || null, th = upg.traceThickness | 0;
+      if (wasDaily) ARC_DB.submitDailyTrace(dailyDay(), playerName, myTag(), runDistCm, runPts, col, th).catch(() => {});
+      else if (upg.traceShown) ARC_DB.submitTrace(playerName, myTag(), gameMode, runDistCm, runPts, col, th).catch(() => {});
     }
     // İlk 5 oyunda ölüm ipucu: neye çarptın / ne bitti + tek cümlelik çözüm
     try {
@@ -11105,7 +11253,7 @@ const ARC_DB = (() => {
     if (wasDaily) {
       const eqB = (equippedBadges || []).filter(Boolean).join(',');
       dailyLocalRecord(sc);
-      await ARC_DB.submitDaily(dailyDay(), playerName, avatarIdx, sc, eqB, myTag());
+      await ARC_DB.submitDaily(dailyDay(), playerName, avatarIdx, sc, eqB, myTag(), runPts);
     } else if (gameMode !== 'wife') {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
       const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
@@ -11333,7 +11481,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawGhostTrail(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawGhostTrail(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -11760,6 +11908,7 @@ const ARC_DB = (() => {
     get coins() { return coins; },
     get ads() { return { ready: AdProvider.available(), interRuns: _interRuns, cont: _adContinueUsed, dbl: _adDoubleUsed }; },
     setInterRuns: n => { _interRuns = n; },
+    get otherTraces() { return otherTraces.map(t => t.key); },
     get coreFx() { return { timer: comboDisplayMax(), cap: comboCap(), win: comboWindowSec(), speed: getBaseSpeed() }; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },

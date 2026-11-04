@@ -396,6 +396,27 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### 📌 Oturum sonu durumu (2026-11-04) — kaldığımız yer
+
+- **Son commit:** `b42cf4a` (web reklam test modu). **Commit'lenmemiş:** diğer oyuncu çizgileri (aşağıdaki girdi) — `arcrise.html`, `firestore.rules`, `firestore.indexes.json`, `tests/e2e.mjs`. Testler 47/47 (`E2E_PART=1/2` 24, `2/2` 23). `CODEX_REVIEW_d571b1f_FOLLOWUP.md` commit'lenmeyecek.
+- **⚠ Deploy gerekli (kullanıcı yapar):** `firebase deploy --only firestore` — yeni `traces` / `daily/{gün}/traces` koleksiyonları, daily skorunda `tracePts` alanı ve `traces(mode asc, ts desc)` indeksi. Deploy'dan önce: çizgi yazımları reddedilir (çizgi görünmez), daily skoru çizgisiz tekrar denenip kaydedilir, indeks yoksa sorgu istemci tarafı filtrelemeye düşer.
+- **Bu oturumda yapılanlar (14 Eki → 4 Kas, commit'li):** perf turu (ekran dışı iz, sprite parıltılar, `:has()` yerine sınıf, dönüş parçacığı tavanı) · PB ghost kaldırıldı · Daily'de yetenek ve yükseltme yok (`gUpg()`) · best combo ipucu ve kıl payı kırmızı vinyet kaldırıldı · Ghost'ta engeller %50 opak · Daily Run kartı yenilendi (gün halkası, birinci + sen satırı) · yeni ikon her yerde · tutorial'da ekranın altı da seker · **IAP kaldırıldı, yalnız AdMob** (ödüllü devam + coin ×2, sınırlı geçiş reklamı, AB onayı, iOS ATT) · web sahte reklam modu `?fakeads=1 / fast / 0`.
+- **Ekonomi kararı:** 10 oyuncu tipli simülasyon yapıldı (artifact: https://claude.ai/artifact/5wxSUgbJWpZo6bK5chYbDd). Kullanıcı kararı: mevcut fiyatlar ve hız ideal (hardcore oyuncu ~52 günde katalog bitiriyor); fiyat eğrisi değişmeyecek, Walls/Magnet etki artışı da olduğu gibi kalacak ("gameplay'de anında hissediliyor").
+- **Açık / kullanıcıya sorulacak:** oyuncunun kendi soluk geçmiş çizgileri (`allGhosts`) kalsın mı · `E2E_PROBE=1` test ölçümü kalsın mı.
+- **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
+
+### Diğer oyuncu çizgileri yeniden yapıldı: seçili 200 çizgi, başlangıca hizalı, bölüm önbellekli çizim (2026-11-04, commit'lenmedi)
+
+- **Neden çalışmıyordu:** rastgele pistte çizgiler engellerle ilgisizdi; mutlak dünya y'si ve ekran oranına bağlı spawn (`H-200`) yüzünden kayıyordu; 100 çizgi her karede baştan çiziliyordu.
+- **Normal oyun:** yalnız "Show to others" (`traceShown`, 45 coin, satın alma ve iade yok — aynen kaldı) açık oyuncular son oyunlarının çizgisini `traces/{AD_TAG}_{mode}` belgesine yazar (yalnız başlangıç çizgisini geçen run). Gösterim sırası, en fazla 200, oyuncunun kendisi hariç: **en uzun run sahibi** (o rekor run'ın çizgisi, `scores.tracePts`) → **arkadaşlar** (son oyunları) → **son oyunlar** (`mode ==`, `ts desc`; her oyuncunun son oyunu). En yüksek skor çizgisi YOK (kullanıcı kararı).
+- **Daily:** satın alma şartı yok, herkes `daily/{gün}/traces/{AD_TAG}` yazar; günün skoru da `tracePts` taşır. Sıra: günün en yüksek skoru → arkadaşlar → son oynananlar, en fazla 200. Pist tohumlu olduğundan çizgiler engellerle eşleşir.
+- **Hizalama:** çizgiler ilk noktaya göre normalize (`h = y0 - y`) → her ekran boyutunda oyuncunun başlangıcına oturur; eski kayıtlarda da çalışır.
+- **Çizim:** 1024 birimlik bantlar ekran dışı tuvale bir kez çizilir (`lighter`, alfa 0.10, en fazla 8 bant LRU), her karede yalnız kopyalanır. LOWFX'te gösterilmez. Liste 5 dk önbellekli (mod/gün anahtarı). Wife Mode ve meydan okumada yok.
+- **Ölüm işaretleri** artık çizgi verisinden değil, oyuncunun en iyi mesafesinden konumlanır (x: isim hash'i).
+- **ARC_DB:** `submitTrace`, `submitDailyTrace`, `getRecentTraces` (indeks yoksa istemci filtresi), `getDailyRecentTraces`, `getTracesFor` (≤60 GET), `getLongestTrace`, `getDailyTopTrace`; `submitDaily` yeni `tracePts` parametresi (400/403'te çizgisiz tekrar); `deleteMyData` çizgi belgelerini de siler.
+- **Kurallar:** `validTrace` (owner = uid, ad/tag biçimi, `pts` ≤ 20000 karakter, renk/kalınlık sınırı); belge kimliği ad+tag(+mod) ile eşleşmeli; okuma herkese açık, güncelleme/silme sahibine.
+- **Test:** sahte runQuery artık üst yolu (alt koleksiyon) dikkate alıyor; `fb.rejectTrace` deploy öncesi kuralları taklit ediyor. 2 yeni test: seçim sırası (LONGEST → CAN → BOB, Extreme ve kendisi hariç) + iz kapalıyken normalde yazılmaz, Daily'de herkes yazar, reddedilince skor çizgisiz kaydedilir.
+
 ### 📌 Oturum sonu durumu (2026-10-01) — kaldığımız yer
 
 - **Canlı sürüm:** `f97d4b1`, önbellek `?v=20261001e`. Çalışma ağacı temiz, `main` = `origin/main`. Firestore kuralları bu turda değişmedi (deploy gerekmiyor).

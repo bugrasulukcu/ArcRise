@@ -69,7 +69,8 @@ service cloud.firestore {
     // Günlük meydan okuma: daily/{YYYYMMDD}/scores/{uid} — oyuncu başına günün en iyisi.
     // Doküman kimliği = yazanın uid'i (başkasının kaydına yazılamaz); güncelleme yalnız skoru artırır.
     function validDaily(d) {
-      return d.keys().hasOnly(['name', 'avatar', 'score', 'ts', 'badges', 'tag'])
+      return d.keys().hasOnly(['name', 'avatar', 'score', 'ts', 'badges', 'tag', 'tracePts'])
+        && (!('tracePts' in d) || (d.tracePts is string && d.tracePts.size() <= 20000))
         && d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
         && d.score is int && d.score > 0 && d.score <= 50000000
         && d.avatar is int && d.avatar >= 0 && d.avatar <= 100
@@ -84,6 +85,39 @@ service cloud.firestore {
       allow update: if isAuthed() && request.auth.uid == uid && validDaily(request.resource.data)
         && request.resource.data.score > resource.data.score;
       allow delete: if isAuthed() && request.auth.uid == uid;
+    }
+
+    // Diğer oyuncu çizgileri: her oyuncunun SON oyunu. Doküman kimliği AD_ETİKET(_mod); yalnız sahibi yazar.
+    //   traces/{AD_ETİKET_mod}        — normal oyun (yalnız "show to others" açanlar yazar)
+    //   daily/{gün}/traces/{AD_ETİKET} — Daily (herkes; aynı parkur)
+    function validTrace(d) {
+      return d.keys().hasOnly(['owner', 'name', 'tag', 'mode', 'ts', 'dist', 'pts', 'color', 'thickness'])
+        && d.owner == request.auth.uid
+        && d.name is string && d.name.matches('^[A-Z0-9]{1,16}$')
+        && d.tag is string && d.tag.matches('^[0-9]{4}$')
+        && d.ts is int
+        && d.dist is number && d.dist >= 0 && d.dist <= 100000
+        && d.pts is string && d.pts.size() <= 20000
+        && (!('color' in d) || (d.color is string && d.color.size() <= 64))
+        && (!('thickness' in d) || (d.thickness is int && d.thickness >= 0 && d.thickness <= 20));
+    }
+    match /traces/{id} {
+      allow read: if true;
+      allow create: if isAuthed() && validTrace(request.resource.data)
+        && request.resource.data.mode in ['normal', 'extreme']
+        && id == request.resource.data.name + '_' + request.resource.data.tag + '_' + request.resource.data.mode;
+      allow update: if isAuthed() && validTrace(request.resource.data) && ownsOld()
+        && request.resource.data.mode in ['normal', 'extreme']
+        && id == request.resource.data.name + '_' + request.resource.data.tag + '_' + request.resource.data.mode;
+      allow delete: if isAuthed() && resource.data.owner == request.auth.uid;
+    }
+    match /daily/{day}/traces/{id} {
+      allow read: if true;
+      allow create: if isAuthed() && day.matches('^[0-9]{8}$') && validTrace(request.resource.data)
+        && request.resource.data.mode == 'daily' && id == request.resource.data.name + '_' + request.resource.data.tag;
+      allow update: if isAuthed() && validTrace(request.resource.data) && ownsOld()
+        && request.resource.data.mode == 'daily' && id == request.resource.data.name + '_' + request.resource.data.tag;
+      allow delete: if isAuthed() && resource.data.owner == request.auth.uid;
     }
 
     // Referral (davet) tıklama sayacı: her yazma clicks'i tam +1 artırabilir.
