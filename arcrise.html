@@ -6309,7 +6309,7 @@ const ARC_DB = (() => {
   // ── Reklam (AdMob — yalnız native Android/iOS; web'de reklam yok) ──────────
   // Oyun yalnız reklamla gelir sağlar (uygulama içi satın alma yok).
   //   Ödüllü: ölünce "devam et" (run başına 1), oyun sonu "coin ×2" (run başına 1).
-  //   Geçiş: oyun sonunda AGAIN / MENU'de, sıkı sınırla (bkz. maybeInterstitial).
+  //   Geçiş: ölünce, oyun sonu ekranından önce, sıkı sınırla (bkz. maybeInterstitial).
   // Yayından ÖNCE: AD_TESTING=false yap ve AD_UNITS'e AdMob hesabındaki gerçek reklam birimlerini yaz
   // (uygulama kimlikleri ayrıca AndroidManifest/strings.xml ve iOS Info.plist'te).
   const ADS_ENABLED = true;
@@ -10699,13 +10699,13 @@ const ARC_DB = (() => {
   let _statsCounted   = false;    // gamesTotal bu run için sayıldı mı (ad-continue çift saymasın)
   let _adContinueUsed = false;    // reklamla devam bu run'da kullanıldı mı (tek hak)
   let _adDoubleUsed = false, _x2Amount = 0;   // oyun sonu "coin ×2" ödüllü reklamı (run başına tek hak)
-  let _adRewardedThisOver = false;            // bu oyun sonu ekranında ödüllü reklam izlendi → geçiş reklamı yok
   let _interRuns = 0;                         // son geçiş reklamından beri sayılan (≥10 sn) run
-  // Geçiş reklamı: oyun sonundan AGAIN/MENU'ye geçerken, yalnız şu koşullarda — en az 5 oyun oynanmış,
-  // son geçişten beri ≥3 run (10 sn'den kısa run'lar sayılmaz), herhangi bir reklamdan ≥90 sn geçmiş,
-  // bu ekranda ödüllü reklam izlenmemiş; Wife modunda yok. Aksi halde then() hemen çalışır.
+  // Geçiş reklamı: ölünce, oyun sonu ekranı açılmadan önce (AGAIN/MENU'de değil — yeni run reklamla
+  // başlamasın). Yalnız şu koşullarda: en az 5 oyun oynanmış, son geçişten beri ≥3 run (10 sn'den kısa
+  // run'lar sayılmaz), herhangi bir reklamdan ≥90 sn geçmiş, bu run'da reklamla devam edilmemiş;
+  // Wife modunda yok. Aksi halde then() hemen çalışır.
   function maybeInterstitial(then) {
-    const ok = AdProvider.available() && !AdProvider.busy() && gameMode !== 'wife' && !_adRewardedThisOver
+    const ok = AdProvider.available() && !AdProvider.busy() && gameMode !== 'wife' && !_adContinueUsed
       && (stats.gamesTotal || 0) >= AdProvider.rules().minGames && _interRuns >= AdProvider.rules().runs
       && AdProvider.sinceLastMs() >= AdProvider.rules().gapMs;
     if (!ok) { then(); return; }
@@ -10918,7 +10918,6 @@ const ARC_DB = (() => {
     if (goBestDistInline) goBestDistInline.textContent = fmtDist((newBestDist ? bestDistBefore : bestDistanceM) || 0);
     // Reklamla devam: run başına tek hak; Wife, günlük/meydan okuma ve güvenli nokta yoksa kapalı.
     // Reklam hazır değilse (web, onay yok) düğmeler hiç görünmez.
-    _adRewardedThisOver = false;
     const adBtn = document.getElementById('btn-continue-ad');
     if (adBtn) { adBtn.disabled = false; adBtn.style.display =
       (AdProvider.available() && !_adContinueUsed && gameMode !== 'wife' && !_seeded() && _lastSafePos) ? '' : 'none'; }
@@ -10927,6 +10926,8 @@ const ARC_DB = (() => {
     const x2Btn = document.getElementById('btn-coin-x2');
     if (x2Btn) { x2Btn.disabled = false; x2Btn.hidden = !(AdProvider.available() && !_adDoubleUsed && _x2Amount >= 1); }
     try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
+    // Geçiş reklamı (koşullar uygunsa) ölümle oyun sonu ekranı arasında — sayım/coin animasyonu reklamın altında kalmasın
+    await new Promise(res => maybeInterstitial(res));
     // Önce ekranı aç — Firestore cevabını beklemeden
     showScene('over');
 
@@ -15127,8 +15128,7 @@ const ARC_DB = (() => {
   });
 
   document.getElementById('wrap-again').addEventListener('click', () => {   // iç düğme dinlemez (çift başlatma)
-    if (scene === 'over') maybeInterstitial(() => { if (scene === 'over') startGame(); });
-    else startGame();
+    startGame();
   });
 
 
@@ -15175,7 +15175,6 @@ const ARC_DB = (() => {
     AdProvider.showRewarded(ok => {
       b.disabled = false;
       if (!ok) return;
-      _adRewardedThisOver = true;
       if (scene === 'over') continueAfterAd();
     });
   });
@@ -15185,7 +15184,7 @@ const ARC_DB = (() => {
     AdProvider.showRewarded(ok => {
       b.disabled = false;
       if (!ok) return;
-      _adDoubleUsed = true; _adRewardedThisOver = true; b.hidden = true;
+      _adDoubleUsed = true; b.hidden = true;
       grantCoins(_x2Amount);
       ++_goAnimTok;   // süren coin sayaç animasyonu yeni değeri ezmesin
       const el = document.getElementById('go-coin-earned');
@@ -16221,7 +16220,7 @@ const ARC_DB = (() => {
         btn.classList.remove('holding');
         fill.style.transition = 'width 0.2s ease';
         fill.style.width = '0%';
-        maybeInterstitial(() => { if (scene === 'over') showScene('home'); });
+        if (scene === 'over') showScene('home');
       }, HOLD_MS);
       if (e && e.preventDefault) e.preventDefault();
     }

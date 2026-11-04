@@ -404,7 +404,7 @@ test('reklam: ×2 coin, ödülsüz kapatma, devam (tek hak), geçiş reklamı ku
   await ev(`__ads.skip = false; document.getElementById('btn-coin-x2').click(); true`); await sleep(400);
   const c1 = await ev('ARC_TEST.coins');
   check(c1 > c0 && await ev('ARC_TEST.ads.dbl') && await ev(`document.getElementById('btn-coin-x2').hidden`), `×2 çalışmadı: ${c0} → ${c1} (kazanç ${amt})`);
-  // ödüllü izlenen ekranda AGAIN → geçiş reklamı YOK
+  // reklamla devam edilen run'ın ikinci ölümünde geçiş reklamı YOK (sayaç dolu olsa da)
   await ev(`ARC_TEST.setInterRuns(5); true`);
   // devam: izlenince run sürer, ikinci ölümde devam düğmesi yok
   check(await ev(`getComputedStyle(document.getElementById('btn-continue-ad')).display !== 'none'`), 'devam düğmesi görünmüyor');
@@ -413,26 +413,28 @@ test('reklam: ×2 coin, ödülsüz kapatma, devam (tek hak), geçiş reklamı ku
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'devam sonrası run bitmedi');
   await sleep(1500);
   check(await ev(`getComputedStyle(document.getElementById('btn-continue-ad')).display === 'none'`), 'devam hakkı ikinci kez sunuldu');
-  // ödüllü reklamlar az önce izlendi → 90 sn dolmadan AGAIN'de geçiş reklamı YOK
-  const i0 = await ev('__ads.inter');
-  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
+  check(await ev('__ads.inter') === 0, 'reklamla devam sonrası ölümde geçiş reklamı gösterildi');
+  // AGAIN hiçbir zaman reklam göstermez
+  await ev(`document.getElementById('wrap-again').click(); true`);
   check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
-  check(await ev('__ads.inter') === i0, 'ödüllü reklamdan hemen sonra geçiş reklamı gösterildi');
+  check(await ev('__ads.inter') === 0, 'AGAIN\'de geçiş reklamı gösterildi');
 });
 
-test('reklam: geçiş reklamı koşullar sağlanınca AGAIN\'de çıkar, 90 sn dolmadan tekrar çıkmaz', async () => {
+test('reklam: geçiş reklamı ölünce (oyun sonu ekranından önce) çıkar, AGAIN\'de çıkmaz, 90 sn dolmadan tekrar çıkmaz', async () => {
   await fresh({ arc_test_fakeads: '1', arc_stats_v1: { gamesTotal: 10 } });
   check(await waitFor('ARC_TEST.ads.ready', 5000), 'sahte AdMob ile reklam hazır olmadı');
+  await ev(`ARC_TEST.setInterRuns(2); true`);
   await playRun(4000);
-  await ev(`ARC_TEST.setInterRuns(2); document.getElementById('wrap-again').click(); true`);
-  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
   check(await ev('__ads.inter') === 0, '3 run dolmadan geçiş reklamı gösterildi');
-  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
   await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
-  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'geçiş reklamından sonra oyun başlamadı');
-  check(await ev('__ads.inter') === 1, 'koşullar sağlanınca geçiş reklamı gösterilmedi');
-  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
-  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`); await sleep(500);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
+  check(await ev('__ads.inter') === 0, 'AGAIN\'de (oyun başında) geçiş reklamı gösterildi');
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'reklam sonrası oyun sonu ekranı açılmadı');
+  check(await ev('__ads.inter') === 1, 'koşullar sağlanınca ölümde geçiş reklamı gösterilmedi');
+  await sleep(1500);
+  await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 3000), 'AGAIN oyunu başlatmadı');
+  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(500);
   check(await ev('__ads.inter') === 1, '90 sn dolmadan ikinci geçiş reklamı gösterildi');
 });
 
@@ -450,14 +452,14 @@ test('reklam: web test modu (?fakeads) — sayaçlı sahte reklam, ✕ erken ç�
   check(await waitFor(`!document.querySelector('#fake-ad .fa-claim').hidden`, 7000), 'sayaç bitince CLAIM çıkmadı');
   await ev(`document.querySelector('#fake-ad .fa-claim').click(); true`); await sleep(200);
   check(await ev('ARC_TEST.coins') > c0, 'CLAIM ödül vermedi');
-  // bu ekranda ödüllü izlendi → AGAIN'de geçiş yok; yeni oyun sonunda (10 sn dolunca) hızlı modda çıkar, kendi kapanır
-  await ev(`document.getElementById('wrap-again').click(); true`);
-  check(await waitFor(`ARC_TEST.scene === 'play'`, 2000) && !(await ev(`!!document.getElementById('fake-ad')`)), 'ödüllü sonrası AGAIN\'de reklam çıktı');
-  await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
+  // AGAIN'de reklam yok; hızlı modda (son reklamdan 10 sn sonra) ölünce geçiş reklamı çıkar, kendi kapanır, sonra oyun sonu ekranı
   await sleep(10500);
   await ev(`ARC_TEST.setInterRuns(1); document.getElementById('wrap-again').click(); true`);
-  check(await waitFor(`!!document.getElementById('fake-ad')`, 2000), 'hızlı modda geçiş reklamı çıkmadı');
-  check(await waitFor(`ARC_TEST.scene === 'play' && !document.getElementById('fake-ad')`, 6000), 'geçiş reklamı kapanıp oyun başlamadı');
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 2000) && !(await ev(`!!document.getElementById('fake-ad')`)), 'AGAIN\'de reklam çıktı');
+  await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`!!document.getElementById('fake-ad')`, 30000), 'hızlı modda ölünce geçiş reklamı çıkmadı');
+  check(await ev(`ARC_TEST.scene !== 'over'`), 'oyun sonu ekranı reklamdan önce açıldı');
+  check(await waitFor(`ARC_TEST.scene === 'over' && !document.getElementById('fake-ad')`, 8000), 'geçiş reklamı kapanıp oyun sonu ekranı açılmadı');
 });
 
 test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç); iz açıkken son oyun gönderilir', async () => {
@@ -502,8 +504,8 @@ test('diğer oyuncu çizgileri: iz kapalıyken normal oyunda gönderilmez; Daily
   await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '2. günlük run bitmedi'); await sleep(2000);
   fb.rejectTrace = false;
   const sc2 = [...fb.docs.entries()].find(([k]) => k.startsWith(`daily/${day}/scores/`));
-  const sc2Score = await ev('ARC_TEST.daily.local.best');
-  check(sc2Score === 0 || (sc2 && !sc2[1].fields.tracePts), `kurallar yayınlanmadan günlük skor kaydedilmedi (yerel en iyi ${sc2Score})`);
+  const sc2Score = parseInt(await ls('arc_last')) || 0;   // bu run'ın skoru (0 ise gönderim zaten yok)
+  check(sc2Score === 0 || (sc2 && !sc2[1].fields.tracePts), `kurallar yayınlanmadan günlük skor kaydedilmedi (run skoru ${sc2Score})`);
 });
 
 test('credits: alert yerine oyun penceresi', async () => {

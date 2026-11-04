@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Geçiş reklamı ölüm anına taşındı (2026-11-04)
+
+- Kullanıcı: reklam ölünce gözüksün, AGAIN'e basınca oyun başında gözükmesin. `maybeInterstitial` artık `_proceedEndGame` içinde, oyun sonu ekranı açılmadan hemen önce bekletilir (skor/coin animasyonu reklamın altında kalmaz). AGAIN ve basılı tutarak MENU reklamsız.
+- Kurallar aynı (≥5 oyun, ≥3 run ≥10 sn, herhangi reklamdan ≥90 sn, Wife'ta yok); "bu ekranda ödüllü izlendi" koşulu (`_adRewardedThisOver`) yerine "bu run'da reklamla devam edildi" (`_adContinueUsed`) → devam edilen run'ın ikinci ölümünde geçiş reklamı yok.
+- Testler: 3 reklam testi yeni akışa göre yazıldı; Daily çizgi testindeki kararsız kontrol (günün en iyisi yerine run skoru) düzeltildi.
+
 ### Diğer oyuncu çizgileri yeniden yapıldı: seçili 200 çizgi, başlangıca hizalı, bölüm önbellekli çizim (2026-11-04)
 
 - **Neden çalışmıyordu:** rastgele pistte çizgiler engellerle ilgisizdi; mutlak dünya y'si ve ekran oranına bağlı spawn (`H-200`) yüzünden kayıyordu; 100 çizgi her karede baştan çiziliyordu.
