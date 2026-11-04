@@ -6236,20 +6236,24 @@ const ARC_DB = (() => {
     return (await res.json()).filter(r => r.document);
   }
   // Son oynanan oyunların çizgileri (oyuncu başına son oyun), en yeniden eskiye.
-  async function getRecentTraces(mode, n = 200) {
+  // since > 0: yalnız o andan sonra yazılanlar (her run başındaki ucuz yenileme).
+  const _tsAfter = since => ({ fieldFilter: { field: { fieldPath: 'ts' }, op: 'GREATER_THAN', value: { integerValue: String(since) } } });
+  async function getRecentTraces(mode, n = 200, since = 0) {
     if (!projectId || projectId.startsWith('BURAYA')) return [];
     const desc = [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }];
+    const byMode = { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: mode } } };
     try {
-      return (await _runQ('', { from: [{ collectionId: 'traces' }], where: { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: mode } } },
+      return (await _runQ('', { from: [{ collectionId: 'traces' }], where: since > 0 ? { compositeFilter: { op: 'AND', filters: [byMode, _tsAfter(since)] } } : byMode,
         orderBy: desc, limit: n })).map(r => _trDoc(r.document)).filter(Boolean);
     } catch (_) {   // bileşik indeks henüz yoksa: süzgeçsiz çek, istemcide ayıkla
-      try { return (await _runQ('', { from: [{ collectionId: 'traces' }], orderBy: desc, limit: Math.min(400, n * 2) }))
+      try { return (await _runQ('', { from: [{ collectionId: 'traces' }], ...(since > 0 ? { where: _tsAfter(since) } : {}), orderBy: desc, limit: Math.min(400, n * 2) }))
         .filter(r => r.document.fields?.mode?.stringValue === mode).map(r => _trDoc(r.document)).filter(Boolean).slice(0, n); } catch (_) { return []; }
     }
   }
-  async function getDailyRecentTraces(day, n = 200) {
+  async function getDailyRecentTraces(day, n = 200, since = 0) {
     if (!projectId || projectId.startsWith('BURAYA') || !/^[0-9]{8}$/.test(day)) return [];
-    try { return (await _runQ(`/daily/${day}`, { from: [{ collectionId: 'traces' }], orderBy: [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }], limit: n }))
+    try { return (await _runQ(`/daily/${day}`, { from: [{ collectionId: 'traces' }], ...(since > 0 ? { where: _tsAfter(since) } : {}),
+      orderBy: [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }], limit: n }))
       .map(r => _trDoc(r.document)).filter(Boolean); } catch (_) { return []; }
   }
   // Belirli oyuncuların (arkadaşlar) son oyun çizgileri: ids = [{name, tag}]
@@ -9649,24 +9653,46 @@ const ARC_DB = (() => {
     if (gameMode === 'wife' || _activeChal || !playerName) { otherTraces = []; _trTiles.clear(); return; }
     const daily = _dailyRun, day = daily ? dailyDay() : null, mode = gameMode;
     const ck = daily ? 'd' + day : 'm' + mode;
-    const hit = _trCache[ck];
-    if (hit && Date.now() - hit.t < TR_CACHE_MS) { setOtherTraces(hit.list); return; }
     const me = `${_sanId(playerName)}_${myTag()}`;
+    const recentQ = since => daily ? ARC_DB.getDailyRecentTraces(day, OTHER_TRACES_MAX, since) : ARC_DB.getRecentTraces(mode, OTHER_TRACES_MAX, since);
+    // Sıra: en uzun run / günün birincisi → arkadaşlar → son oyunlar; anahtar başına tek çizgi, ben hariç
+    const build = c => {
+      const seen = new Set([me]), list = [];
+      for (const t of [c.first, ...c.fr, ...c.recent]) {
+        if (!t || seen.has(t.key) || list.length >= OTHER_TRACES_MAX) continue;
+        seen.add(t.key); list.push(t);
+      }
+      c.list = list; c.maxTs = Math.max(c.maxTs || 0, ...c.recent.map(t => t.ts || 0), ...c.fr.map(t => t.ts || 0));
+      return list;
+    };
+    const hit = _trCache[ck];
+    if (hit && Date.now() - hit.t < TR_CACHE_MS) {
+      // Önbellektekini hemen göster, sonra yalnız son sorgudan beri yazılan çizgileri çek (tek ucuz sorgu):
+      // başka oyuncunun az önce bitirdiği oyun bir sonraki run'da görünür.
+      setOtherTraces(hit.list);
+      try {
+        // 60 sn pay: saati biraz geride olan cihazın yazdığı da kaçmasın; zaten bilineni ayıkla
+        const known = new Set([...hit.recent, ...hit.fr].map(t => t.key + '@' + t.ts));
+        const newer = (await recentQ(Math.max(0, (hit.maxTs || 0) - 60e3))).filter(t => !known.has(t.key + '@' + t.ts));
+        if (tok !== _trTok || !newer.length) return;
+        const nk = new Set(newer.map(t => t.key));
+        hit.fr = hit.fr.map(t => newer.find(n => n.key === t.key) || t);   // arkadaşın yeni oyunu eskisinin yerine
+        hit.recent = [...newer, ...hit.recent.filter(t => !nk.has(t.key))].slice(0, OTHER_TRACES_MAX);
+        setOtherTraces(build(hit));
+      } catch (_) {}
+      return;
+    }
     const friends = acceptedFriends().map(e => parseId(e.from === myId() ? e.to : e.from)).filter(p => p.name && /^\d{4}$/.test(p.tag));
     try {
       const [first, fr, recent] = await Promise.all([
         daily ? ARC_DB.getDailyTopTrace(day) : ARC_DB.getLongestTrace(mode),
         ARC_DB.getTracesFor(friends, mode, day),
-        daily ? ARC_DB.getDailyRecentTraces(day, OTHER_TRACES_MAX) : ARC_DB.getRecentTraces(mode, OTHER_TRACES_MAX),
+        recentQ(0),
       ]);
       if (tok !== _trTok) return;   // bu arada yeni run başladı
-      const seen = new Set([me]), list = [];
-      for (const t of [first, ...fr, ...recent]) {
-        if (!t || seen.has(t.key) || list.length >= OTHER_TRACES_MAX) continue;
-        seen.add(t.key); list.push(t);
-      }
-      _trCache[ck] = { t: Date.now(), list };
-      setOtherTraces(list);
+      const c = { t: Date.now(), first, fr, recent };
+      _trCache[ck] = c;
+      setOtherTraces(build(c));
     } catch (_) { if (tok === _trTok) { otherTraces = []; _trTiles.clear(); } }
   }
   // Karo: başlangıçtan yükseklik [k·T, (k+1)·T) bandındaki bütün çizgiler bir kez çizilir; her karede yalnız kopyalanır.

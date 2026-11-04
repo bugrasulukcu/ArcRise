@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Diğer oyuncu çizgileri her run başında tazelenir (2026-11-04)
+
+- Kullanıcı: yeni çizgiyi görmek için uygulamadan çıkıp girmek gerekti. Sebep: liste 5 dk önbellekte, bu sürede hiç sorgu yoktu.
+- Artık önbellek varken liste hemen gösterilir, ardından yalnız son bilinen `ts`'den (60 sn pay, saat kayması) sonra yazılan çizgiler çekilir (`getRecentTraces` / `getDailyRecentTraces` `since` parametresi; normalde 1 okuma). Yeni gelen oyuncunun çizgisi son oyunların başına, arkadaşın yeni oyunu eskisinin yerine. Tam yenileme (en uzun run, arkadaşlar, 200 son oyun) yine 5 dk'da bir.
+- Sonuç: başka oyuncunun bitirdiği oyun senin bir sonraki run'ında (AGAIN dahil) görünür. Test eklendi.
+
 ### Diğer oyuncu çizgileri gerçek yay gibi: yol boyunca örnekleme + RDP sıkıştırma (2026-11-04)
 
 - Kullanıcı: çizgiler gerçek oyuncunun çizeceği yay gibi değil. Sebep: nokta yalnız top 20 px YUKARI çıkınca alınıyordu (yana/aşağı kıvrılan yaylar düzleşiyordu), uzun run'da 150 noktaya seyreltiliyordu (5 m'de ~220 px aralık, araya quadratic ile sahte eğri) ve 180 px'ten uzun parçalar hiç çizilmiyordu.

@@ -495,6 +495,23 @@ test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç
   check(rt.mx <= 2 && rt.n >= 10 && rt.breaks === 1, `çizgi kodlaması yayı bozuyor: ${JSON.stringify(rt)}`);
 });
 
+test('diğer oyuncu çizgileri: başka oyuncunun az önce bitirdiği oyun bir sonraki run\'da görünür (yeniden açmadan)', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  const pts = 'v2:300,0,20,-166,-40,-200';
+  doc('traces/BOB_2222_normal', { name: S('BOB'), tag: S('2222'), mode: S('normal'), ts: I(Date.now() - 100000), dist: D(50), pts: S(pts) });
+  await fresh({ arc_tag: '1234' });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`ARC_TEST.otherTraces.join() === 'BOB_2222'`, 6000), `ilk liste: ${JSON.stringify(await ev('ARC_TEST.otherTraces'))}`);
+  await sleep(1500); await ev(`ARC_BOT.stop(); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1000);
+  // başka cihazda yeni oyunlar: EVE ilk kez, BOB yeniden oynadı
+  doc('traces/EVE_5555_normal', { name: S('EVE'), tag: S('5555'), mode: S('normal'), ts: I(Date.now()), dist: D(40), pts: S(pts) });
+  doc('traces/BOB_2222_normal', { name: S('BOB'), tag: S('2222'), mode: S('normal'), ts: I(Date.now() - 10), dist: D(60), pts: S('v2:310,0,10,-100') });
+  await ev(`document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.otherTraces.join() === 'EVE_5555,BOB_2222'`, 6000), `yeni oyunlar gelmedi: ${JSON.stringify(await ev('ARC_TEST.otherTraces'))}`);
+});
+
 test('diğer oyuncu çizgileri: iz kapalıyken normal oyunda gönderilmez; Daily\'de herkes gönderir, günün skoru çizgiyi taşır', async () => {
   fbReset();
   await fresh({ arc_tag: '1234' });
