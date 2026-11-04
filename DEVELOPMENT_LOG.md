@@ -405,6 +405,13 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Canlı sıra (HUD): solda skor, sağda mesafe sırası; okuma tavanlı (2026-11-04)
+
+- BEST'in altında RANK: run başında o moddaki oyuncu sayısından başlar, geçtikçe birinciliğe iner; her geçilen oyuncuda yeşil nabız, #1'de altın. Normal / Extreme'de; Daily, meydan okuma, Wife, tutorial ve çevrimdışında gizli. Kendi eski rekorun sayılmaz.
+- ARC_DB `countAboveF` / `valuesAboveF` (field: score | distance). İlk 100 dışında yalnız sayım (1 okuma / 1000 eşleşen kayıt), değer arttıysa 2.5 sn'de bir; ilk 100'de üstteki 6 değer de alınır → her geçişte anında iner, liste bitince (≥1.5 sn) yenilenir. **Run başına okuma tavanı 40** (`LR_READS_MAX`); dolunca yenileme durur.
+- **Yeni indeks:** scores (mode asc, distance asc) — deploy edilmeden mesafe sırası gizli kalır (skor sırası mevcut indeksle çalışır).
+- 3 test eklendi.
+
 ### Deneme: oyun alanı bükülmesi (şok dalgası / blob) + topun arkasında kara delik (2026-11-04)
 
 - Kullanıcı isteği (beğenmezse geri alınacak): ölümde oyun alanını büken şok dalgası, toplamada yerel blob; topun arkasında büyük çaplı, sönen cam / kara delik efekti. (Instagram örnekleri açılamadı; tarife göre yapıldı.)

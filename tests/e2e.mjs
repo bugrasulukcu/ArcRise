@@ -524,6 +524,56 @@ test('reklam: web test modu (?fakeads) — sayaçlı sahte reklam, ✕ erken ç�
   check(await waitFor(`ARC_TEST.scene === 'over' && !document.getElementById('fake-ad')`, 8000), 'geçiş reklamı kapanıp oyun sonu ekranı açılmadı');
 });
 
+test('canlı sıra: skor ve mesafe sırası toplamdan başlar, geçtikçe birinciliğe iner (kendi rekoru ve diğer mod sayılmaz)', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  [[1, 2], [2, 4], [3, 6]].forEach(([sc, d], i) => doc(`scores/P${i}_normal`, { name: S('P' + i), mode: S('normal'), score: I(sc), distance: D(d), ts: I(1), avatar: I(0) }));
+  doc('scores/X_extreme', { name: S('X'), mode: S('extreme'), score: I(5), distance: D(8), ts: I(1), avatar: I(0) });
+  await fresh({ arc_combo_reset_v24: '1', arc_score_v26: '1', arc_dist_reset_v2: '1', arc_stats_v1: { bestNormal: 100, bestDistNormal: 500 } });
+  const uid = await ev(`ARC_DB.ensureAuth().then(() => ARC_DB.getUid())`);
+  doc(`scores/${uid}_normal`, { name: S('ARC'), mode: S('normal'), score: I(100), distance: D(500), ts: I(1), avatar: I(0) });   // kendi eski rekoru
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`!document.getElementById('h-rank').hidden && !document.getElementById('h-drank').hidden`, 6000), 'sıra görünmedi');
+  const r0 = await ev(`[document.getElementById('h-rank').textContent, document.getElementById('h-drank').textContent]`);
+  check(r0[0] === '#4' && r0[1] === '#4', `başlangıç sırası yanlış (beklenen #4 / #4): ${r0}`);
+  await ev(`ARC_BOT.start(); true`);
+  check(await waitFor(`document.getElementById('h-drank').textContent === '#1' && document.getElementById('h-drank').classList.contains('first')`, 20000), `mesafe sırası birinciliğe inmedi: ${await ev(`document.getElementById('h-drank').textContent`)}`);
+  check(await waitFor(`ARC_TEST.score > 3 ? document.getElementById('h-rank').textContent === '#1' : true`, 20000), `skor sırası birinciliğe inmedi: ${await ev(`document.getElementById('h-rank').textContent`)}`);
+  await ev(`ARC_BOT.stop(); true`); await waitFor(`ARC_TEST.scene === 'over'`, 30000);
+  // Daily'de gizli
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(1500);
+  check(await ev(`document.getElementById('h-rank').hidden && document.getElementById('h-drank').hidden`), 'Daily\'de canlı sıra görünüyor');
+});
+
+test('canlı sıra: üstte listeden çok oyuncu varken yenilenerek birinciliğe iner', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  for (let i = 0; i < 20; i++) doc(`scores/Q${i}_normal`, { name: S('Q' + i), mode: S('normal'), score: I(0), distance: D(1 + i * 1.5), ts: I(1), avatar: I(0) });
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`document.getElementById('h-drank').textContent === '#21'`, 6000), `başlangıç: ${await ev(`document.getElementById('h-drank').textContent`)}`);
+  await ev(`ARC_BOT.start(); true`);
+  check(await waitFor(`document.getElementById('h-drank').textContent === '#1'`, 25000), `birinciliğe inmedi: ${await ev(`document.getElementById('h-drank').textContent`)}`);
+  await ev(`ARC_BOT.stop(); true`);
+});
+
+test('canlı sıra: kalabalık sıralamada run başına okuma tavanı (40) aşılmaz', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  for (let i = 0; i < 3000; i++) doc(`scores/Q${i}_normal`, { name: S('Q' + i), mode: S('normal'), score: I(i % 60), distance: D(2 + (i % 400)), ts: I(1), avatar: I(0) });
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`!document.getElementById('h-drank').hidden`, 6000), 'sıra görünmedi');
+  await sleep(15000);
+  const reads = await ev('ARC_TEST.liveRankReads');
+  check(reads >= 2 && reads <= 40, `okuma tahmini ${reads} (2 ≤ n ≤ 40 bekleniyordu)`);
+  await ev(`ARC_BOT.stop(); true`);
+});
+
 test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç); iz açıkken son oyun gönderilir', async () => {
   fbReset();
   const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });

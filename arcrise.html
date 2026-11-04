@@ -230,6 +230,13 @@
     .hud-tr .hud-divider { margin-left: auto; }
     .hud-sub-lbl { font-size: 7px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
     .hud-sub-num { font-size: 11px; color: rgba(255,255,255,.75); letter-spacing: 1px; }
+    /* Canlı sıra: geçilen her oyuncuda yeşil nabız, birincilikte altın */
+    .hud-rank-lbl { margin-top: 6px; }
+    .hud-rank { color: #9fd8ff; transition: color .3s; }
+    .hud-rank.up { animation: rankUp .35s ease-out; }
+    .hud-rank.first { color: #ffd25a; text-shadow: 0 0 8px rgba(255,210,90,.6); }
+    @keyframes rankUp { 0% { color: #7dffa0; transform: scale(1.35); } 100% { transform: scale(1); } }
+    .hud-tl .hud-rank.up { transform-origin: left center; } .hud-tr .hud-rank.up { transform-origin: right center; }
     /* Küçük avatar renk noktası YOUR BEST yanında */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
 
@@ -4259,6 +4266,8 @@
         <div class="hud-divider"></div>
         <div class="hud-sub-lbl">BEST <span id="hud-av"></span></div>
         <div class="hud-sub-num" id="h-best">000</div>
+        <div class="hud-sub-lbl hud-rank-lbl" id="h-rank-lbl" hidden>RANK</div>
+        <div class="hud-sub-num hud-rank" id="h-rank" hidden>#—</div>
         <div class="hud-sub-lbl" id="chal-lbl" hidden>⚔ TARGET</div>
         <div class="hud-sub-num" id="chal-num" hidden>000</div>
       </div>
@@ -4268,6 +4277,8 @@
         <div class="hud-divider"></div>
         <div class="hud-sub-lbl">BEST</div>
         <div class="hud-sub-num" id="h-dist-best">0</div>
+        <div class="hud-sub-lbl hud-rank-lbl" id="h-drank-lbl" hidden>RANK</div>
+        <div class="hud-sub-num hud-rank" id="h-drank" hidden>#—</div>
       </div>
       <div id="rt-mini" aria-hidden="true"></div>
       <!-- Combo indicator -->
@@ -5677,6 +5688,37 @@ const ARC_DB = (() => {
     } catch (e) { console.warn('[ArcDB] count failed', e); return null; }
   }
 
+  // Canlı sıra (HUD) için alan genel sürümler: field = 'score' | 'distance' (cm). Mesafe sorgusu
+  // (mode, distance) bileşik indeksini ister (firestore.indexes.json); yoksa null döner → HUD gizler.
+  const _numV = (field, S) => field === 'score' ? { integerValue: String(Math.max(0, Math.floor(S))) } : { doubleValue: Math.max(0, Number(S) || 0) };
+  const _modeAbove = (mode, field, S) => ({ compositeFilter: { op: 'AND', filters: [
+    { fieldFilter: { field: { fieldPath: 'mode' }, op: 'EQUAL', value: { stringValue: normMode(mode) } } },
+    { fieldFilter: { field: { fieldPath: field }, op: 'GREATER_THAN', value: _numV(field, S) } } ] } });
+  async function countAboveF(mode, field, S) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    try {
+      const res = await fbFetch(`${BASE}:runAggregationQuery?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: 'scores' }], where: _modeAbove(mode, field, S) },
+          aggregations: [{ alias: 'n', count: {} }] } }) });
+      if (!res.ok) throw new Error('count ' + res.status);
+      const v = (await res.json())?.[0]?.result?.aggregateFields?.n?.integerValue;
+      return v != null ? parseInt(v, 10) : null;
+    } catch (e) { return null; }
+  }
+  // S'nin hemen üstündeki n değer (artan), kendi kaydı hariç
+  async function valuesAboveF(mode, field, S, n) {
+    if (!projectId || projectId.startsWith('BURAYA')) return null;
+    try {
+      const res = await fbFetch(`${BASE}:runQuery?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'scores' }], where: _modeAbove(mode, field, S),
+          orderBy: [{ field: { fieldPath: field }, direction: 'ASCENDING' }], limit: n + 1 } }) });
+      if (!res.ok) throw new Error('above ' + res.status);
+      const mine = getUid() ? `${getUid()}_${normMode(mode)}` : '';
+      return (await res.json()).filter(r => r.document && r.document.name.split('/').pop() !== mine).slice(0, n)
+        .map(r => { const f = r.document.fields?.[field]; return Number(f?.integerValue ?? f?.doubleValue ?? 0); });
+    } catch (e) { return null; }
+  }
+
   // Allow explicit cache wipe (e.g. after submitting a new score).
   function invalidateTopCache() {
     _memCache.clear();
@@ -6307,7 +6349,7 @@ const ARC_DB = (() => {
     return r ? { key: `${_sanName(r.name)}_${r.tag}`, name: r.name, tag: r.tag, pts: r.tracePts, color: null, thickness: 0 } : null;
   }
 
-  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, countAboveF, valuesAboveF, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -9877,6 +9919,69 @@ const ARC_DB = (() => {
     ctx.restore();
   }
 
+  // ── Canlı sıra (HUD): solda skor sırası, sağda mesafe sırası ─────────────────────
+  // Run başında: o moddaki oyuncu sayısı (sayım sorgusu, 1 okuma) → sıra toplamdan başlar. Okuma tasarrufu:
+  //   ilk 100 dışında: yalnız sayım, değer arttıysa 2.5 sn'de bir (1 okuma) — gösterilen sayı yeni değere akar;
+  //   ilk 100'de: ayrıca hemen üstteki LR_LADDER değer → her geçilen oyuncuda sıra anında 1 azalır, liste
+  //   bitmeye yakınken (≥1.5 sn arayla) yenilenir. Kendi eski rekorun sayılmaz (sayımdan düşülür, listede yok).
+  // Normal / Extreme dışında (Daily, meydan okuma, Wife, tutorial) ve çevrimdışıyken gizli.
+  // Maliyet tavanı: sayım sorgusu eşleşen her 1000 kayıt için 1 okuma sayılır (oyuncu arttıkça pahalanır) →
+  // run başına toplam LR_READS_MAX okuma; bitince yenileme durur (sıra listedekiyle inmeye devam eder, son değerde kalır).
+  const LR_LADDER = 6, LR_GAP_MS = 1500, LR_FAR_GAP_MS = 2500, LR_NEAR = 100, LR_READS_MAX = 40;
+  const _lr = { tok: 0, on: false, reads: 0, k: { score: null, distance: null } };
+  function _lrEls(f) { return f === 'score' ? [document.getElementById('h-rank'), document.getElementById('h-rank-lbl')] : [document.getElementById('h-drank'), document.getElementById('h-drank-lbl')]; }
+  function _lrHide() { for (const f of ['score', 'distance']) { const [n, l] = _lrEls(f); if (n) { n.hidden = true; n.classList.remove('first', 'up'); } if (l) l.hidden = true; } }
+  function startLiveRank() {
+    const tok = ++_lr.tok;
+    _lr.on = false; _lr.reads = 0; _lr.k.score = _lr.k.distance = null; _lrHide();
+    if ((gameMode !== 'normal' && gameMode !== 'extreme') || _seeded() || tutActive || !playerName) return;
+    _lr.on = true;
+    for (const f of ['score', 'distance']) { _lr.k[f] = { rank: 0, shown: 0, ladder: [], busy: false, at: 0, v: 0, ok: false }; _lrRefresh(f, 0, tok); }
+  }
+  function _lrMyBest(f) {
+    if (f === 'score') return gameMode === 'extreme' ? (stats.bestExtreme || 0) : (stats.bestNormal || 0);
+    return gameMode === 'extreme' ? (stats.bestDistExtreme || 0) : (stats.bestDistNormal || 0);
+  }
+  async function _lrRefresh(f, v, tok) {
+    const L = _lr.k[f]; if (!L || L.busy) return;
+    const cost = Math.max(1, Math.ceil((L.cnt || 0) / 1000));   // son sayıma göre tahmini okuma
+    if (L.ok && _lr.reads + cost > LR_READS_MAX) { L.end = true; return; }
+    L.busy = true; L.at = performance.now(); L.v = v; _lr.reads += cost;
+    const cnt = await ARC_DB.countAboveF(gameMode, f, v);
+    const rank = cnt == null ? 0 : Math.max(1, cnt - (_lrMyBest(f) > v ? 1 : 0) + 1);
+    const ladderOk = rank > 1 && rank <= LR_NEAR && _lr.reads + LR_LADDER <= LR_READS_MAX;
+    if (ladderOk) _lr.reads += LR_LADDER;
+    const above = ladderOk ? await ARC_DB.valuesAboveF(gameMode, f, v, LR_LADDER) : [];
+    if (cnt != null) L.cnt = cnt;
+    if (tok !== _lr.tok) return;
+    L.busy = false;
+    if (cnt == null || !above) { if (!L.ok) { const [n, l] = _lrEls(f); if (n) n.hidden = true; if (l) l.hidden = true; } return; }
+    if (!L.ok) { L.shown = rank; const [n, l] = _lrEls(f); if (n) n.hidden = false; if (l) l.hidden = false; }
+    L.ok = true; L.rank = rank; L.ladder = above;
+    L.end = rank <= 1 || (ladderOk && above.length < LR_LADDER);   // end: üstte listedekilerden başka kimse yok
+  }
+  function tickLiveRank(dt, sc, distCm) {
+    if (!_lr.on) return;
+    for (const f of ['score', 'distance']) {
+      const L = _lr.k[f]; if (!L || !L.ok) continue;
+      const v = f === 'score' ? sc : distCm;
+      let passed = 0;
+      while (L.ladder.length && v > L.ladder[0]) { L.ladder.shift(); passed++; }
+      if (passed) L.rank = Math.max(1, L.rank - passed);
+      const near = L.rank <= LR_NEAR, gap = near ? LR_GAP_MS : LR_FAR_GAP_MS;
+      if ((!near || L.ladder.length <= 1) && !L.end && L.rank > 1 && !L.busy && v > L.v && performance.now() - L.at > gap) _lrRefresh(f, v, _lr.tok);
+      // gösterilen sayı hedefe doğru akar (toplu geçişte de birer birer sayıyormuş gibi)
+      const prev = Math.round(L.shown);
+      L.shown += (L.rank - L.shown) * Math.min(1, dt * 10);
+      if (Math.abs(L.rank - L.shown) < 0.5) L.shown = L.rank;
+      const cur = Math.round(L.shown), [n] = _lrEls(f);
+      if (!n) continue;
+      setTxt(n, '#' + cur.toLocaleString('en-US'));
+      n.classList.toggle('first', cur === 1);
+      if (cur < prev) { n.classList.remove('up'); void n.offsetWidth; n.classList.add('up'); }
+    }
+  }
+
   // ── World helpers ─────────────────────────────────────────
   const W2S = y => y - camY;
   const S2W = y => y + camY;
@@ -9963,6 +10068,7 @@ const ARC_DB = (() => {
     document.getElementById('combo-hud').classList.remove('active');
     fetchCrossPlayerGhosts();
     loadOtherTraces();
+    startLiveRank();
     initBgArcs();
     // Engel/enerji buffer'ını hemen doldur — bir ekran yukarıda hazır beklesin
     spawnAhead();
@@ -11632,6 +11738,7 @@ const ARC_DB = (() => {
         const bd = bestDistanceM || 0;
         setTxt(dBestEl, fmtDist(bd));
       }
+      tickLiveRank(dtRaw, Math.floor(score), distCm);
     }
 
     requestAnimationFrame(loop);
@@ -12025,6 +12132,7 @@ const ARC_DB = (() => {
     get ads() { return { ready: AdProvider.available(), interRuns: _interRuns, cont: _adContinueUsed, dbl: _adDoubleUsed }; },
     setInterRuns: n => { _interRuns = n; },
     get otherTraces() { return otherTraces.map(t => t.key); },
+    get liveRankReads() { return _lr.reads; },
     traceCodec: { encodeTrace, decodeTrace },
     get coreFx() { return { timer: comboDisplayMax(), cap: comboCap(), win: comboWindowSec(), speed: getBaseSpeed() }; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },

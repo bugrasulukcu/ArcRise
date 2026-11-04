@@ -29,6 +29,20 @@
       ]
     },
     {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "mode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "distance",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "traces",
       "queryScope": "COLLECTION",
       "fields": [
