@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### İlk oyun kilidi: tutorial bitene kadar ana menüde yalnız START ve profil (2026-11-04)
+
+- Kullanıcı: yeni oyuncu doğrudan Quests → Daily oynayabiliyordu, orada tutorial yok. Artık `arc_firstplay` yokken (`html.first-run`) High Scores, Quests, Settings (mod seçimi dahil), Invite, Friends, coin ve UPG düğmeleri gri (%30, grayscale) ve basılamaz; bildirim noktaları gizli. Tıklama yakalama aşamasında durdurulur, START kısa bir nabızla işaret edilir. Profil açık; PRIVACY / CREDITS bağlantıları da açık (gizlilik politikası her zaman erişilebilir olmalı).
+- Kilit tutorial bitince veya atlanınca (`endTutorial`) ve veri silmede yeniden hesaplanır. Eski sürümde oynamış ama bayrağı olmayan oyuncu (`gamesTotal > 0`) kilitlenmez.
+- Test eklendi; geçiş reklamı testindeki 10 sn sayaç kararsızlığı düzeltildi.
+
 ### Diğer oyuncu çizgileri her run başında tazelenir (2026-11-04)
 
 - Kullanıcı: yeni çizgiyi görmek için uygulamadan çıkıp girmek gerekti. Sebep: liste 5 dk önbellekte, bu sürede hiç sorgu yoktu.

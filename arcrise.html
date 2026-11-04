@@ -4189,6 +4189,12 @@
         radial-gradient(95% 80% at 50% 12%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%),
         rgba(9,10,16,.72);
     }
+    /* İlk oyun (tutorial) bitene kadar ana menüde yalnız START ve profil açık; kalanı gri ve basılamaz */
+    html.first-run :is(#btn-lb, #btn-quests, #btn-settings, #btn-challenge-link, #btn-friends, #home-coin-pill, #home-upgrade-btn) {
+      opacity: .3; filter: grayscale(1); animation: none !important; cursor: default;
+    }
+    html.first-run :is(#btn-lb, #btn-quests, #btn-settings, #btn-challenge-link, #btn-friends, #home-coin-pill, #home-upgrade-btn) * { animation: none !important; }
+    html.first-run :is(.fr-badge, #home .notif-dot) { display: none !important; }
   </style>
 </head>
 <body>
@@ -10714,6 +10720,7 @@ const ARC_DB = (() => {
     hudEl.classList.remove('tutorial');
     obstacles.length = 0; bonuses.length = 0;
     localStorage.setItem('arc_firstplay', '1');
+    try { applyFirstRunLock(); } catch (_) {}
     if (wasActive && _tutWantsPlay) {
       // SEAMLESS transition: tutorial overlay kalkar, ball ters yöne arc atar,
       // gerçek gameplay devam eder (sahne değiştirmeden).
@@ -11587,6 +11594,7 @@ const ARC_DB = (() => {
     try { updateQuestButton(); } catch(_){}
     setSfx(true); setMus(true); setGameMode('normal');
     renderAvPicker(); applyProfile();
+    try { applyFirstRunLock(); } catch (_) {}
     // Tema da sıfırlanır: CSS sınıfı hemen kalkar; canvas paleti (Game Boy / Noir) yalnız açılışta
     // kurulduğu için o durumda sayfa yenilenir — yoksa oyun baştan başlıyor ama tema kalıyordu.
     const hadCanvasTheme = !!_tStyle;
@@ -15153,6 +15161,25 @@ const ARC_DB = (() => {
 
   setGameMode(gameMode); // init buttons
 
+  // İlk oyun kilidi: tutorial bitene (veya atlanana) kadar ana menüde yalnız START ve profil çalışır —
+  // yoksa oyuncu Quests'ten tutorialsız Daily'ye, Settings'ten Extreme'e geçebiliyordu.
+  const FIRST_RUN_LOCKED = '#btn-lb, #btn-quests, #btn-settings, #btn-challenge-link, #btn-friends, #home-coin-pill, #home-upgrade-btn';
+  const isFirstRun = () => localStorage.getItem('arc_firstplay') !== '1';
+  function applyFirstRunLock() {
+    const on = isFirstRun();
+    document.documentElement.classList.toggle('first-run', on);
+    document.querySelectorAll(FIRST_RUN_LOCKED).forEach(b => b.setAttribute('aria-disabled', on ? 'true' : 'false'));
+  }
+  // Yakalama aşamasında: düğmenin kendi dinleyicisinden önce durdurur; START kısa bir nabızla işaret edilir
+  document.addEventListener('click', e => {
+    if (!isFirstRun() || !e.target.closest || !e.target.closest(FIRST_RUN_LOCKED)) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    document.getElementById('wrap-start')?.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 380, easing: 'ease-out' });
+    try { haptic(15); } catch (_) {}
+  }, true);
+  // Eski sürümde oynamış ama bayrağı olmayan oyuncu kilitlenmesin
+  try { if (isFirstRun() && (stats.gamesTotal || 0) > 0) localStorage.setItem('arc_firstplay', '1'); } catch (_) {}
+  applyFirstRunLock();
   // İlk START tıklamasında oyuncu hiç oynamadıysa tutorial gösterilir;
   // sonraki tıklamalarda normal oyuna geçer.
   function handleStartTap() {

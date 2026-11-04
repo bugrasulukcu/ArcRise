@@ -357,6 +357,27 @@ test('seri: 5. gün sandık, 1 gün kaçırma serbest, 2 gün sıfırlar, 60. g�
   check((await lsJSON('arc_upg_v1')).traceColorsOwned.includes('rb:ember'), '60. gün Ember izi verilmedi');
 });
 
+test('ilk oyun: tutorial bitene kadar ana menüde yalnız START ve profil çalışır', async () => {
+  await fresh({}, { firstplay: false });
+  check(await ev(`document.documentElement.classList.contains('first-run')`), 'ilk açılışta kilit yok');
+  const op = id => ev(`getComputedStyle(document.getElementById('${id}')).opacity`).then(Number);
+  check(await op('btn-quests') < 0.5 && await op('btn-friends') < 0.5 && await op('btn-start') > 0.9, 'kilitli düğmeler gri değil / START sönük');
+  await ev(`document.getElementById('btn-quests').click(); document.getElementById('btn-settings').click(); document.getElementById('btn-lb').click(); document.getElementById('home-upgrade-btn').click(); true`); await sleep(400);
+  check(await ev(`!document.getElementById('quests-modal').classList.contains('open') && ARC_TEST.scene === 'home'`), 'kilitliyken Quests / Settings açıldı');
+  check(await ev(`![...document.querySelectorAll('.open')].some(e => /modal/.test(e.id))`), `kilitliyken pencere açıldı: ${await ev(`[...document.querySelectorAll('.open')].map(e => e.id).join()`)}`);
+  await ev(`document.getElementById('home-profile').click(); true`); await sleep(400);
+  check(await ev(`[...document.querySelectorAll('.open')].some(e => /prof/.test(e.id))`), 'profil açılmadı');
+  // eski sürümde oynamış (bayraksız) oyuncu kilitlenmez
+  await fresh({ arc_stats_v1: { gamesTotal: 3 } }, { firstplay: false });
+  check(!(await ev(`document.documentElement.classList.contains('first-run')`)), 'oynamış oyuncu kilitlendi');
+  // tutorial bitince kilit kalkar
+  await fresh({}, { firstplay: false });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(800);
+  check(await ev('ARC_TEST.tutActive'), 'tutorial başlamadı');
+  await ev(`ARC_TEST.finishTutorial(); true`); await sleep(300);
+  check(!(await ev(`document.documentElement.classList.contains('first-run')`)), 'tutorial sonrası kilit kalkmadı');
+});
+
 test('tutorial: gerçek run\'a geçişte takılı item harcanır', async () => {
   await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { shield: { count: 3, armed: true } } } }, { firstplay: false });
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(800);
@@ -423,7 +444,7 @@ test('reklam: ×2 coin, ödülsüz kapatma, devam (tek hak), geçiş reklamı ku
 test('reklam: geçiş reklamı ölünce (oyun sonu ekranından önce) çıkar, AGAIN\'de çıkmaz, 90 sn dolmadan tekrar çıkmaz', async () => {
   await fresh({ arc_test_fakeads: '1', arc_stats_v1: { gamesTotal: 10 } });
   check(await waitFor('ARC_TEST.ads.ready', 5000), 'sahte AdMob ile reklam hazır olmadı');
-  await ev(`ARC_TEST.setInterRuns(2); true`);
+  await ev(`ARC_TEST.setInterRuns(1); true`);   // bu run ≥10 sn sürse de en fazla 2 olur
   await playRun(4000);
   check(await ev('__ads.inter') === 0, '3 run dolmadan geçiş reklamı gösterildi');
   await ev(`ARC_TEST.setInterRuns(3); document.getElementById('wrap-again').click(); true`);
