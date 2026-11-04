@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Rozet: üst kademe kazanılınca takılı eskisi çıkarılamıyordu; sol / sağ slot seçimi (2026-11-04)
+
+- **Hata:** takılı rozet eski kademe kimliğiyle (`score-1`) kalıyor, ızgara ise yeni kademeyi (`score-2`) gösteriyordu → hücre takılı görünmüyor, dokununca ikinci slota ikinci kez takılıyor, eskisi çıkarılamıyordu. Terfi yalnız açılışta, yeni kademe açılmadan ÖNCE yapılıyordu. Düzeltme: `promoteEquipped()` artık `checkBadgeUnlocks` yeni rozet açınca da çalışır (aynı ailenin iki slotta kalmış kademelerini teke indirir); ızgara takılı durumu aile bazında eşler (`eqIdx`).
+- **Sol / sağ:** rozet penceresinin üstünde LEFT / RIGHT slot seçici (takılı rozet ikonuyla, seçili olan altın). Profildeki sol/sağ slottan açılınca o slot seçili gelir. Rozete dokunmak seçili slota takar; aynı slottakine tekrar dokunmak çıkarır; öbür slottakine dokunmak yer değiştirir; öbür slot boşsa seçim ona geçer. Takılı hücrelerde L / R etiketi. Sıralama listesinde rozetler bu sırayla (sol, sağ) görünür.
+- 2 test eklendi. 52/52.
+
 ### Devam geri sayımı topun üstünde, yeni animasyon; Revive de sayımla döner (2026-11-04)
 
 - Kullanıcı: reklamla / yükseltmeyle devamda geri sayım topun tam üstünde (topun içindeki enerji rakamını kapatıyordu). Artık `drawResumeCountdown`: rakam ekranın yatay ortasında, topun ~150 px üstünde (top ekranın tepesine yakınsa altında). Her saniye büyükten yerine oturur (ease-out), arkasında genişleyen dalga halkası, saniye sonunda söner; altında "GET READY"; topun çevresinde kalan süreyle boşalan yeşil halka; bitince kısa "GO".

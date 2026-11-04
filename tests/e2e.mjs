@@ -357,6 +357,38 @@ test('seri: 5. gün sandık, 1 gün kaçırma serbest, 2 gün sıfırlar, 60. g�
   check((await lsJSON('arc_upg_v1')).traceColorsOwned.includes('rb:ember'), '60. gün Ember izi verilmedi');
 });
 
+test('rozet: takılıyken üst kademe kazanılınca slot yeni kademeye geçer ve çıkarılabilir', async () => {
+  // SCORE I takılı; skor 300 → SCORE II açılır (checkBadgeUnlocks)
+  await fresh({ arc_combo_reset_v24: '1', arc_score_v26: '1', arc_stats_v1: { bestNormal: 300 }, arc_badges_earned_v1: ['score-1'], arc_badges_v1: ['score-1', null] });
+  check(JSON.stringify(await lsJSON('arc_badges_v1')) === '["score-2",null]', `slot yükselmedi: ${await ls('arc_badges_v1')}`);
+  await ev(`document.querySelector('.prof-eq-slot').click(); true`); await sleep(300);
+  const cell = `[...document.querySelectorAll('#badges-modal-grid .prof-badge')].find(e => /SCORE/.test(e.textContent))`;
+  check(await ev(`${cell}.classList.contains('sel')`), 'takılı rozet ızgarada seçili görünmüyor');
+  await ev(`${cell}.click(); true`); await sleep(200);
+  check(JSON.stringify(await lsJSON('arc_badges_v1')) === '[null,null]', `rozet çıkarılamadı: ${await ls('arc_badges_v1')}`);
+  // eski hatadan kalan durum: aynı ailenin iki kademesi iki slotta → tek slot
+  await fresh({ arc_combo_reset_v24: '1', arc_score_v26: '1', arc_stats_v1: { bestNormal: 300 }, arc_badges_earned_v1: ['score-1', 'score-2'], arc_badges_v1: ['score-1', 'score-2'] });
+  check(JSON.stringify(await lsJSON('arc_badges_v1')) === '["score-2",null]', `çift kayıt temizlenmedi: ${await ls('arc_badges_v1')}`);
+});
+
+test('rozet: sol / sağ slot seçilir, öbür slottakine dokunmak yer değiştirir', async () => {
+  await fresh({ arc_badges_earned_v1: ['score-1', 'range-1'], arc_badges_v1: [null, null] });
+  const eq = async () => JSON.stringify(await lsJSON('arc_badges_v1'));
+  const cell = name => `[...document.querySelectorAll('#badges-modal-grid .prof-badge')].find(e => e.textContent.includes('${name}'))`;
+  await ev(`document.getElementById('prof-eq-slot-r').click(); true`); await sleep(300);
+  check(await ev(`document.querySelector('#badges-slot-pick .bsp-slot.active').dataset.slot === '1'`), 'sağ slottan açınca SAĞ seçili değil');
+  await ev(`${cell('SCORE')}.click(); true`); await sleep(150);
+  check(await eq() === '[null,"score-1"]', `sağa takılmadı: ${await eq()}`);
+  check(await ev(`document.querySelector('#badges-slot-pick .bsp-slot.active').dataset.slot === '0'`), 'sol boşken seçim sola geçmedi');
+  await ev(`${cell('DISTANCE')}.click(); true`); await sleep(150);
+  check(await eq() === '["range-1","score-1"]', `sola takılmadı: ${await eq()}`);
+  check(await ev(`${cell('SCORE')}.querySelector('.prof-badge-pos').textContent === 'R' && ${cell('DISTANCE')}.querySelector('.prof-badge-pos').textContent === 'L'`), 'L / R etiketi yanlış');
+  await ev(`${cell('SCORE')}.click(); true`); await sleep(150);   // seçili sol; SCORE sağda → yer değiştirir
+  check(await eq() === '["score-1","range-1"]', `yer değiştirmedi: ${await eq()}`);
+  await ev(`document.querySelector('#badges-slot-pick .bsp-slot[data-slot="1"]').click(); ${cell('DISTANCE')}.click(); true`); await sleep(150);
+  check(await eq() === '["score-1",null]', `sağdaki çıkarılamadı: ${await eq()}`);
+});
+
 test('revive: bilet kullanılınca top 3 sn sayımla donuk bekler, sonra akar', async () => {
   await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { revive: { count: 1 } } } });
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(3000); await ev(`ARC_BOT.stop(); true`);

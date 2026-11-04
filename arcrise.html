@@ -1742,6 +1742,22 @@
       background: rgba(255,210,80,.08);
     }
     .prof-badge-icon { font-size: 22px; line-height: 1; }
+    /* Rozet penceresi: hangi slota (sol / sağ) takılacağını seçme */
+    #badges-slot-pick { display: flex; gap: 10px; justify-content: center; width: 100%; }
+    .bsp-slot {
+      display: flex; align-items: center; gap: 8px; min-width: 112px; padding: 6px 12px 6px 6px;
+      border-radius: 12px; border: 1.5px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.55); font-family: var(--font); font-size: 10px; letter-spacing: 2px; cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, background .2s, color .2s;
+    }
+    .bsp-slot.active { border-color: rgba(255,210,80,.8); background: rgba(255,210,80,.10); color: #ffd25a;
+      box-shadow: 0 0 14px rgba(255,210,80,.3), inset 0 1px 0 rgba(255,255,255,.12); }
+    .bsp-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      border: 1.5px dashed rgba(255,255,255,.22); }
+    .bsp-slot.filled .bsp-icon { border: none; }
+    .prof-badge { position: relative; }
+    .prof-badge-pos { position: absolute; top: 4px; right: 4px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px;
+      background: #ffd25a; color: #1a1200; font-family: var(--font); font-size: 8px; font-weight: 700; line-height: 14px; text-align: center; }
     .prof-badge-name { font-size: 7px; letter-spacing: 1px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.2; }
 
     /* Upgrades modal (CORE + GEAR katalogu) */
@@ -5115,7 +5131,11 @@
       <div id="badges-modal-title" class="modal-head-title">Badges</div>
       <span class="modal-head-spacer"></span>
     </div>
-    <div id="badges-modal-sub">Equipped badges show next to your name on the leaderboard · Tap to equip · re-tap to remove</div>
+    <div id="badges-modal-sub">Shown next to your name on the leaderboard · pick a slot, tap a badge · re-tap to remove</div>
+    <div id="badges-slot-pick">
+      <button class="bsp-slot" type="button" data-slot="0"><span class="bsp-icon"></span><span class="bsp-lbl">LEFT</span></button>
+      <button class="bsp-slot" type="button" data-slot="1"><span class="bsp-icon"></span><span class="bsp-lbl">RIGHT</span></button>
+    </div>
     <div id="badges-modal-grid"></div>
   </div>
 </div>
@@ -14665,7 +14685,10 @@ const ARC_DB = (() => {
         }));
       }
     } catch(_){}
-    if (dirty) saveEarned();
+    if (dirty) {
+      saveEarned();
+      try { promoteEquipped(); renderEquipSlots(); } catch(_){}   // takılı rozet yeni kademesine geçer
+    }
     try { refreshNotifs(); } catch(_){}
     return dirty;
   }
@@ -14704,36 +14727,51 @@ const ARC_DB = (() => {
     for (let i = 5; i >= 1; i--) if (earnedBadges.has(`${fid}-${i}`)) return i;
     return 0;
   }
+  let _badgeTarget = 0;   // rozet penceresinde takılacak slot: 0 = sol, 1 = sağ
+  function renderBadgeSlotPick() {
+    document.querySelectorAll('#badges-slot-pick .bsp-slot').forEach(el => {
+      const i = Number(el.dataset.slot), b = equippedBadges[i] ? findBadge(equippedBadges[i]) : null;
+      el.classList.toggle('active', i === _badgeTarget);
+      el.classList.toggle('filled', !!b);
+      el.querySelector('.bsp-icon').innerHTML = b ? badgeHTML(b, 34) : '';
+    });
+  }
+  document.querySelectorAll('#badges-slot-pick .bsp-slot').forEach(el => el.addEventListener('click', () => {
+    _badgeTarget = Number(el.dataset.slot); renderBadgeSlotPick();
+  }));
   function renderBadgeGrid() {
     const grid = document.getElementById('badges-modal-grid');
     if (!grid) return;
+    renderBadgeSlotPick();
     grid.innerHTML = '';
+    // Takılı slot: aynı rozet ya da aynı ailenin başka kademesi (takılıyken bir üst kademe kazanıldıysa
+    // slotta hâlâ eskisi durabilir — hücre onu da "takılı" sayar, dokununca çıkarır)
+    const eqIdx = id => { const fam = findBadge(id)?.family;
+      return equippedBadges.findIndex(e => e && (e === id || (fam && findBadge(e)?.family === fam))); };
     // Ortak hücre: id = equip edilecek rozet, colored ikon + ad; locked ise gri.
     const addCell = (id, icon, label, desc, locked, col, progressTxt) => {
       const el = document.createElement('button');
       el.type = 'button';
-      el.className = 'prof-badge' + (equippedBadges.includes(id) ? ' sel' : '');
+      const at = eqIdx(id);
+      el.className = 'prof-badge' + (at !== -1 ? ' sel' : '');
       if (locked) { el.style.opacity = '0.32'; el.style.filter = 'grayscale(1)'; }
       el.title = desc;
-      el.innerHTML = `<span class="prof-badge-icon">${badgeHTML(findBadge(id) || { id, tier: 0 }, 44)}</span><span class="prof-badge-name">${label}</span>`;
+      el.innerHTML = `<span class="prof-badge-icon">${badgeHTML(findBadge(id) || { id, tier: 0 }, 44)}</span><span class="prof-badge-name">${label}</span>`
+        + (at !== -1 ? `<span class="prof-badge-pos">${at === 0 ? 'L' : 'R'}</span>` : '');
       el.addEventListener('click', () => {
         if (locked) { try { showToast((desc + (progressTxt ? ' · ' + progressTxt : '')).toUpperCase()); } catch(_){} return; }
-        const idx = equippedBadges.indexOf(id);
-        if (idx !== -1) {
-          equippedBadges[idx] = null;
-        } else {
-          const empty = equippedBadges.indexOf(null);
-          if (empty !== -1) equippedBadges[empty] = id;
-          else equippedBadges[1] = id;
-        }
+        // Seçili slota (sol / sağ) takılır: aynı slottakine tekrar dokunmak çıkarır, öbür slottakine
+        // dokunmak iki slotu yer değiştirir. Öbür slot boşsa seçim ona geçer (ikinciyi takmak kolay olsun).
+        const t = _badgeTarget, o = 1 - t, idx = eqIdx(id);
+        let state;
+        if (idx === t) { equippedBadges[t] = null; state = 'REMOVED'; }
+        else if (idx === o) { const cur = equippedBadges[o]; equippedBadges[o] = equippedBadges[t]; equippedBadges[t] = cur; state = 'MOVED ' + (t ? 'RIGHT' : 'LEFT'); }
+        else { equippedBadges[t] = id; state = 'EQUIPPED ' + (t ? 'RIGHT' : 'LEFT'); if (!equippedBadges[o]) _badgeTarget = o; }
         saveBadges();
         renderBadgeGrid();
         renderEquipSlots();
         // Dokununca altta geçici bilgi: takıldı/çıkarıldı + koşul + ilerleme
-        try {
-          const state = equippedBadges.includes(id) ? 'EQUIPPED' : 'REMOVED';
-          showToast(`${label} ${state} · ${desc}${progressTxt ? ' · ' + progressTxt : ''}`.toUpperCase());
-        } catch(_){}
+        try { showToast(`${label} ${state} · ${desc}${progressTxt ? ' · ' + progressTxt : ''}`.toUpperCase()); } catch(_){}
       });
       grid.appendChild(el);
     };
@@ -14772,18 +14810,24 @@ const ARC_DB = (() => {
     }
   } catch(_) {}
   // Eski sürümden kalmış / artık var olmayan equip'leri temizle;
-  // aile rozetlerini kazanılmış EN YÜKSEK kademeye terfi ettir.
-  equippedBadges = equippedBadges.map(id => {
-    if (!id || !earnedBadges.has(id)) return null;
-    const b = findBadge(id);
-    if (!b) return null; // eski id (first-1k vb.) — yeni sistemde yok
-    if (b.family) {
-      const top = familyTopTier(b.family);
-      if (top > 0) return `${b.family}-${top}`;
-    }
-    return id;
-  });
-  saveBadges();
+  // aile rozetlerini kazanılmış EN YÜKSEK kademeye terfi ettir (açılışta + yeni kademe kazanılınca).
+  function promoteEquipped() {
+    const seen = new Set();   // aynı ailenin iki kademesi iki slotta kalmışsa (eski hata) tek slot kalsın
+    equippedBadges = equippedBadges.map(id => {
+      if (!id || !earnedBadges.has(id)) return null;
+      const b = findBadge(id);
+      if (!b) return null; // eski id (first-1k vb.) — yeni sistemde yok
+      let out = id;
+      if (b.family) {
+        const top = familyTopTier(b.family);
+        if (top > 0) out = `${b.family}-${top}`;
+      }
+      if (seen.has(out)) return null;
+      seen.add(out); return out;
+    });
+    saveBadges();
+  }
+  promoteEquipped();
   // Açılışta da kontrol — upgrade/streak koşulları oyun dışı sağlanmış olabilir
   checkBadgeUnlocks();
   // Bildirim noktalarını ilk kez yerleştir (tüm const'lar tanımlandıktan sonra)
@@ -14791,7 +14835,9 @@ const ARC_DB = (() => {
 
   // Badges modal: opened by tapping any equip slot, closed by Close button.
   const badgesModal = document.getElementById('badges-modal');
-  function openBadgesModal() {
+  function openBadgesModal(slot) {
+    // Profildeki sol / sağ slottan açılınca o slot seçili gelir
+    _badgeTarget = slot === 0 || slot === 1 ? slot : (equippedBadges[0] ? (equippedBadges[1] ? 0 : 1) : 0);
     renderBadgeGrid();
     badgesModal.classList.add('open');
     markBadgesSeen();   // görüldü → yeşil noktalar temizlenir
@@ -14802,7 +14848,7 @@ const ARC_DB = (() => {
 
   // Tap any slot (empty or filled) → open the Badges screen.
   document.querySelectorAll('.prof-eq-slot').forEach(el => {
-    el.addEventListener('click', openBadgesModal);
+    el.addEventListener('click', () => openBadgesModal(Number(el.dataset.slot)));
   });
 
   // Geri oku — avatar/badge/isim seçimleri dokununca zaten kaydedildiği için
