@@ -7350,10 +7350,10 @@ const ARC_DB = (() => {
                                 // touching unrelated callsites)
 
   // ── Multi-trace ghosts ───────────────────────────────────
-  // ghostSampled = current game's sparsely-sampled trail (no shift), used
-  // for the run's shared trace (traces / daily traces) at endGame. Sampling cadence ~every 20 world-px
-  // upward — keeps each saved trace under ~150 points.
-  const ghostSampled = [];
+  // ghostSampled = bu run'ın yolu (kaydırılmaz), oyun sonunda paylaşılan çizgiye (traces / daily traces)
+  // sıkıştırılır. Yol boyunca ~6 px'te bir nokta → yaylar ve dönüşler korunur; j: sıçrama (revive /
+  // reklamla devam) → çizgi orada kesilir.
+  const ghostSampled = [], GS_STEP = 6, GS_JUMP = 120, GS_MAX = 40000;
   let crossPlayerGhosts = []; // diğer oyuncuların ölüm işaretleri (ad/avatar + en iyi mesafe), moda göre
   // Oyuncunun kendi geçmiş run izleri kaldırıldı: eski sürümlerin biriktirdiği depo temizlenir
   const GHOSTS_KEY        = 'arc_traces_v1';
@@ -9580,13 +9580,64 @@ const ARC_DB = (() => {
   const OTHER_TRACES_MAX = 200, TR_TILE = 1024, TR_TILES_MAX = 8, TR_CACHE_MS = 5 * 60e3;
   let otherTraces = [], _trTiles = new Map(), _trTok = 0;
   const _trCache = {};
+  // Çizgi biçimi "v2:" + parçalar (';' ile): her parça "x,y,dx,dy,dx,dy…" — x mutlak, y ilk noktaya
+  // (spawn) göre, sonrakiler bir öncekine fark. Noktalar Ramer–Douglas–Peucker ile seyreltilir: yol
+  // ε pikselden fazla sapmaz, yaylar yay kalır. Sığmazsa (kural 20 KB) ε büyütülür.
+  const TRACE_MAX_CHARS = 18000;
+  function _rdp(seg, eps) {
+    const n = seg.length; if (n < 3) return seg;
+    const keep = new Uint8Array(n); keep[0] = keep[n - 1] = 1;
+    const st = [[0, n - 1]], e2 = eps * eps;
+    while (st.length) {
+      const [a, b] = st.pop(), A = seg[a], B = seg[b], dx = B.x - A.x, dy = B.y - A.y, L = dx * dx + dy * dy;
+      let mi = -1, md = e2;
+      for (let i = a + 1; i < b; i++) {
+        const P = seg[i];
+        let d;
+        if (!L) d = (P.x - A.x) ** 2 + (P.y - A.y) ** 2;
+        else { const c = (P.x - A.x) * dy - (P.y - A.y) * dx; d = c * c / L; }
+        if (d > md) { md = d; mi = i; }
+      }
+      if (mi > 0) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+    }
+    return seg.filter((_, i) => keep[i]);
+  }
+  function encodeTrace(src) {
+    const segs = []; let cur = [];
+    for (const p of src) { if (p.j && cur.length) { segs.push(cur); cur = []; } cur.push(p); }
+    if (cur.length) segs.push(cur);
+    const y0 = src[0].y;
+    for (let eps = 1.2; eps < 200; eps *= 1.5) {
+      const out = segs.filter(g => g.length >= 2).map(g => {
+        const r = _rdp(g, eps), a = [r[0].x, r[0].y - y0];
+        for (let i = 1; i < r.length; i++) a.push(r[i].x - r[i - 1].x, r[i].y - r[i - 1].y);
+        return a.join(',');
+      }).join(';');
+      if (!out) return null;
+      if (out.length + 3 <= TRACE_MAX_CHARS) return 'v2:' + out;
+    }
+    return null;
+  }
+  // → [{x, h}…] (h = spawn'dan yukarı yükseklik), parça arası null; eski biçim (v2 öncesi) okunmaz
+  function decodeTrace(str) {
+    if (typeof str !== 'string' || !str.startsWith('v2:')) return null;
+    const pts = [];
+    for (const seg of str.slice(3).split(';')) {
+      const v = seg.split(',').map(Number);
+      if (v.length < 4 || v.some(n => !Number.isFinite(n))) continue;
+      if (pts.length) pts.push(null);
+      let x = v[0], y = v[1]; pts.push({ x, h: -y });
+      for (let i = 2; i + 1 < v.length; i += 2) { x += v[i]; y += v[i + 1]; pts.push({ x, h: -y }); }
+    }
+    return pts.length >= 2 ? pts : null;
+  }
   function setOtherTraces(list) {
     otherTraces = [];
     for (const t of list) {
-      let raw = null; try { raw = JSON.parse(t.pts); } catch (_) {}
-      if (!Array.isArray(raw) || raw.length < 2) continue;
-      const y0 = raw[0][1]; let hMin = Infinity, hMax = -Infinity;
-      const pts = raw.map(p => { const h = y0 - p[1]; if (h < hMin) hMin = h; if (h > hMax) hMax = h; return { x: p[0], h }; });
+      const pts = decodeTrace(t.pts);
+      if (!pts) continue;
+      let hMin = Infinity, hMax = -Infinity;
+      for (const p of pts) if (p) { if (p.h < hMin) hMin = p.h; if (p.h > hMax) hMax = p.h; }
       const col = typeof t.color === 'string' && t.color.charAt(0) === '#' ? t.color : (gameMode === 'extreme' && !_dailyRun ? '#ff8866' : '#88bbff');
       otherTraces.push({ key: t.key, pts, hMin, hMax, color: col, w: 1.2 + Math.max(0, Math.min(20, t.thickness | 0)) * 0.12 });
     }
@@ -9623,27 +9674,21 @@ const ARC_DB = (() => {
     let c = _trTiles.get(k);
     if (c) { _trTiles.delete(k); _trTiles.set(k, c); return c; }   // LRU
     c = document.createElement('canvas'); c.width = W; c.height = TR_TILE;
-    const x = c.getContext('2d'), h0 = k * TR_TILE, h1 = h0 + TR_TILE, M = 200, MAX_SEG = 180;
+    const x = c.getContext('2d'), h0 = k * TR_TILE, h1 = h0 + TR_TILE, M = 200;
     x.lineCap = 'round'; x.lineJoin = 'round'; x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.10;
     for (const t of otherTraces) {
       if (t.hMax < h0 - M || t.hMin > h1 + M) continue;
       x.strokeStyle = t.color; x.lineWidth = t.w; x.beginPath();
-      let buf = [];
-      const flush = () => {
-        if (buf.length >= 2) {
-          x.moveTo(buf[0].x, buf[0].y);
-          for (let i = 1; i < buf.length - 1; i++) x.quadraticCurveTo(buf[i].x, buf[i].y, (buf[i].x + buf[i + 1].x) / 2, (buf[i].y + buf[i + 1].y) / 2);
-          x.lineTo(buf[buf.length - 1].x, buf[buf.length - 1].y);
-        }
-        buf = [];
-      };
+      // Noktalar gerçek yolun üzerinde (RDP) → düz çizgilerle birleştirmek yayı korur; yumuşatma köşe keserdi
+      let pen = false, prevOut = null;
       for (const p of t.pts) {
-        if (p.h < h0 - M || p.h > h1 + M) { flush(); continue; }
-        const y = h1 - p.h, prev = buf[buf.length - 1];
-        if (prev && (p.x - prev.x) ** 2 + (y - prev.y) ** 2 > MAX_SEG * MAX_SEG) flush();
-        buf.push({ x: p.x, y });
+        if (!p) { pen = false; prevOut = null; continue; }
+        const out = p.h < h0 - M || p.h > h1 + M;
+        if (out) { if (pen) x.lineTo(p.x, h1 - p.h); pen = false; prevOut = p; continue; }   // bant dışına uzanan parça da çizilsin
+        if (!pen) { if (prevOut) x.moveTo(prevOut.x, h1 - prevOut.h); else x.moveTo(p.x, h1 - p.h); pen = true; }
+        x.lineTo(p.x, h1 - p.h); prevOut = null;
       }
-      flush(); x.stroke();
+      x.stroke();
     }
     _trTiles.set(k, c);
     if (_trTiles.size > TR_TILES_MAX) _trTiles.delete(_trTiles.keys().next().value);
@@ -10059,11 +10104,10 @@ const ARC_DB = (() => {
       trail.push({ x: player.x, y: player.y, h: th, d: lp ? (lp.d || 0) + Math.hypot(player.x - lp.x, player.y - lp.y) : 0 });
       if (trail.length > 600) trail.shift();
     }
-    // Sparse sample for ghost capture — every ~20 world-px upward.
-    // No shift, so the trace keeps its true start at H - 200 (spawn).
-    if (!ghostSampled.length || (ghostSampled.at(-1).y - player.y) > 20) {
-      ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y) });
-    }
+    // Paylaşılan çizgi için yol örneği (bkz. ghostSampled) — ilk nokta spawn
+    { const gl = ghostSampled.at(-1), gd = gl ? Math.hypot(player.x - gl.x, player.y - gl.y) : Infinity;
+      if (gd > GS_STEP && ghostSampled.length < GS_MAX)
+        ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y), j: gl && gd > GS_JUMP ? 1 : 0 }); }
 
     // Yeşil bantta (üst 2 kademe) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
     if (!tutActive && Math.ceil(energy * comboDisplayMax()) >= comboDisplayMax() - 1 && Math.random() < dt * 16) {
@@ -11088,18 +11132,7 @@ const ARC_DB = (() => {
       dAv:   !!upg.deathAvatar,            // avatar (tomb) işaretçisi açık mı
     };
     // Bu run'ın çizgisi (~150 nokta). İlk nokta başlangıç: okuyan taraf onu referans alıp kendi ekranına hizalar.
-    let runPts = null;
-    if (_startCrossed && ghostSampled.length >= 4) {
-      const src  = ghostSampled;
-      const step = Math.max(1, Math.floor(src.length / 150));
-      const out  = [];
-      for (let i = 0; i < src.length; i += step) out.push([src[i].x | 0, src[i].y | 0]);
-      // Always include last point so the trace ends at the death spot
-      const last = src[src.length - 1];
-      if (out.length === 0 || out[out.length - 1][1] !== (last.y | 0)) out.push([last.x | 0, last.y | 0]);
-      runPts = JSON.stringify(out);
-      if (runPts.length > 19000) runPts = null;   // firestore.rules limiti 20KB — normalde ~2KB
-    }
+    const runPts = (_startCrossed && ghostSampled.length >= 4) ? encodeTrace(ghostSampled) : null;
     if (upg.traceShown && runPts) traceData.pts = runPts;   // en iyi mesafe çizgisi (scores): yalnız "show to others" açıksa
     // Diğer oyunculara son oyun çizgisi: normalde "show to others" açıksa, Daily'de herkes (aynı parkur)
     if (runPts && !chal && gameMode !== 'wife') {
@@ -11785,6 +11818,7 @@ const ARC_DB = (() => {
     get ads() { return { ready: AdProvider.available(), interRuns: _interRuns, cont: _adContinueUsed, dbl: _adDoubleUsed }; },
     setInterRuns: n => { _interRuns = n; },
     get otherTraces() { return otherTraces.map(t => t.key); },
+    traceCodec: { encodeTrace, decodeTrace },
     get coreFx() { return { timer: comboDisplayMax(), cap: comboCap(), win: comboWindowSec(), speed: getBaseSpeed() }; },
     get homeParticles() { let n = 0; for (const p of particles) if (p.home) n++; return n; },
     spawnGoldHere: (ahead = 0, dx = 0) => { goldBalls.push({ x: player.x + dx, y: player.y - ahead, r: 1.5, pts: 20 }); },

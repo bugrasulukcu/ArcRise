@@ -466,7 +466,7 @@ test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç
   fbReset();
   const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
   const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
-  const pts = JSON.stringify([[300, 866], [320, 700], [280, 500]]);
+  const pts = 'v2:300,0,20,-166,-40,-200';
   doc('scores/LONG', { name: S('LONGEST'), tag: S('1111'), mode: S('normal'), score: I(10), distance: D(900), ts: I(1), avatar: I(0), tracePts: S(pts) });
   doc('traces/BOB_2222_normal', { name: S('BOB'), tag: S('2222'), mode: S('normal'), ts: I(200), dist: D(50), pts: S(pts) });
   doc('traces/CAN_3333_normal', { name: S('CAN'), tag: S('3333'), mode: S('normal'), ts: I(300), dist: D(60), pts: S(pts) });
@@ -483,7 +483,16 @@ test('diğer oyuncu çizgileri: en uzun run, son oyunlar (moda göre, ben hariç
   const w = fb.writes.filter(x => x.path === 'traces/ARC_1234_normal' && x.status === 200);
   check(w.length === 1, `son oyun çizgisi gönderilmedi: ${JSON.stringify(fb.writes.map(x => x.path))}`);
   const f = fb.docs.get('traces/ARC_1234_normal').fields;
-  check(JSON.parse(f.pts.stringValue).length >= 2 && f.owner?.stringValue, 'çizgi kaydı eksik');
+  check(f.pts.stringValue.startsWith('v2:') && f.owner?.stringValue, 'çizgi kaydı eksik');
+  // Kodlama yayı korur: r=150 çember yayı (6 px adım) + sıçrama → kodla/çöz, sapma ≤ 2 px, parça kesilir
+  const rt = await ev(`(() => { const { encodeTrace, decodeTrace } = ARC_TEST.traceCodec, src = [];
+    for (let a = 0; a <= Math.PI * 1.5; a += 6 / 150) src.push({ x: 300 + 150 * Math.cos(a), y: 800 - 150 * Math.sin(a), j: 0 });
+    src.push({ x: 300, y: 200, j: 1 }, { x: 310, y: 150, j: 0 });
+    const e = encodeTrace(src), d = decodeTrace(e), seg = d.slice(0, d.indexOf(null)).map(p => ({ x: p.x, y: src[0].y - p.h }));
+    let mx = 0; for (const q of src.slice(0, -2)) { let b = 1e9; for (let i = 1; i < seg.length; i++) { const A = seg[i - 1], B = seg[i], dx = B.x - A.x, dy = B.y - A.y, L = dx * dx + dy * dy;
+      const t = Math.max(0, Math.min(1, ((q.x - A.x) * dx + (q.y - A.y) * dy) / L)); b = Math.min(b, Math.hypot(q.x - A.x - t * dx, q.y - A.y - t * dy)); } mx = Math.max(mx, b); }
+    return { mx, n: seg.length, breaks: d.filter(p => p === null).length, len: e.length }; })()`);
+  check(rt.mx <= 2 && rt.n >= 10 && rt.breaks === 1, `çizgi kodlaması yayı bozuyor: ${JSON.stringify(rt)}`);
 });
 
 test('diğer oyuncu çizgileri: iz kapalıyken normal oyunda gönderilmez; Daily\'de herkes gönderir, günün skoru çizgiyi taşır', async () => {

@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Diğer oyuncu çizgileri gerçek yay gibi: yol boyunca örnekleme + RDP sıkıştırma (2026-11-04)
+
+- Kullanıcı: çizgiler gerçek oyuncunun çizeceği yay gibi değil. Sebep: nokta yalnız top 20 px YUKARI çıkınca alınıyordu (yana/aşağı kıvrılan yaylar düzleşiyordu), uzun run'da 150 noktaya seyreltiliyordu (5 m'de ~220 px aralık, araya quadratic ile sahte eğri) ve 180 px'ten uzun parçalar hiç çizilmiyordu.
+- Yeni: `ghostSampled` yol boyunca ~6 px'te bir (`GS_STEP`), >120 px sıçrama (revive / reklamla devam) parça keser (`j`). Oyun sonunda `encodeTrace`: Ramer–Douglas–Peucker (ε 1.2 px, 18 000 karaktere sığmazsa ×1.5 büyür), biçim `v2:` + parçalar `x,y,dx,dy…` (y spawn'a göre). `decodeTrace` yalnız v2 okur → eski hatalı kayıtlar gösterilmez. Çizim düz parçalarla (noktalar yolun üzerinde; yumuşatma köşe keserdi).
+- Ölçüm (bot run): gerçek yoldan en fazla 1.18 px sapma, ~0.23 karakter/px yol. Test: r=150 yay kodla/çöz ≤ 2 px, sıçramada parça kesilir. 47/47.
+
 ### Geçiş reklamı ölüm anına taşındı (2026-11-04)
 
 - Kullanıcı: reklam ölünce gözüksün, AGAIN'e basınca oyun başında gözükmesin. `maybeInterstitial` artık `_proceedEndGame` içinde, oyun sonu ekranı açılmadan hemen önce bekletilir (skor/coin animasyonu reklamın altında kalmaz). AGAIN ve basılı tutarak MENU reklamsız.
