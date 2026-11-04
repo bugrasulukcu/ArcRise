@@ -12438,6 +12438,8 @@ const ARC_DB = (() => {
       rank: i,
       _markTop: i === 0,
     }));
+    // Listede sıra atlanıyorsa (#1 · ··· · üstüm · BEN · altım) araya ayraç — skor ve mesafe aynı
+    show = show.flatMap((r, i) => i && r.rank - show[i - 1].rank > 1 ? [{ _divider: true }, r] : [r]);
     // İlk 30 dışındaysam: #1 · ··· · üstüm · BEN · altım (gerçek sıra numaralarıyla)
     if (youIdx === -1 && around) {
       const me = { name: playerName, avatar: avatarIdx, score: around.score, tag: myTag(), rank: around.rank };

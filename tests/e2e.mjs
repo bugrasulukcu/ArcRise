@@ -281,6 +281,21 @@ test('izler: oyuncunun kendi geçmiş izleri saklanmaz, eski depo silinir', asyn
   check(await ls('arc_traces_v1') === null, 'run sonunda kendi izi yine kaydedildi');
 });
 
+test('liderlik: sıra atlanınca skor ve mesafe listesinde ··· ayracı', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  for (let i = 0; i < 10; i++) doc(`scores/Q${i}_normal`, { name: S('Q' + i), tag: S('1000'), mode: S('normal'), score: I(100 - i * 10), distance: D(1000 - i * 100), ts: I(1), avatar: I(0) });
+  await fresh({ arc_tag: '1234', arc_combo_reset_v24: '1', arc_score_v26: '1', arc_dist_reset_v2: '1', arc_denom_v23: '1', arc_stats_unit: 'cm', arc_stats_v1: { bestNormal: 55, bestDistNormal: 550 } });
+  const uid = await ev(`ARC_DB.ensureAuth().then(() => ARC_DB.getUid())`);
+  doc(`scores/${uid}_normal`, { name: S('ARC'), tag: S('1234'), mode: S('normal'), score: I(55), distance: D(550), ts: I(1), avatar: I(0), owner: S(uid) });
+  await ev(`ARC_DB.invalidateTopCache(); document.getElementById('btn-lb').click(); true`);
+  const div = `document.querySelectorAll('#lb-list .lb-list-row.divider').length`;
+  check(await waitFor(`${div} === 1`, 6000), `skor listesinde ayraç yok: ${await ev(`document.getElementById('lb-list').textContent.replace(/\s+/g, ' ')`)}`);
+  await ev(`document.querySelector('[data-metric="distance"]').click(); true`);
+  check(await waitFor(`${div} === 1 && /\\d\\.\\d\\dm/i.test(document.getElementById('lb-list').textContent)`, 6000), `mesafe listesinde ayraç yok: ${await ev(`document.getElementById('lb-list').textContent.replace(/\s+/g, ' ')`)}`);
+});
+
 test('liderlik: çevrimdışıyken "LOADING"de takılmaz, mesaj gösterir', async () => {
   fbReset();
   await fresh();

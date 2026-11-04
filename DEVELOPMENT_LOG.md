@@ -405,6 +405,10 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### High Scores: sıra atlanınca mesafe listesinde de ··· ayracı (2026-11-04)
+
+- Ayraç yalnız skor listesinde ilk 30 dışındayken (`around`) ekleniyordu; mesafede oyuncu hep listede olduğundan #1 ile üstündeki arasında boşluk olsa da çıkmıyordu (ilk 30 içindeki skor sıralarında da). `renderLbPosition` artık gösterilen sıralar arasında atlama olan her yere ayraç koyar. Test eklendi.
+
 ### Firestore okumaları ~520 → ~15–20 / run; çizgiler 100 (2026-11-04)
 
 - Ölçüm (sahte sunucu: 400 skor + 250 çizgi, fetch sayacı = dönen belge): run başına ~520 okuma. Sebep: her oyun sonunda `invalidateTopCache()` tüm okuma önbelleğini siliyordu → her run ölüm işaretleri (300 skor kaydı) + oyun sonu sıralaması (150) yeniden; çizgilerin "yeni" sorgusundaki 60 sn pay son dakikanın tüm çizgilerini her run yeniden okutuyordu.
