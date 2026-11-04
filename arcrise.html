@@ -9807,7 +9807,7 @@ const ARC_DB = (() => {
     started = false; running = false;
     _reviveOffered = false; _lastSafePos = null;
     dyingT = -1; cancelRoulette(); _deathInfo = null;
-    _statsCounted = false; _adContinueUsed = false; _adDoubleUsed = false; resumeCountdown = 0;
+    _statsCounted = false; _adContinueUsed = false; _adDoubleUsed = false; resumeCountdown = 0; _resumeGoT = 0;
     _runStartTs = performance.now();
     _runUsedRevive = false; _runCmBanked = 0; runCombo = 0; _runMaxCombo = 0; _comboStreak = 0; _comboPopT = 0; _comboPot = 0; _runNearMiss = 0; _runThreads = 0;
     _nextBigCoinCm = 250; _runBigCoins = 0; _runBigBanked = 0; _runChestCoins = 0; _runChestBanked = 0;
@@ -10789,7 +10789,9 @@ const ARC_DB = (() => {
     _interRuns = 0;
     AdProvider.showInterstitial(() => then());
   }
-  let resumeCountdown = 0;        // reklamla dönünce top üzerinde 3→1 geri sayım (sn)
+  let resumeCountdown = 0;        // reklamla / Revive ile dönünce topun üstünde 3→1 geri sayım (sn)
+  let _resumeGoT = 0;             // sayım bitince kısa "GO" parlaması (sn)
+  const RESUME_SEC = 3;
   let _runStartTs     = 0;        // run başlangıcı (speedrun badge için)
   let _runUsedRevive  = false;    // bu run'da revive kullanıldı mı (survivor badge)
   let _runNearMiss    = 0;        // bu run'daki "CLOSE!" sayısı (daredevil badge)
@@ -10840,10 +10842,9 @@ const ARC_DB = (() => {
     // Enerji bitip ölündüyse enerji 0'da kalıyor ve bir sonraki karede tekrar ölünüyordu
     // (bilet boşa gidiyordu). Reklamla devamdaki gibi toparla.
     energy = Math.max(energy, 0.6); graceTimer = 0;
-    // Kısa dokunulmazlık penceresi (aktif Ghost booster'ını bitince kesmez)
+    // Reklamla devamdaki gibi: top donuk, üstünde 3→1 sayım; sayım + 1 sn dokunulmaz (aktif Ghost'u kesmez)
     isGhost = true;
-    setTimeout(() => { if (scene === 'play' && boosterType !== 'ghost') isGhost = false; }, 1200);
-    running = true;
+    running = false; resumeCountdown = RESUME_SEC;
     try { playBgMusic(); } catch(_){} // ölümde fade olan müziği geri başlat
     haptic(60);
   }
@@ -11317,23 +11318,49 @@ const ARC_DB = (() => {
     return String(v); // 999.999 üstü: olduğu gibi
   };
 
-  // Reklamla dönüşte topun İÇİNDE 3→1 geri sayımını çizer — topu kapatmaz.
-  function drawResumeCountdown() {
-    if (resumeCountdown <= 0) return;
-    const n = Math.ceil(resumeCountdown);
-    const frac = resumeCountdown - (n - 1);        // saniye içinde 1→0
-    const px = player.x, py = W2S(player.y);
-    // Font, topun içine sığacak boyutta (yarıçap ~18px). Nabız sadece hafif opaklıkta.
-    const size = Math.min(26, player.r * 1.45);
+  // Devam (reklam / Revive) geri sayımı: rakam ekranın ortasında, topun ~150 px ÜSTÜNDE (top ve üstündeki enerji rakamı
+  // görünür kalır). Her saniye rakam büyükten yerine oturur, arkasında dalga halkası genişler; topun
+  // çevresindeki yeşil halka kalan süreyle boşalır. Sayım bitince kısa "GO".
+  function drawResumeCountdown(dt) {
+    if (resumeCountdown <= 0 && _resumeGoT <= 0) return;
+    const TAU = Math.PI * 2, px = player.x, py = W2S(player.y);
+    const cx = W / 2;                                  // yatayda hep ortada: top duvara yakınken kenara sıkışmasın
+    let cy = py - 150; if (cy < 110) cy = py + 150;   // top ekranın üstüne yakınsa rakam altına
     ctx.save();
-    ctx.translate(px, py);
-    ctx.globalAlpha = 0.55 + 0.45 * frac;          // her saniye hafif nabız (boyut sabit)
-    ctx.font = '700 ' + size + 'px Sarpanch, system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)';
-    ctx.fillStyle = '#fff';
-    ctx.strokeText(n, 0, 1);
-    ctx.fillText(n, 0, 1);
+    if (resumeCountdown > 0) {
+      const n = Math.ceil(resumeCountdown), t = 1 - (resumeCountdown - (n - 1));   // saniye içinde 0→1
+      // topun çevresinde kalan süre halkası
+      const rr = player.r + 9;
+      ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = '#7dffa0'; ctx.shadowColor = '#7dffa0'; ctx.shadowBlur = LOWFX ? 0 : 10;
+      ctx.beginPath(); ctx.arc(px, py, rr, -Math.PI / 2, -Math.PI / 2 + TAU * (resumeCountdown / RESUME_SEC)); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // rakam: büyükten yerine oturur (ease-out), saniyenin sonunda söner
+      const pop = 1 - Math.pow(1 - Math.min(1, t / 0.3), 3);
+      const a = Math.min(1, t / 0.1) * (t > 0.8 ? Math.max(0, (1 - t) / 0.2) : 1);
+      ctx.globalAlpha = a * (1 - t) * 0.55; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 30 + 46 * t, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = a;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(1.8 - 0.8 * pop, 1.8 - 0.8 * pop);
+      ctx.font = '700 58px Sarpanch, system-ui, sans-serif';
+      ctx.shadowColor = 'rgba(125,255,160,.9)'; ctx.shadowBlur = LOWFX ? 0 : 18;
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(n, 0, 2);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(n, 0, 2);
+      ctx.restore();
+      ctx.globalAlpha = 0.6 * Math.min(1, (RESUME_SEC - resumeCountdown) / 0.3);
+      ctx.font = '600 11px Sarpanch, system-ui, sans-serif'; ctx.fillStyle = '#cfe9ff';
+      ctx.fillText('GET READY', cx, cy + 44);
+    } else {
+      _resumeGoT = Math.max(0, _resumeGoT - dt);
+      const t = 1 - _resumeGoT / 0.55;
+      ctx.globalAlpha = Math.max(0, 1 - t);
+      ctx.translate(cx, cy); ctx.scale(1 + 0.5 * t, 1 + 0.5 * t);
+      ctx.font = '700 46px Sarpanch, system-ui, sans-serif';
+      ctx.shadowColor = 'rgba(125,255,160,.9)'; ctx.shadowBlur = LOWFX ? 0 : 18;
+      ctx.fillStyle = '#7dffa0'; ctx.fillText('GO', 0, 2);
+    }
     ctx.restore();
   }
 
@@ -11427,15 +11454,15 @@ const ARC_DB = (() => {
       drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
-      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
+      if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
     }
 
-    // Reklamla dönüşte top üzerinde 3→1 geri sayım; biter bitmez oyun akmaya başlar.
+    // Devamda (reklam / Revive) 3→1 geri sayım; biter bitmez oyun akmaya başlar.
     if (resumeCountdown > 0 && scene === 'play') {
       resumeCountdown = Math.max(0, resumeCountdown - dtRaw);
       if (resumeCountdown === 0) {
-        running = true;
-        setTimeout(() => { if (scene === 'play') isGhost = false; }, 1000);
+        running = true; _resumeGoT = 0.55;
+        setTimeout(() => { if (scene === 'play' && boosterType !== 'ghost') isGhost = false; }, 1000);
       }
     }
 
@@ -15252,7 +15279,7 @@ const ARC_DB = (() => {
     isGhost = true; // geri sayım boyunca + dönüş sonrası kısa dokunulmazlık
     beginArc(1, getRadius());
     started = true; running = false;   // geri sayım bitene kadar top donuk
-    resumeCountdown = 3.0;             // loop'ta 3→1 sayar, biter bitmez akar
+    resumeCountdown = RESUME_SEC;      // loop'ta 3→1 sayar, biter bitmez akar
     try { playBgMusic(); } catch(_){}
     haptic(40);
   }

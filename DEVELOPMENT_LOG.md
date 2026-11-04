@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Devam geri sayımı topun üstünde, yeni animasyon; Revive de sayımla döner (2026-11-04)
+
+- Kullanıcı: reklamla / yükseltmeyle devamda geri sayım topun tam üstünde (topun içindeki enerji rakamını kapatıyordu). Artık `drawResumeCountdown`: rakam ekranın yatay ortasında, topun ~150 px üstünde (top ekranın tepesine yakınsa altında). Her saniye büyükten yerine oturur (ease-out), arkasında genişleyen dalga halkası, saniye sonunda söner; altında "GET READY"; topun çevresinde kalan süreyle boşalan yeşil halka; bitince kısa "GO".
+- Revive bileti önceden topu anında akıtıyordu; artık reklamla devam gibi 3 sn donuk bekler (`RESUME_SEC`), sayım + 1 sn dokunulmaz (aktif Ghost'u kesmez).
+- Test eklendi (Revive: sayımda donuk, sonra akar). 50/50.
+
 ### İlk oyun kilidi: tutorial bitene kadar ana menüde yalnız START ve profil (2026-11-04)
 
 - Kullanıcı: yeni oyuncu doğrudan Quests → Daily oynayabiliyordu, orada tutorial yok. Artık `arc_firstplay` yokken (`html.first-run`) High Scores, Quests, Settings (mod seçimi dahil), Invite, Friends, coin ve UPG düğmeleri gri (%30, grayscale) ve basılamaz; bildirim noktaları gizli. Tıklama yakalama aşamasında durdurulur, START kısa bir nabızla işaret edilir. Profil açık; PRIVACY / CREDITS bağlantıları da açık (gizlilik politikası her zaman erişilebilir olmalı).

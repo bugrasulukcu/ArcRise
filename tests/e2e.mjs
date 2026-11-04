@@ -357,6 +357,15 @@ test('seri: 5. gün sandık, 1 gün kaçırma serbest, 2 gün sıfırlar, 60. g�
   check((await lsJSON('arc_upg_v1')).traceColorsOwned.includes('rb:ember'), '60. gün Ember izi verilmedi');
 });
 
+test('revive: bilet kullanılınca top 3 sn sayımla donuk bekler, sonra akar', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { revive: { count: 1 } } } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(3000); await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`document.getElementById('revive-modal').classList.contains('open')`, 30000), 'Revive önerilmedi');
+  await ev(`document.getElementById('revive-use').click(); ARC_BOT.start(); true`); await sleep(1200);
+  check(await ev(`ARC_TEST.scene === 'play' && !ARC_TEST.running`), 'sayım sırasında top akıyor');
+  check(await waitFor(`ARC_TEST.running`, 3500), 'sayım bitince top akmadı');
+});
+
 test('ilk oyun: tutorial bitene kadar ana menüde yalnız START ve profil çalışır', async () => {
   await fresh({}, { firstplay: false });
   check(await ev(`document.documentElement.classList.contains('first-run')`), 'ilk açılışta kilit yok');
