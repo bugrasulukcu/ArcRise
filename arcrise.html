@@ -99,7 +99,7 @@
   <!-- CSP: XSS'e ikinci savunma hattı — enjekte kod dış script yükleyemez /
        veri sızdıramaz. Yeni bir dış servis eklersen buraya da eklemen gerekir!
        (gstatic/google.com script+frame: ileride App Check reCAPTCHA için hazır.) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.google-analytics.com https://www.googletagmanager.com; media-src 'self' blob: data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-src https://www.google.com https://recaptcha.google.com; object-src 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.google-analytics.com https://www.googletagmanager.com; media-src 'self' blob: data:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-src https://www.google.com https://recaptcha.google.com; object-src 'none'; base-uri 'self'">
   <link rel="icon" type="image/png" href="PNG/GAME_ICON.png">
   <link rel="apple-touch-icon" href="PNG/GAME_ICON.png">
   <!-- Sarpanch (OFL-1.1) uygulamanin icinde: FONTS/. Google Fonts'tan cekilince
@@ -5250,6 +5250,8 @@ const ArcAn = (() => {
 // (isimler sunucu kuralında A-Z0-9'a kısıtlı ama defense-in-depth: eski/bozuk
 // doc'lar veya ileride gevşetilen kurallar XSS'e dönüşmesin.)
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Mezar fotoğrafı: yalnız base64 JPEG data-URL (firestore.rules > validScore.photo ile aynı sınır)
+const SAFE_PHOTO = s => typeof s === 'string' && s.length <= 2800 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(s);
 
 const ARC_DB = (() => {
   const { apiKey, projectId } = FIREBASE_CONFIG;
@@ -5422,6 +5424,25 @@ const ARC_DB = (() => {
   // Mode'u her zaman normalize et: bilinmiyorsa 'normal' say.
   function normMode(m) { return (m === 'extreme') ? 'extreme' : 'normal'; }
 
+  // Mezar fotoğrafını mevcut skor kayıtlarına yaz ('' → sil). Kaydı olmayan mod atlanır (ilk skorla gider).
+  async function setPhoto(photo) {
+    if (!projectId || projectId.startsWith('BURAYA')) return false;
+    if (photo && !SAFE_PHOTO(photo)) return false;
+    await ensureAuth(); const uid = getUid();
+    if (!uid) return false;
+    let ok = true;
+    for (const mode of ['normal', 'extreme']) {
+      try {
+        const res = await fbFetch(`${BASE}/scores/${uid}_${mode}?key=${apiKey}&updateMask.fieldPaths=photo&currentDocument.exists=true`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields: photo ? { photo: { stringValue: photo } } : {} }),
+        });
+        if (!res.ok && res.status !== 404) ok = false;
+      } catch (_) { ok = false; }
+    }
+    return ok;
+  }
+
   // Skor kaydet — her oyuncu için (name + mode) başına sadece en yüksek skor tutulur.
   // Eski 'mode' alanı olmayan kayıtlar "normal" sayılır (geriye dönük uyumluluk).
   async function submitScore(name, avatar, score, mode, distance, traceData, badges, tag) {
@@ -5454,6 +5475,8 @@ const ARC_DB = (() => {
     // Ölüm işaretçisi bayrakları — diğer oyuncular en uzak noktanda avatar/ad görsün.
     const dName = !!(traceData && traceData.dName);
     const dAv   = !!(traceData && traceData.dAv);
+    // Mezar fotoğrafı (yalnız denetimden geçmişse dolu gelir); boşsa sunucudaki silinir.
+    const photo = (dAv && traceData && SAFE_PHOTO(traceData.photo)) ? traceData.photo : '';
     console.log('[ArcDB] submitScore', { name, avatar, score, mode, dist: distNum, hasTrace: !!tracePts });
     await ensureAuth(); const uid = getUid();
     if (!uid) { console.warn('[ArcDB] no auth — score not saved'); return; }
@@ -5481,7 +5504,8 @@ const ARC_DB = (() => {
         const thicknessChanged = traceThickness !== oldThickness;
         const oldDName = !!match.document.fields.dName?.booleanValue;
         const oldDAv   = !!match.document.fields.dAv?.booleanValue;
-        const flagChanged = (dName !== oldDName) || (dAv !== oldDAv);
+        const flagChanged = (dName !== oldDName) || (dAv !== oldDAv)
+          || photo !== (match.document.fields.photo?.stringValue || '');
         const writeTracePts    = distBetter && tracePts !== null;
         const writeTraceCosmetic = (traceColor !== null || traceData) && (colorChanged || thicknessChanged);
         if (!scoreBetter && !distBetter && !writeTracePts && !writeTraceCosmetic && !flagChanged) {
@@ -5501,6 +5525,8 @@ const ARC_DB = (() => {
         const maskParts = ['score','avatar','ts','mode','distance'];
         fields.dName = { booleanValue: dName }; maskParts.push('dName');
         fields.dAv   = { booleanValue: dAv };   maskParts.push('dAv');
+        if (photo) fields.photo = { stringValue: photo };
+        maskParts.push('photo');   // maskede olup gövdede olmayan alan silinir
         if (uid) { fields.owner = { stringValue: uid }; maskParts.push('owner'); }
         if (tag) { fields.tag = { stringValue: String(tag) }; maskParts.push('tag'); } // arkadaş ekleme için kimlik
         if (writeTracePts) {
@@ -5540,6 +5566,7 @@ const ARC_DB = (() => {
         if (traceData)      fields.traceThickness = { integerValue: String(traceThickness) };
         fields.dName = { booleanValue: dName };
         fields.dAv   = { booleanValue: dAv };
+        if (photo) fields.photo = { stringValue: photo };
         if (typeof badges === 'string' && badges) fields.badges = { stringValue: badges.slice(0, 64) };
         if (uid)            fields.owner          = { stringValue: uid };
         if (tag)            fields.tag            = { stringValue: String(tag) }; // arkadaş ekleme için kimlik
@@ -5574,6 +5601,7 @@ const ARC_DB = (() => {
           traceThickness: parseInt(f.traceThickness?.integerValue ?? 0) || 0,
           dName:    !!f.dName?.booleanValue,
           dAv:      !!f.dAv?.booleanValue,
+          photo:    SAFE_PHOTO(f.photo?.stringValue) ? f.photo.stringValue : '',
           badges:   f.badges?.stringValue || '',
           tag:      f.tag?.stringValue || '',
           owner:    f.owner?.stringValue || '',
@@ -5862,7 +5890,7 @@ const ARC_DB = (() => {
       // Yalnız ölüm işareti (ad/avatar) açık oyuncular, en iyi mesafeleriyle — işaret mesafeden konumlanır.
       // (Çizgiler ayrı: getRecentTraces / getLongestTrace.)
       if ((!r.dName && !r.dAv) || !(r.distance > 0)) continue;
-      out.push({ name: r.name, mode: r.mode, distance: r.distance, avatar: r.avatar | 0, dName: r.dName, dAv: r.dAv });
+      out.push({ name: r.name, mode: r.mode, distance: r.distance, avatar: r.avatar | 0, dName: r.dName, dAv: r.dAv, photo: r.photo });
       if (out.length >= limit) break;
     }
     return out;
@@ -6372,7 +6400,7 @@ const ARC_DB = (() => {
     return r ? { key: `${_sanName(r.name)}_${r.tag}`, name: r.name, tag: r.tag, pts: r.tracePts, color: null, thickness: 0 } : null;
   }
 
-  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, countAboveF, valuesAboveF, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, countAboveF, valuesAboveF, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, setPhoto, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -7306,14 +7334,88 @@ const ARC_DB = (() => {
     }
     if (!src || !src.width || !src.height) { showToast('COULD NOT READ IMAGE'); return null; }
     if (src.width * src.height > AV_MAX_PIXELS) { try { src.close && src.close(); } catch (_) {} showToast('IMAGE TOO LARGE · MAX 40 MP'); return null; }
+    // Denetim 64 px'e inmeden, modelin kendi çözünürlüğünde (224) yapılır — küçük resimde isabet düşer
+    const side = Math.min(src.width, src.height), chk = document.createElement('canvas');
+    chk.width = chk.height = 224;
+    chk.getContext('2d').drawImage(src, (src.width - side) / 2, (src.height - side) / 2, side, side, 0, 0, 224, 224);
     const url = avatarFromSource(src, src.width, src.height);
     try { src.close && src.close(); } catch (_) {}
-    if (!url) showToast('COULD NOT PROCESS IMAGE');
-    return url;
+    if (!url) { showToast('COULD NOT PROCESS IMAGE'); return null; }
+    showToast('CHECKING PHOTO…');
+    const ok = await photoVerdict(chk);
+    if (ok === false) { showToast('PHOTO NOT ALLOWED'); return null; }
+    return { url, ok };
   }
-  function setCustomAvatar(url) {
+  // ok: true = denetimden geçti, null = denetlenemedi (çevrimdışı) → yüklenmez, sonra tekrar denenir
+  function setCustomAvatar(url, ok) {
     customAvatarSrc = url;
     try { localStorage.setItem('arc_avatar_custom', url); } catch {}
+    try { ok ? localStorage.setItem('arc_avatar_ok', '1') : localStorage.removeItem('arc_avatar_ok'); } catch {}
+  }
+
+  // ── Fotoğraf denetimi (telefonda) — nsfwjs MobileNetV2 (~%90 isabet). İlk kullanımda CDN'den bir kez
+  // yüklenir (~6 MB, sürüm sabit + SRI bütünlük özeti; sonra tarayıcı önbelleği). Kurcalanmış bir istemci
+  // bunu atlatabilir → Blaze'e geçişte sunucu tarafı denetim eklenecek (SECURITY_NOTES).
+  const NSFW_BASE = 'https://cdn.jsdelivr.net/npm/nsfwjs@4.4.0/dist/';
+  const NSFW_FILES = [
+    ['models/mobilenet_v2/model.min.js',            'sha384-VsoJuRePCgpUmSlvPwW/IXzJGJk8PP0RQuAAGfhwKz2sGb7NroFRHBqD/EySC0vU'],
+    ['models/mobilenet_v2/group1-shard1of1.min.js', 'sha384-5F6gcz+dyppqYc8BDH0IbKZcRbVl2c+nUSShQMb1AFhdQES+d3bG5hHNOOIE5Yha'],
+    ['browser/nsfwjs.min.js',                       'sha384-AgEYUP1dk2mGxhfUGZ4muudxnzuhFD4HFvGAOgeRu1a/78Ls+Jmx/TWEF4qU3aOF'],
+  ];
+  let _nsfwModel = null;
+  function _loadScript(src, integrity) {
+    return new Promise((ok, err) => {
+      const s = document.createElement('script');
+      s.src = src; s.integrity = integrity; s.crossOrigin = 'anonymous';
+      s.onload = ok; s.onerror = err; document.head.appendChild(s);
+    });
+  }
+  function _nsfw() {
+    return _nsfwModel || (_nsfwModel = (async () => {
+      if (!window.nsfwjs) for (const [f, h] of NSFW_FILES) await _loadScript(NSFW_BASE + f, h);
+      return window.nsfwjs.load('MobileNetV2');
+    })().catch(e => { _nsfwModel = null; throw e; }));
+  }
+  // true = temiz, false = uygunsuz, null = denetlenemedi
+  async function photoVerdict(img) {
+    try {
+      const p = {};
+      for (const r of await (await _nsfw()).classify(img)) p[r.className] = r.probability;
+      // Çocuklar da oynuyor → sıkı eşik; "Sexy" (mayo, iç çamaşırı) da reddedilir
+      return !(((p.Porn || 0) + (p.Hentai || 0)) >= 0.4 || (p.Sexy || 0) >= 0.6);
+    } catch (e) { console.warn('[photo] check failed', e); return null; }
+  }
+
+  // Paylaşılan fotoğraf: mezar açık + özel fotoğraf + denetimden geçmiş. Değilse sunucudaki silinir.
+  function sharedPhoto() {
+    let ok = false; try { ok = localStorage.getItem('arc_avatar_ok') === '1'; } catch {}
+    return (upg.deathAvatar && customAvatarSrc && ok && SAFE_PHOTO(customAvatarSrc)) ? customAvatarSrc : '';
+  }
+  const _photoKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return s ? (h >>> 0).toString(36) : ''; };
+  let _photoBusy = false, _photoAgain = false;
+  async function syncPhoto() {
+    if (_photoBusy) { _photoAgain = true; return; }
+    _photoBusy = true;
+    try {
+      // Denetlenmemiş fotoğraf (eski sürümden ya da çevrimdışı seçilmiş): 64 px hâliyle denetle
+      let ok = false; try { ok = localStorage.getItem('arc_avatar_ok') === '1'; } catch {}
+      if (upg.deathAvatar && customAvatarSrc && !ok) {
+        const im = new Image(); im.src = customAvatarSrc;
+        try { await im.decode(); } catch (_) {}
+        const v = await photoVerdict(im);
+        if (v === false) {
+          customAvatarSrc = null;
+          try { localStorage.removeItem('arc_avatar_custom'); localStorage.removeItem('arc_avatar_ok'); } catch {}
+          try { applyProfile(); } catch (_) {}
+          showToast('PHOTO NOT ALLOWED · REMOVED');
+        } else if (v) { try { localStorage.setItem('arc_avatar_ok', '1'); } catch {} }
+      }
+      const want = sharedPhoto(), key = _photoKey(want);
+      let up = ''; try { up = localStorage.getItem('arc_photo_up') || ''; } catch {}
+      if (key !== up && await ARC_DB.setPhoto(want)) { try { localStorage.setItem('arc_photo_up', key); } catch {} }
+    } catch (e) { console.warn('[photo] sync failed', e); }
+    _photoBusy = false;
+    if (_photoAgain) { _photoAgain = false; syncPhoto(); }
   }
   // Profile setup upload — dosya seçilir, 64×64 / ≤2 KB'a küçültülür
   document.getElementById('ps-upload-btn').addEventListener('click', () => {
@@ -7322,12 +7424,13 @@ const ARC_DB = (() => {
   document.getElementById('ps-upload-file').addEventListener('change', async e => {
     const file = e.target.files[0];
     e.target.value = '';
-    const url = await processAvatarFile(file);
-    if (!url) return;
-    setCustomAvatar(url);
+    const r = await processAvatarFile(file);
+    if (!r) return;
+    setCustomAvatar(r.url, r.ok);
     // Profil-setup avatar grid'inde seçim temizle
     document.querySelectorAll('#av-grid .av-img-opt').forEach(el => el.classList.remove('sel'));
     showToast('PHOTO UPLOADED');
+    syncPhoto();
   });
 
   // ── State ────────────────────────────────────────────────
@@ -8165,6 +8268,8 @@ const ARC_DB = (() => {
     im.onload = () => { const url = avatarFromSource(im, im.naturalWidth, im.naturalHeight); if (url) { setCustomAvatar(url); try { applyProfile(); } catch (_) {} } };
     im.src = customAvatarSrc;
   }
+  // Açılışta paylaşılan mezar fotoğrafını sunucuyla eşitle (eski sürümden kalan / çevrimdışı seçilmiş fotoğraf)
+  setTimeout(() => { if (scene === 'home') syncPhoto(); }, 6000);
 
   // iOS: Web Audio varsayılan olarak zil/sessiz anahtarına uyar (telefon sessizdeyse HİÇ ses yok).
   // Eskiden müzik <audio> ile çaldığı için sessiz modda da duyuluyordu. 'playback' oturumu
@@ -9486,6 +9591,19 @@ const ARC_DB = (() => {
     o.img.onload = () => { o.loaded = true; };
     o.img.src = src; _remoteAvImgs[idx] = o; return null;
   }
+  // Diğer oyuncuların mezar fotoğrafları (scores.photo) — data-URL'e göre önbellek, en çok 150
+  const _remotePhotos = new Map();
+  function remotePhotoImg(src) {
+    if (!SAFE_PHOTO(src)) return null;
+    let o = _remotePhotos.get(src);
+    if (!o) {
+      if (_remotePhotos.size >= 150) _remotePhotos.delete(_remotePhotos.keys().next().value);
+      o = { img: new Image(), loaded: false };
+      o.img.onload = () => { o.loaded = true; };
+      o.img.src = src; _remotePhotos.set(src, o);
+    }
+    return o.loaded ? o.img : null;
+  }
   function drawRemoteDeathMarkers() {
     if (!crossPlayerGhosts.length) return;
     for (const g of crossPlayerGhosts) {
@@ -9501,7 +9619,7 @@ const ARC_DB = (() => {
       ctx.globalAlpha = 0.85;
       if (showAv) {
         const r = 13, cy = sy - r - 12;
-        const img = remoteAvImg(g.avatar | 0);
+        const img = (g.photo && remotePhotoImg(g.photo)) || remoteAvImg(g.avatar | 0);
         if (img) {
           ctx.save(); ctx.beginPath(); ctx.arc(mx, cy, r, 0, Math.PI*2); ctx.clip();
           ctx.drawImage(img, mx - r, cy - r, r * 2, r * 2); ctx.restore();
@@ -11483,6 +11601,7 @@ const ARC_DB = (() => {
       thickness: upg.traceThickness | 0,   // 0..20
       dName: !!upg.deathName,              // kullanıcı adı işaretçisi açık mı
       dAv:   !!upg.deathAvatar,            // avatar (tomb) işaretçisi açık mı
+      photo: sharedPhoto(),                // mezar fotoğrafı (denetimden geçmişse)
     };
     // Bu run'ın çizgisi (~150 nokta). İlk nokta başlangıç: okuyan taraf onu referans alıp kendi ekranına hizalar.
     const runPts = (_startCrossed && ghostSampled.length >= 4) ? encodeTrace(ghostSampled) : null;
@@ -11925,7 +12044,7 @@ const ARC_DB = (() => {
      'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_dist_chests','arc_chest_pending','arc_chal_outbox',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
-     'arc_view_rankscore','arc_view_rankdist','arc_fb_rt',
+     'arc_view_rankscore','arc_view_rankdist','arc_fb_rt','arc_avatar_ok','arc_photo_up',
      'arc_ga_cid',   // analitik kimliği de sıfırlanır → silmeden sonra yeni, bağlantısız kimlik
      STATS_KEY, GHOSTS_KEY, UPG_KEY].forEach(k => localStorage.removeItem(k));
     best = 0; coins = 0; lastScore = 0; xpTotal = 0; distTotal = 0; coinsSpent = 0; coinsEarned = 0;
@@ -12724,7 +12843,7 @@ const ARC_DB = (() => {
   document.getElementById('prof-trace-btn').addEventListener('click', () => { renderTrace(); openSub('trace-modal'); });
   // Tomb / Death Text: SAHİPSE doğrudan aç/kapa (uyarı yok), DEĞİLSE satın alma ekranı açılır.
   document.getElementById('prof-tomb-btn').addEventListener('click', () => {
-    if (upg.tombOwned) { upg.deathAvatar = !upg.deathAvatar; saveUpg(); renderProfButtons(); }
+    if (upg.tombOwned) { upg.deathAvatar = !upg.deathAvatar; saveUpg(); renderProfButtons(); syncPhoto(); }
     else { renderTomb(); openSub('tomb-modal'); }
   });
   document.getElementById('prof-deathtext-btn').addEventListener('click', () => {
@@ -12964,7 +13083,7 @@ const ARC_DB = (() => {
     g.innerHTML = `<div class="custom-card"><button class="dt-opt" id="tomb-buy">${iconHTML('coin', { size: 12 })} ${TOMB_PRICE}</button></div>`;
     const buy = document.getElementById('tomb-buy');
     if (buy) buy.addEventListener('click', () => confirmPurchase('Tomb · profile picture', TOMB_PRICE, () => {
-      if (!spendCoins(TOMB_PRICE)) return; upg.tombOwned = true; upg.deathAvatar = true; saveUpg();
+      if (!spendCoins(TOMB_PRICE)) return; upg.tombOwned = true; upg.deathAvatar = true; saveUpg(); syncPhoto();
       closeSub('tomb-modal'); renderProfButtons();
     }));
     renderProfButtons();
@@ -14686,8 +14805,9 @@ const ARC_DB = (() => {
       d.addEventListener('click', () => {
         avatarIdx = i;
         customAvatarSrc = null;
-        try { localStorage.removeItem('arc_avatar_custom'); } catch {}
+        try { localStorage.removeItem('arc_avatar_custom'); localStorage.removeItem('arc_avatar_ok'); } catch {}
         localStorage.setItem('arc_avatar', i);
+        syncPhoto();   // sunucudaki mezar fotoğrafı silinir
         const pImg = document.getElementById('prof-modal-av-img');
         if (pImg) pImg.src = avatarSrc();
         grid.querySelectorAll('.av-modal-opt').forEach((el, j) => {
@@ -14715,9 +14835,9 @@ const ARC_DB = (() => {
   document.getElementById('prof-av-file').addEventListener('change', async e => {
     const file = e.target.files[0];
     e.target.value = '';
-    const url = await processAvatarFile(file);
-    if (!url) return;
-    setCustomAvatar(url);
+    const r = await processAvatarFile(file);
+    if (!r) return;
+    setCustomAvatar(r.url, r.ok);
     const pImg = document.getElementById('prof-modal-av-img');
     if (pImg) pImg.src = customAvatarSrc;
     // Drop preset selection in the grid
@@ -14725,6 +14845,7 @@ const ARC_DB = (() => {
     document.querySelectorAll('#av-grid .av-img-opt').forEach(el => el.classList.remove('sel'));
     applyProfile();
     showToast('PHOTO UPLOADED');
+    syncPhoto();
   });
 
   // ── Badges = Achievements ─────────────────────────────────

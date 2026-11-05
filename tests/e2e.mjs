@@ -119,6 +119,8 @@ function onFirebase({ requestId, request }) {
     if (w.mustNotExist && fb.docs.has(target)) { w.status = 409; return reply(requestId, 409, { error: { code: 409 } }); }
     const cur = fb.docs.get(target) || { name: `projects/p/databases/(default)/documents/${target}`, fields: {} };
     cur.fields = { ...cur.fields, ...(body.fields || {}) };
+    // Firestore gibi: maskede olup gövdede olmayan alan silinir
+    for (const f of url.searchParams.getAll('updateMask.fieldPaths')) if (!(f in (body.fields || {}))) delete cur.fields[f];
     fb.docs.set(target, cur);
     return reply(requestId, 200, cur);
   }
@@ -133,7 +135,7 @@ ws.onmessage = m => {
 };
 await send('Fetch.enable', { patterns: [{ urlPattern: '*googleapis.com/*' }] });
 await send('Network.enable');
-await send('Network.setBlockedURLs', { urls: ['*recaptcha*', '*gstatic.com/*'] });
+await send('Network.setBlockedURLs', { urls: ['*recaptcha*', '*gstatic.com/*', '*cdn.jsdelivr.net/*'] });   // fotoğraf denetim modeli: testte sahte (window.nsfwjs)
 await send('Page.enable'); await send('Runtime.enable');
 // Müzik sayacı: döngülü AudioBufferSource = arka plan müziği
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__music = 0;
@@ -299,6 +301,38 @@ test('profil fotoğrafı: 64×64 ve ≤2 KB\'a küçülür; SVG ve 15 MB üstü 
   check(svg === photo, 'SVG kabul edildi');
   const huge = await pick(`Promise.resolve(new File([new Uint8Array(16 * 1024 * 1024)], 'h.png', { type: 'image/png' }))`);
   check(huge === photo, '16 MB dosya kabul edildi');
+});
+
+test('mezar fotoğrafı: telefonda denetlenir; uygunsuz reddedilir, temiz olan skor kaydına yüklenir, hazır avatara dönünce silinir', async () => {
+  fbReset();
+  await fresh({ arc_tag: '1234', arc_upg_v1: { comboSplitV22: true, tombOwned: true, deathAvatar: true } });
+  const uid = await ev(`ARC_DB.ensureAuth().then(() => ARC_DB.getUid())`);
+  const myDoc = `scores/${uid}_normal`;
+  fb.docs.set(myDoc, { name: `projects/p/databases/(default)/documents/${myDoc}`, fields: { name: { stringValue: 'ARC' }, mode: { stringValue: 'normal' }, score: { integerValue: '10' }, distance: { doubleValue: 5 }, ts: { integerValue: '1' }, avatar: { integerValue: '0' }, owner: { stringValue: uid } } });
+  // Sahte model: __nsfwBad açıkken her resmi uygunsuz sayar
+  await ev(`window.__nsfwBad = true; window.nsfwjs = { load: async () => ({ classify: async () => window.__nsfwBad
+    ? [{ className: 'Porn', probability: 0.92 }, { className: 'Neutral', probability: 0.08 }]
+    : [{ className: 'Neutral', probability: 0.95 }, { className: 'Porn', probability: 0.01 }] }) }; true`);
+  const pick = () => ev(`(async () => { const f = await new Promise(r => { const c = document.createElement('canvas'); c.width = c.height = 300;
+    const x = c.getContext('2d'); x.fillStyle = '#4a8'; x.fillRect(0, 0, 300, 300); c.toBlob(b => r(new File([b], 'p.png', { type: 'image/png' })), 'image/png'); });
+    const dt = new DataTransfer(); dt.items.add(f); const inp = document.getElementById('prof-av-file');
+    inp.files = dt.files; inp.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 900)); return localStorage.getItem('arc_avatar_custom'); })()`);
+  check(await pick() === null, 'uygunsuz fotoğraf kabul edildi');
+  check(!fb.docs.get(myDoc).fields.photo, 'uygunsuz fotoğraf yüklendi');
+  await ev(`window.__nsfwBad = false; true`);
+  const photo = await pick();
+  check(photo && await ls('arc_avatar_ok') === '1', `temiz fotoğraf kabul edilmedi: ${photo}`);
+  check(await (async () => { for (let i = 0; i < 30; i++) { if (fb.docs.get(myDoc).fields.photo?.stringValue === photo) return true; await sleep(200); } return false; })(),
+    `fotoğraf skor kaydına yüklenmedi: ${JSON.stringify(Object.keys(fb.docs.get(myDoc).fields))}`);
+  // Başka oyuncunun mezar fotoğrafı okunur; bozuk / dış URL'li olan yok sayılır
+  fb.docs.set('scores/OTHER_normal', { name: 'projects/p/databases/(default)/documents/scores/OTHER_normal', fields: { name: { stringValue: 'ZED' }, mode: { stringValue: 'normal' }, score: { integerValue: '5' }, distance: { doubleValue: 9 }, ts: { integerValue: '9' }, avatar: { integerValue: '2' }, dAv: { booleanValue: true }, photo: { stringValue: photo } } });
+  fb.docs.set('scores/EVIL_normal', { name: 'projects/p/databases/(default)/documents/scores/EVIL_normal', fields: { name: { stringValue: 'EVIL' }, mode: { stringValue: 'normal' }, score: { integerValue: '5' }, distance: { doubleValue: 9 }, ts: { integerValue: '8' }, avatar: { integerValue: '2' }, dAv: { booleanValue: true }, photo: { stringValue: 'https://evil.example/x.jpg' } } });
+  const gh = await ev(`ARC_DB.invalidateTopCache(); ARC_DB.getCrossPlayerGhosts(null, 10).then(r => JSON.stringify(r.map(g => [g.name, g.photo ? g.photo.slice(0, 22) : ''])))`);
+  check(gh.includes('["ZED","data:image/jpeg;base64"]') && gh.includes('["EVIL",""]'), `mezar fotoğrafları: ${gh}`);
+  // Hazır avatara dönünce sunucudaki fotoğraf silinir
+  await ev(`document.getElementById('prof-av-ring').click(); document.querySelector('#avpick-grid .av-modal-opt').click(); true`);
+  let gone = false; for (let i = 0; i < 30 && !gone; i++) { gone = !fb.docs.get(myDoc).fields.photo; if (!gone) await sleep(200); }
+  check(gone, 'hazır avatara dönünce fotoğraf silinmedi');
 });
 
 test('liderlik: sıra atlanınca skor ve mesafe listesinde ··· ayracı', async () => {

@@ -55,6 +55,10 @@ service cloud.firestore {
         && (!('traceThickness' in d) || (d.traceThickness is int && d.traceThickness >= 0 && d.traceThickness <= 20))
         && (!('badges' in d) || (d.badges is string && d.badges.matches('^[A-Za-z0-9_,-]{0,64}$')))
         && (!('tag' in d) || (d.tag is string && d.tag.matches('^[0-9]{4}$')))
+        // photo: mezar profil resmi — telefonda 64×64 / ≤2 KB JPEG'e küçültülür (base64 ≈ 2,75K karakter).
+        // Yalnız base64 JPEG data-URL; başka biçim / dış URL reddedilir.
+        && (!('photo' in d) || (d.photo is string && d.photo.size() <= 2800
+            && d.photo.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')))
         && (!('owner' in d) || d.owner is string);
     }
 

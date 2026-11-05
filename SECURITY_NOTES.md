@@ -109,9 +109,11 @@ Web'e referrer kısıtı Capacitor WebView'ı kırar → **App Check Enforce** t
 
 Kod = anonim refresh token'ın base64'ü; süresi dolmaz, revoke edilemez. Sızarsa kalıcı hesap devri, geri alma yolu yok. Bugün mitigasyonu yok — uzun vadede Play Games account linking.
 
-### 5. Data Safety formu — "Photos" İŞARETLEME
+### 5. Data Safety formu — "Photos" ARTIK İŞARETLENMELİ (2026-11-05)
 
-Custom avatar sunucuya gitmiyor: Firestore'a yalnızca `avatarIdx` (int 0-100) yazılıyor, kural da `is int` diye zorluyor. Yüklenen foto localStorage'da kalıyor. `privacy.html` "avatar you pick" diyerek fazla beyan etmiş (güvenli tarafta) ama forma bakarak "Photos" işaretlenirse gereksiz yere ağır bir kategoriye girilir.
+~~Custom avatar sunucuya gitmiyor~~ — 2026-11-05'ten beri **gidiyor**: Tomb açık + özel fotoğraf + telefondaki denetimden geçmişse 64×64 / ≤2 KB JPEG `scores/{uid}_{mode}.photo` alanına yazılır ve diğer oyunculara mezarda gösterilir. Play Data Safety: **Photos and videos → Photos: Collected, Shared değil (Google yalnız hizmet sağlayıcı), isteğe bağlı, amaç: App functionality**; kullanıcı silme talebi: hazır avatar seçmek / Tomb kapatmak / hesap silmek kaldırır. App Store gizlilik etiketi: "Photos or Videos — App Functionality, not linked to tracking". `privacy.html` güncellendi.
+
+**Fotoğraf denetimi:** telefonda nsfwjs MobileNetV2 (CDN, sürüm sabit + SRI; Porn+Hentai ≥ 0.4 veya Sexy ≥ 0.6 → red). Denetlenemezse (çevrimdışı) fotoğraf yalnız cihazda kalır, sonra tekrar denenir. **Kısıt:** kurcalanmış istemci denetimi atlatıp kurala uyan herhangi bir JPEG yazabilir (kural yalnız biçim/boyut doğrular). **Blaze'de yapılacak:** `scores` yazımında tetiklenen Cloud Function → Cloud Vision SafeSearch (ilk 1000 görsel/ay bedava) → uygunsuzsa `photo` silinir; isteğe bağlı olarak okuyucular yalnız sunucunun onayladığı (`photoOk`) fotoğrafı gösterir. Ayrıca bildirme (report) + engelleme düğmesi (madde 2) mezar fotoğrafını da kapsamalı.
 
 ### 6. Zaten bilinenler
 

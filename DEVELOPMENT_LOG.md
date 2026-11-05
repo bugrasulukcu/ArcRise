@@ -405,11 +405,19 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Mezar fotoğrafı paylaşılıyor; telefonda uygunsuz içerik denetimi (2026-11-05)
+
+- **Akış:** fotoğraf telefonda küçültülür (64×64, ≤2 KB) ve **küçültmeden önce** 224 px kopyası nsfwjs MobileNetV2 ile denetlenir (`photoVerdict`; Porn+Hentai ≥ 0.4 veya Sexy ≥ 0.6 → "PHOTO NOT ALLOWED", fotoğraf alınmaz). Model ilk kullanımda jsDelivr'den yüklenir (~6 MB, `nsfwjs@4.4.0`, SRI özetli; CSP `script-src`'ye `cdn.jsdelivr.net` eklendi). Denetlenemezse (çevrimdışı) fotoğraf cihazda kalır, `arc_avatar_ok` boş → yüklenmez; açılışta / Tomb açılınca 64 px hâliyle tekrar denetlenir.
+- **Yükleme:** `sharedPhoto()` = Tomb açık + özel fotoğraf + denetimden geçmiş. `syncPhoto()` fark varsa `ARC_DB.setPhoto` ile `scores/{uid}_{normal,extreme}.photo`'ya yazar (yalnız mevcut kayıtlar; `updateMask=photo`, okuma yok), değilse siler; `submitScore` da her yazımda aynı alanı taşır. Tetikleyiciler: fotoğraf yükleme, hazır avatar seçme (silinir), Tomb aç/kapa ve satın alma, açılıştan 6 sn sonra. `arc_photo_up` = sunucudakinin özeti (gereksiz yazım yok).
+- **Okuma:** ölüm işaretleri (`getCrossPlayerGhosts`) `photo`'yu da getirir — ek okuma yok, belge başına ≤2,8 KB bant. Çizimde `remotePhotoImg` (data-URL önbelleği, en çok 150); geçersiz biçim (dış URL vb.) yok sayılır, hazır avatara düşer.
+- **Kural:** `validScore.photo` yalnız `data:image/jpeg;base64,…` ve ≤2800 karakter. Emülatörde: ekleme/silme izinli; büyük, dış URL, SVG ve başkasının kaydı reddedildi (+ önceki 11 kontrol).
+- **Kısıt / Blaze'de:** istemci denetimi atlatılabilir → Cloud Vision SafeSearch fonksiyonu; report/block. Data Safety'de artık "Photos" işaretlenmeli (SECURITY_NOTES madde 5). `privacy.html` güncellendi. Test eklendi (sahte model; e2e'de jsDelivr engelli). **Kural deploy gerekir.**
+
 ### Maliyet istismarına karşı: kural tavanları, native App Check; profil fotoğrafı 64 px / ≤2 KB (2026-11-05)
 
 - **Kurallar:** liste sorgularına belge tavanı (`listMax`): daily scores 100, traces 120, daily traces 100, players 50, friendreqs 200, challenges 100, referrals liste kapalı; limitsiz sorgu reddedilir. scores'ta tavan yok (sayım sorguları da list kuralından geçer, limit taşımaz — emülatörde doğrulandı); orayı App Check korur. Çizgi indeks yedeği 400 → 120. **Deploy gerekir.**
 - **App Check native:** `@capacitor-firebase/app-check@8.6.0` (+ peer `firebase@12.6.0`). `_appCheckNative`: Android Play Integrity, iOS App Attest (`appCheckIOS` plist eklenene kadar kapalı); token alınamazsa reCAPTCHA v3. Android debug ve iOS (genel cihaz, imzasız) derlemeleri başarılı. iOS SPM isim çakışması (eklenti klasörü `app-check` = google/app-check kimliği → "AppCheckCore bulunamadı"): `tools/fix-spm-appcheck.js` farklı adlı bağlantı açıp Package.swift yolunu çevirir; `npm run sync` ve `postinstall`'da otomatik. Ayrıntı ve konsol adımları: SECURITY_NOTES.md madde 0.
-- **Profil fotoğrafı:** `processAvatarFile` / `avatarFromSource` — ortadan kare kırpma, kademeli küçültme, 64×64 JPEG, kalite 0.85 → 0.25 arası ≤2048 bayta inene kadar; yalnız raster (SVG reddedilir), dosya ≤15 MB, ≤40 MP, EXIF yönü, saydam zemin koyu. Eski 256 px kayıt açılışta bir kez küçültülür. Fotoğraf hâlâ YALNIZ cihazda (sunucuya gitmiyor). Test eklendi.
+- **Profil fotoğrafı:** `processAvatarFile` / `avatarFromSource` — ortadan kare kırpma, kademeli küçültme, 64×64 JPEG, kalite 0.85 → 0.25 arası ≤2048 bayta inene kadar; yalnız raster (SVG reddedilir), dosya ≤15 MB, ≤40 MP, EXIF yönü, saydam zemin koyu. Eski 256 px kayıt açılışta bir kez küçültülür. Test eklendi. (Paylaşım: bir üstteki giriş.)
 
 ### High Scores: sıra atlanınca mesafe listesinde de ··· ayracı (2026-11-04)
 
