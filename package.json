@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests/e2e.mjs",
-    "sync": "node sync-www.js && npx cap sync android && npx cap sync ios && node verify-sync.js",
+    "sync": "node sync-www.js && npx cap sync android && npx cap sync ios && node tools/fix-spm-appcheck.js && node verify-sync.js",
     "verify": "node verify-sync.js",
-    "setup-hooks": "git config core.hooksPath .githooks"
+    "setup-hooks": "git config core.hooksPath .githooks",
+    "postinstall": "node tools/fix-spm-appcheck.js"
   },
   "repository": {
     "type": "git",
@@ -22,9 +23,11 @@
   "homepage": "https://github.com/bugrasulukcu/ArcRise#readme",
   "dependencies": {
     "@capacitor-community/admob": "8.2.1",
+    "@capacitor-firebase/app-check": "8.6.0",
     "@capacitor/android": "8.5.3",
     "@capacitor/cli": "8.5.3",
     "@capacitor/core": "8.5.3",
-    "@capacitor/ios": "8.5.3"
+    "@capacitor/ios": "8.5.3",
+    "firebase": "12.6.0"
   }
 }

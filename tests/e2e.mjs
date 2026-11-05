@@ -281,6 +281,26 @@ test('izler: oyuncunun kendi geçmiş izleri saklanmaz, eski depo silinir', asyn
   check(await ls('arc_traces_v1') === null, 'run sonunda kendi izi yine kaydedildi');
 });
 
+test('profil fotoğrafı: 64×64 ve ≤2 KB\'a küçülür; SVG ve 15 MB üstü reddedilir; eski büyük fotoğraf küçülür', async () => {
+  // eski sürümden kalma 256 px fotoğraf (gürültülü → büyük JPEG)
+  const big = await ev(`(() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    for (let i = 0; i < 4000; i++) { x.fillStyle = 'hsl(' + (i * 37 % 360) + ',80%,50%)'; x.fillRect((i * 53) % 256, (i * 97) % 256, 6, 6); } return c.toDataURL('image/jpeg', 0.95); })()`);
+  await fresh({ arc_avatar_custom: big });
+  check(await waitFor(`(localStorage.getItem('arc_avatar_custom') || '').length < 3000`, 4000), `eski fotoğraf küçülmedi: ${(await ls('arc_avatar_custom') || '').length} karakter`);
+  const pick = async js => ev(`(async () => { const f = await (${js}); const dt = new DataTransfer(); dt.items.add(f); const inp = document.getElementById('prof-av-file');
+    inp.files = dt.files; inp.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 900)); return localStorage.getItem('arc_avatar_custom'); })()`);
+  const photo = await pick(`new Promise(r => { const c = document.createElement('canvas'); c.width = 1600; c.height = 1200; const x = c.getContext('2d');
+    for (let i = 0; i < 20000; i++) { x.fillStyle = 'hsl(' + (i * 37 % 360) + ',80%,50%)'; x.fillRect((i * 53) % 1600, (i * 97) % 1200, 9, 9); }
+    c.toBlob(b => r(new File([b], 'p.png', { type: 'image/png' })), 'image/png'); })`);
+  const bytes = Math.floor((photo.length - photo.indexOf(',') - 1) * 3 / 4);
+  const dim = await ev(`new Promise(r => { const im = new Image(); im.onload = () => r(im.naturalWidth + 'x' + im.naturalHeight); im.src = localStorage.getItem('arc_avatar_custom'); })`);
+  check(photo.startsWith('data:image/jpeg') && bytes <= 2048 && dim === '64x64', `fotoğraf: ${dim}, ${bytes} bayt`);
+  const svg = await pick(`Promise.resolve(new File(['<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'], 'x.svg', { type: 'image/svg+xml' }))`);
+  check(svg === photo, 'SVG kabul edildi');
+  const huge = await pick(`Promise.resolve(new File([new Uint8Array(16 * 1024 * 1024)], 'h.png', { type: 'image/png' }))`);
+  check(huge === photo, '16 MB dosya kabul edildi');
+});
+
 test('liderlik: sıra atlanınca skor ve mesafe listesinde ··· ayracı', async () => {
   fbReset();
   const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });

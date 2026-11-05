@@ -405,6 +405,12 @@ App yüklenince:
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
 
+### Maliyet istismarına karşı: kural tavanları, native App Check; profil fotoğrafı 64 px / ≤2 KB (2026-11-05)
+
+- **Kurallar:** liste sorgularına belge tavanı (`listMax`): daily scores 100, traces 120, daily traces 100, players 50, friendreqs 200, challenges 100, referrals liste kapalı; limitsiz sorgu reddedilir. scores'ta tavan yok (sayım sorguları da list kuralından geçer, limit taşımaz — emülatörde doğrulandı); orayı App Check korur. Çizgi indeks yedeği 400 → 120. **Deploy gerekir.**
+- **App Check native:** `@capacitor-firebase/app-check@8.6.0` (+ peer `firebase@12.6.0`). `_appCheckNative`: Android Play Integrity, iOS App Attest (`appCheckIOS` plist eklenene kadar kapalı); token alınamazsa reCAPTCHA v3. Android debug ve iOS (genel cihaz, imzasız) derlemeleri başarılı. iOS SPM isim çakışması (eklenti klasörü `app-check` = google/app-check kimliği → "AppCheckCore bulunamadı"): `tools/fix-spm-appcheck.js` farklı adlı bağlantı açıp Package.swift yolunu çevirir; `npm run sync` ve `postinstall`'da otomatik. Ayrıntı ve konsol adımları: SECURITY_NOTES.md madde 0.
+- **Profil fotoğrafı:** `processAvatarFile` / `avatarFromSource` — ortadan kare kırpma, kademeli küçültme, 64×64 JPEG, kalite 0.85 → 0.25 arası ≤2048 bayta inene kadar; yalnız raster (SVG reddedilir), dosya ≤15 MB, ≤40 MP, EXIF yönü, saydam zemin koyu. Eski 256 px kayıt açılışta bir kez küçültülür. Fotoğraf hâlâ YALNIZ cihazda (sunucuya gitmiyor). Test eklendi.
+
 ### High Scores: sıra atlanınca mesafe listesinde de ··· ayracı (2026-11-04)
 
 - Ayraç yalnız skor listesinde ilk 30 dışındayken (`around`) ekleniyordu; mesafede oyuncu hep listede olduğundan #1 ile üstündeki arasında boşluk olsa da çıkmıyordu (ilk 30 içindeki skor sıralarında da). `renderLbPosition` artık gösterilen sıralar arasında atlama olan her yere ayraç koyar. Test eklendi.

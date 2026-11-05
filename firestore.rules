@@ -30,6 +30,10 @@ service cloud.firestore {
     // (2026-07-02: "sahipsiz eski doc sahiplenilebilir" istisnası kaldırıldı —
     //  canlıdaki tüm scores/players doc'ları owner'lı doğrulandı.)
     function ownsOld()  { return resource.data.owner == request.auth.uid; }
+    // Liste sorgusu belge tavanı (maliyet istismarı: tek istekle binlerce belge çekilmesin).
+    // limit'siz sorgu da reddedilir (limit null). NOT: sayım (count) sorguları da bu kuraldan geçer ve
+    // limit taşımaz → sayım gereken koleksiyonda (scores) tavan YOK; orası App Check ile korunur.
+    function listMax(n) { return request.query.limit != null && request.query.limit <= n; }
 
     // Skor tavanı (v24): eski 1000000000 (1 milyar) pratikte hiçbir şeyi elemiyordu —
     // tavansız combo eğrisiyle 128 MİLYONLUK bir run rahatça geçiyordu. Combo artık
@@ -55,6 +59,7 @@ service cloud.firestore {
     }
 
     match /scores/{doc} {
+      // Tavan yok: canlı sıra / oyun sonu sırası sayım sorgusu kullanır (bkz. listMax notu). App Check zorunlu olmalı.
       allow read: if true;
       allow create: if isAuthed() && validScore(request.resource.data) && ownsNew();
       allow update: if isAuthed() && validScore(request.resource.data)
@@ -79,7 +84,8 @@ service cloud.firestore {
         && (!('tag' in d) || (d.tag is string && d.tag.matches('^[0-9]{4}$')));
     }
     match /daily/{day}/scores/{uid} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if listMax(100);   // getDailyTop en çok 100
       allow create: if isAuthed() && request.auth.uid == uid && day.matches('^[0-9]{8}$')
         && validDaily(request.resource.data);
       allow update: if isAuthed() && request.auth.uid == uid && validDaily(request.resource.data)
@@ -102,7 +108,8 @@ service cloud.firestore {
         && (!('thickness' in d) || (d.thickness is int && d.thickness >= 0 && d.thickness <= 20));
     }
     match /traces/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if listMax(120);   // son oyunlar 100 (+ indeks yedeği 120)
       allow create: if isAuthed() && validTrace(request.resource.data)
         && request.resource.data.mode in ['normal', 'extreme']
         && id == request.resource.data.name + '_' + request.resource.data.tag + '_' + request.resource.data.mode;
@@ -112,7 +119,8 @@ service cloud.firestore {
       allow delete: if isAuthed() && resource.data.owner == request.auth.uid;
     }
     match /daily/{day}/traces/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if listMax(100);
       allow create: if isAuthed() && day.matches('^[0-9]{8}$') && validTrace(request.resource.data)
         && request.resource.data.mode == 'daily' && id == request.resource.data.name + '_' + request.resource.data.tag;
       allow update: if isAuthed() && validTrace(request.resource.data) && ownsOld()
@@ -124,7 +132,8 @@ service cloud.firestore {
     // Authed gerektirir; coin client-side olduğundan self-increment koruması
     // pratik fayda sağlamaz (cheater zaten kendine coin verebilir).
     match /referrals/{code} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;   // yalnız tekil okuma (davet kodu)
       allow create: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
         && request.resource.data.clicks == 1;
       allow update: if isAuthed() && request.resource.data.keys().hasOnly(['clicks'])
@@ -147,7 +156,8 @@ service cloud.firestore {
         && (!('owner' in d) || d.owner is string);
     }
     match /players/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if listMax(50);   // isim#tag araması / kurtarma kodu en çok 50
       allow create: if isAuthed() && validPlayer(request.resource.data) && ownsNew();
       allow update: if isAuthed() && validPlayer(request.resource.data) && ownsOld() && ownsNew();
       // Hesap silme: yalnızca profilin sahibi.
@@ -165,7 +175,9 @@ service cloud.firestore {
       // Sadece taraflar okur (fromUid/toUid) → sosyal graf dışarıdan enumerate edilemez.
       // Client sorguları where fromUid==uid / where toUid==uid şeklinde olmalı.
       // NOT: toUid alanı olmayan ESKİ doc'lar artık okunamaz (kabul edilen migration kısıtı).
-      allow read: if request.auth != null
+      allow get: if request.auth != null
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow list: if request.auth != null && listMax(200)
         && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
       // Oluşturma: gönderen 'from' oyuncusunun sahibi olmalı; status pending.
       // Sıkılaştırma: alan listesi sabit (keys().hasOnly), doc id == from__to,
@@ -206,7 +218,9 @@ service cloud.firestore {
       return (exists(p1) && get(p1).data.status == 'accepted') || (exists(p2) && get(p2).data.status == 'accepted');
     }
     match /challenges/{id} {
-      allow read: if request.auth != null
+      allow get: if request.auth != null
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow list: if request.auth != null && listMax(100)
         && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['from', 'to', 'fromUid', 'toUid', 'fromName', 'fromTag', 'mode', 'target', 'status', 'result', 'ts', 'rts'])

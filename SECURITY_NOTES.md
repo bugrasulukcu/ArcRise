@@ -81,6 +81,13 @@
 
 Öncelik sırasıyla. Hepsi doğrulandı, tahmin değil.
 
+### 0. 2026-11-05 durumu (bu listeden yapılanlar)
+
+- **Okuma maliyeti (madde 1): YAPILDI** — `0b601e0`: önbellek her run silinmiyor, `where mode ==` + indeks, ölüm işaretleri ≤105 / 15 dk, çizgiler 100 / 15 dk. Ölçüm: run başına ~520 → ~15–20 okuma.
+- **Liste sorgusu tavanı (kurallar):** `listMax(n)` — daily scores 100, traces 120, daily traces 100, players 50, friendreqs 200, challenges 100, referrals liste kapalı; limitsiz sorgu reddedilir. Emülatörde doğrulandı. **scores'ta tavan YOK:** sayım (count) sorguları da list kuralından geçer ve limit taşımaz → tavan canlı sıra / oyun sonu sırasını kırardı (emülatörde doğrulandı). scores'u App Check korur.
+- **App Check native:** `@capacitor-firebase/app-check@8.6.0` eklendi. Android: Play Integrity (`appCheckAndroid: true`). iOS: App Attest — `GoogleService-Info.plist` eklenene kadar `appCheckIOS: false` (plist yokken token isteği çökebilir). Native token alınamazsa reCAPTCHA v3'e düşer. Geliştirici cihazı: `localStorage.arc_appcheck_debug = '1'` → debug sağlayıcı, logcat'teki token Console > App Check > Manage debug tokens'a.
+- **Kalan (kullanıcı, konsolda):** Android uygulamasını App Check'e Play Integrity ile kaydet (Play Console'da Play Integrity API'yi Cloud projesine bağla, imza SHA-256'larını ekle) → metrics "verified" görününce Firestore + Authentication için **Enforce**. Blaze'e geçince bütçe uyarısı + faturalandırmayı kapatan bütçe fonksiyonu.
+
 ### 1. Firestore okuma maliyeti — launch riski + DoS vektörü
 
 `getTopScores` mode filtresini client'ta yapıyor (composite index yok; `firestore.indexes.json` dosyası bile yok), telafi için `n*6+30` (üst sınır 250) doküman çekiyor. `arcrise.html:8423` her skor gönderiminde cache'i temizliyor → neredeyse her run yeni tam sorgu. Leaderboard için ~150, ghost listesi için ~250 okuma.
