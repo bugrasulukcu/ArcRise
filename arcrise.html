@@ -10942,11 +10942,23 @@ const ARC_DB = (() => {
       // Bu frame'de kazasız: son güvenli pozisyonu güncelle (revive için)
       _lastSafePos = { x: player.x, y: player.y };
     }
-    // MAGNET (pasif): her seviye toplama menzilini büyütür → değmeden, yaklaşınca toplar.
+    // MAGNET (pasif): her seviye yakalama menzilini büyütür. Menzile giren top yakalanır ve mor Magnet
+    // booster'ındaki gibi topa doğru hızlanarak çekilir, değince toplanır (eskiden menzil kenarında anında
+    // toplanıyordu → halkaya çarpıp patlıyor gibi görünüyordu). Yakalanan bırakılmaz; 0.35 sn'de değmezse yine toplanır.
     const magGrab = gUpg('magnetRange') * MAG_PX_PER_LVL;
+    const magPull = (b, touchR) => {
+      const dx = player.x - b.x, dy = player.y - b.y, d2 = dx*dx + dy*dy;
+      if (d2 < touchR * touchR) return true;
+      if (!b.magT && (magGrab <= 0 || d2 >= (touchR + magGrab) ** 2)) return false;
+      b.magT = (b.magT || 0) + dt;
+      if (b.magT > 0.35) return true;
+      const d = Math.sqrt(d2), st = Math.min(d, (260 + 2600 * b.magT) * dt);
+      b.x += dx / d * st; b.y += dy / d * st;
+      return d - st < touchR;
+    };
     for (let i = bonuses.length - 1; i >= 0; i--) {
-      const b = bonuses[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
+      const b = bonuses[i];
+      if (magPull(b, player.r + b.r)) {
         // Tutorial sahne 2: yeşil toplandı → enerji anlatımına geç
         if (tutActive && tutStage === 2) {
           bonuses.splice(i, 1);
@@ -10971,9 +10983,8 @@ const ARC_DB = (() => {
     }
     // Altın top toplama — combo çarpanlı + flying score + sahne flash
     for (let i = goldBalls.length - 1; i >= 0; i--) {
-      const b = goldBalls[i], dx = player.x - b.x, dy = player.y - b.y;
-      const hitR = player.r + Math.max(12, b.r * 9) + magGrab;
-      if (dx*dx + dy*dy < hitR * hitR) {
+      const b = goldBalls[i];
+      if (magPull(b, player.r + Math.max(12, b.r * 9))) {
         // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = timeMulFor(cd);
@@ -10994,8 +11005,8 @@ const ARC_DB = (() => {
     }
     // Mor booster toplama (base 100 + süre × booster katsayıları; aktivasyon SONRA)
     for (let i = purpleBalls.length - 1; i >= 0; i--) {
-      const b = purpleBalls[i], dx = player.x - b.x, dy = player.y - b.y;
-      if (dx*dx + dy*dy < (player.r + b.r + magGrab)**2) {
+      const b = purpleBalls[i];
+      if (magPull(b, player.r + b.r)) {
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = timeMulFor(cd);
         const boostMul = getBoostScoreMul();
@@ -12314,7 +12325,9 @@ const ARC_DB = (() => {
     get bounces() { return runBounces; },
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
-    spawnBonusHere: (ahead = 200, dx = 0, r = 14) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r }); },
+    spawnBonusHere: (ahead = 200, dx = 0, r = 14, tag) => { bonuses.push({ x: player.x + dx, y: player.y - ahead, r, tag }); },
+    // Test: işaretli yeşilin topa uzaklığı (-1 = toplandı)
+    tagDist: tag => { const b = bonuses.find(o => o.tag === tag); return b ? Math.round(Math.hypot(b.x - player.x, b.y - player.y)) : -1; },
     get obstacleAlpha() { return _obsA; },
     get coins() { return coins; },
     get ads() { return { ready: AdProvider.available(), interRuns: _interRuns, cont: _adContinueUsed, dbl: _adDoubleUsed }; },

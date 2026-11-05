@@ -796,6 +796,17 @@ test('perf: dönüş parçacıkları üst sınırı aşmaz; pencere açıkken ht
   check(peak > 0 && peak <= 56, `dönüş parçacığı tepe sayısı ${peak} (sınır 56)`);
 });
 
+test('magnet: menzile giren yeşil anında patlamaz, topa çekilip değince toplanır', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, magnetRange: 8 } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); ARC_TEST.ghost(20); true`); await sleep(1500);
+  // menzil: değme (r + 14) + 8 sv × ~7 px → değme sınırının ~30 px dışına koy
+  const d0 = await ev(`(() => { const r = ARC_TEST.player.r + 14 + 30, a = ARC_TEST.player.heading + Math.PI / 2;
+    ARC_TEST.spawnBonusHere(-Math.sin(a) * r, Math.cos(a) * r, 14, 'm'); return ARC_TEST.tagDist('m'); })()`);
+  const d1 = await ev(`new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(() => ok(ARC_TEST.tagDist('m')))))`);
+  check(d0 > 0 && d1 > 0 && d1 < d0, `ilk karelerde çekilmedi ya da anında toplandı: ${d0} → ${d1}`);
+  check(await waitFor(`ARC_TEST.tagDist('m') === -1`, 1500), 'çekilen yeşil toplanmadı');
+});
+
 test('ghost: engeller %50 opaklığa iner, ghost bitince geri gelir', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(1500);

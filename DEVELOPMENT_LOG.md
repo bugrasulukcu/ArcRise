@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### 📌 Oturum sonu durumu (2026-11-05) — kaldığımız yer
+
+- **Commit'li ve push'lu (4–5 Kas):** diğer oyuncu çizgileri v2 (RDP, karo önbellek, run başında artımlı yenileme) · ölünce geçiş reklamı (Again'de yok) · ilk oyunda yalnız START + profil açık · devam geri sayımı topun üstünde · rozet: üst kademe takılıyken çıkarma + sol/sağ slot · ölüm şok dalgası / blob bükülmesi + kara delik (nesneler %25) · canlı sıra (HUD) · okumalar ~520 → ~15–20 / run, çizgiler 100 · LB mesafe ayracı · `755d100` kural tavanları + native App Check (Play Integrity) + fotoğraf 64 px / ≤2 KB · `ce8b977` mezar fotoğrafı paylaşımı + telefonda nsfwjs denetimi · magnet (pasif) çekme etkisi.
+- **Deploy:** kurallar ve indeksler (son hâl dahil, `photo` kuralı) kullanıcı tarafından deploy edildi (2026-11-05).
+- **Kullanıcının konsolda yapacakları:** App Check'e Android'i Play Integrity ile kaydet (SHA-256'lar, Play Console'da Cloud projesini bağla) · geliştirici cihazı debug token · "verified" oranı yükselince Firestore + Auth **Enforce** · iOS: `GoogleService-Info.plist` + App Attest gelince `appCheckIOS: true` · Play Data Safety'de **Photos** işaretle · yayındaki privacy.html'i güncelle.
+- **Lansmanda (Blaze ile):** dünya paketi (tek anlık görüntü belgesi), bütçe uyarısı + faturalandırma kesici, fotoğraf için Cloud Vision SafeSearch fonksiyonu, report/block.
+- **Testler:** 59/59 (üçe bölünmüş koşu: `E2E_PART=1/3` …, ön planda, `< /dev/null`).
+
 ### 📌 Oturum sonu durumu (2026-11-04) — kaldığımız yer
 
 - **Durum:** diğer oyuncu çizgileri `6497082` ile commit'lendi; Firestore kuralları + `traces(mode asc, ts desc)` indeksi kullanıcı tarafından deploy edildi (2026-11-04). `CODEX_REVIEW_d571b1f_FOLLOWUP.md` commit'lenmeyecek.
@@ -404,6 +412,10 @@ App yüklenince:
 - **Ekonomi kararı:** 10 oyuncu tipli simülasyon yapıldı (artifact: https://claude.ai/artifact/5wxSUgbJWpZo6bK5chYbDd). Kullanıcı kararı: mevcut fiyatlar ve hız ideal (hardcore oyuncu ~52 günde katalog bitiriyor); fiyat eğrisi değişmeyecek, Walls/Magnet etki artışı da olduğu gibi kalacak ("gameplay'de anında hissediliyor").
 - **Açık / kullanıcıya sorulacak:** `E2E_PROBE=1` test ölçümü kalsın mı.
 - **Test notu:** bazı turlarda birçok oynanış testi topluca düşüyor (bot ilerlemiyor / "başlangıç çizgisi geçilmedi"); değişiklik yokken de oluyor, rAF ~60 fps ve sayfa görünür ölçüldü → ortam kaynaklı sayıldı, tekrar koşunca geçiyor.
+
+### Magnet (pasif): menzile giren nesne topa çekilir (2026-11-05)
+
+- Kullanıcı: nesneler menzil halkasına değince patlıyor gibi görünüyordu. Eskiden menzil kenarında anında toplanıyordu. Artık `magPull`: menzile giren yeşil / altın / mor yakalanır, mor Magnet booster'ındaki gibi topa doğru hızlanarak çekilir (260 px/s + 2600 px/s²), değince toplanır; yakalanan bırakılmaz, 0.35 sn'de değmezse yine toplanır (oyun avantajı korunur). Test eklendi (`ARC_TEST.tagDist`).
 
 ### Mezar fotoğrafı paylaşılıyor; telefonda uygunsuz içerik denetimi (2026-11-05)
 
