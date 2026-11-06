@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Oyun sonu: sahte NEXUS / BYTE satırları kaldırıldı (2026-11-06)
+
+- Sıralama boş dönünce (günün ilk Daily oyuncusu, 0 puan yazılmadı, çevrimdışı) en başta demo için yazılmış yedek, `NEXUS` (best + 1) ve `BYTE` (skor − 1) satırlarını uyduruyordu; oyuncular gerçek sanıyordu. Artık yalnız kendi satırın gösterilir. Test eklendi (eski kodda düştüğü doğrulandı).
+
 ### 📌 Oturum sonu durumu (2026-11-05) — kaldığımız yer
 
 - **Commit'li ve push'lu (4–5 Kas):** diğer oyuncu çizgileri v2 (RDP, karo önbellek, run başında artımlı yenileme) · ölünce geçiş reklamı (Again'de yok) · ilk oyunda yalnız START + profil açık · devam geri sayımı topun üstünde · rozet: üst kademe takılıyken çıkarma + sol/sağ slot · ölüm şok dalgası / blob bükülmesi + kara delik (nesneler %25) · canlı sıra (HUD) · okumalar ~520 → ~15–20 / run, çizgiler 100 · LB mesafe ayracı · `755d100` kural tavanları + native App Check (Play Integrity) + fotoğraf 64 px / ≤2 KB · `ce8b977` mezar fotoğrafı paylaşımı + telefonda nsfwjs denetimi · magnet (pasif) çekme etkisi.

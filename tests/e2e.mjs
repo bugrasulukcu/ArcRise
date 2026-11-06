@@ -350,6 +350,15 @@ test('liderlik: sıra atlanınca skor ve mesafe listesinde ··· ayracı', asyn
   check(await waitFor(`${div} === 1 && /\\d\\.\\d\\dm/i.test(document.getElementById('lb-list').textContent)`, 6000), `mesafe listesinde ayraç yok: ${await ev(`document.getElementById('lb-list').textContent.replace(/\s+/g, ' ')`)}`);
 });
 
+test('oyun sonu: liste boşken sahte oyuncu (NEXUS / BYTE) uydurulmaz, yalnız kendi satırın', async () => {
+  fbReset();
+  await fresh();
+  await playRun(1500);
+  const txt = await ev(`document.getElementById('gameover').textContent.replace(/\\s+/g, ' ')`);
+  check(!/NEXUS|BYTE/.test(txt), `sahte oyuncu var: ${txt}`);
+  check(/ARC/.test(txt), `kendi satırın yok: ${txt}`);
+});
+
 test('liderlik: çevrimdışıyken "LOADING"de takılmaz, mesaj gösterir', async () => {
   fbReset();
   await fresh();
