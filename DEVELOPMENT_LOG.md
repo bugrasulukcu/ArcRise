@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Quests düğmesi: günlük skor + sıra (2026-11-06)
+
+- QUESTS düğmesinde "n/3 done" altına ikinci satır: `DAILY RUN: 1,234 • #3/17` (yalnız bugün günlük oynandıysa). Skor `arc_daily_v1`'den; sıra **ek okuma olmadan** zaten çekilen günlük listelerden önbelleğe (`arc_daily_rank`, gün değişince geçersiz): Quests penceresindeki ilk 100 ve günlük oyun sonu listesi (ilk 20). Liste sınıra dayandıysa `#12/100+`. Sığmazsa skor kısalır, sıra hep görünür; ≤360 px'te "Run" düşer. Ayrı commit (beğenilmezse `git revert`).
+
 ### Vanilla sadeleşti · biberon · rozet ekranı kaydırmasız + sıralama rozetleri (2026-11-06)
 
 - **Vanilla:** yalnız toplanan yeşil sayılır (HUD: GREENS, yeşil başına `+1`). Combo, mesafe, rekor, sıra ve yetenek HUD'u gizli; `gUpg` Vanilla'da 0 (yükseltme yok), yetenek tetiklenmez, Revive bileti sunulmaz/harcanmaz. Altın, mor, kapı/koridor/halka ve thread bonusu çıkmaz. **Hiçbir şey kaydedilmez:** run başında `stats` kopyalanır, bitince / BACK TO MENU'da geri yüklenir (oyun içi sayaç artışları atılır); `arc_last` ve analitik (runStart/runEnd) yazılmaz; sunucuya yazım yok (test ediliyor).

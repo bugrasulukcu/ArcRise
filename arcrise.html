@@ -3004,6 +3004,13 @@
       font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.45);
       text-transform: uppercase;
     }
+    /* Günlük koşu özeti: "DAILY RUN: 1,234 • #3/17" — taşarsa üç nokta */
+    #btn-quests .bsh-daily { display: flex; max-width: calc(100% + 16px); margin: 0 -8px; white-space: nowrap;
+      letter-spacing: .4px; color: rgba(255,206,90,.75); }
+    #btn-quests .bsh-daily > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* sığmazsa skor kısalır, sıra hep görünür */
+    #btn-quests .bsh-daily > span + span { flex: none; }
+    @media (max-width: 360px) { #btn-quests .bsh-daily .bd-run { display: none; } }   /* dar ekran: "DAILY: 1,234 • #3/17" */
+    #btn-quests .bsh-daily[hidden] { display: none; }
     /* Quests'te tamamlanmış ödül varsa dikkat çeken nokta */
     #btn-quests.has-reward { animation: questPulse 1.3s ease-in-out infinite alternate; }
     @keyframes questPulse {
@@ -4403,6 +4410,7 @@
           QUESTS
         </span>
         <span class="bsh-sub" id="btn-quests-sub">Daily quests</span>
+        <span class="bsh-sub bsh-daily" id="btn-quests-daily" hidden></span>
       </button>
       <button class="btn-gray btn-icon gl gl-lilac" id="btn-settings" title="Settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -11743,6 +11751,7 @@ const ARC_DB = (() => {
     if (wasDaily) {
       const eqB = (equippedBadges || []).filter(Boolean).join(',');
       dailyLocalRecord(sc);
+      try { updateQuestButton(); } catch(_) {}
       await ARC_DB.submitDaily(dailyDay(), playerName, avatarIdx, sc, eqB, myTag(), runPts);
     } else if (gameMode !== 'wife') {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
@@ -11755,6 +11764,7 @@ const ARC_DB = (() => {
     // Yeterli satır çek — 20 yeter, sıralama görmek için. Günlük koşuda günün tablosu.
     const topRows = wasDaily ? ((await ARC_DB.getDailyTop(dailyDay(), 20)) || []) : await ARC_DB.getTopScores(20, gameMode);
 
+    if (wasDaily && topRows.length) try { dailyRankSave(topRows, 20); } catch(_) {}
     let lbFallback = false; // liste boş (çevrimdışı / günün ilk oyuncusu / 0 puan yazılmadı) → yalnız kendi satırın
     if (topRows.length === 0) {
       // Eskiden burada sahte NEXUS / BYTE satırları uyduruluyordu; gerçek oyuncu sanılıyordu.
@@ -12145,7 +12155,7 @@ const ARC_DB = (() => {
      'arc_last','arc_avatar_custom','arc_mode','arc_xp','arc_dist_total','arc_extreme_unlocked',
      // oyun-içi satın almalar / ilerleme
      'arc_slots_v1','arc_slots_owned','arc_quests_v1','arc_friends_v2','arc_friend_code','arc_tag','arc_social_v1',
-     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_dist_chests','arc_chest_pending','arc_chal_outbox',
+     'arc_ref_used','arc_ref_claimed','arc_badges_v1','arc_badges_earned_v1','arc_login_day','arc_series_day','arc_streak_v1','arc_pb_ghost_normal','arc_pb_ghost_extreme','arc_daily_v1','arc_daily_rank','arc_dist_chests','arc_chest_pending','arc_chal_outbox',
      // bildirim/görülme + anonim kimlik token'ı
      'arc_badges_seen_v1','arc_seen_extreme','arc_seen_upg_coins','arc_view_avgscore','arc_view_avgdist',
      'arc_view_rankscore','arc_view_rankdist','arc_fb_rt','arc_avatar_ok','arc_photo_up',
@@ -16309,7 +16319,25 @@ const ARC_DB = (() => {
     const doneCount = questState.quests.filter(q => q.claimed).length;
     if (sub) sub.textContent = claimable > 0 ? `${claimable} reward${claimable>1?'s':''} ready!` : `${doneCount}/${questState.quests.length} done`;
     if (btn) btn.classList.toggle('has-reward', claimable > 0);
+    // Günlük koşu: bugünkü en iyi skor + son bilinen sıra (yalnız zaten çekilen günlük listelerden — ek okuma yok)
+    const dEl = document.getElementById('btn-quests-daily');
+    if (dEl) {
+      const dl = dailyLocal(), rk = dailyRankGet();
+      dEl.hidden = !dl.best;
+      dEl.innerHTML = dl.best ? `<span>Daily<span class="bd-run"> Run</span>: ${_fmtN(dl.best)}</span>${rk ? `<span>&nbsp;• ${rk}</span>` : ''}` : '';
+    }
     try { refreshNotifs(); } catch(_){}
+  }
+  // Günlük sıra önbelleği: { day, txt } — "#3/17" (liste sınıra dayandıysa "#3/100+")
+  function dailyRankGet() {
+    try { const o = JSON.parse(localStorage.getItem('arc_daily_rank')); if (o && o.day === dailyDay()) return o.txt; } catch(_) {}
+    return '';
+  }
+  function dailyRankSave(rows, cap) {
+    const i = (rows || []).findIndex(r => r.owner === ARC_DB.getUid());
+    if (i < 0) return;
+    try { localStorage.setItem('arc_daily_rank', JSON.stringify({ day: dailyDay(), txt: `#${i + 1}/${rows.length}${rows.length >= cap ? '+' : ''}` })); } catch(_) {}
+    try { updateQuestButton(); } catch(_) {}
   }
   function renderQuests(animate) {
     const list = document.getElementById('quests-list');
@@ -16372,6 +16400,7 @@ const ARC_DB = (() => {
       if (!rows.length) { setLead('BE TODAY\'S FIRST', ''); return; }
       const top = rows[0], uid = ARC_DB.getUid();
       setLead(top.owner === uid ? 'YOU' : top.name.toUpperCase(), _fmtN(top.score));
+      dailyRankSave(rows, 100);
       const el = document.getElementById('dl-rank'); if (!el) return;
       const i = rows.findIndex(r => r.owner === uid);
       el.textContent = i >= 0 ? `#${i + 1}/${rows.length}` : `#${rows.length}+`;

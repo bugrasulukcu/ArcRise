@@ -1420,6 +1420,18 @@ test('rozet ekranı: kaydırma yok, 320×568 ve 390×844\'te sığar; sıralama 
   check(['top100', 'top10', 'run-top100', 'daily-king'].every(id => e.includes(id)) && !e.includes('run-top10'), `kazanılan: ${JSON.stringify(e)}`);
 });
 
+test('quests düğmesi: günlük skor + sıra satırı ("Daily Run: 1,234 • #3/17")', async () => {
+  const d = new Date(), day = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  await fresh({});
+  check(await ev(`document.getElementById('btn-quests-daily').hidden`), 'günlük oynanmadan satır görünüyor');
+  await fresh({ arc_daily_v1: { day, best: 1234, runs: 2 }, arc_daily_rank: { day, txt: '#3/17' } });
+  const t = await ev(`(() => { const e = document.getElementById('btn-quests-daily'); return { h: e.hidden, t: e.textContent, sub: document.getElementById('btn-quests-sub').textContent }; })()`);
+  check(!t.h && t.t.replace(/\u00a0/g, ' ') === 'Daily Run: 1,234 • #3/17' && /done|ready/i.test(t.sub), `düğme: ${JSON.stringify(t)}`);
+  // dünkü sıra gösterilmez
+  await fresh({ arc_daily_v1: { day, best: 50, runs: 1 }, arc_daily_rank: { day: '20000101', txt: '#1/2' } });
+  check(await ev(`document.getElementById('btn-quests-daily').textContent`) === 'Daily Run: 50', 'eski günün sırası gösterildi');
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));
