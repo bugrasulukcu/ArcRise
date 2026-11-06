@@ -816,6 +816,15 @@ test('magnet: menzile giren yeşil anında patlamaz, topa çekilip değince topl
   check(await waitFor(`ARC_TEST.tagDist('m') === -1`, 1500), 'çekilen yeşil toplanmadı');
 });
 
+test('arka plan ızgarası dünya ile aynı yönde (aşağı) kayar', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); ARC_TEST.ghost(20); true`); await sleep(1200);
+  const a = await ev(`({ g: ARC_TEST.gridY, c: ARC_TEST.camY })`); await sleep(1200);
+  const b = await ev(`({ g: ARC_TEST.gridY, c: ARC_TEST.camY })`);
+  // camY azalır (top yükselir) → dünya ekranda aşağı iner → ızgara kaydırması artmalı (çizgiler aşağı)
+  check(b.c < a.c && b.g > a.g, `ızgara ters yönde: camY ${a.c} → ${b.c}, ızgara ${a.g} → ${b.g}`);
+});
+
 test('ghost: engeller %50 opaklığa iner, ghost bitince geri gelir', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(1500);

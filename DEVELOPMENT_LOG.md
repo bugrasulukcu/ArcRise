@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Arka plan ızgarası ters yöne kayıyordu (2026-11-06)
+
+- Oyunda ızgara parallax'ı `drawGrid(bctx, camY * 0.45)` idi; top yükseldikçe `camY` azaldığı için çizgiler YUKARI kayıyordu, dünya (engeller, toplar) ise aşağı iniyor (ilk commit'ten beri). Artık `gridScrollY() = -camY * 0.45`: ızgara dünyayla aynı yönde, %45 hızla iner. Test eklendi (`ARC_TEST.gridY / camY`).
+
 ### Oyun sonu: sahte NEXUS / BYTE satırları kaldırıldı (2026-11-06)
 
 - Sıralama boş dönünce (günün ilk Daily oyuncusu, 0 puan yazılmadı, çevrimdışı) en başta demo için yazılmış yedek, `NEXUS` (best + 1) ve `BYTE` (skor − 1) satırlarını uyduruyordu; oyuncular gerçek sanıyordu. Artık yalnız kendi satırın gösterilir. Test eklendi (eski kodda düştüğü doğrulandı).
