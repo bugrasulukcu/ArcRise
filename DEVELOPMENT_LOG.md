@@ -396,9 +396,13 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
-### Quests düğmesi: günlük skor + sıra (2026-11-06)
+### Quests düğmesi: günlük skor + sıra (2026-11-06/07)
 
-- QUESTS düğmesinde "n/3 done" altına ikinci satır: `DAILY RUN: 1,234 • #3/17` (yalnız bugün günlük oynandıysa). Skor `arc_daily_v1`'den; sıra **ek okuma olmadan** zaten çekilen günlük listelerden önbelleğe (`arc_daily_rank`, gün değişince geçersiz): Quests penceresindeki ilk 100 ve günlük oyun sonu listesi (ilk 20). Liste sınıra dayandıysa `#12/100+`. Sığmazsa skor kısalır, sıra hep görünür; ≤360 px'te "Run" düşer. Ayrı commit (beğenilmezse `git revert`).
+- QUESTS düğmesinde "n/3 done" altına dürtü satırı: `DAILY RUN: 1,234 • #3/17`. Günlük oynanmadıysa da görünür: `DAILY RUN: 0 • #0/<bugün oynayan>`.
+- Sıra **sayım sorgusuyla** (aggregation, `countDaily`): üstündekiler + toplam, ikisi de `limit 100` (kural `listMax(100)`'ü geçer — emülatörde doğrulandı; limitsiz sayım reddedilir). Oynandıysa ~2, oynanmadıysa ~1 okuma. 100'e dayanırsa `100+`.
+- Tazeleme sıralama önbelleğiyle aynı aralıkta: **5 dk** (`DAILY_RANK_MS`). Menüdeyken 30 sn'de bir bakılır, önbellek 5 dk'yı geçtiyse arka planda yenilenir; oyun sırasında / sekme gizliyken sorgu yok, çevrimdışıysa dakikada bir dener. Sıra değişince satır 2,4 sn yeşil (yükseldi) / kırmızı (düştü) yanar.
+- Önbellek `arc_daily_rank` = { day, best, txt, ts }: gün ya da bugünkü en iyi skor değişince geçersiz. Quests penceresindeki ilk 100 listesi de önbelleği doldurur.
+- Ayrı commit'ler (beğenilmezse `git revert`).
 
 ### Vanilla sadeleşti · biberon · rozet ekranı kaydırmasız + sıralama rozetleri (2026-11-06)
 

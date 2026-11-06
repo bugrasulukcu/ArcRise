@@ -3009,6 +3009,9 @@
       letter-spacing: .4px; color: rgba(255,206,90,.75); }
     #btn-quests .bsh-daily > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* sığmazsa skor kısalır, sıra hep görünür */
     #btn-quests .bsh-daily > span + span { flex: none; }
+    #btn-quests .bsh-daily { transition: color .5s, text-shadow .5s; }
+    #btn-quests .bsh-daily.bd-up   { color: #5fe07a; text-shadow: 0 0 8px rgba(95,224,122,.6); }   /* sıra yükseldi */
+    #btn-quests .bsh-daily.bd-down { color: #ff6a6a; text-shadow: 0 0 8px rgba(255,106,106,.6); }   /* sıra düştü */
     @media (max-width: 360px) { #btn-quests .bsh-daily .bd-run { display: none; } }   /* dar ekran: "DAILY: 1,234 • #3/17" */
     #btn-quests .bsh-daily[hidden] { display: none; }
     /* Quests'te tamamlanmış ödül varsa dikkat çeken nokta */
@@ -6331,6 +6334,22 @@ const ARC_DB = (() => {
       return w.ok;
     } catch (e) { console.warn('[ArcDB] daily submit failed', e); return false; }
   }
+  // Günlük tabloda sayım (aggregation, ~1 okuma): above verilirse skoru ondan büyük olanlar. Kural listMax(100)
+  // istediği için "en çok 100 say" (limit 100) → 100 dönerse 100+ demektir.
+  async function countDaily(day, above) {
+    if (!projectId || projectId.startsWith('BURAYA') || !/^[0-9]{8}$/.test(day)) return null;
+    try {
+      const q = { from: [{ collectionId: 'scores' }], limit: 100 };
+      if (above != null) q.where = { fieldFilter: { field: { fieldPath: 'score' }, op: 'GREATER_THAN', value: { integerValue: String(Math.max(0, Math.floor(above))) } } };
+      const res = await fbFetch(`${BASE}/daily/${day}:runAggregationQuery?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredAggregationQuery: { structuredQuery: q, aggregations: [{ alias: 'n', count: {} }] } }),
+      });
+      if (!res.ok) return null;
+      const v = (await res.json())?.[0]?.result?.aggregateFields?.n?.integerValue;
+      return v != null ? parseInt(v, 10) : null;
+    } catch (_) { return null; }
+  }
   async function getDailyTop(day, n = 20) {
     if (!projectId || projectId.startsWith('BURAYA') || !/^[0-9]{8}$/.test(day)) return null;
     try {
@@ -6428,7 +6447,7 @@ const ARC_DB = (() => {
     return r ? { key: `${_sanName(r.name)}_${r.tag}`, name: r.name, tag: r.tag, pts: r.tracePts, color: null, thickness: 0 } : null;
   }
 
-  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, countAboveF, valuesAboveF, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, submitScore, setPhoto, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
+  const api = { submitTrace, submitDailyTrace, getRecentTraces, getDailyRecentTraces, getTracesFor, getLongestTrace, getDailyTopTrace, getScoresAbove, getScoresBelow, countAbove, countAboveF, valuesAboveF, sendChallenge, getMyChallenges, resolveChallenge, deleteChallenge, submitDaily, getDailyTop, countDaily, submitScore, setPhoto, getTopScores, topFailed: () => _topFailed, getCrossPlayerGhosts, invalidateTopCache, recordReferralClick, getReferralClicks, registerPlayer, getPlayer, findTagsForName, ensureAuth, getUid, sendFriendRequest, getMySocial, acceptFriendRequest, removeFriendEdge, deleteMyData, getRecoveryCode, restoreFromCode, fetchWallet, syncWallet };
   // Anonim oturumu açılışta ısıt (uid hazır olsun; ilk yazımda gecikme olmasın).
   try { ensureAuth(); } catch(_){}
   // Yıkıcı admin araçları sadece debug modunda dışarı açılır (?debug).
@@ -11764,7 +11783,6 @@ const ARC_DB = (() => {
     // Yeterli satır çek — 20 yeter, sıralama görmek için. Günlük koşuda günün tablosu.
     const topRows = wasDaily ? ((await ARC_DB.getDailyTop(dailyDay(), 20)) || []) : await ARC_DB.getTopScores(20, gameMode);
 
-    if (wasDaily && topRows.length) try { dailyRankSave(topRows, 20); } catch(_) {}
     let lbFallback = false; // liste boş (çevrimdışı / günün ilk oyuncusu / 0 puan yazılmadı) → yalnız kendi satırın
     if (topRows.length === 0) {
       // Eskiden burada sahte NEXUS / BYTE satırları uyduruluyordu; gerçek oyuncu sanılıyordu.
@@ -12453,6 +12471,7 @@ const ARC_DB = (() => {
     tutDrop: () => { const d = S2W(H + 20) - player.y; player.y += d; player.cy += d; },   // test: topu ekran altına it
     fitProfVals: () => fitProfVals(),
     awardRank: (k, i) => awardRankBadges(k, i),
+    questBtn: () => updateQuestButton(),
     get magRing() { return Math.round(magRingR()); }, get gridY() { return gridScrollY(); }, get camY() { return camY; },
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
     tap: () => { if (running) { beginArc(-player.dir, getRadius()); markTapFx(); } },
@@ -16319,26 +16338,63 @@ const ARC_DB = (() => {
     const doneCount = questState.quests.filter(q => q.claimed).length;
     if (sub) sub.textContent = claimable > 0 ? `${claimable} reward${claimable>1?'s':''} ready!` : `${doneCount}/${questState.quests.length} done`;
     if (btn) btn.classList.toggle('has-reward', claimable > 0);
-    // Günlük koşu: bugünkü en iyi skor + son bilinen sıra (yalnız zaten çekilen günlük listelerden — ek okuma yok)
+    // Günlük koşu dürtüsü: bugünkü en iyi skor + sıra (oynanmadıysa 0 • #0/oyuncu sayısı). Sıra 5 dk'da bir tazelenir.
     const dEl = document.getElementById('btn-quests-daily');
     if (dEl) {
-      const dl = dailyLocal(), rk = dailyRankGet();
-      dEl.hidden = !dl.best;
-      dEl.innerHTML = dl.best ? `<span>Daily<span class="bd-run"> Run</span>: ${_fmtN(dl.best)}</span>${rk ? `<span>&nbsp;• ${rk}</span>` : ''}` : '';
+      const dl = dailyLocal(), rk = dailyRankGet() || (dl.best ? '' : '#0');
+      dEl.hidden = false;
+      dEl.innerHTML = `<span>Daily<span class="bd-run"> Run</span>: ${_fmtN(dl.best || 0)}</span>${rk ? `<span>&nbsp;• ${rk}</span>` : ''}`;
     }
     try { refreshNotifs(); } catch(_){}
   }
   // Günlük sıra önbelleği: { day, txt } — "#3/17" (liste sınıra dayandıysa "#3/100+")
+  // Önbellek { day, best, txt, ts }: gün ya da bugünkü en iyi skor değişince geçersiz (oynayınca "#0" kalmasın)
+  const DAILY_RANK_MS = 5 * 60e3;   // sıralama önbelleğiyle aynı (CACHE_TTL_MS): 5 dk'da bir ~2 okuma
+  function dailyRankRaw() {
+    try { const o = JSON.parse(localStorage.getItem('arc_daily_rank')); if (o && o.day === dailyDay() && o.best === dailyLocal().best) return o; } catch(_) {}
+    return null;
+  }
   function dailyRankGet() {
-    try { const o = JSON.parse(localStorage.getItem('arc_daily_rank')); if (o && o.day === dailyDay()) return o.txt; } catch(_) {}
-    return '';
+    const o = dailyRankRaw();
+    if (!o) { dailyRankRefresh(); return ''; }
+    if (Date.now() - (o.ts || 0) > DAILY_RANK_MS) dailyRankRefresh();   // bayat → arka planda tazele, eskisi görünür
+    return o.txt;
+  }
+  const _rankNum = t => { const m = /^#(\d+)/.exec(t || ''); return m ? +m[1] : 0; };
+  function dailyRankStore(txt) {
+    const prev = dailyRankRaw();
+    try { localStorage.setItem('arc_daily_rank', JSON.stringify({ day: dailyDay(), best: dailyLocal().best, txt, ts: Date.now() })); } catch(_) {}
+    try { updateQuestButton(); } catch(_) {}
+    // Sıra değişti → satır kısa süre yeşil (yükseldi) / kırmızı (düştü) yanar
+    const a = _rankNum(prev?.txt), b = _rankNum(txt), el = document.getElementById('btn-quests-daily');
+    if (el && prev && a && b && a !== b) {
+      el.classList.remove('bd-up', 'bd-down'); void el.offsetWidth;
+      el.classList.add(b < a ? 'bd-up' : 'bd-down');
+      setTimeout(() => el.classList.remove('bd-up', 'bd-down'), 2400);
+    }
   }
   function dailyRankSave(rows, cap) {
     const i = (rows || []).findIndex(r => r.owner === ARC_DB.getUid());
-    if (i < 0) return;
-    try { localStorage.setItem('arc_daily_rank', JSON.stringify({ day: dailyDay(), txt: `#${i + 1}/${rows.length}${rows.length >= cap ? '+' : ''}` })); } catch(_) {}
-    try { updateQuestButton(); } catch(_) {}
+    if (i < 0 || !dailyLocal().best) return;
+    dailyRankStore(`#${i + 1}/${rows.length}${rows.length >= cap ? '+' : ''}`);
   }
+  // Önbellekte sıra yoksa / 5 dk'dan eskiyse: sayım sorgusu — oynandıysa 2 (üstündekiler + toplam), oynanmadıysa
+  // 1 (toplam) okuma. Yalnız menüdeyken, aynı anda tek istek; çevrimdışıysa dakikada bir dener.
+  let _drBusy = false, _drFailAt = 0;
+  async function dailyRankRefresh() {
+    const best = dailyLocal().best;
+    if (_drBusy || scene === 'play' || document.hidden || Date.now() - _drFailAt < 60e3) return;
+    _drBusy = true; _drFailAt = Date.now();
+    try {
+      const day = dailyDay(), cap = n => n >= 100 ? '100+' : n;
+      const [above, total] = await Promise.all([best ? ARC_DB.countDaily(day, best) : 0, ARC_DB.countDaily(day)]);
+      if (above == null || total == null || day !== dailyDay() || best !== dailyLocal().best) return;
+      _drFailAt = 0;
+      dailyRankStore(best ? `#${cap(above + 1)}/${cap(Math.max(total, above + 1))}` : `#0/${cap(total)}`);
+    } catch (_) {} finally { _drBusy = false; }
+  }
+  // Menüdeyken 30 sn'de bir bak: önbellek 5 dk'yı geçtiyse tazele (sıra değişimi oyuncuya yansır)
+  setInterval(() => { try { if (scene === 'home' && !document.hidden) updateQuestButton(); } catch(_) {} }, 30e3);
   function renderQuests(animate) {
     const list = document.getElementById('quests-list');
     if (!list) return;

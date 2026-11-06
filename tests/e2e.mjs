@@ -103,7 +103,7 @@ function onFirebase({ requestId, request }) {
     const ob = q.orderBy?.[0];
     const sf = ob ? ob.field.fieldPath : 'score', dir = ob && ob.direction === 'ASCENDING' ? 1 : -1;
     rows.sort((a, b) => dir * ((val(a.fields[sf]) || 0) - (val(b.fields[sf]) || 0)));
-    if (agg) return reply(requestId, 200, [{ result: { aggregateFields: { n: { integerValue: String(rows.length) } } } }]);
+    if (agg) return reply(requestId, 200, [{ result: { aggregateFields: { n: { integerValue: String(q.limit ? Math.min(q.limit, rows.length) : rows.length) } } } }]);   // limit: "en çok n say"
     if (q.limit) rows = rows.slice(0, q.limit);
     return reply(requestId, 200, rows.length ? rows.map(document => ({ document })) : [{ readTime: new Date().toISOString() }]);
   }
@@ -1422,14 +1422,25 @@ test('rozet ekranı: kaydırma yok, 320×568 ve 390×844\'te sığar; sıralama 
 
 test('quests düğmesi: günlük skor + sıra satırı ("Daily Run: 1,234 • #3/17")', async () => {
   const d = new Date(), day = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const txt = `document.getElementById('btn-quests-daily').textContent.replace(/\u00a0/g, ' ')`;
+  // oynanmadıysa da dürtü: 0 skor, #0/bugün oynayan sayısı
+  fbReset();
+  for (const [u, sc] of [['A1', 900], ['A2', 400], ['A3', 20]]) fb.docs.set(`daily/${day}/scores/${u}`, { name: `x/daily/${day}/scores/${u}`, fields: { name: { stringValue: u }, score: { integerValue: String(sc) } } });
   await fresh({});
-  check(await ev(`document.getElementById('btn-quests-daily').hidden`), 'günlük oynanmadan satır görünüyor');
-  await fresh({ arc_daily_v1: { day, best: 1234, runs: 2 }, arc_daily_rank: { day, txt: '#3/17' } });
+  check(!(await ev(`document.getElementById('btn-quests-daily').hidden`)), 'günlük oynanmadan satır gizli');
+  check(await waitFor(`${txt} === 'Daily Run: 0 • #0/3'`, 4000), `oynanmamış: ${await ev(txt)}`);
+  await fresh({ arc_daily_v1: { day, best: 1234, runs: 2 }, arc_daily_rank: { day, best: 1234, txt: '#3/17', ts: Date.now() } });
   const t = await ev(`(() => { const e = document.getElementById('btn-quests-daily'); return { h: e.hidden, t: e.textContent, sub: document.getElementById('btn-quests-sub').textContent }; })()`);
   check(!t.h && t.t.replace(/\u00a0/g, ' ') === 'Daily Run: 1,234 • #3/17' && /done|ready/i.test(t.sub), `düğme: ${JSON.stringify(t)}`);
-  // dünkü sıra gösterilmez
-  await fresh({ arc_daily_v1: { day, best: 50, runs: 1 }, arc_daily_rank: { day: '20000101', txt: '#1/2' } });
-  check(await ev(`document.getElementById('btn-quests-daily').textContent`) === 'Daily Run: 50', 'eski günün sırası gösterildi');
+  // önbellek yoksa / eski günse: sayım sorgusuyla kendisi çeker (Quests'e girmeden)
+  await fresh({ arc_daily_v1: { day, best: 400, runs: 1 }, arc_daily_rank: { day: '20000101', best: 400, txt: '#1/2' } });
+  check(await waitFor(`document.getElementById('btn-quests-daily').textContent.replace(/\u00a0/g, ' ') === 'Daily Run: 400 • #2/3'`, 4000),
+    `sıra kendiliğinden gelmedi: ${await ev(txt)}`);
+  // 5 dk'dan eski önbellek tazelenir; sıra yükselince satır yeşil yanar
+  fb.docs.set(`daily/${day}/scores/A1`, { name: `x`, fields: { name: { stringValue: 'A1' }, score: { integerValue: '100' } } });
+  await ev(`localStorage.setItem('arc_daily_rank', JSON.stringify({ day: '${day}', best: 400, txt: '#2/3', ts: Date.now() - 6 * 60e3 })); ARC_TEST.questBtn(); true`);
+  check(await waitFor(`${txt} === 'Daily Run: 400 • #1/3'`, 4000), `tazelenmedi: ${await ev(txt)}`);
+  check(await ev(`document.getElementById('btn-quests-daily').classList.contains('bd-up')`), 'yükselme vurgusu yok');
 });
 
 // ── Koştur ───────────────────────────────────────────────────
