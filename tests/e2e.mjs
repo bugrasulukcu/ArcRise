@@ -853,6 +853,7 @@ test('günlük meydan okuma: aynı pist, eşyasız, yeteneksiz ve yükseltmesiz,
   await ev(`ARC_TEST.trigger(0); true`);
   check((await ev('ARC_TEST.slotCD'))[0] === 0, 'günlükte yetenek tetiklendi');
   const sig1 = await ev('ARC_TEST.layoutSig(10)');
+  await ev(`ARC_TEST.straight(-Math.PI / 2); true`);   // çizgiyi geçsin (öncesinde sayaç işlemez)
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
   await sleep(2500);
   const day = await ev(`(() => { const d = new Date(); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); })()`);
@@ -867,6 +868,7 @@ test('günlük meydan okuma: aynı pist, eşyasız, yeteneksiz ve yükseltmesiz,
   const sig2 = await ev('ARC_TEST.layoutSig(10)');
   check(sig1 === sig2, `pist farklı:\n${sig1}\n${sig2}`);
   // menüye dön → mod geri gelir
+  await ev(`ARC_TEST.straight(-Math.PI / 2); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '2. run bitmedi'); await sleep(1200);
   await ev(`document.getElementById('btn-menu').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(900);
   await ev(`document.getElementById('btn-menu').dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); true`); await sleep(500);
@@ -881,7 +883,8 @@ test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
   const q = (metric, target, param) => ({ metric, target, param: param || 0, reward: 2, label: metric, progress: 0, claimed: false });
   await fresh({ arc_mode: 'extreme', arc_extreme_unlocked: '1', arc_login_day: today(),
     arc_quests_v1: { date: today(), day: 1, quests: [q('runsToday', 3), q('extremeRuns', 1, 100), q('nearMissToday', 4)], allBonusClaimed: false } });
-  await ev(`document.getElementById('btn-start').click(); true`);
+  // çizgiden önce sayaç işlemez → hemen ölüm = duvara dümdüz
+  await ev(`document.getElementById('btn-start').click(); ARC_TEST.straight(0); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
   await sleep(800);
   const dist = (await ev('ARC_TEST.lastRun')).distCm;
@@ -1009,6 +1012,80 @@ test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldo
   await ev(`ARC_TEST.trigger(0); true`);
   const cd = (await ev('ARC_TEST.slotCD'))[0];
   check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
+});
+
+test('boş slot: dokununca hiçbir şey olmaz (upgrades açılmaz), + yerine yasak ikonu', async () => {
+  await fresh({ arc_slots_owned: '2', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
+    arc_upg_v1: { comboSplitV22: true, inv: { shock: { owned: true, durLvl: 0 } } } });
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+  const s = await ev(`(() => { const el = document.getElementById('slot-2'); return { ic: !!el.querySelector('.slot-empty svg') && getComputedStyle(el.querySelector('.slot-empty')).display !== 'none', plus: el.textContent.includes('+') }; })()`);
+  check(s.ic && !s.plus, `boş slotta yasak ikonu yok: ${JSON.stringify(s)}`);
+  await ev(`document.getElementById('slot-2').click(); true`); await sleep(300);
+  check(!(await ev(`document.getElementById('upgrades-modal').classList.contains('open')`)), 'boş slota dokununca upgrades açıldı');
+  check(await ev(`ARC_TEST.scene === 'play'`), 'boş slot oyunu etkiledi');
+  await ev(`document.getElementById('slot-1').click(); true`);
+  check((await ev('ARC_TEST.slotCD'))[0] > 0, 'dolu slot artık tetiklenmiyor');
+});
+
+test('magnet halkası: yalnız Magnet yükseltmesiyle, seviyeyle büyür, Daily\'de yok', async () => {
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  check(await ev('ARC_TEST.magRing') === 0, 'Magnet yokken halka var');
+  const ring = async lvl => {
+    await fresh({ arc_upg_v1: { comboSplitV22: true, magnetRange: lvl } });
+    await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+    return ev('ARC_TEST.magRing');
+  };
+  const r2 = await ring(2), r6 = await ring(6);
+  check(r2 > 0 && r6 > r2, `halka seviyeyle büyümüyor: ${r2} → ${r6}`);
+  await ev(`ARC_TEST.ghost(3); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi'); await sleep(1500);
+  await fresh({ arc_upg_v1: { comboSplitV22: true, magnetRange: 6 } });
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
+  check((await ev('ARC_TEST.daily')).on, 'günlük açılmadı');
+  check(await ev('ARC_TEST.magRing') === 0, 'Daily\'de magnet halkası görünüyor');
+});
+
+test('geri sayım başlangıç çizgisi geçilince başlar', async () => {
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(700);
+  check(!(await ev('ARC_TEST.startCrossed')) && await ev('ARC_TEST.energy') === 1, `çizgiden önce sayaç işliyor: ${await ev('ARC_TEST.energy')}`);
+  await ev(`ARC_TEST.straight(-Math.PI / 2); true`);   // dümdüz yukarı → çizgiyi geçer
+  check(await waitFor('ARC_TEST.startCrossed', 6000), 'çizgi geçilmedi');
+  await sleep(600);
+  check(await ev('ARC_TEST.energy') < 1, 'çizgiden sonra sayaç işlemiyor');
+});
+
+test('vanilla: duvardan ve zeminden seker, aşağı inemez; adı VANILLA', async () => {
+  await fresh({ arc_mode: 'wife' });
+  check(await ev(`document.getElementById('wife-title').textContent === 'VANILLA MODE'`), 'mod adı Vanilla değil');
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  const p0 = await ev('ARC_TEST.player');
+  // sağ duvara doğru → ölmeden seker
+  await ev(`ARC_TEST.placePlayer(ARC_TEST.player.wr - ARC_TEST.player.r - 6, 0, 1); ARC_TEST.straight(0); true`); await sleep(500);
+  const p1 = await ev('ARC_TEST.player');
+  check(await ev(`ARC_TEST.scene === 'play'`) && p1.x + p1.r <= p1.wr + 1, `duvardan sekmedi: ${JSON.stringify(p1)}`);
+  // biraz yüksel, sonra dümdüz aşağı → zemin en yüksek noktanın altında sabit kalır
+  await ev(`ARC_TEST.placePlayer(${p0.x}, 0, 1); ARC_TEST.straight(-Math.PI / 2); true`); await sleep(1500);
+  const top = (await ev('ARC_TEST.player')).y, fl = await ev('ARC_TEST.floorY');
+  check(fl <= top + 200, `zemin topun çok altında: top ${top}, zemin ${fl}`);
+  await ev(`ARC_TEST.straight(Math.PI / 2); true`); await sleep(1500);
+  const p2 = await ev('ARC_TEST.player');
+  check(await ev(`ARC_TEST.scene === 'play'`) && p2.y + p2.r <= fl + 2, `top zeminin altına indi: y ${p2.y}, zemin ${fl}`);
+  check(Math.sin(p2.heading) < 0 || p2.y < top, `zeminden yukarı sekmedi: ${JSON.stringify(p2)}`);
+});
+
+test('devam (Revive): kaldığı yerin üstünden başlar, iz eskiye bağlanmaz', async () => {
+  await fresh({ arc_upg_v1: { comboSplitV22: true, inv: { revive: { count: 1 } } } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(3000); await ev(`ARC_BOT.stop(); true`);
+  check(await waitFor(`document.getElementById('revive-modal').classList.contains('open')`, 30000), 'Revive önerilmedi');
+  const safe = await ev('ARC_TEST.lastSafe');
+  await ev(`document.getElementById('revive-use').click(); true`); await sleep(200);
+  const p = await ev('ARC_TEST.player');
+  check(safe && p.y <= safe.y - 100, `devam noktası kaldığı yerin üstünde değil: safe ${JSON.stringify(safe)} → ${JSON.stringify(p)}`);
+  check(await waitFor(`ARC_TEST.running`, 4000), 'sayım bitince top akmadı'); await sleep(400);
+  check(await ev('ARC_TEST.trailJumps') >= 1, 'iz eski çizgiye bağlandı (kopukluk yok)');
 });
 
 test('coin yalnız mesafeden: altın ve kristal coin vermez, dolum önceki kesirden', async () => {

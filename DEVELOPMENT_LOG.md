@@ -396,6 +396,23 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Sayaç çizgiden sonra · Wife → Vanilla · zemin duvarı · kopuk devam (2026-11-06)
+
+- **Geri sayım** artık başlangıç çizgisi (START 10 cm) geçilince başlar; öncesinde enerji dolu kalır. Çizgiden önce ölüm yalnız duvar/engelle.
+- **Wife Mode → Vanilla Mode** (görünen adlar: başlık, START etiketi, oyun sonu yazısı, aria). İç anahtar `wife` korundu (kayıtlı `arc_mode` bozulmasın). Açıklamadaki "Added at my wife's request" satırı kaldırıldı; yerine duvar/zemin sekmesi anlatıldı.
+- **Vanilla:** topta sayı da sonsuzluk işareti de yok; duvardan ölmeden seker.
+- **Zemin duvarı (Vanilla + tutorial):** zemin, topun çıktığı en yüksek noktanın 196 px altında (başlangıçta ekranın alt kenarı) ve yalnız yukarı kayar → top aşağı gidemez, zemine değince yukarı seker. Ekrandaysa ince bir ışık çizgisiyle gösterilir. Eskiden tutorial'da zemin ekranın altıydı; top yükselince yarım ekran aşağı inebiliyordu.
+- **Devam (reklam / Revive):** ortak `placeForResume()`: kaldığı yerin 140 px üstünde, ortada, yukarı bakarak başlar; çevredeki engeller temizlenir (Revive'da da). İz kopar (`j` noktası çizilmez), paylaşılan çizgide de sıçrama işaretlenir → eski yerden yeni başlangıca düz çizgi yok.
+- Testler: 3 yeni (sayaç, Vanilla duvar/zemin, devam kopukluğu); dokunmadan ölmeyi bekleyen 2 test topu yönlendirecek şekilde güncellendi (`ARC_TEST.straight`).
+
+### Kara delik cam kenarı → Magnet menzil halkası (2026-11-06)
+
+- Topun çevresindeki ince cam kenar (kara delik efektinin parçası, sabit 2.7·r) her modda çiziliyordu ve bir yükseltme gibi görünüyordu. Artık yalnız Magnet yükseltmesi olanda çizilir ve menzili gösterir: yarıçap `player.r + 14 + seviye × MAG_PX_PER_LVL` (ortalama yeşilin yakalandığı mesafe), seviyeyle büyür. Daily'de (yükseltmeler kapalı) görünmez. Izgara bükülmesi ve koyu hale aynen kalır. Test eklendi (`ARC_TEST.magRing`).
+
+### Boş yetenek slotu: dokunmak bir şey yapmaz, yasak ikonu (2026-11-06)
+
+- Oyun içinde boş (satın alınmış) slota dokununca upgrades penceresi açılıyordu. Artık boş slot hiçbir etki yapmaz (basılma animasyonu da yok); `+` yerine slot renginde bir yasak ikonu (daire + çapraz çizgi) gösterilir. Dolu slot eskisi gibi tetiklenir. Test eklendi.
+
 ### Arka plan ızgarası ters yöne kayıyordu (2026-11-06)
 
 - Oyunda ızgara parallax'ı `drawGrid(bctx, camY * 0.45)` idi; top yükseldikçe `camY` azaldığı için çizgiler YUKARI kayıyordu, dünya (engeller, toplar) ise aşağı iniyor (ilk commit'ten beri). Artık `gridScrollY() = -camY * 0.45`: ızgara dünyayla aynı yönde, %45 hızla iner. Test eklendi (`ARC_TEST.gridY / camY`).

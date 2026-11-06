@@ -3965,9 +3965,11 @@
     .slot-icon { display: flex; align-items: center; justify-content: center; line-height: 0; }
     .slot-icon svg { display: block; filter: drop-shadow(0 0 4px rgba(var(--sc, 255,255,255), .6)); }
     .slot:not(.filled) .slot-icon { display: none; }
-    /* boş (satın alınmış) slot → "+" ikonu: gear eklenebileceğini gösterir */
-    .slot-plus { display: none; font-size: 30px; font-weight: 300; line-height: 1; color: rgba(var(--sc, 255,255,255), .85); }
-    .slot:not(.filled):not(.locked) .slot-plus { display: flex; }
+    /* boş (satın alınmış) slot → yasak ikonu: oyun içinde dokunmak bir şey yapmaz */
+    .slot-empty { display: none; line-height: 0; color: rgba(var(--sc, 255,255,255), .85); }
+    .slot:not(.filled):not(.locked) .slot-empty { display: flex; }
+    .slot { -webkit-tap-highlight-color: transparent; }
+    .slot:not(.filled):not(.locked):active { transform: none; }
     /* kilitli slot — kendi renginde kesikli + fiyat */
     .slot.locked { border-style: dashed; border-color: rgba(var(--sc, 255,200,90), .5); }
     .slot.locked.next { cursor: pointer; opacity: 1; }
@@ -4296,10 +4298,10 @@
       </div>
       <!-- Equippable booster slots (sadece satın alınanlar görünür) -->
       <div id="slot-hud">
-        <button class="slot slot-pos-0 slot-c0" id="slot-1" data-slot="0" aria-label="Slot 1"><span class="slot-icon"></span><span class="slot-plus">+</span></button>
-        <button class="slot slot-pos-1 slot-c1" id="slot-2" data-slot="1" aria-label="Slot 2"><span class="slot-icon"></span><span class="slot-plus">+</span></button>
-        <button class="slot slot-pos-2 slot-c2" id="slot-3" data-slot="2" aria-label="Slot 3"><span class="slot-icon"></span><span class="slot-plus">+</span></button>
-        <button class="slot slot-pos-3 slot-c3" id="slot-4" data-slot="3" aria-label="Slot 4"><span class="slot-icon"></span><span class="slot-plus">+</span></button>
+        <button class="slot slot-pos-0 slot-c0" id="slot-1" data-slot="0" aria-label="Slot 1"><span class="slot-icon"></span><span class="slot-empty"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span></button>
+        <button class="slot slot-pos-1 slot-c1" id="slot-2" data-slot="1" aria-label="Slot 2"><span class="slot-icon"></span><span class="slot-empty"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span></button>
+        <button class="slot slot-pos-2 slot-c2" id="slot-3" data-slot="2" aria-label="Slot 3"><span class="slot-icon"></span><span class="slot-empty"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span></button>
+        <button class="slot slot-pos-3 slot-c3" id="slot-4" data-slot="3" aria-label="Slot 4"><span class="slot-icon"></span><span class="slot-empty"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span></button>
       </div>
     </div>
   </div>
@@ -4430,7 +4432,7 @@
       <span class="slbl">Mode</span>
       <div class="sctl sctl-mode">
         <div id="mode-fx-wrap">
-          <button id="mode-btn-wife" title="Wife Mode" aria-label="Wife Mode"></button>
+          <button id="mode-btn-wife" title="Vanilla Mode" aria-label="Vanilla Mode"></button>
           <div id="mode-sel">
             <button class="mode-btn active-normal" id="mode-btn-normal">Chill</button>
             <button class="mode-btn" id="mode-btn-extreme">Extreme</button>
@@ -4728,11 +4730,11 @@
   <div id="wife-modal-box" class="gl gl-pink gl-glass">
     <div id="wife-modal-deco"></div>
     <div id="wife-icon"></div>
-    <div id="wife-title">WIFE MODE</div>
+    <div id="wife-title">VANILLA MODE</div>
     <div id="wife-desc">
-      Added at my wife's request <span class="ic-hearts"></span><br><br>
       A slower, gentler way to play —
-      <b>50% of Chill's speed</b> with twice the green energy spawn.
+      <b>50% of Chill's speed</b> with twice the green energy spawn.<br><br>
+      No timer, and the <b>walls and floor bounce you back</b>.
     </div>
     <div id="wife-warn">
       Casual only. Runs in this mode <b>don't earn coins</b> and <b>don't enter the leaderboard</b>.
@@ -7589,6 +7591,8 @@ const ARC_DB = (() => {
   // sıkıştırılır. Yol boyunca ~6 px'te bir nokta → yaylar ve dönüşler korunur; j: sıçrama (revive /
   // reklamla devam) → çizgi orada kesilir.
   const ghostSampled = [], GS_STEP = 6, GS_JUMP = 120, GS_MAX = 40000;
+  let _trailBreak = false, _gsBreak = false;   // devamda true → izin / paylaşılan çizginin sonraki noktası öncekine bağlanmaz
+  let _bestY = Infinity;                        // Vanilla / tutorial zemini için topun en yüksek noktası (dünya y)
   let crossPlayerGhosts = []; // diğer oyuncuların ölüm işaretleri (ad/avatar + en iyi mesafe), moda göre
   // Oyuncunun kendi geçmiş run izleri kaldırıldı: eski sürümlerin biriktirdiği depo temizlenir
   const GHOSTS_KEY        = 'arc_traces_v1';
@@ -8576,7 +8580,10 @@ const ARC_DB = (() => {
     if (!w || Math.abs(sy - w.y) > w.reach) { ctx.moveTo(x0, sy); ctx.lineTo(x1, sy); return; }
     for (let x = x0, i = 0; ; x = Math.min(x1, x + 10), i++) { const o = holeOff(x, sy); i ? ctx.lineTo(x + o.x, sy + o.y) : ctx.moveTo(x + o.x, sy + o.y); if (x >= x1) break; }
   }
-  // Şok cephesinde hafif ışık halkası + topun arkasında kara delik: koyu, geniş, yumuşak sönen hale ve ince cam kenar
+  // İnce cam kenar = Magnet menzili: yalnız Magnet yükseltmesi olanda (Daily'de gUpg 0 → yok), seviyeyle büyür.
+  // Yarıçap ≈ ortalama yeşilin (r≈14) merkezinin yakalandığı mesafe. 0 = halka yok.
+  const magRingR = () => { const g = gUpg('magnetRange') * MAG_PX_PER_LVL; return g > 0 ? player.r + 14 + g : 0; };
+  // Şok cephesinde hafif ışık halkası + topun arkasında kara delik: koyu, geniş, yumuşak sönen hale ve (Magnet varsa) ince cam kenar
   function drawWarpFx() {
     const TAU = Math.PI * 2;
     for (const w of _wl) {
@@ -8590,8 +8597,9 @@ const ARC_DB = (() => {
     const g = ctx.createRadialGradient(px, py, pr * 0.8, px, py, R);
     g.addColorStop(0, 'rgba(0,0,0,.66)'); g.addColorStop(0.3, 'rgba(2,3,10,.34)'); g.addColorStop(0.65, 'rgba(4,6,16,.10)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, R, 0, TAU); ctx.fill();
-    if (LOWFX) return;
-    const rr = pr * 2.7, lg = ctx.createLinearGradient(px - rr, py - rr, px + rr, py + rr);
+    const rr = magRingR();
+    if (!rr) return;
+    const lg = ctx.createLinearGradient(px - rr, py - rr, px + rr, py + rr);
     lg.addColorStop(0, 'rgba(255,255,255,.26)'); lg.addColorStop(0.45, 'rgba(170,200,255,.04)'); lg.addColorStop(1, 'rgba(200,160,255,.18)');
     ctx.lineWidth = 1.2; ctx.strokeStyle = lg; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.stroke();
     const ig = ctx.createRadialGradient(px - rr * 0.35, py - rr * 0.45, 0, px, py, rr);
@@ -9705,7 +9713,8 @@ const ARC_DB = (() => {
     // 1) IŞILTI — toplamsal (lighter), geniş & soluk: yalnız hafif hale, beyazlaştırmaz.
     // Ekran dışı parçalar atlanır: iz 600 noktaya kadar uzar ama genelde ~100'ü görünür. Pay (60 px)
     // en kalın ışıltı katmanından geniş → görünen kenarda kesik olmaz; görünen kısmın çizimi aynı.
-    const CULL = 60, offY = i => { const ya = W2S(trail[i-1].y), yb = W2S(trail[i].y);
+    const CULL = 60, offY = i => { if (trail[i].j) return true;   // kopukluk (devam noktası) — parça çizilmez
+      const ya = W2S(trail[i-1].y), yb = W2S(trail[i].y);
       return (ya < -CULL && yb < -CULL) || (ya > H + CULL && yb > H + CULL); };
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 1; i < trail.length; i++) {
@@ -9832,7 +9841,7 @@ const ARC_DB = (() => {
     ctx.fillStyle = countCol;
     // -20% from the doubled size; Timer upgrade'i rakamı çift haneye çıkarınca
     // (10..12) topun içine sığması için ayrıca daraltılır.
-    const cdText = (gameMode === 'wife') ? '∞' : String(countdown);
+    const cdText = (gameMode === 'wife') ? '' : String(countdown);   // Vanilla: süre yok → rakam da yok
     const fontPx = (r < 20 ? 18 : 22) * (cdText.length > 1 ? 0.74 : 1);
     // Canvas ctx.font doesn't resolve CSS vars — use the literal family name.
     ctx.font = `700 ${fontPx}px Sarpanch, 'Press Start 2P', monospace`;
@@ -10225,7 +10234,7 @@ const ARC_DB = (() => {
     player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
-    camY = 0; trail.length = 0; ghostSampled.length = 0;
+    camY = 0; trail.length = 0; ghostSampled.length = 0; _bestY = Infinity; _trailBreak = _gsBreak = false;
     _runStartY = player.y;
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
@@ -10545,8 +10554,10 @@ const ARC_DB = (() => {
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
     if (tutActive) tutTick(dt);
-    if (gameMode === 'wife' || tutActive) {
-      // Wife mode / tutorial: süre sınırı yok — enerji hep dolu, ölüm yok
+    if (gameMode === 'wife' || tutActive) floorBounce();
+    if (gameMode === 'wife' || tutActive || !_startCrossed) {
+      // Vanilla / tutorial: süre sınırı yok — enerji hep dolu, ölüm yok.
+      // Diğer modlar: geri sayım başlangıç çizgisi geçilince başlar (o ana dek enerji dolu).
       energy = 1;
       graceTimer = 0;
     } else {
@@ -10569,13 +10580,14 @@ const ARC_DB = (() => {
       const th = (now * 80 + trail.length * 3) % 360; // anlık ton rengi
       // d: noktaya kadarki toplam yol uzunluğu — iz renkleri buna bağlı (dizi sırasına değil)
       const lp = trail.at(-1);
-      trail.push({ x: player.x, y: player.y, h: th, d: lp ? (lp.d || 0) + Math.hypot(player.x - lp.x, player.y - lp.y) : 0 });
+      if (_trailBreak) { _trailBreak = false; trail.push({ x: player.x, y: player.y, h: th, d: lp ? (lp.d || 0) : 0, j: 1 }); }   // devam: eskiye bağlanmaz
+      else trail.push({ x: player.x, y: player.y, h: th, d: lp ? (lp.d || 0) + Math.hypot(player.x - lp.x, player.y - lp.y) : 0 });
       if (trail.length > 600) trail.shift();
     }
     // Paylaşılan çizgi için yol örneği (bkz. ghostSampled) — ilk nokta spawn
     { const gl = ghostSampled.at(-1), gd = gl ? Math.hypot(player.x - gl.x, player.y - gl.y) : Infinity;
-      if (gd > GS_STEP && ghostSampled.length < GS_MAX)
-        ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y), j: gl && gd > GS_JUMP ? 1 : 0 }); }
+      if ((gd > GS_STEP || _gsBreak) && ghostSampled.length < GS_MAX) {
+        ghostSampled.push({ x: Math.round(player.x), y: Math.round(player.y), j: gl && (gd > GS_JUMP || _gsBreak) ? 1 : 0 }); _gsBreak = false; } }
 
     // Yeşil bantta (üst 2 kademe) oyuncudan ufak kıvılcımlar saçılır — combo sahnede hissedilsin
     if (!tutActive && Math.ceil(energy * comboDisplayMax()) >= comboDisplayMax() - 1 && Math.random() < dt * 16) {
@@ -10879,7 +10891,9 @@ const ARC_DB = (() => {
       // Wall Forgiveness: her seviye 1px collision yumuşatma
       const wallTol = gUpg('wallSoft');
       if (player.x - player.r + wallTol < walls.left || player.x + player.r - wallTol > walls.right) {
-        if (runBounces > 0) {                 // Bounce eşyası: duvardan aynalı seker
+        if (gameMode === 'wife') {            // Vanilla: duvarda ölüm yok → seker
+          bounceOffWall();
+        } else if (runBounces > 0) {          // Bounce eşyası: duvardan aynalı seker
           useBounce(player.x < (walls.left + walls.right) / 2 ? walls.left : walls.right, player.y);
           bounceOffWall();
         } else if (runShield) {               // Shield eşyası: duvardan sektirir, kalkan gider
@@ -11126,18 +11140,39 @@ const ARC_DB = (() => {
       beginArc(-player.dir, getRadius());
     }
   }
+  // Vanilla / tutorial: aşağısı hep duvar. Zemin, topun çıktığı en yüksek noktanın FLOOR_GAP altında
+  // (başlangıçta ekranın alt kenarı); top yukarı çıktıkça zemin de çıkar, asla aşağı inmez → top aşağı
+  // gidemez, zemine değince yukarı seker.
+  const FLOOR_GAP = 196;
+  const floorY = () => Math.min(S2W(H - 4), _bestY + FLOOR_GAP);   // dünya y'si
+  function floorBounce() {
+    _bestY = Math.min(_bestY, player.y);
+    const fy = floorY();
+    if (player.y + player.r > fy) {
+      player.y = fy - player.r - 1;
+      if (Math.sin(player.heading) > 0) player.heading = -player.heading;   // y bileşeni aynalanır (yukarı)
+      beginArc(awaySign(0, -1), getRadius());      // yay zeminden uzağa (yukarı) kıvrılır
+      haptic(20);
+    }
+  }
+  // Zemin çizgisi: ekrandaysa ince, soluk bir ışık bandı (nereden sekileceği görünsün)
+  function drawFloor() {
+    if (!(gameMode === 'wife' || tutActive) || scene !== 'play') return;
+    const sy = W2S(floorY());
+    if (sy > H - 6 || sy < 0) return;
+    ctx.save();
+    const g = ctx.createLinearGradient(0, sy, 0, sy + 26);
+    g.addColorStop(0, 'rgba(160,200,255,.16)'); g.addColorStop(1, 'rgba(160,200,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(walls.left, sy, walls.right - walls.left, 26);
+    ctx.strokeStyle = 'rgba(180,215,255,.45)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(walls.left, sy); ctx.lineTo(walls.right, sy); ctx.stroke();
+    ctx.restore();
+  }
   // Her kare (running iken): duvarda sek, pratik hedeflerini denetle
   function tutTick(dt) {
     _tutStageT += dt;
     if (player.x - player.r < walls.left || player.x + player.r > walls.right) {
       bounceOffWall();                             // duvarda ölüm yok → geri sek
-    }
-    // Ekranın altı da duvar: kamera aşağı inmediği için aşağı dönen top görünmez alanda kalıyordu → yukarı sek
-    if (W2S(player.y) + player.r > H - 4) {
-      player.y = S2W(H - 4 - player.r - 1);
-      if (Math.sin(player.heading) > 0) player.heading = -player.heading;   // y bileşeni aynalanır (yukarı)
-      beginArc(awaySign(0, -1), getRadius());      // yay alt kenardan uzağa (yukarı) kıvrılır
-      haptic(20);
     }
     if (tutStage === 2) {
       const b = bonuses[0];
@@ -11289,7 +11324,7 @@ const ARC_DB = (() => {
     upg.inv.revive.count = Math.max(0, (upg.inv.revive.count || 0) - 1);
     _runUsedRevive = true;
     saveUpg();
-    if (_lastSafePos) { player.x = _lastSafePos.x; player.y = _lastSafePos.y; }
+    placeForResume();
     // Enerji bitip ölündüyse enerji 0'da kalıyor ve bir sonraki karede tekrar ölünüyordu
     // (bilet boşa gidiyordu). Reklamla devamdaki gibi toparla.
     energy = Math.max(energy, 0.6); graceTimer = 0;
@@ -11513,7 +11548,7 @@ const ARC_DB = (() => {
     coinRow.classList.remove('done'); wrapEl.classList.remove('run', 'flash');
     earnedEl.textContent = '+0'; earnedEl.classList.add('zero');
     progEl.classList.toggle('show', isWife);
-    progEl.textContent = isWife ? 'WIFE MODE · NO COINS' : '';
+    progEl.textContent = isWife ? 'VANILLA MODE · NO COINS' : '';
     const from = isWife ? coinCarry : _coinAnimFrom, to = isWife ? coinCarry : _coinAnimTo;
     const FLIGHTS = Math.min(gained, 10), WRAPS = Math.min(gained, 6);   // ≤10 uçan coin, çubuk ≤6 kez dolar (flaş yorucu olmasın)
     const visTo = gained > WRAPS ? WRAPS + coinCarry : to;   // çubuk WRAPS kez dolar, gerçek kalan kesirde durur
@@ -11900,7 +11935,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawFloor(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -12320,6 +12355,7 @@ const ARC_DB = (() => {
     ghost: s => activateBooster('ghost', s || 4),
     // Test: oyuncuyu duvara doğru yerleştir (x, gidiş açısı, dönüş yönü)
     placePlayer: (x, heading, dir) => { player.x = x; player.heading = heading; beginArc(dir, getRadius()); },
+    straight: h => { player.heading = h; beginArc(1, 1e5); },   // test: neredeyse düz gidiş (dev yarıçaplı yay)
     get bounces() { return runBounces; },
     get chests() { return { opened: [..._distChestsOpened], run: _runChestCoins, next: _nextBigCoinCm }; },
     rewardToast(o) { showRewardToast(o); }, toast(m) { showToast(m); },
@@ -12345,7 +12381,7 @@ const ARC_DB = (() => {
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
     get tutActive() { return tutActive; }, get camY() { return camY; }, get running() { return running; },
     tutDrop: () => { const d = S2W(H + 20) - player.y; player.y += d; player.cy += d; },   // test: topu ekran altına it
-    get gridY() { return gridScrollY(); }, get camY() { return camY; },
+    get magRing() { return Math.round(magRingR()); }, get gridY() { return gridScrollY(); }, get camY() { return camY; },
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
     tap: () => { if (running) { beginArc(-player.dir, getRadius()); markTapFx(); } },
     // Test: kristali topun DIŞ yanına (yay merkezinin tersi), kenarlar arası 12 px koy → çarpmadan sıyırır
@@ -12357,6 +12393,9 @@ const ARC_DB = (() => {
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },
     setCombo: n => { runCombo = n; energy = 1; },
     get startCrossed() { return _startCrossed; },
+    get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); },
+    get lastSafe() { return _lastSafePos && { x: Math.round(_lastSafePos.x), y: Math.round(_lastSafePos.y) }; },
+    get trailJumps() { return trail.filter(p => p.j).length; },
     // Test: nesneyi oyuncunun bulunduğu yere koy (hemen tetiklensin)
     spawnFeatHere: (kind, ahead = 0, dx = 0) => {
       const x = ahead ? (walls.left + walls.right) / 2 + dx : player.x, y = player.y - ahead;
@@ -13467,7 +13506,8 @@ const ARC_DB = (() => {
         if (i === slotsOwned) buySlot();
         return;
       }
-      if (slotItems[i] && scene === 'play' && running) {
+      if (!slotItems[i]) return;       // boş slot → hiçbir etki yok (upgrades açılmaz)
+      if (scene === 'play' && running) {
         triggerAbility(i);             // oyun-içinde dolu slot → ability tetikle
       } else {
         try { openUpgradesModal(); } catch(_) { upgradesModal.classList.add('open'); }
@@ -14301,7 +14341,7 @@ const ARC_DB = (() => {
         const dot = document.createElement('button');
         dot.className = cls;
         dot.innerHTML = owned
-          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span><span class="slot-plus">+</span>`
+          ? `<span class="slot-icon">${it?.icon ? iconHTML(it.icon, { size: 24 }) : ''}</span><span class="slot-empty"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>`
           : `<span class="slot-price">${iconHTML('coin', { size: 10 })}${SLOT_PRICES[i]}</span>`;
         dot.addEventListener('click', () => {
           if (!owned) { if (isNext) buySlot(); return; }
@@ -15517,7 +15557,7 @@ const ARC_DB = (() => {
     // START butonundaki aktif mod etiketi
     const smEl = document.getElementById('start-mode');
     if (smEl) {
-      const label = m === 'extreme' ? 'EXTREME' : m === 'wife' ? 'WIFE' : 'CHILL';
+      const label = m === 'extreme' ? 'EXTREME' : m === 'wife' ? 'VANILLA' : 'CHILL';
       const col   = m === 'extreme' ? '#ff7733' : m === 'wife' ? '#ff66aa' : '#66ccff';
       smEl.textContent = ' · ' + label;
       smEl.style.color = col;
@@ -15716,11 +15756,14 @@ const ARC_DB = (() => {
   // Reklam sonrası run'a devam — son güvenli noktadaki dar koridor yerine
   // ekranın ortasında, etraftaki engeller temizlenmiş ferah bir alanda
   // sıfırdan devam ettiriyoruz (skor/mesafe/coin korunur).
-  function continueAfterAd() {
-    _adContinueUsed = true;
+  // Devam noktası (reklam / Revive ortak): kaldığı yerin RESUME_LIFT px üstünde, ortada, yukarı bakar.
+  // İz kopar (_trailBreak) → yeni başlangıçtan eski ize düz çizgi çekilmez.
+  const RESUME_LIFT = 140;
+  function placeForResume() {
     player.x = W / 2;
-    player.y = (_lastSafePos ? _lastSafePos.y : player.y) - 40;
+    player.y = (_lastSafePos ? _lastSafePos.y : player.y) - RESUME_LIFT;
     player.heading = -Math.PI / 2;
+    _trailBreak = _gsBreak = true;
     // Oyuncunun hemen önündeki/etrafındaki engel ve bonusları temizle.
     const clearAbove = player.y - H * 1.2, clearBelow = player.y + H * 0.4;
     for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -15740,11 +15783,15 @@ const ARC_DB = (() => {
       if (py < clearBelow && py > clearAbove) purpleBalls.splice(i, 1);
     }
     nextSpawnY = Math.min(nextSpawnY, player.y - H);
+    beginArc(1, getRadius());
+  }
+  function continueAfterAd() {
+    _adContinueUsed = true;
+    placeForResume();
     energy = Math.max(energy, 0.6); // ölüme combo bitmişken dönmek anlamsız olmasın
     graceTimer = 0;
     showScene('play');
     isGhost = true; // geri sayım boyunca + dönüş sonrası kısa dokunulmazlık
-    beginArc(1, getRadius());
     started = true; running = false;   // geri sayım bitene kadar top donuk
     resumeCountdown = RESUME_SEC;      // loop'ta 3→1 sayar, biter bitmez akar
     try { playBgMusic(); } catch(_){}
