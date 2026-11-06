@@ -396,6 +396,17 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Vanilla sadeleşti · biberon · rozet ekranı kaydırmasız + sıralama rozetleri (2026-11-06)
+
+- **Vanilla:** yalnız toplanan yeşil sayılır (HUD: GREENS, yeşil başına `+1`). Combo, mesafe, rekor, sıra ve yetenek HUD'u gizli; `gUpg` Vanilla'da 0 (yükseltme yok), yetenek tetiklenmez, Revive bileti sunulmaz/harcanmaz. Altın, mor, kapı/koridor/halka ve thread bonusu çıkmaz. **Hiçbir şey kaydedilmez:** run başında `stats` kopyalanır, bitince / BACK TO MENU'da geri yüklenir (oyun içi sayaç artışları atılır); `arc_last` ve analitik (runStart/runEnd) yazılmaz; sunucuya yazım yok (test ediliyor).
+- **İkon:** çiçek yerine pembe biberon (mod düğmesi, Vanilla penceresi, CONTINUE). Süs parçacıkları biberon + kalp.
+- **Rozet ekranı:** kaydırma kaldırıldı — 5 sütun, madalya ekran yüksekliğine göre 28–40 px, pencerenin yükseklik sınırı yok; 320×568 ve 390×844'te sığar (test).
+- **Sıralama rozetleri (kalıcı, bir kez ulaşınca):** TOP 100 / TOP 10 (skor), RUN TOP 100 / RUN TOP 10 (en uzun koşu), DAILY KING (günlük skorda #1). Tespit: profil sıralaması (ilk 100 satır) ve oyun sonu listesi (`awardRankBadges`). Mesafe sırası profildeki gibi ilk 100 skor satırı içinden hesaplanır. "Daily longest runner" bekliyor: günlük kayıtlarda mesafe tutulmuyor.
+
+### Profil: en yüksek skor / mesafe %50 büyük (2026-11-06)
+
+- `.prof-sum-val` (üst satır) 18 → 27 px. Dar ekranda uzun değer sığmazsa `fitProfVals()` pencere açılınca yazıyı kutuya sığacak kadar küçültür (320 px'te 6 haneli skor ~25 px). Test eklendi.
+
 ### Sayaç çizgiden sonra · Wife → Vanilla · zemin duvarı · kopuk devam (2026-11-06)
 
 - **Geri sayım** artık başlangıç çizgisi (START 10 cm) geçilince başlar; öncesinde enerji dolu kalır. Çizgiden önce ölüm yalnız duvar/engelle.
@@ -403,6 +414,7 @@ App yüklenince:
 - **Vanilla:** topta sayı da sonsuzluk işareti de yok; duvardan ölmeden seker.
 - **Zemin duvarı (Vanilla + tutorial):** zemin, topun çıktığı en yüksek noktanın 196 px altında (başlangıçta ekranın alt kenarı) ve yalnız yukarı kayar → top aşağı gidemez, zemine değince yukarı seker. Ekrandaysa ince bir ışık çizgisiyle gösterilir. Eskiden tutorial'da zemin ekranın altıydı; top yükselince yarım ekran aşağı inebiliyordu.
 - **Devam (reklam / Revive):** ortak `placeForResume()`: kaldığı yerin 140 px üstünde, ortada, yukarı bakarak başlar; çevredeki engeller temizlenir (Revive'da da). İz kopar (`j` noktası çizilmez), paylaşılan çizgide de sıçrama işaretlenir → eski yerden yeni başlangıca düz çizgi yok.
+- **Vanilla çıkış:** ölüm olmadığı için oyundan çıkılamıyordu → zemin çizgisinin hemen altında `BACK TO MENU` düğmesi (zeminle birlikte yükselir; zemin ekranın altındayken alt kenarda durur). Dokununca doğrudan ana menü.
 - Testler: 3 yeni (sayaç, Vanilla duvar/zemin, devam kopukluğu); dokunmadan ölmeyi bekleyen 2 test topu yönlendirecek şekilde güncellendi (`ARC_TEST.straight`).
 
 ### Kara delik cam kenarı → Magnet menzil halkası (2026-11-06)

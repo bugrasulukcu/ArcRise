@@ -1433,7 +1433,7 @@
     .prof-sum-lbl  { font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.55);
                      text-align: center; line-height: 1.2; }
     .prof-sum-val  {
-      width: 100%; font-size: 18px; letter-spacing: 1px; text-align: center;
+      width: 100%; font-size: 27px; letter-spacing: 1px; text-align: center; white-space: nowrap;
       padding: 4px 6px;
     }
     .prof-sum-row-3 .prof-sum-val { font-size: 15px; }
@@ -1714,10 +1714,9 @@
       -webkit-backdrop-filter: blur(8px) saturate(1.1);
       border: 2px solid rgba(255,255,255,.18);
       border-radius: 22px;
-      padding: 24px 20px 20px;
+      padding: 20px 16px 16px;
       width: min(92vw, 360px);
-      max-height: 88vh;
-      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      display: flex; flex-direction: column; gap: 10px; align-items: center;
     }
     #badges-modal-title {
       font-size: 21px; letter-spacing: 3px; color: #fff; text-align: center;
@@ -1726,13 +1725,16 @@
       font-size: 9px; letter-spacing: 1.2px; color: rgba(255,255,255,.5);
       text-align: center;
     }
+    /* Kaydırma yok: 5 sütun, hücre ve madalya ekran yüksekliğine göre küçülür (25 rozet → 5 satır) */
     #badges-modal-grid {
       width: 100%;
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      max-height: 58vh; overflow-y: auto;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
       padding: 2px;
     }
+    #badges-modal-grid .prof-badge { padding: 6px 2px; gap: 3px; min-width: 0; }
+    #badges-modal-grid .prof-badge-icon svg { width: clamp(28px, 5.6vh, 40px); height: clamp(28px, 5.6vh, 40px); }
+    #badges-modal-grid .prof-badge-name { font-size: 6.5px; letter-spacing: .6px; }
     .prof-badge {
       display: flex; flex-direction: column; align-items: center; gap: 4px;
       padding: 10px 4px;
@@ -2623,6 +2625,19 @@
       cursor: pointer;
     }
     #tut-skip:hover { color: #fff; border-color: rgba(255,255,255,.4); }
+    /* Vanilla: ölüm yok → çıkış düğmesi zemin çizgisinin hemen altında, zeminle birlikte yükselir (top JS'te) */
+    #vanilla-exit {
+      position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+      pointer-events: auto; white-space: nowrap;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(180,215,255,.35);
+      color: rgba(220,235,255,.8);
+      font-family: var(--font); font-size: 10px; letter-spacing: 1.6px;
+      padding: 9px 14px; border-radius: 8px;
+      cursor: pointer;
+    }
+    #vanilla-exit[hidden] { display: none; }
+    #vanilla-exit:active { transform: translateX(-50%) scale(.96); }
     #revive-modal-box {
       position: relative;
       background:
@@ -3923,6 +3938,8 @@
     }
     #hud.active #slot-hud { display: block; }
     html.daily-run #hud.active #slot-hud { display: none; }   /* günlük: herkes aynı koşulda — yetenek yok */
+    /* Vanilla: yalnız toplanan yeşil sayısı — combo, mesafe, rekor, sıra ve yetenek yok */
+    html.vanilla-run #hud.active :is(#slot-hud, #combo-hud, .hud-tr, #rt-mini, .hud-tl > :not(#h-score-lbl):not(#h-score)) { display: none !important; }
     .slot {
       position: absolute;
       width: 66px; height: 66px;
@@ -4262,8 +4279,9 @@
       <button id="tut-skip">SKIP</button>
     </div>
     <div id="hud">
+      <button id="vanilla-exit" type="button" hidden>BACK TO MENU</button>
       <div class="hud-tl">
-        <div class="hud-lbl">SCORE</div>
+        <div class="hud-lbl" id="h-score-lbl">SCORE</div>
         <div class="hud-num" id="h-score">000</div>
         <div class="hud-divider"></div>
         <div class="hud-sub-lbl">BEST <span id="hud-av"></span></div>
@@ -6692,6 +6710,8 @@ const ARC_DB = (() => {
     coin: '<defs><radialGradient id="cg" cx="30%" cy="30%" r="80%"><stop offset="0%" stop-color="#fff6b3"/><stop offset="45%" stop-color="#ffd866"/><stop offset="100%" stop-color="#b8860b"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#cg)" stroke="#6a4505" stroke-width="1"/><text x="12" y="16" text-anchor="middle" font-family="\'Sarpanch\', sans-serif" font-weight="800" font-size="11" fill="#4a2c00">C</text>',
     bolt: '<path d="M14 2 L3 14 H10 L8 22 L21 8 H13 L15 2 Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>',
     flower: '<g fill="currentColor"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><circle cx="12" cy="18" r="3"/><circle cx="7.8" cy="7.8" r="2.8"/><circle cx="16.2" cy="7.8" r="2.8"/><circle cx="7.8" cy="16.2" r="2.8"/><circle cx="16.2" cy="16.2" r="2.8"/></g><circle cx="12" cy="12" r="2.5" fill="#ffee88"/>',
+    // Vanilla modu: biberon (emzik ucu, halka, gövde, süt, ölçü çizgileri)
+    bottle: '<path d="M12 1.2c1.1 0 1.7.8 1.7 1.7 0 .8-.5 1.3-.6 2.1h-2.2c-.1-.8-.6-1.3-.6-2.1 0-.9.6-1.7 1.7-1.7z" fill="currentColor"/><rect x="7.6" y="5" width="8.8" height="2.8" rx="1.1" fill="currentColor"/><path d="M8.4 7.8h7.2l.9 2v10.4a2.4 2.4 0 0 1-2.4 2.4h-4.2a2.4 2.4 0 0 1-2.4-2.4V9.8z" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.15 14.2h7.7v6a1.8 1.8 0 0 1-1.8 1.8h-4.1a1.8 1.8 0 0 1-1.8-1.8z" fill="#fff" opacity=".88"/><path d="M12.6 10.6h2M12.6 12.6h1.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>',
     hearts: '<path d="M12 20 C8 16 3 13 3 8 a4 4 0 0 1 9 -2 a4 4 0 0 1 9 2 c0 5 -5 8 -9 12 z" fill="currentColor"/>',
     target: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>',
     magnet: '<path d="M4 4 H9 V14 a3 3 0 0 0 6 0 V4 H20 V14 a8 8 0 0 1 -16 0 Z" fill="currentColor"/><rect x="4" y="4" width="5" height="3" fill="#fff" opacity=".25"/><rect x="15" y="4" width="5" height="3" fill="#fff" opacity=".25"/>',
@@ -7454,7 +7474,7 @@ const ARC_DB = (() => {
   const _seeded = () => _dailyRun || !!_activeChal;
   // Oynanışı etkileyen CORE yükseltme seviyesi: günlükte herkes aynı koşulda → 0 (kayıtlı seviye değişmez,
   // günlük bitince geri gelir). Görsel yükseltmeler (iz rengi/kalınlığı vb.) bundan geçmez.
-  function gUpg(k) { if (_dailyRun) return 0; try { return (upg && upg[k]) || 0; } catch (_) { return 0; } }
+  function gUpg(k) { if (_dailyRun || gameMode === 'wife') return 0;   /* günlük / Vanilla: yükseltme yok */ try { return (upg && upg[k]) || 0; } catch (_) { return 0; } }
   const CHAL_TRIES = 3;   // meydan okumada deneme hakkı — en yüksek skor sayılır
   const dailyDay = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
   const dailySeed = day => { let h = 2166136261; for (const c of 'arcrise-daily-' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -7593,6 +7613,16 @@ const ARC_DB = (() => {
   const ghostSampled = [], GS_STEP = 6, GS_JUMP = 120, GS_MAX = 40000;
   let _trailBreak = false, _gsBreak = false;   // devamda true → izin / paylaşılan çizginin sonraki noktası öncekine bağlanmaz
   let _bestY = Infinity;                        // Vanilla / tutorial zemini için topun en yüksek noktası (dünya y)
+  // Vanilla: hiçbir şey kaydedilmez. Run başında istatistiklerin kopyası alınır, run bitince / çıkınca geri
+  // yüklenir → oyun içinde artan sayaçlar (altın, iz, rozet koşulları…) sonradan başka bir kayıtla yazılamaz.
+  let _vanGreens = 0, _vanSnap = null;
+  function vanillaBegin() { vanillaRestore(); _vanGreens = 0; if (gameMode === 'wife') _vanSnap = JSON.stringify(stats); }
+  function vanillaRestore() {
+    if (!_vanSnap) return;
+    const o = JSON.parse(_vanSnap); _vanSnap = null;
+    for (const k of Object.keys(stats)) delete stats[k];
+    Object.assign(stats, o);
+  }
   let crossPlayerGhosts = []; // diğer oyuncuların ölüm işaretleri (ad/avatar + en iyi mesafe), moda göre
   // Oyuncunun kendi geçmiş run izleri kaldırıldı: eski sürümlerin biriktirdiği depo temizlenir
   const GHOSTS_KEY        = 'arc_traces_v1';
@@ -10299,8 +10329,9 @@ const ARC_DB = (() => {
       const bonusGap = 460 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
-      const spawnGold   = (runCoinRainActive || distCm >= 30) && srand() < (runCoinRainActive ? 0.48 : 0.12);  // Gold Rush: ×4, baştan
-      const spawnPurple = distCm >= 75 && srand() < 0.08;
+      // Vanilla: yalnız yeşil sayılır → altın / mor / skor nesneleri çıkmaz
+      const spawnGold   = (runCoinRainActive || distCm >= 30) && srand() < (runCoinRainActive ? 0.48 : 0.12) && !wife;  // Gold Rush: ×4, baştan
+      const spawnPurple = distCm >= 75 && srand() < 0.08 && !wife;
 
       const bonusProb = (t < 0.15 ? .42 : .58) * (wife ? 1.7 : 1.0);
       if (needBonus || srand() < bonusProb) {
@@ -10337,7 +10368,7 @@ const ARC_DB = (() => {
           if (mark >= BIG_COIN_EVERY_CM) { spawnBigCoin(); nextSpawnY -= gap; continue; }
         }
         // ── Skorla birleşen nesneler (engel slotunun bir kısmı) ──
-        const featRoll = srand();
+        const featRoll = wife ? 1 : srand();
         if (distCm >= 40 && featRoll < 0.07) { spawnGate(); nextSpawnY -= gap; continue; }
         if (distCm >= 60 && featRoll < 0.11) { spawnCorridor(); nextSpawnY -= gap; continue; }
         if (distCm >= 80 && featRoll < 0.14) { spawnRing(); nextSpawnY -= gap; continue; }
@@ -10861,7 +10892,7 @@ const ARC_DB = (() => {
     // ── THREAD: dönen ikilinin yörünge dairesine girip sağ çıkmak = iki topun arasından geçmek
     // (toplar hep karşılıklı → dairenin içinden geçen, ikisinin arasından geçmiştir).
     // Girerken topların oyuncuya en yakın mesafesi izlenir: çok yakın sıyırma → PERFECT.
-    if (dyingT < 0 && !tutActive) {
+    if (dyingT < 0 && !tutActive && gameMode !== 'wife') {   // Vanilla: puan / combo yok
       for (const ob of obstacles) {
         if (!ob.lead || ob._thr) continue;
         const dx = player.x - ob.x, dy = player.y - ob.y, d = Math.hypot(dx, dy);
@@ -10982,6 +11013,14 @@ const ARC_DB = (() => {
           spawnGreenParticles(b.x, b.y);
           setTutText('<span class="accent-g">NICE!</span>', 'bottom');
           tutLater(500, () => { if (tutActive && tutStage === 2) enterTutStage(3); });
+          continue;
+        }
+        if (gameMode === 'wife') {           // Vanilla: combo / puan yok — yalnız toplanan yeşil sayılır
+          _vanGreens++;
+          spawnFloatText(b.x, b.y - b.r - 8, '+1', 120, 1);
+          bonuses.splice(i, 1);
+          spawnGreenPull(b.x, b.y);
+          addWarp('blob', b.x, b.y); addWarp('ring', b.x, b.y);
           continue;
         }
         // Base 10, süre katsayısı → booster katsayısı sırayla
@@ -11168,6 +11207,23 @@ const ARC_DB = (() => {
     ctx.beginPath(); ctx.moveTo(walls.left, sy); ctx.lineTo(walls.right, sy); ctx.stroke();
     ctx.restore();
   }
+  // Vanilla'da ölüm yok → oyundan çıkış düğmesi zeminin hemen altında (ekran dışına taşarsa alt kenarda)
+  const _vxBtn = document.getElementById('vanilla-exit');
+  let _vxTop = -1;
+  function updateVanillaExit() {
+    const on = gameMode === 'wife' && scene === 'play' && !tutActive && dyingT < 0;
+    if (_vxBtn.hidden === on) _vxBtn.hidden = !on;
+    if (!on) return;
+    const k = (hudEl.clientHeight || H) / H;   // oyun birimi → CSS px
+    const top = Math.round(Math.min(W2S(floorY()) + 12, H - 50) * k);
+    if (top !== _vxTop) { _vxTop = top; _vxBtn.style.top = top + 'px'; }
+  }
+  _vxBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    running = false; started = false;
+    vanillaRestore();
+    showScene('home');
+  });
   // Her kare (running iken): duvarda sek, pratik hedeflerini denetle
   function tutTick(dt) {
     _tutStageT += dt;
@@ -11310,7 +11366,7 @@ const ARC_DB = (() => {
   let _comboPot       = 0;        // biriken combo puanı — zincir kırılınca patlayıp skora eklenir
   function offerRevive() {
     if (_reviveOffered) return false;
-    if (_seeded()) return false;   // günlük / meydan okuma: eşyasız kural — Revive de ikinci hayat sayılır
+    if (_seeded() || gameMode === 'wife') return false;   // günlük / meydan okuma: eşyasız kural — Revive de ikinci hayat sayılır; Vanilla: bilet harcanmaz
     if ((upg.inv?.revive?.count || 0) <= 0) return false;
     _reviveOffered = true;
     running = false;
@@ -11380,10 +11436,12 @@ const ARC_DB = (() => {
     running = false; started = false;
     // Run coin kazancı: mesafe × COIN_PER_M + toplanan altın × COIN_PER_GOLD,
     // günlük yumuşak tavandan geçirilir. Sönümlü lifetime eğrisi kaldırıldı.
-    lastScore = Math.floor(score);
-    localStorage.setItem('arc_last', String(lastScore));
+    const vanilla = gameMode === 'wife';
+    if (vanilla) vanillaRestore();   // Vanilla: oyun içi sayaç artışları atılır
+    lastScore = vanilla ? _vanGreens : Math.floor(score);   // Vanilla: skor = toplanan yeşil
+    if (!vanilla) localStorage.setItem('arc_last', String(lastScore));
     const runDistCm = (distancePx / H_REF) * CM_PER_SCREEN;
-    try { ArcAn.runEnd({ mode: gameMode, daily: wasDaily ? 1 : 0, challenge: chal ? 1 : 0, score: lastScore, distance_cm: Math.round(runDistCm) }); } catch(_){}
+    if (!vanilla) try { ArcAn.runEnd({ mode: gameMode, daily: wasDaily ? 1 : 0, challenge: chal ? 1 : 0, score: lastScore, distance_cm: Math.round(runDistCm) }); } catch(_){}
     const prevCoins = coins;
     // Wife Mode is casual — no coin earnings either
     if (gameMode !== 'wife') {
@@ -11724,6 +11782,8 @@ const ARC_DB = (() => {
       }
     }
 
+    // Sıralama rozetleri (gerçek liste; tek kişilik yedek listede sayılmaz)
+    if (markedYou && !lbFallback && !chal) try { awardRankBadges(wasDaily ? 'daily' : 'score', ann.find(r => r.isYou).rank); } catch(_) {}
     // Oyuncu top-50 dışındaysa doğru pozisyona ekle
     if (!markedYou) {
       const ins = ann.findIndex(r => r.score < sc);
@@ -11935,7 +11995,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawFloor(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawFloor(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -11952,7 +12012,7 @@ const ARC_DB = (() => {
 
     if (scene === 'play' && running) {
       if (dt > 0.025) { step(dt / 2); step(dt / 2); } else step(dt);
-      setTxt(hScore, pad(Math.floor(score)));
+      setTxt(hScore, gameMode === 'wife' ? String(_vanGreens) : pad(Math.floor(score)));
       if (_activeChal) {   // meydan okuma: alanda hedef (gelen) ya da şimdiye kadarki en iyi (gönderen); geçilince yeşil
         const cn = document.getElementById('chal-num'), c = _activeChal;
         const ref = c.role === 'recv' ? c.target : c.best;
@@ -12381,6 +12441,8 @@ const ARC_DB = (() => {
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
     get tutActive() { return tutActive; }, get camY() { return camY; }, get running() { return running; },
     tutDrop: () => { const d = S2W(H + 20) - player.y; player.y += d; player.cy += d; },   // test: topu ekran altına it
+    fitProfVals: () => fitProfVals(),
+    awardRank: (k, i) => awardRankBadges(k, i),
     get magRing() { return Math.round(magRingR()); }, get gridY() { return gridScrollY(); }, get camY() { return camY; },
     get player() { return { x: Math.round(player.x), y: Math.round(player.y), heading: +player.heading.toFixed(2), dir: player.dir, wl: walls.left, wr: walls.right, r: player.r }; },
     tap: () => { if (running) { beginArc(-player.dir, getRadius()); markTapFx(); } },
@@ -12811,6 +12873,18 @@ const ARC_DB = (() => {
     renderEquipSlots();
     try { refreshNotifs(); } catch(_){}
     profModal.classList.add('open');
+    fitProfVals();
+  }
+  // En yüksek skor / mesafe 27 px; dar ekranda uzun değer (7 hane, 4 haneli metre) sığmazsa küçülür
+  function fitProfVals() {
+    for (const id of ['ps-score', 'ps-distbest']) {
+      const e = document.getElementById(id); if (!e) continue;
+      e.style.fontSize = '';
+      const cs = getComputedStyle(e), room = e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const r = document.createRange(); r.selectNodeContents(e);
+      const w = r.getBoundingClientRect().width;
+      if (w > room && room > 0) e.style.fontSize = Math.floor(parseFloat(cs.fontSize) * room / w) + 'px';
+    }
   }
 
   function renderProfStats() {
@@ -12875,6 +12949,7 @@ const ARC_DB = (() => {
       const pD = parseInt(localStorage.getItem('arc_view_rankdist'), 10);
       setRank('rk-score', sIdx, (sIdx >= 0 && !isNaN(pS)) ? Math.sign(pS - sIdx) : 0);
       setRank('rk-dist',  dIdx, (dIdx >= 0 && !isNaN(pD)) ? Math.sign(pD - dIdx) : 0);
+      awardRankBadges('score', sIdx); awardRankBadges('dist', dIdx);
       if (sIdx >= 0) localStorage.setItem('arc_view_rankscore', String(sIdx));
       if (dIdx >= 0) localStorage.setItem('arc_view_rankdist',  String(dIdx));
     } catch (_) {
@@ -13459,7 +13534,7 @@ const ARC_DB = (() => {
   function triggerAbility(slotIdx) {
     const item = slotItems[slotIdx];
     if (!item || item.type !== 'ability') return;
-    if (_dailyRun) return;   // günlük: eşya gibi yetenekler de kapalı (aynı pist, aynı koşul)
+    if (_dailyRun || gameMode === 'wife') return;   // günlük / Vanilla: eşya gibi yetenekler de kapalı
     if (slotCD[slotIdx] > 0) return;
     if (scene !== 'play' || !running) return;
     const key = item.key;
@@ -14965,6 +15040,13 @@ const ARC_DB = (() => {
   ];
   // Tek seferlik ÖZEL rozetler (kademesiz — beceri/an yakalama)
   const BADGE_SPECIALS = [
+    // Sıralama rozetleri: bir kez ulaşılınca kalıcı (koleksiyon). Tespit: profil sıralaması (ilk 100) ve oyun sonu
+    // listesi (bkz. awardRankBadges).
+    { id: 'top100',     icon: 'medal', name: 'TOP 100',     desc: 'Reach the top 100 in high score',  cond: () => !!stats.rkScore100 },
+    { id: 'top10',      icon: 'medal', name: 'TOP 10',      desc: 'Reach the top 10 in high score',   cond: () => !!stats.rkScore10 },
+    { id: 'run-top100', icon: 'ruler', name: 'RUN TOP 100', desc: 'Reach the top 100 in longest run', cond: () => !!stats.rkDist100 },
+    { id: 'run-top10',  icon: 'ruler', name: 'RUN TOP 10',  desc: 'Reach the top 10 in longest run',  cond: () => !!stats.rkDist10 },
+    { id: 'daily-king', icon: 'crown', name: 'DAILY KING',  desc: 'Be #1 on the Daily high score',    cond: () => !!stats.rkDailyKing },
     { id: 'speedrun',  icon: 'hourglass', name: 'SPEEDRUN',  desc: '5.00m in under 60 seconds',
       cond: () => !!stats.speedrunDone },
     { id: 'night-owl', icon: 'owl',       name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
@@ -14993,8 +15075,14 @@ const ARC_DB = (() => {
   // ── Rozet madalyonları (avatar stili) ─────────────────────────
   // Koyu disk + kademe renginde iç ışık ve halka + üstten beyaza açılan parlayan glif + altta
   // kademe noktaları (I–V). Glifler 24×24; P = degrade boya, D = koyu detay çizgisi.
-  const BADGE_SPECIAL_COLORS = { maestro: '#ffd24a', speedrun: '#35e0ff', 'night-owl': '#9b8cff', survivor: '#ff5a8c', boss: '#ffcc33', daredevil: '#ff7a28', 'last-second': '#7CFF7A' };
+  const BADGE_SPECIAL_COLORS = { top100: '#7de3ff', top10: '#ffd24a', 'run-top100': '#5fe07a', 'run-top10': '#35e0ff', 'daily-king': '#ff8a3d', maestro: '#ffd24a', speedrun: '#35e0ff', 'night-owl': '#9b8cff', survivor: '#ff5a8c', boss: '#ffcc33', daredevil: '#ff7a28', 'last-second': '#7CFF7A' };
+  // Sıralama rozetleri: kürsü / bayrak / taç üstünde koyu rakam
+  const _bdgNum = (t, x, y, fs, D) => `<text x="${x}" y="${y}" font-size="${fs}" font-family="Arial Black, Arial, sans-serif" font-weight="900" text-anchor="middle" fill="${D}">${t}</text>`;
+  const _bdgPodium = n => (P, D) => `<rect x="7.6" y="9.5" width="8.8" height="12" rx=".6" fill="${P}"/><rect x="1.6" y="14" width="5.6" height="7.5" rx=".6" fill="${P}" opacity=".7"/><rect x="16.8" y="16" width="5.6" height="5.5" rx=".6" fill="${P}" opacity=".7"/><path d="M12 1.6l1.25 2.6 2.85.35-2.1 1.95.55 2.8L12 7.9 9.45 9.3l.55-2.8-2.1-1.95 2.85-.35z" fill="${P}"/>` + _bdgNum(n, 12, 17.6, n.length > 2 ? 4.6 : 5.8, D);
+  const _bdgFlag = n => (P, D) => `<path d="M4.5 22.5V2" stroke="${P}" stroke-width="2.2" stroke-linecap="round"/><path d="M5.5 2.8h15.5l-3.2 5 3.2 5H5.5z" fill="${P}"/>` + _bdgNum(n, 12.2, 10.1, n.length > 2 ? 5 : 6.2, D) + `<path d="M8 19h12M8 22h9" stroke="${P}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>`;
   const BADGE_GLYPHS = {
+    top100: _bdgPodium('100'), top10: _bdgPodium('10'), 'run-top100': _bdgFlag('100'), 'run-top10': _bdgFlag('10'),
+    'daily-king': (P, D) => `<path d="M2.5 19h19l-1.6-11-4.4 4.2L12 5 8.5 12.2 4.1 8z" fill="${P}" stroke-linejoin="round"/><path d="M3 21.6h18" stroke="${P}" stroke-width="2" stroke-linecap="round"/>` + _bdgNum('1', 12, 17.6, 6.4, D) + `<path d="M12 .8c.9 1 1.5 1.9 1.5 2.9a1.5 1.5 0 0 1-3 0c0-.6.3-1.1.7-1.5 0 .5.2.8.5 1 .2-.8.3-1.6.3-2.4z" fill="${P}"/>`,
     score:    (P, D) => `<path d="M7 3h10v4a5 5 0 0 1-10 0z" fill="${P}"/><path d="M17 4.5h2.4a2.6 2.6 0 0 1-2.6 4.2M7 4.5H4.6a2.6 2.6 0 0 0 2.6 4.2" fill="none" stroke="${P}" stroke-width="1.8" stroke-linecap="round"/><path d="M10.5 12.5h3v4h-3zM7.5 17h9v3.5h-9z" fill="${P}"/>`,
     range:    (P, D) => `<path d="M6 21.5V2.5" stroke="${P}" stroke-width="2.2" stroke-linecap="round"/><path d="M7 3.5h12l-3 4 3 4H7z" fill="${P}"/><path d="M11 3.5v8M15 3.5v8" stroke="${D}" stroke-width="1.2" opacity=".5"/>`,
     odometer: (P, D) => `<circle cx="15.5" cy="8.5" r="4.6" fill="${P}"/><path d="M12 12 3.5 20.5M9.5 9.2 4.5 14.2M14.8 14.5 9.8 19.5" stroke="${P}" stroke-width="2" stroke-linecap="round"/><circle cx="14.2" cy="7.2" r="1.4" fill="#fff" opacity=".8"/>`,
@@ -15154,6 +15242,16 @@ const ARC_DB = (() => {
     return dirty;
   }
 
+  // Sıralama rozetleri: kind = 'score' | 'dist' | 'daily', idx = 0'dan sıra. Yalnız yeni bayrak kalıcı yazılır.
+  function awardRankBadges(kind, idx) {
+    if (!(idx >= 0)) return;
+    const set = k => { if (stats[k]) return false; stats[k] = true; return true; };
+    let d = false;
+    if (kind === 'score') { if (idx < 100) d = set('rkScore100') || d; if (idx < 10) d = set('rkScore10') || d; }
+    if (kind === 'dist')  { if (idx < 100) d = set('rkDist100') || d;  if (idx < 10) d = set('rkDist10') || d; }
+    if (kind === 'daily' && idx === 0) d = set('rkDailyKing') || d;
+    if (d) { saveStats(); checkBadgeUnlocks(); }
+  }
   // Günlük giriş serisi — açılışta bir kez (streak rozeti + giriş ödül şeridi).
   // Gün farkı TAKVİM günüyle: eskiden 24 saat karşılaştırılıyordu → yaz/kış saati
   // geçişinde (23/25 saatlik gün) seri sıfırlanıyordu.
@@ -15377,12 +15475,15 @@ const ARC_DB = (() => {
     // sırasını bozuyordu.
     consumeArmedConsumables();
     resetGame();
+    vanillaBegin();
+    document.documentElement.classList.toggle('vanilla-run', gameMode === 'wife');
+    document.getElementById('h-score-lbl').textContent = gameMode === 'wife' ? 'GREENS' : 'SCORE';
     showScene('play');
     playBgMusic();                     // kural scene==='play' ister → ekran değiştikten sonra
     // Oyun hemen başlasın — ilk dokunuş bekleme
     beginArc(Math.random() < .5 ? -1 : 1, W / 4);
     started = true; running = true;
-    try { ArcAn.runStart({ mode: gameMode, daily: _dailyRun ? 1 : 0, challenge: _activeChal ? 1 : 0 }); } catch(_){}
+    if (gameMode !== 'wife') try { ArcAn.runStart({ mode: gameMode, daily: _dailyRun ? 1 : 0, challenge: _activeChal ? 1 : 0 }); } catch(_){}
     // Pre-Booster: rastgele (işe yarar) bir booster, normal sürenin 2 katı
     if (_runPreboostPending) {
       activateBooster(_runPreboostPending, BOOSTER_INFO[_runPreboostPending].dur * 2);
@@ -15573,7 +15674,7 @@ const ARC_DB = (() => {
   const wifeDecoEl = document.getElementById('wife-modal-deco');
   let wifeDecoActive = false;
   let wifeDecoTimer = 0;
-  const FLOWER_GLYPHS = ['flower'];
+  const FLOWER_GLYPHS = ['bottle', 'hearts'];   // Vanilla süsleri: biberon + kalp
   function tickWifeDeco(dt) {
     if (!wifeDecoActive) return;
     wifeDecoTimer += dt;
@@ -16880,16 +16981,16 @@ const ARC_DB = (() => {
     fill('.ic-bolt',   'bolt',   { size: 18 });
     fill('.ic-coin',   'coin',   { size: 18 });
     fill('.ic-hearts', 'hearts', { size: 16, color: '#ff77cc' });
-    fill('.ic-flower', 'flower', { size: 16, color: '#ff77cc' });
+    fill('.ic-flower', 'bottle', { size: 16, color: '#ff77cc' });
     fill('.ic-camera', 'camera', { size: 16 });
     const wb = document.getElementById('mode-btn-wife');
-    if (wb) wb.innerHTML = iconHTML('flower', { size: 22, color: '#ff77cc' });
+    if (wb) wb.innerHTML = iconHTML('bottle', { size: 22, color: '#ff77cc' });
     const ei = document.getElementById('extreme-icon');
     if (ei) ei.innerHTML = iconHTML('bolt', { size: 64, color: '#ff5522' });
     const eci = document.getElementById('ex-coin-icon');
     if (eci) eci.innerHTML = iconHTML('coin', { size: 18 });
     const wi = document.getElementById('wife-icon');
-    if (wi) wi.innerHTML = iconHTML('flower', { size: 64, color: '#ff77cc' });
+    if (wi) wi.innerHTML = iconHTML('bottle', { size: 64, color: '#ff77cc' });
   })();
 
   // Revive modal buttons

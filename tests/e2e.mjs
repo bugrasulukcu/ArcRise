@@ -1057,7 +1057,7 @@ test('geri sayım başlangıç çizgisi geçilince başlar', async () => {
   check(await ev('ARC_TEST.energy') < 1, 'çizgiden sonra sayaç işlemiyor');
 });
 
-test('vanilla: duvardan ve zeminden seker, aşağı inemez; adı VANILLA', async () => {
+test('vanilla: duvardan ve zeminden seker, aşağı inemez, zeminde BACK TO MENU; adı VANILLA', async () => {
   await fresh({ arc_mode: 'wife' });
   check(await ev(`document.getElementById('wife-title').textContent === 'VANILLA MODE'`), 'mod adı Vanilla değil');
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
@@ -1074,6 +1074,13 @@ test('vanilla: duvardan ve zeminden seker, aşağı inemez; adı VANILLA', async
   const p2 = await ev('ARC_TEST.player');
   check(await ev(`ARC_TEST.scene === 'play'`) && p2.y + p2.r <= fl + 2, `top zeminin altına indi: y ${p2.y}, zemin ${fl}`);
   check(Math.sin(p2.heading) < 0 || p2.y < top, `zeminden yukarı sekmedi: ${JSON.stringify(p2)}`);
+  // ölüm yok → zeminin altında BACK TO MENU; dokununca ana menü
+  check(await ev(`(() => { const b = document.getElementById('vanilla-exit'); return !b.hidden && getComputedStyle(b).display !== 'none'; })()`), 'Vanilla\'da çıkış düğmesi yok');
+  await ev(`document.getElementById('vanilla-exit').click(); true`); await sleep(300);
+  check(await ev(`ARC_TEST.scene === 'home'`), 'çıkış düğmesi ana menüye dönmedi');
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(300);
+  check(await ev(`document.getElementById('vanilla-exit').hidden`), 'normal modda çıkış düğmesi görünüyor');
 });
 
 test('devam (Revive): kaldığı yerin üstünden başlar, iz eskiye bağlanmaz', async () => {
@@ -1086,6 +1093,28 @@ test('devam (Revive): kaldığı yerin üstünden başlar, iz eskiye bağlanmaz'
   check(safe && p.y <= safe.y - 100, `devam noktası kaldığı yerin üstünde değil: safe ${JSON.stringify(safe)} → ${JSON.stringify(p)}`);
   check(await waitFor(`ARC_TEST.running`, 4000), 'sayım bitince top akmadı'); await sleep(400);
   check(await ev('ARC_TEST.trailJumps') >= 1, 'iz eski çizgiye bağlandı (kopukluk yok)');
+});
+
+test('vanilla: yalnız yeşil sayılır, combo / yükseltme yok, hiçbir şey kaydedilmez, biberon ikonu', async () => {
+  fbReset();
+  await fresh({ arc_mode: 'wife', arc_score_v26: '1', arc_last: '77', arc_upg_v1: { comboSplitV22: true, magnetRange: 6, timer: 4, coreOwned: { timer: 4 } } });
+  check(await ev(`!!document.querySelector('#mode-btn-wife svg') && document.getElementById('mode-btn-wife').innerHTML.includes('M12 1.2c1.1')`), 'Vanilla düğmesinde biberon yok');
+  const st0 = await ls('arc_stats_v1');
+  await sleep(4000); fbReset();   // açılıştaki hesap / cüzdan yazımları (2,5 sn gecikmeli) sayılmasın
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(400);
+  const fx = await ev('ARC_TEST.coreFx');
+  check(fx.timer === 8 && await ev('ARC_TEST.magRing') === 0, `Vanilla'da yükseltme çalışıyor: ${JSON.stringify(fx)}`);
+  const hud = await ev(`({ lbl: document.getElementById('h-score-lbl').textContent,
+    combo: getComputedStyle(document.getElementById('combo-hud')).display, dist: getComputedStyle(document.querySelector('.hud-tr')).display })`);
+  check(hud.lbl === 'GREENS' && hud.combo === 'none' && hud.dist === 'none', `HUD: ${JSON.stringify(hud)}`);
+  await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(300);
+  await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(300);
+  check(await ev(`document.getElementById('h-score').textContent`) === '2', `yeşil sayacı: ${await ev(`document.getElementById('h-score').textContent`)}`);
+  await ev(`ARC_TEST.obstacleAhead(40, 30); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 10000), 'Vanilla run engelde bitmedi'); await sleep(1500);
+  check(await ls('arc_stats_v1') === st0, 'Vanilla istatistik kaydetti');
+  check(await ls('arc_last') === '77', 'Vanilla son skoru kaydetti');
+  check(!fb.writes.length, `Vanilla sunucuya yazdı: ${JSON.stringify(fb.writes.map(w => w.path))}`);
 });
 
 test('coin yalnız mesafeden: altın ve kristal coin vermez, dolum önceki kesirden', async () => {
@@ -1350,6 +1379,45 @@ test('ux: rekor rengi sonraki runa taşınmaz; 320 pxte yükseltme önizlemesi k
     return [...n.children].filter(sp => { const b = sp.getBoundingClientRect(); return b.left < c.left - 0.5 || b.right > c.right + 0.5 || sp.scrollWidth > sp.clientWidth + 1; }).map(sp => sp.textContent); }).flat()`);
   await send('Emulation.clearDeviceMetricsOverride');
   check(over.length === 0, `320 px'te taşan önizleme: ${JSON.stringify(over)}`);
+});
+
+test('profil: en yüksek skor / mesafe 27 px, uzun değer 320 px\'te sığacak kadar küçülür', async () => {
+  await fresh({});
+  await ev(`document.getElementById('home-profile').click(); true`); await sleep(600);
+  const fs0 = await ev(`['ps-score', 'ps-distbest'].map(id => getComputedStyle(document.getElementById(id)).fontSize)`);
+  check(fs0.every(f => f === '27px'), `normal genişlikte yazı boyu: ${fs0}`);
+  // 320 px + en uzun gerçekçi değerler (7 haneli skor, 4 haneli metre)
+  await send('Emulation.setDeviceMetricsOverride', { width: 320, height: 568, deviceScaleFactor: 1, mobile: true }); await sleep(300);
+  await ev(`document.getElementById('ps-score').textContent = '9999999'; document.getElementById('ps-distbest').textContent = '9999.99m'; ARC_TEST.fitProfVals(); true`);
+  const r = await ev(`['ps-score', 'ps-distbest'].map(id => { const e = document.getElementById(id), c = e.closest('.prof-sum').getBoundingClientRect(), b = e.getBoundingClientRect();
+    const rg = document.createRange(); rg.selectNodeContents(e); const t = rg.getBoundingClientRect();
+    return { id, txt: e.textContent, fs: getComputedStyle(e).fontSize, fit: t.left >= c.left - 0.5 && t.right <= c.right + 0.5 }; })`);
+  await send('Emulation.clearDeviceMetricsOverride');
+  check(r[0].txt.length >= 7, `büyük değer yazılmadı: ${JSON.stringify(r)}`);
+  check(r.every(x => x.fit), `320 px'te taşıyor: ${JSON.stringify(r)}`);
+});
+
+test('rozet ekranı: kaydırma yok, 320×568 ve 390×844\'te sığar; sıralama rozetleri kazanılır', async () => {
+  fbReset();   // önceki testlerin skorları profil sıralamasından rozet kazandırmasın
+  await fresh({});
+  const measure = async (w, h) => {
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: true }); await sleep(250);
+    return ev(`(() => { const g = document.getElementById('badges-modal-grid'), b = document.getElementById('badges-modal-box');
+      const r = b.getBoundingClientRect(), last = g.lastElementChild.getBoundingClientRect();
+      return { n: g.children.length, ov: getComputedStyle(g).overflowY, top: Math.round(r.top), bottom: Math.round(r.bottom), lastB: Math.round(last.bottom), vh: innerHeight }; })()`);
+  };
+  await ev(`document.getElementById('home-profile').click(); true`); await sleep(500);
+  await ev(`document.querySelector('.prof-eq-slot').click(); true`); await sleep(400);
+  for (const [w, h] of [[320, 568], [390, 844]]) {
+    const m = await measure(w, h);
+    check(m.n === 25 && m.ov === 'visible', `ızgara: ${JSON.stringify(m)}`);
+    check(m.top >= 0 && m.bottom <= m.vh && m.lastB <= m.bottom, `${w}×${h}'te taşıyor: ${JSON.stringify(m)}`);
+  }
+  await send('Emulation.clearDeviceMetricsOverride');
+  // sıralama: profil listesinde 5. sıradaysan TOP 100 + TOP 10; günlük listede 1. → DAILY KING
+  await ev(`ARC_TEST.awardRank('score', 4); ARC_TEST.awardRank('dist', 40); ARC_TEST.awardRank('daily', 0); true`);
+  const e = await lsJSON('arc_badges_earned_v1');
+  check(['top100', 'top10', 'run-top100', 'daily-king'].every(id => e.includes(id)) && !e.includes('run-top10'), `kazanılan: ${JSON.stringify(e)}`);
 });
 
 // ── Koştur ───────────────────────────────────────────────────
