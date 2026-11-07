@@ -633,6 +633,13 @@
     #btn-menu {
       position: relative; overflow: hidden;
       width: 70%; align-self: center;
+      padding-inline: 10px; letter-spacing: 1.2px;   /* "BACK TO MENU" düğmeden taşıyordu (320–390 px) */
+    }
+    @media (max-width: 360px) {
+      #btn-menu { font-size: 10px !important; letter-spacing: .6px; }
+      /* coin satırı: "NEXT COIN · … TO GO" sığmıyorsa alt satıra iner (kesilmez) */
+      #go-coin-top { flex-wrap: wrap; row-gap: 6px; }
+      #go-coin-progress { letter-spacing: .6px; }
     }
     #btn-menu .hold-fill {
       position: absolute; left: 0; top: 0; bottom: 0;
@@ -2346,6 +2353,14 @@
       flex: 0 0 auto;
       font-size: 12px; font-weight: 700; letter-spacing: .3px; color: #cba6ff;
     }
+    @media (max-width: 360px) {
+      /* Yükseltme kartı: başlık + değer sığmazsa değer alt satıra iner (başlık "SCORE…" diye kesilmez) */
+      .core-card-head { flex-wrap: wrap; row-gap: 2px; }
+      .core-card-title { letter-spacing: .4px; }
+      /* Gear slotları: 4 × 60 px 320 px'te iki yandan taşıyordu */
+      #upgrades-modal .upg-slots-row { gap: 7px; }
+      #upgrades-modal .upg-slots-row .slot { width: 52px; height: 52px; }
+    }
     /* Birim harfleri (örn. saniye "s") global uppercase'ten muaf */
     .low { text-transform: none; }
     .core-card-buys {
@@ -3142,6 +3157,7 @@
     .st-cell.today .st-num { color: #ffce5a; }
     .st-cell.future .chest-svg { opacity: .55; }
     .st-cell.pending .chest-svg { animation: chestWiggle 1.4s ease-in-out infinite; filter: drop-shadow(0 0 5px currentColor); }
+    .chest-svg { overflow: visible; }   /* açılınca dönen kapak viewBox'ın üstüne taşar — kırpılmasın */
     .chest-svg .chest-lid { transform-origin: 5px 13px; transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
     .chest-svg.open .chest-lid { transform: rotate(-24deg) translate(-1px, -2px); }
     @keyframes chestWiggle { 0%,70%,100% { transform: rotate(0); } 76% { transform: rotate(-9deg); } 84% { transform: rotate(8deg); } 92% { transform: rotate(-4deg); } }
@@ -3258,7 +3274,7 @@
     }
     #chest-pop.open { display: flex; animation: questIn .25s ease both; }
     .cp-card {
-      width: 82%; padding: 18px 16px 16px; border-radius: 18px; text-align: center;
+      width: 82%; max-width: 320px; padding: 18px 16px 16px; border-radius: 18px; text-align: center;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
       border: 2px solid var(--cc); box-shadow: 0 0 30px color-mix(in srgb, var(--cc) 35%, transparent);
       background: linear-gradient(180deg, rgba(20,24,36,.97), rgba(10,12,20,.97));
@@ -3823,6 +3839,8 @@
     #go-chal .gc-dots i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #8fb8ff; box-sizing: border-box; }
     #go-chal .gc-dots i.used { background: #8fb8ff; }
     /* ── Coin kapsülü: solda toplayıcı coin + "+N COINS", sağda sonraki coin, altta dolum çubuğu ── */
+    /* Vanilla oyun sonu: yalnız GREENS sayısı */
+    #gameover .panel.go-vanilla :is(.go-twin-col + .go-twin-col, .go-twin-best, #rank-rows) { display: none; }
     #go-coin-row {
       position: relative; width: 100%; box-sizing: border-box;
       padding: 11px 13px 13px; border-radius: 14px;
@@ -3865,7 +3883,7 @@
     #go-coin-row.zero-run #go-coin-ico { transform: scale(.82); opacity: .7; }
     #go-coin-row.zero-run #go-coin-progress { font-size: 10px; color: rgba(255,255,255,.78); }
     #go-coin-word { font-size: 9px; letter-spacing: 1.8px; color: rgba(255,204,68,.7); margin-left: 3px; }
-    #go-coin-progress { font-size: 8.5px; letter-spacing: 1.1px; color: rgba(255,255,255,.5); white-space: nowrap;
+    #go-coin-progress { font-size: 8.5px; letter-spacing: 1.1px; color: rgba(255,255,255,.5); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
       opacity: 0; transform: translateY(3px); transition: opacity .35s ease, transform .35s ease; }
     #go-coin-progress.show { opacity: 1; transform: none; }
     #go-coin-progress b { color: #ffcc44; font-weight: 600; }
@@ -4087,8 +4105,13 @@
     @media (max-height: 620px) {
       /* Pencereler: kutu ekranı aşmasın, içerik kutunun içinde kaysın */
       [id$="-modal-box"], #upginfo-box, #gearpick-box {
-        max-height: calc(100% - 20px); overflow-y: auto; -webkit-overflow-scrolling: touch;
+        max-height: calc(100% - 20px); overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
       }
+      /* Extreme / Vanilla: alev / çiçek çerçevesi kutunun dışına taşar → kutu değil arka plan kayar
+         (kutu sığmazsa üstten başlar; margin:auto sığınca ortalar). Eskiden alttaki düğmeye ulaşılamıyordu. */
+      #coins-modal-box { max-height: none; overflow: visible; }   /* kısa kutu: 2 px için kaydırma çubuğu çıkıyordu */
+      #extreme-modal, #wife-modal { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 0; }
+      #extreme-modal #extreme-modal-box, #wife-modal #wife-modal-box { margin: auto; max-height: none; overflow: visible; gap: 10px; padding-top: 18px; }
     }
 
     /* ══════════ GLOW DİLİ — avatar stilinin UI'a genellenmiş hâli ══════════
@@ -11574,7 +11597,9 @@ const ARC_DB = (() => {
     _x2Amount = (gameMode !== 'wife') ? Math.max(0, earned) : 0;
     const x2Btn = document.getElementById('btn-coin-x2');
     if (x2Btn) { x2Btn.disabled = false; x2Btn.hidden = !(AdProvider.available() && !_adDoubleUsed && _x2Amount >= 1); }
-    try { document.getElementById('go-score-lbl').textContent = wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
+    const vanillaGo = gameMode === 'wife';
+    try { document.getElementById('go-score-lbl').textContent = vanillaGo ? 'GREENS' : wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
+    document.querySelector('#gameover .panel')?.classList.toggle('go-vanilla', vanillaGo);
     // Geçiş reklamı (koşullar uygunsa) ölümle oyun sonu ekranı arasında — sayım/coin animasyonu reklamın altında kalmasın
     await new Promise(res => maybeInterstitial(res));
     // Önce ekranı aç — Firestore cevabını beklemeden
@@ -11583,7 +11608,7 @@ const ARC_DB = (() => {
     // ── Twin animation: score + distance count up together ─
     const scoreValEl = document.getElementById('go-score-val');
     const distValEl  = document.getElementById('go-dist-val');
-    scoreValEl.textContent = pad(0);
+    scoreValEl.textContent = vanillaGo ? '0' : pad(0);
     if (distValEl) distValEl.textContent = '0';
     const animDur = Math.min(1400, Math.max(600, sc / 4));
     const animStart = performance.now();
@@ -11598,7 +11623,7 @@ const ARC_DB = (() => {
       const elapsed = performance.now() - animStart;
       const t = Math.min(1, elapsed / animDur);
       const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      scoreValEl.textContent = pad(Math.floor(sc * eased));
+      scoreValEl.textContent = vanillaGo ? String(Math.floor(sc * eased)) : pad(Math.floor(sc * eased));
       if (distValEl) {
         const d = runDistCm * eased;
         distValEl.textContent = fmtDist(d);
@@ -16453,7 +16478,7 @@ const ARC_DB = (() => {
       if (a) a.textContent = nm; if (b) b.textContent = sc; };
     ARC_DB.getDailyTop(dailyDay(), 100).then(rows => {
       if (!rows) { setLead('OFFLINE', ''); return; }
-      if (!rows.length) { setLead('BE TODAY\'S FIRST', ''); return; }
+      if (!rows.length) { setLead('BE THE FIRST', ''); return; }
       const top = rows[0], uid = ARC_DB.getUid();
       setLead(top.owner === uid ? 'YOU' : top.name.toUpperCase(), _fmtN(top.score));
       dailyRankSave(rows, 100);

@@ -1443,6 +1443,29 @@ test('quests düğmesi: günlük skor + sıra satırı ("Daily Run: 1,234 • #3
   check(await ev(`document.getElementById('btn-quests-daily').classList.contains('bd-up')`), 'yükselme vurgusu yok');
 });
 
+test('pencereler 320×568: kasa kapağı kırpılmaz, Extreme kayar, gear slotları ve Coins taşmaz', async () => {
+  await fresh({ arc_slots_owned: '2', arc_coins_earned: '5000', arc_coins_spent: '0' });
+  await send('Emulation.setDeviceMetricsOverride', { width: 320, height: 568, deviceScaleFactor: 1, mobile: true }); await sleep(300);
+  try {
+    // kasa SVG'si: dönen kapak viewBox dışına taşabilir
+    check(await ev(`(() => { const d = document.createElement('div'); d.innerHTML = '<svg class="chest-svg"></svg>'; document.body.appendChild(d); const o = getComputedStyle(d.firstChild).overflow; d.remove(); return o; })()`) === 'visible', 'kasa SVG kapağı kırpılıyor');
+    // Extreme: pencere kayınca alttaki "Stay Chill" ekrana gelir
+    await ev(`document.getElementById('btn-settings').click(); true`); await sleep(400);
+    await ev(`document.getElementById('mode-btn-extreme').click(); true`); await sleep(500);
+    const ex = await ev(`(() => { const m = document.getElementById('extreme-modal'); m.scrollTop = 1e5; const b = document.getElementById('extreme-back').getBoundingClientRect(); return { bottom: Math.round(b.bottom), vh: innerHeight }; })()`);
+    check(ex.bottom <= ex.vh, `Extreme "Stay Chill" ulaşılamıyor: ${JSON.stringify(ex)}`);
+    await ev(`document.getElementById('extreme-back').click(); ARC_TEST.toScene('home'); true`); await sleep(300);
+    // gear slotları kutunun içinde
+    await ev(`document.getElementById('home-upgrade-btn').click(); true`); await sleep(400);
+    await ev(`document.querySelector('.upg-tab[data-tab="abilities"]').click(); true`); await sleep(400);
+    const sl = await ev(`(() => { const box = document.getElementById('upgrades-modal-box').getBoundingClientRect(); return [...document.querySelectorAll('#upgrades-modal .upg-slots-row .slot')].map(s => s.getBoundingClientRect()).every(r => r.left >= box.left && r.right <= box.right); })()`);
+    check(sl, 'gear slotları kutudan taşıyor');
+    await ev(`document.getElementById('upgrades-modal').classList.remove('open'); document.getElementById('home-coin-pill').click(); true`); await sleep(400);
+    const co = await ev(`(() => { const b = document.getElementById('coins-modal-box'); return { sw: b.scrollWidth, cw: b.clientWidth, ox: getComputedStyle(b).overflowX }; })()`);
+    check(co.ox === 'visible' || co.sw <= co.cw, `Coins kutusunda yatay kaydırma: ${JSON.stringify(co)}`);
+  } finally { await send('Emulation.clearDeviceMetricsOverride'); }
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

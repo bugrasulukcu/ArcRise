@@ -396,6 +396,19 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Pencere taraması: 320×568 / 390×844 / 768×1024 (2026-11-07)
+
+- 32 ekran/pencere üç boyutta açılıp ekran görüntüsü + otomatik taşma denetimiyle tarandı. Düzeltilenler:
+  - **Kasa açılışı:** dönen kapak SVG viewBox'ının üstüne taşıp düz kesiliyordu → `.chest-svg { overflow: visible }`. Kasa kartı tablette 600 px'e yayılıyordu → `max-width: 320px`.
+  - **Extreme penceresi (≤620 px yükseklik):** sığmıyordu, "Stay Chill" ulaşılamazdı (kutunun `overflow: visible`'ı genel kaydırma kuralını eziyordu). Artık arka plan kayar, kutu `margin:auto` (Vanilla penceresi de aynı).
+  - **Kısa ekran genel kuralı:** kayan kutularda `overflow-x: hidden` (Coins'te 2 px için iki kaydırma çubuğu çizgisi çıkıyordu); Coins kutusu kaydırılmaz.
+  - **Yükseltme kartları (≤360 px):** "SCORE…", "COIN DO…", "PRE-BOO…" kesiliyordu → değer sığmazsa alt satıra iner. Gear slotları 4×60 px iki yandan taşıyordu → 52 px.
+  - **Oyun sonu:** "NEXT COIN · … TO GO" kartın sağından taşıyordu (≤360 px'te alt satıra iner); "BACK TO MENU" düğmeden taşıyordu (320 ve 390 px) → iç boşluk / harf aralığı.
+  - **Vanilla oyun sonu:** SCORE/DISTANCE/BEST ve sıralama yerine yalnız **GREENS** sayısı.
+  - **Quests:** "BE TODAY'S FIRST" 320 px'te kesiliyordu → "BE THE FIRST".
+- Açık kalan: tablette (iPad destekli, `TARGETED_DEVICE_FAMILY 1,2`) arayüz telefon boyutunda ortada küçük kalıyor; Daily oyun sonunda 320 px'te "BADGE UNLOCKED" bildirimi birkaç saniye skorun üstünü örtüyor. `analysis-modal` ve `av-modal` hiçbir yerden açılmıyor (ölü kod).
+- Test: 320×568 pencere testi (kasa SVG, Extreme kaydırma, gear slotları, Coins).
+
 ### Quests düğmesi: günlük skor + sıra (2026-11-06/07)
 
 - QUESTS düğmesinde "n/3 done" altına dürtü satırı: `DAILY RUN: 1,234 • #3/17`. Günlük oynanmadıysa da görünür: `DAILY RUN: 0 • #0/<bugün oynayan>`.
