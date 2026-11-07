@@ -157,11 +157,15 @@
       width:  100vw;
       height: 100vh;
     }
-    /* Yatay/geniş ekran (PC): dikey canvas'ı esnetme — 9:16 koru, ortala (letterbox). */
+    /* 9:16'dan geniş ekran (iPad, yatay, PC): oyun alanı 9:16, ortada; kenarlar siyah (letterbox). */
     body.letterbox .stack {
-      width:  min(100vw, 56.285vh);
-      height: min(100vh, 177.667vw);
+      width:  min(100vw, 56.25vh);
+      height: min(100vh, 177.78vw);
     }
+    /* Arayüz oyun alanıyla orantılı büyür (fitCanvas → --uiz). Canvas ölçeklenmez. */
+    /* zoom'lu öğelerde vw/vh de zoom kadar büyür → arayüz kurallarında bunlar kullanılır (zoom 1'de aynı) */
+    :root { --uiz: 1; --vw: calc(1vw / var(--uiz)); --vh: calc(1vh / var(--uiz)); --dvh: calc(1dvh / var(--uiz)); }
+    html.uiz body > :not(#wrap):not(script):not(style), html.uiz .stack > :not(canvas) { zoom: var(--uiz); }
     canvas {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
@@ -205,7 +209,7 @@
     /* ── Debug overlay ───────────────────────────────────── */
     #debug-overlay {
       position: fixed; top: 0; right: 0;
-      width: min(70vw, 240px); padding: 14px 16px;
+      width: min(calc(70 * var(--vw)), 240px); padding: 14px 16px;
       background: rgba(8,10,18,0.55);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -274,7 +278,7 @@
     /* ══════════ HOME ══════════ */
     #home { gap: 0; }
     #title {
-      font-size: clamp(34px, 9vw, 52px);
+      font-size: clamp(34px, calc(9 * var(--vw)), 52px);
       letter-spacing: 3px;
       text-align: center;
       position: relative;
@@ -285,7 +289,7 @@
     /* Logo sits behind the profile card — ball+arc poke out above the top edge. */
     #home-logo-wrap {
       position: relative;
-      width: min(80vw, 300px);   /* .menu ile aynı genişlik */
+      width: min(calc(80 * var(--vw)), 300px);   /* .menu ile aynı genişlik */
       align-self: center;
       display: flex; flex-direction: column; align-items: center;
       isolation: isolate;
@@ -383,7 +387,7 @@
       color: #66ccff; /* JS modla günceller */
     }
 
-    .menu { display: flex; flex-direction: column; gap: 14px; width: min(80vw, 300px); margin-top: 30px; }
+    .menu { display: flex; flex-direction: column; gap: 14px; width: min(calc(80 * var(--vw)), 300px); margin-top: 30px; }
 
     .btn-gray {
       padding: 14px 24px; border-radius: 13px;
@@ -429,9 +433,9 @@
       border: 2px solid rgba(255,255,255,.18);
       border-radius: 22px;
       padding: 24px 20px 20px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 12px;
-      max-height: 88vh; overflow: visible;
+      max-height: calc(88 * var(--vh)); overflow: visible;
       transition: border-color .6s ease, box-shadow .6s ease, background .6s ease;
     }
     /* ── Mod çerçevesi (v27 yeniden): yalnız kenarda dönen ince gradyan halka (mask ile içi boş),
@@ -694,7 +698,7 @@
       border: 2px solid rgba(255,255,255,.18);
       border-radius: 22px;
       padding: 24px 20px 20px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 20px;
     }
     /* Settings paneli sade gri stroke (gökkuşağı halka kaldırıldı) */
@@ -784,7 +788,7 @@
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 22px;
       padding: 26px 22px 22px;
-      width: min(90vw, 330px);
+      width: min(calc(90 * var(--vw)), 330px);
       display: flex; flex-direction: column; gap: 18px; align-items: center;
     }
     /* Oyun-sonu sıralaması: başlıksız kompakt satırlar — LEADERBOARD penceresinin satır dili
@@ -849,7 +853,7 @@
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 22px;
       padding: 28px 22px 24px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 20px; align-items: center;
     }
     #profile-setup h2 { font-size: 18px; letter-spacing: 2px; text-align: center; }
@@ -925,28 +929,6 @@
     }
     #settings-name-lbl { font-size: 13px; letter-spacing: 2px; }
 
-    /* ══════════ AVATAR MODAL ══════════ */
-    #av-modal {
-      position: fixed; inset: 0; z-index: 50;
-      display: none; align-items: center; justify-content: center;
-      background: rgba(6,8,14,0.22);
-      backdrop-filter: blur(20px) saturate(1.15);
-      -webkit-backdrop-filter: blur(20px) saturate(1.15);
-    }
-    #av-modal.open { display: flex; }
-    #av-modal-box {
-      background: rgba(12,16,26,0.96);
-      border: 2px solid rgba(255,255,255,.18);
-      border-radius: 22px;
-      padding: 24px 20px 20px;
-      width: min(92vw, 360px);
-      display: flex; flex-direction: column; gap: 18px; align-items: center;
-    }
-    #av-modal-title { font-size: 15.5px; letter-spacing: 2px; color: #fff; }
-    #av-modal-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr);
-      gap: 10px; width: 100%;
-    }
     .av-modal-opt {
       width: 100%; aspect-ratio: 1; border-radius: 50%;
       border: 2px solid transparent; cursor: pointer;
@@ -955,14 +937,6 @@
     }
     .av-modal-opt img { width: 100%; height: 100%; border-radius: 50%; display: block; }
     .av-modal-opt.sel { border-color: #fff; transform: scale(1.1); }
-    #av-modal-close {
-      width: 100%; padding: 13px; border-radius: 13px;
-      border: 2px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.7); font-family: var(--font);
-      font-size: 13px; letter-spacing: 2px; cursor: pointer;
-    }
-    #av-modal-close:active { transform: scale(0.97); }
 
     /* av-picker in settings — image thumbnails */
     .av-opt {
@@ -982,7 +956,7 @@
       color: #ff3355; font-family: var(--font);
       font-size: 10.5px; letter-spacing: 1px;
       cursor: pointer; white-space: nowrap;
-      min-width: min(72vw, 260px);
+      min-width: min(calc(72 * var(--vw)), 260px);
     }
     .btn-danger:active { transform: scale(0.97); }
 
@@ -1004,7 +978,7 @@
     #backup-outer {
       position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; justify-content: center; gap: 12px;
-      flex-wrap: wrap; width: min(92vw, 420px);
+      flex-wrap: wrap; width: min(calc(92 * var(--vw)), 420px);
     }
     /* Silik metin yerine gerçek buton görünümü */
     #backup-outer .home-link {
@@ -1226,7 +1200,7 @@
       border: 2px solid rgba(255,210,80,.65);
       border-radius: 22px;
       padding: 26px 22px 22px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       box-shadow:
         0 0 40px rgba(255,170,0,.30),
@@ -1346,8 +1320,8 @@
       border: 2px solid rgba(255,255,255,.18);
       border-radius: 22px;
       padding: 24px 20px 20px;
-      width: min(92vw, 360px);
-      max-height: 92vh; overflow-y: auto;
+      width: min(calc(92 * var(--vw)), 360px);
+      max-height: calc(92 * var(--vh)); overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
     }
     /* Geri butonu her pencerede kutu köşesinden aynı yerde: 21px sağ / 25px aşağı
@@ -1475,24 +1449,16 @@
     }
     .pcb-ic { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
     .pcb-ic svg { width: 22px; height: 22px; }
-    /* ANALYSIS butonu — nötr */
-    #prof-analysis-btn {
-      width: 100%; padding: 12px; border-radius: 12px; cursor: pointer;
-      font-family: var(--font); font-size: 11px; letter-spacing: 2px;
-      border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.05); color: #fff;
-      transition: transform .12s, filter .2s;
-    }
-    #prof-analysis-btn:active { transform: scale(0.97); }
-    /* Profil alt-modalları (analysis/trace/tomb/deathtext) — ortak kabuk */
-    #analysis-modal, #trace-modal, #tomb-modal, #deathtext-modal, #custom-modal, #privacy-modal {
+    /* Profil alt-modalları (trace/tomb/deathtext) — ortak kabuk */
+    #trace-modal, #tomb-modal, #deathtext-modal, #custom-modal, #privacy-modal {
       position: fixed; inset: 0; z-index: 62; display: none; align-items: center; justify-content: center;
       background: rgba(6,8,14,.55); backdrop-filter: blur(8px) saturate(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.1);
     }
     #custom-modal { z-index: 64; }   /* trace modalının üstünde, pencere gibi */
     #privacy-modal { z-index: 66; }
-    #analysis-modal.open, #trace-modal.open, #tomb-modal.open, #deathtext-modal.open, #custom-modal.open, #privacy-modal.open { display: flex; }
-    #analysis-modal-box, #trace-modal-box, #tomb-modal-box, #deathtext-modal-box, #custom-modal-box, #privacy-modal-box {
-      position: relative; width: min(92vw, 360px); max-height: 88vh; overflow-y: auto; scrollbar-width: none;
+    #trace-modal.open, #tomb-modal.open, #deathtext-modal.open, #custom-modal.open, #privacy-modal.open { display: flex; }
+    #trace-modal-box, #tomb-modal-box, #deathtext-modal-box, #custom-modal-box, #privacy-modal-box {
+      position: relative; width: min(calc(92 * var(--vw)), 360px); max-height: calc(88 * var(--vh)); overflow-y: auto; scrollbar-width: none;
       background:
         radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.12), transparent 60%),
         linear-gradient(180deg, rgba(18,12,30,.97), rgba(10,6,20,.98));
@@ -1500,7 +1466,7 @@
       display: flex; flex-direction: column; gap: 12px; align-items: center;
       box-shadow: 0 0 32px rgba(150,90,240,.25);
     }
-    #analysis-modal-box::-webkit-scrollbar, #trace-modal-box::-webkit-scrollbar { display: none; }
+    #trace-modal-box::-webkit-scrollbar { display: none; }
     .trace-sec-lbl { width: 100%; font-size: 9px; letter-spacing: 2px; color: rgba(190,160,255,.7); margin-top: 4px; }
     /* Privacy policy gövdesi */
     #privacy-body { width: 100%; text-align: left; font-size: 10.5px; line-height: 1.6; letter-spacing: .3px; color: rgba(255,255,255,.78); text-transform: none; }
@@ -1651,24 +1617,6 @@
     .ps-gold   { color: #ffd866; }
     .ps-purple { color: #c099ff; }
 
-    /* Per-mode bests mini-table (Chill / Extreme) */
-    #prof-modes {
-      width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 4px;
-      border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px;
-    }
-    .pm-row { display: grid; grid-template-columns: 1.1fr 1fr 1fr; align-items: center; gap: 6px; }
-    .pm-row > span { font-size: 12px; text-align: right; letter-spacing: .5px; }
-    .pm-lbl { text-align: left !important; font-size: 8.5px; letter-spacing: 1.2px; color: rgba(255,255,255,.5); }
-    .pm-row:not(.pm-head) { padding: 5px 8px; border-radius: 8px; background: rgba(255,255,255,.035); }
-    .pm-head > span { font-size: 8.5px; letter-spacing: 1.4px; }
-    .pm-c-chill { color: #66ccff; }
-    .pm-c-ext   { color: #ff8866; }
-    .pm-row:not(.pm-head) span:nth-child(2) { color: rgba(180,225,255,.92); }
-    .pm-row:not(.pm-head) span:nth-child(3) { color: rgba(255,200,180,.92); }
-
-    /* Extras row (best multiplier + streak) */
-    #prof-extra { width: 100%; margin-top: 8px; display: flex; align-items: stretch; }
-
     /* Avatar picker sub-grid (toggled when avatar is tapped) */
     #prof-av-grid {
       display: none; grid-template-columns: repeat(5, 1fr);
@@ -1722,7 +1670,7 @@
       border: 2px solid rgba(255,255,255,.18);
       border-radius: 22px;
       padding: 20px 16px 16px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 10px; align-items: center;
     }
     #badges-modal-title {
@@ -1740,7 +1688,7 @@
       padding: 2px;
     }
     #badges-modal-grid .prof-badge { padding: 6px 2px; gap: 3px; min-width: 0; }
-    #badges-modal-grid .prof-badge-icon svg { width: clamp(28px, 5.6vh, 40px); height: clamp(28px, 5.6vh, 40px); }
+    #badges-modal-grid .prof-badge-icon svg { width: clamp(28px, calc(5.6 * var(--vh)), 40px); height: clamp(28px, calc(5.6 * var(--vh)), 40px); }
     #badges-modal-grid .prof-badge-name { font-size: 6.5px; letter-spacing: .6px; }
     .prof-badge {
       display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -1794,8 +1742,8 @@
       border: 2px solid rgba(170,120,255,.45);
       border-radius: 22px;
       padding: 24px 20px 20px;
-      width: min(92vw, 360px);
-      height: 80vh; max-height: 720px;
+      width: min(calc(92 * var(--vw)), 360px);
+      height: calc(80 * var(--vh)); max-height: 720px;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       box-shadow: 0 0 28px rgba(170,120,255,.18);
     }
@@ -1858,7 +1806,7 @@
     .modal-head-title, #upgrades-modal-title { flex: 1; min-width: 0; text-align: center; margin: 0; font-weight: 700; }
     .modal-head-spacer { flex-shrink: 0; width: 38px; }
     #upgrades-modal-title {   /* dar ekranda (≈<400px) coin kutusuna binmesin diye esnek boy; normal telefonda 21px */
-      font-size: clamp(14px, 5.2vw, 21px); letter-spacing: clamp(1.5px, .75vw, 3px); color: #fff; text-align: center; white-space: nowrap;
+      font-size: clamp(14px, calc(5.2 * var(--vw)), 21px); letter-spacing: clamp(1.5px, calc(.75 * var(--vw)), 3px); color: #fff; text-align: center; white-space: nowrap;
       text-shadow: 0 0 14px rgba(170,120,255,.4);
     }
     /* Coin rozeti — geri okuyla aynı kare form + radius (sadece daha geniş) */
@@ -2181,7 +2129,7 @@
     }
     #reset-modal.open { display: flex; }
     #reset-modal-box {
-      width: min(86vw, 320px);
+      width: min(calc(86 * var(--vw)), 320px);
       background: linear-gradient(180deg, rgba(30,18,22,.97), rgba(16,10,12,.98));
       border: 1px solid rgba(255,77,106,.5); border-radius: 18px; padding: 24px 20px;
       display: flex; flex-direction: column; align-items: center; gap: 14px;
@@ -2213,7 +2161,7 @@
     }
     #upginfo-modal.open { display: flex; }
     #upginfo-box {
-      width: min(88vw, 340px); max-height: 88vh; overflow-y: auto;
+      width: min(calc(88 * var(--vw)), 340px); max-height: calc(88 * var(--vh)); overflow-y: auto;
       background:
         radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.18), transparent 62%),
         linear-gradient(180deg, rgba(24,16,42,.97), rgba(12,8,22,.98));
@@ -2240,7 +2188,7 @@
       cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.22); color: #fff;
     }
     #buy-modal-box {
-      width: min(84vw, 300px);
+      width: min(calc(84 * var(--vw)), 300px);
       background:
         radial-gradient(120% 70% at 50% 0%, rgba(170,120,255,.18), transparent 62%),
         linear-gradient(180deg, rgba(24,16,42,.97), rgba(12,8,22,.98));
@@ -2463,7 +2411,7 @@
       color: var(--green);
       font-family: var(--font); font-size: 12px; letter-spacing: 1.5px;
       padding: 12px 18px; border-radius: 11px;
-      width: min(88vw, 340px); text-align: center; line-height: 1.55; box-sizing: border-box;   /* sabit genişlik: kısa/uzun hepsi aynı kutu, gerekirse alt satır */
+      width: min(calc(88 * var(--vw)), 340px); text-align: center; line-height: 1.55; box-sizing: border-box;   /* sabit genişlik: kısa/uzun hepsi aynı kutu, gerekirse alt satır */
       box-shadow: 0 0 24px rgba(124,255,122,.20);
       opacity: 0; pointer-events: none;
       transition: opacity .22s, transform .22s;
@@ -2497,12 +2445,12 @@
       position: fixed; left: 50%; top: 13%;
       transform: translateX(-50%);
       z-index: 120; pointer-events: none; display: none;
-      width: max-content; max-width: 96vw;   /* left:50% → içerik ekranın yarısına sıkışıp satır düşürüyordu */
+      width: max-content; max-width: calc(96 * var(--vw));   /* left:50% → içerik ekranın yarısına sıkışıp satır düşürüyordu */
     }
     #reward-toast.show { display: block; }
     .rt-card {
       position: relative; overflow: hidden;
-      width: min(92vw, 360px); box-sizing: border-box;   /* sabit genişlik; uzun metin alt satıra iner */
+      width: min(calc(92 * var(--vw)), 360px); box-sizing: border-box;   /* sabit genişlik; uzun metin alt satıra iner */
       display: flex; align-items: center; gap: 12px;
       background: rgba(16,22,34,.94);
       border: 1.5px solid rgba(255,206,90,.6);
@@ -2565,7 +2513,7 @@
       border: 1.5px solid rgba(255,255,255,.20);
       border-radius: 22px;
       padding: 22px 20px 18px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 12px; align-items: stretch;
       box-shadow: 0 0 28px rgba(120,160,255,.18);
     }
@@ -2663,7 +2611,7 @@
       border: 1.5px solid rgba(255,90,140,.55);
       border-radius: 22px;
       padding: 28px 24px 22px;
-      width: min(90vw, 340px);
+      width: min(calc(90 * var(--vw)), 340px);
       display: flex; flex-direction: column; gap: 16px; align-items: center;
       box-shadow: 0 0 36px rgba(255,80,120,.25);
     }
@@ -2693,7 +2641,7 @@
       border: 2px solid rgba(255,140,200,.65);
       border-radius: 26px;
       padding: 26px 22px 22px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 12px; align-items: center;
       box-shadow:
         0 0 40px rgba(255,80,150,.30),
@@ -2801,7 +2749,7 @@
       border: 1.5px solid rgba(255,120,40,.0);
       border-radius: 22px;
       padding: 24px 20px 20px;
-      width: min(92vw, 360px);
+      width: min(calc(92 * var(--vw)), 360px);
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       overflow: visible;
     }
@@ -3088,7 +3036,7 @@
     #gearpick-modal { z-index: 64; } /* upgrades modal'ın (58) üstünde açılır */
     #quests-modal.open, #friends-modal.open, #friendslist-modal.open, #gearpick-modal.open, #credits-modal.open, #chal-intro.open { display: flex; }
     #quests-modal-box, #friends-modal-box, #friendslist-modal-box, #gearpick-box, #credits-box, #chal-intro-box {
-      position: relative; width: min(92vw, 360px);
+      position: relative; width: min(calc(92 * var(--vw)), 360px);
       border-radius: 22px; padding: 24px 20px 18px;
       display: flex; flex-direction: column; gap: 14px; align-items: center;
       background:
@@ -3302,7 +3250,7 @@
     }
     #chest-pop.revealed .cp-ok { opacity: 1; }
     .tr-sw.streak { box-shadow: inset 0 0 0 2px rgba(255,170,60,.55); }
-    #quests-modal-box { max-height: 92vh; max-height: 92dvh; overflow-y: auto; }
+    #quests-modal-box { max-height: calc(92 * var(--vh)); max-height: calc(92 * var(--dvh)); overflow-y: auto; }
     #credits-box { border-color: rgba(90,216,255,.45); text-align: center; }
     #credits-box .fm-title { color: #8fe6ff; }
     .cr-logo { font-size: 30px; letter-spacing: 6px; color: #fff; text-shadow: 0 0 18px rgba(90,216,255,.55); }
@@ -3864,7 +3812,7 @@
       background: radial-gradient(80% 60% at 50% 40%, #2a1d63, #0b0820 70%); font-family: var(--font); color: #fff; }
     #fake-ad .fa-x { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 14px; width: 40px; height: 40px; border-radius: 50%;
       border: 1.5px solid rgba(255,255,255,.5); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; cursor: pointer; }
-    #fake-ad .fa-card { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(78vw, 300px); }
+    #fake-ad .fa-card { display: flex; flex-direction: column; align-items: center; gap: 14px; width: min(calc(78 * var(--vw)), 300px); }
     #fake-ad .fa-tag { font-size: 10px; letter-spacing: 2px; color: #ffd24a; border: 1px solid rgba(255,210,74,.6); padding: 4px 10px; border-radius: 6px; }
     #fake-ad .fa-num { font-size: 64px; font-weight: 800; line-height: 1; }
     #fake-ad .fa-bar { width: 100%; height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
@@ -4234,7 +4182,7 @@
       animation: tlSpin .7s linear infinite;
     }
     @keyframes tlSpin { to { transform: rotate(360deg); } }
-    #theme-modal-box { width: min(88vw, 360px); max-height: 86vh; overflow-y: auto; border-radius: 22px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+    #theme-modal-box { width: min(calc(88 * var(--vw)), 360px); max-height: calc(86 * var(--vh)); overflow-y: auto; border-radius: 22px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
     #theme-list { display: flex; flex-direction: column; gap: 10px; }
     .theme-card { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; cursor: pointer; text-align: left; font-family: var(--font); }
     .theme-card.active { border-color: color-mix(in srgb, var(--c) 90%, transparent); }
@@ -5102,27 +5050,6 @@
 </div>
 
 <!-- ══ BADGES MODAL (opened from equip slots) ══ -->
-<!-- ANALYSIS (detaylı veriler) -->
-<div id="analysis-modal">
-  <div id="analysis-modal-box" class="gl gl-lilac gl-glass">
-    <div class="modal-head">
-      <button id="analysis-close" class="modal-back" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 L17.5 17.5"/><path d="M17.5 6.5 L6.5 17.5"/></svg></button>
-      <div class="fm-title modal-head-title">ANALYSIS</div>
-      <span class="modal-head-spacer"></span>
-    </div>
-    <div id="prof-modes">
-      <div class="pm-row pm-head"><span class="pm-lbl"></span><span class="pm-c-chill">CHILL</span><span class="pm-c-ext">EXTREME</span></div>
-      <div class="pm-row"><span class="pm-lbl">SCORE</span><span id="pm-score-n">0</span><span id="pm-score-e">0</span></div>
-      <div class="pm-row"><span class="pm-lbl">DIST.</span><span id="pm-dist-n">0m</span><span id="pm-dist-e">0m</span></div>
-      <div class="pm-row"><span class="pm-lbl">GAMES</span><span id="pm-games-n">0</span><span id="pm-games-e">0</span></div>
-    </div>
-    <div id="prof-extra">
-      <div class="prof-sum"><div class="prof-sum-lbl">LIFETIME DIST</div><div class="prof-sum-val ps-blue" id="ps-distlife">0m</div></div>
-      <div class="prof-sum"><div class="prof-sum-lbl">BEST COMBO</div><div class="prof-sum-val ps-flame" id="ps-mul">0</div></div>
-      <div class="prof-sum"><div class="prof-sum-lbl">STREAK</div><div class="prof-sum-val ps-gold" id="ps-streak">0d</div></div>
-    </div>
-  </div>
-</div>
 
 <!-- TRACE (iz: kalinlik + renk + animasyon) -->
 <div id="trace-modal">
@@ -5205,14 +5132,6 @@
   </div>
 </div>
 
-<!-- ══ AVATAR MODAL ══ -->
-<div id="av-modal">
-  <div id="av-modal-box" class="gl gl-lilac gl-glass">
-    <div id="av-modal-title">CHOOSE AVATAR</div>
-    <div id="av-modal-grid"></div>
-    <button id="av-modal-close">DONE</button>
-  </div>
-</div>
 
 <!-- Tutorial system removed — players discover mechanics through play -->
 
@@ -6723,8 +6642,14 @@ const ARC_DB = (() => {
     : null;
   function fitCanvas() {
     const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
-    // Geniş/yatay (PC) ekranlarda letterbox; dikey telefonlarda tam ekran.
-    document.body.classList.toggle('letterbox', (vh / vw) < 1.25);
+    // 9:16'dan geniş ekranlarda (iPad, yatay, PC) oyun alanı 9:16'ya sabitlenir, kenarlar siyah kalır: dünya genişliği
+    // sabit (W) olduğundan geniş ekran ileriyi daha az gösteriyordu (iPad 3:4 → H 800, telefon ~1300) — eşitsizlik.
+    // Arayüz de oyun alanıyla orantılı büyür (--uiz: 390 px genişlikli telefon tabanı; etkin yükseklik ≥ 700 px kalır).
+    const lb = (vh / vw) < 1.75;
+    document.body.classList.toggle('letterbox', lb);
+    const uiz = lb ? Math.max(1, Math.min(1.8, Math.min(vw, vh * 9 / 16) / 390, vh / 700)) : 1;
+    document.documentElement.style.setProperty('--uiz', uiz.toFixed(3));
+    document.documentElement.classList.toggle('uiz', uiz > 1.01);
     // ÖNEMLİ: iç yüksekliği window.innerHeight'tan DEĞİL, canvas'ın GERÇEKTEN render
     // edildiği kutudan hesapla. iOS'ta CSS 100vh ≠ innerHeight olduğundan bu fark
     // dikey gerdirmeye (sünme) yol açıyordu. Gerçek kutuyu ölçünce iç en-boy oranı
@@ -7244,24 +7169,7 @@ const ARC_DB = (() => {
   function renderAvPicker() {
     // Profile setup grid
     renderAvatarGrid('av-grid', 'av-img-opt', () => { renderAvPicker(); applyProfile(); });
-    // Settings avatar modal grid
-    renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {
-      renderAvPicker(); applyProfile();
-    });
   }
-
-  // ── Avatar modal ──────────────────────────────────────────
-  const avModal = document.getElementById('av-modal');
-  function openAvModal() {
-    renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {
-      renderAvatarGrid('av-modal-grid', 'av-modal-opt', () => {}); // refresh sel state
-      applyProfile();
-    });
-    avModal.classList.add('open');
-  }
-  // settings-profile-ro removed — profile editing is now on home card
-  document.getElementById('av-modal-close').addEventListener('click', () => avModal.classList.remove('open'));
-  avModal.addEventListener('click', e => { if (e.target === avModal) avModal.classList.remove('open'); });
 
   // ── Profile setup ─────────────────────────────────────────
   document.getElementById('ps-confirm').addEventListener('click', () => {
@@ -11666,7 +11574,8 @@ const ARC_DB = (() => {
     const setBar = f => { const pc = (Math.max(0, Math.min(1, f)) * 100) + '%'; barEl.style.width = pc; tipEl.style.left = pc; };
     // Kapsül içi koordinat: uçuşlar #go-coin-row'a göre konumlanır
     const ptIn = (el, fx, fy) => { const r = el.getBoundingClientRect(), o = coinRow.getBoundingClientRect();
-      return { x: r.left - o.left + r.width * fx, y: r.top - o.top + r.height * fy }; };
+      const z = (o.width / (coinRow.offsetWidth || o.width)) || 1;   // arayüz zoom'u (iPad): rect görsel px → yerel px
+      return { x: (r.left - o.left + r.width * fx) / z, y: (r.top - o.top + r.height * fy) / z }; };
     // İnce halka: tam boyda çizilip küçükten büyütülür → kenar hep ince ve keskin kalır
     const ring = (p, size, ms) => {
       const e = document.createElement('span'); e.className = 'go-coin-ring';
@@ -12936,7 +12845,7 @@ const ARC_DB = (() => {
       e.style.fontSize = '';
       const cs = getComputedStyle(e), room = e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       const r = document.createRange(); r.selectNodeContents(e);
-      const w = r.getBoundingClientRect().width;
+      const w = r.getBoundingClientRect().width / ((e.getBoundingClientRect().width / (e.offsetWidth || 1)) || 1);   // zoom → yerel px
       if (w > room && room > 0) e.style.fontSize = Math.floor(parseFloat(cs.fontSize) * room / w) + 'px';
     }
   }
@@ -13011,10 +12920,10 @@ const ARC_DB = (() => {
     }
   }
 
-  // ── Profil alt-modalları: Analysis · Trace · Tomb · Death Text ──
+  // ── Profil alt-modalları: Trace · Tomb · Death Text ──
   function openSub(id) { const m = document.getElementById(id); if (m) m.classList.add('open'); }
   function closeSub(id) { const m = document.getElementById(id); if (m) m.classList.remove('open'); }
-  [['analysis-modal','analysis-close'], ['trace-modal','trace-close'], ['tomb-modal','tomb-close'], ['deathtext-modal','deathtext-close'], ['custom-modal','custom-close'], ['privacy-modal','privacy-close']]
+  [['trace-modal','trace-close'], ['tomb-modal','tomb-close'], ['deathtext-modal','deathtext-close'], ['custom-modal','custom-close'], ['privacy-modal','privacy-close']]
     .forEach(([m, c]) => {
       document.getElementById(c).addEventListener('click', () => closeSub(m));
       document.getElementById(m).addEventListener('click', e => { if (e.target.id === m) closeSub(m); });

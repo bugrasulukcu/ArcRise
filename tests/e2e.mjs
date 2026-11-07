@@ -1466,6 +1466,22 @@ test('pencereler 320×568: kasa kapağı kırpılmaz, Extreme kayar, gear slotla
   } finally { await send('Emulation.clearDeviceMetricsOverride'); }
 });
 
+test('iPad / geniş ekran: oyun alanı 9:16 (kenarlar siyah), arayüz orantılı büyür; telefonda değişmez', async () => {
+  await fresh({});
+  const m = () => ev(`(() => { const r = document.querySelector('.stack').getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), H: ARC_TEST.player && 0, lb: document.body.classList.contains('letterbox'), uiz: +getComputedStyle(document.documentElement).getPropertyValue('--uiz') }; })()`);
+  try {
+    await send('Emulation.setDeviceMetricsOverride', { width: 768, height: 1024, deviceScaleFactor: 1, mobile: true }); await sleep(500);
+    const t = await m();
+    check(t.lb && Math.abs(t.w / t.h - 9 / 16) < 0.01 && t.w < 768, `iPad'de oyun alanı 9:16 değil: ${JSON.stringify(t)}`);
+    check(t.uiz > 1.3 && t.uiz < 1.6, `iPad'de arayüz büyümedi: ${t.uiz}`);
+    const box = await ev(`(() => { document.getElementById('home-upgrade-btn').click(); return new Promise(r => setTimeout(() => { const b = document.getElementById('upgrades-modal-box').getBoundingClientRect(); r({ top: Math.round(b.top), bottom: Math.round(b.bottom), vh: innerHeight }); }, 500)); })()`);
+    check(box.top >= 0 && box.bottom <= box.vh, `iPad'de yükseltme penceresi ekrandan taşıyor: ${JSON.stringify(box)}`);
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }); await sleep(500);
+    const p = await m();
+    check(!p.lb && p.w === 390 && p.uiz === 1, `telefonda değişti: ${JSON.stringify(p)}`);
+  } finally { await send('Emulation.clearDeviceMetricsOverride'); }
+});
+
 // ── Koştur ───────────────────────────────────────────────────
 let pass = 0, fail = 0;
 const run = tests.filter(t => !FILTER || FILTER.split(',').some(f => t.name.toLowerCase().includes(f.trim())));

@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### iPad / geniş ekran: oyun alanı 9:16, arayüz orantılı; ölü pencereler silindi (2026-11-07)
+
+- **Eşitlik:** dünya genişliği sabit (`W`) olduğundan geniş ekran ileriyi daha az gösteriyordu (iPad 3:4 → `H` 800, telefon ~1300). Artık ekran 9:16'dan genişse (`vh/vw < 1.75`; iPad, yatay, PC) oyun alanı 9:16'ya sabitlenir, kenarlar siyah kalır (eskiden eşik 1.25 idi, iPad tam ekran açılıyordu).
+- **Arayüz ölçeği:** `--uiz` = min(oyun alanı genişliği / 390, ekran yüksekliği / 700), 1–1.8 (iPad 11" ≈ 1.46–1.6). Ekranlara, pencerelere ve HUD'a `zoom` uygulanır; canvas ölçeklenmez. `zoom`'lu öğelerde `vw`/`vh` de büyüdüğü için arayüz kurallarındaki 34 `vw`/`vh` → `calc(N * var(--vw))` (zoom 1'de aynı). Zoom altında `getBoundingClientRect` görsel px döndüğünden oyun sonu coin uçuşları ve profil değer sığdırma yerel px'e çevrilir. Telefonlarda hiçbir şey değişmez (test).
+- Chrome (768×1024, 1024×1366, 1180×820) ve **iPad simülatöründe Safari (WebKit)** ekran görüntüleriyle doğrulandı. Not: simülatör denemesi canlı Firebase'e bağlandı; oluşan anonim hesap oyunun "Delete account & data" akışıyla silindi.
+- **Silindi:** hiçbir yerden açılmayan `analysis-modal` (ve `#prof-modes` / `#prof-extra` stilleri) ile `av-modal` (`.av-modal-opt` avatar seçicide kullanıldığı için kaldı).
+- Test: iPad'de 9:16 + `--uiz` + yükseltme penceresi ekranda; telefonda değişmez.
+
 ### Pencere taraması: 320×568 / 390×844 / 768×1024 (2026-11-07)
 
 - 32 ekran/pencere üç boyutta açılıp ekran görüntüsü + otomatik taşma denetimiyle tarandı. Düzeltilenler:
