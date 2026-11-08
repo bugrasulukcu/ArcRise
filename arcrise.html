@@ -243,17 +243,28 @@
     #debug-overlay .dbg-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
     #debug-overlay .dbg-row span:first-child { color: rgba(255,255,255,.5); }
     .hud-divider {
-      width: 60%; height: 1px; margin: 6px 0;
+      width: 60%; height: 1px; margin: 7px 0 6px;
       background: rgba(255,255,255,.18);
     }
     .hud-tr .hud-divider { margin-left: auto; }
     .hud-sub-lbl { font-size: 8.5px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
     .hud-sub-num { font-size: 13px; color: rgba(255,255,255,.75); letter-spacing: 1px; font-variant-numeric: tabular-nums; }
-    /* Canlı sıra: geçilen her oyuncuda yeşil nabız, birincilikte altın */
-    .hud-rank-lbl { margin-top: 6px; }
-    .hud-rank { color: #9fd8ff; transition: color .3s; }
+    /* BEST: etiket + değer tek satırda */
+    .hud-best { display: flex; align-items: center; gap: 6px; }
+    .hud-tr .hud-best { justify-content: flex-end; }
+    .hud-best-lbl { font-size: 10px; letter-spacing: 1.4px; color: var(--green); }
+    .hud-best .hud-sub-num { color: rgba(255,255,255,.85); }
+    /* Canlı sıra: sayının hemen altında; renk sıralamadaki dilime göre mercan → sarı → yeşil (--rk JS'te),
+       ilk 10 altın + parlama, birincilik daha güçlü. Geçilen her oyuncuda nabız. */
+    .hud-rank-lbl { display: none !important; }
+    .hud-tr .hud-rank { margin-left: auto; }
+    .hud-rank { display: block; width: fit-content; margin-top: 3px; font-size: 13px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
+      color: var(--rk, #9fd8ff); transition: color .6s, text-shadow .6s; }
+    .hud-rank[hidden] { display: none; }
     .hud-rank.up { animation: rankUp .35s ease-out; }
-    .hud-rank.first { color: #ffd25a; text-shadow: 0 0 8px rgba(255,210,90,.6); }
+    .hud-rank.top { color: #ffd25a; text-shadow: 0 0 8px rgba(255,210,90,.55); }
+    .hud-rank.first { color: #ffe27a; text-shadow: 0 0 12px rgba(255,210,90,.9), 0 0 2px #fff; animation: rankFirst 1.6s ease-in-out infinite; }
+    @keyframes rankFirst { 50% { text-shadow: 0 0 18px rgba(255,210,90,1), 0 0 4px #fff; } }
     @keyframes rankUp { 0% { color: #7dffa0; transform: scale(1.35); } 100% { transform: scale(1); } }
     .hud-tl .hud-rank.up { transform-origin: left center; } .hud-tr .hud-rank.up { transform-origin: right center; }
     /* Küçük avatar renk noktası YOUR BEST yanında */
@@ -3682,7 +3693,7 @@
     /* Combo + booster HUDs sit just under the top score row so they aren't
        hidden under the player's thumb during play. */
     #combo-hud {
-      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 50%; transform: translateX(-50%);
+      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 30px); left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none; align-items: center; gap: 4px;
     }
@@ -3902,7 +3913,7 @@
     /* ══════════ BOOSTER HUD ══════════ */
     /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
     #booster-hud {   /* v27: çarpan hapının altında COMBO etiketi + pencere çizgisi var → biraz aşağıda */
-      position: absolute; top: 172px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 150px); left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none;
     }
@@ -4313,22 +4324,20 @@
       <div class="hud-tl">
         <div class="hud-lbl" id="h-score-lbl">SCORE</div>
         <div class="hud-num" id="h-score">000</div>
+        <div class="hud-rank-lbl" id="h-rank-lbl" hidden></div>
+        <div class="hud-rank" id="h-rank" hidden>#—</div>
         <div class="hud-divider"></div>
-        <div class="hud-sub-lbl">BEST <span id="hud-av"></span></div>
-        <div class="hud-sub-num" id="h-best">000</div>
-        <div class="hud-sub-lbl hud-rank-lbl" id="h-rank-lbl" hidden>RANK</div>
-        <div class="hud-sub-num hud-rank" id="h-rank" hidden>#—</div>
+        <div class="hud-best"><span class="hud-best-lbl">BEST</span><span class="hud-sub-num" id="h-best">000</span><span id="hud-av"></span></div>
         <div class="hud-sub-lbl" id="chal-lbl" hidden>⚔ TARGET</div>
         <div class="hud-sub-num" id="chal-num" hidden>000</div>
       </div>
       <div class="hud-tr">
         <div class="hud-lbl">DISTANCE</div>
         <div class="hud-num" id="h-dist">0</div>
+        <div class="hud-rank-lbl" id="h-drank-lbl" hidden></div>
+        <div class="hud-rank" id="h-drank" hidden>#—</div>
         <div class="hud-divider"></div>
-        <div class="hud-sub-lbl">BEST</div>
-        <div class="hud-sub-num" id="h-dist-best">0</div>
-        <div class="hud-sub-lbl hud-rank-lbl" id="h-drank-lbl" hidden>RANK</div>
-        <div class="hud-sub-num hud-rank" id="h-drank" hidden>#—</div>
+        <div class="hud-best"><span class="hud-best-lbl">BEST</span><span class="hud-sub-num" id="h-dist-best">0</span></div>
       </div>
       <div id="rt-mini" aria-hidden="true"></div>
       <!-- Combo indicator -->
@@ -10183,7 +10192,7 @@ const ARC_DB = (() => {
   const LR_LADDER = 6, LR_GAP_MS = 1500, LR_FAR_GAP_MS = 2500, LR_NEAR = 100, LR_READS_MAX = 40;
   const _lr = { tok: 0, on: false, reads: 0, k: { score: null, distance: null } };
   function _lrEls(f) { return f === 'score' ? [document.getElementById('h-rank'), document.getElementById('h-rank-lbl')] : [document.getElementById('h-drank'), document.getElementById('h-drank-lbl')]; }
-  function _lrHide() { for (const f of ['score', 'distance']) { const [n, l] = _lrEls(f); if (n) { n.hidden = true; n.classList.remove('first', 'up'); } if (l) l.hidden = true; } }
+  function _lrHide() { for (const f of ['score', 'distance']) { const [n, l] = _lrEls(f); if (n) { n.hidden = true; n.classList.remove('first', 'top', 'up'); } if (l) l.hidden = true; } }
   function startLiveRank() {
     const tok = ++_lr.tok;
     _lr.on = false; _lr.reads = 0; _lr.k.score = _lr.k.distance = null; _lrHide();
@@ -10209,7 +10218,7 @@ const ARC_DB = (() => {
     if (tok !== _lr.tok) return;
     L.busy = false;
     if (cnt == null || !above) { if (!L.ok) { const [n, l] = _lrEls(f); if (n) n.hidden = true; if (l) l.hidden = true; } return; }
-    if (!L.ok) { L.shown = rank; const [n, l] = _lrEls(f); if (n) n.hidden = false; if (l) l.hidden = false; }
+    if (!L.ok) { L.shown = rank; L.total = rank; const [n, l] = _lrEls(f); if (n) n.hidden = false; if (l) l.hidden = false; }   // ilk sayım (v=0) → toplam
     L.ok = true; L.rank = rank; L.ladder = above;
     L.end = rank <= 1 || (ladderOk && above.length < LR_LADDER);   // end: üstte listedekilerden başka kimse yok
   }
@@ -10231,6 +10240,14 @@ const ARC_DB = (() => {
       if (!n) continue;
       setTxt(n, '#' + cur.toLocaleString('en-US'));
       n.classList.toggle('first', cur === 1);
+      n.classList.toggle('top', cur > 1 && cur <= 10);
+      // dilim: 0 = sonuncu, 1 = birinci (toplam = run başındaki ilk sayım) → mercan → sarı → yeşil
+      if (L.total > 1) {
+        const p = Math.max(0, Math.min(1, (L.total - cur) / (L.total - 1)));
+        const c = p < 0.5 ? [255, Math.round(122 + 92 * p * 2), Math.round(104 - 14 * p * 2)]
+                          : [Math.round(255 - 131 * (p - 0.5) * 2), Math.round(214 + 41 * (p - 0.5) * 2), Math.round(90 + 32 * (p - 0.5) * 2)];
+        setStyle(n, '--rk', `rgb(${c[0]},${c[1]},${c[2]})`);
+      }
       if (cur < prev) { n.classList.remove('up'); void n.offsetWidth; n.classList.add('up'); }
     }
   }

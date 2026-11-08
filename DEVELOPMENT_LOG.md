@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### HUD düzeni: sıra sayının altında, tek satır BEST · sıra rengi dilime göre (2026-11-08)
+
+- Skor / mesafe sütunu: başlık → büyük sayı → **canlı sıra** (RANK etiketi yok, "#" yeterli) → çizgi → **"BEST değer"** tek satır. Sütun 6 satırdan 4'e indi; combo halkası biraz aşağıda (üst + 30 px), booster onun altında.
+- **Sıra rengi:** sıralamadaki dilime göre (toplam = run başındaki ilk sayım, ek okuma yok) mercan → sarı → yeşil; saf kırmızı değil (her run sondan başladığı için ilk saniyelerde "kötü" demesin). İlk 10 altın + ışık, birincilikte nabız gibi parlar; geçilen her oyuncuda eski nabız sürer.
+- Test: sondayken mercan, ilk 10 altın, birincilikte parlama.
+
 ### Combo dairesi + halka · büyük, hareketli skor / mesafe (2026-11-08)
 
 - **Combo:** hap yerine kademe renginde çarpan **dairesi**; çevresinde 3 yaylı SVG halka (zincir: yaylar sırayla yeşil dolar, en yenisi pencere süresiyle geri gider). Combo açılınca yaylar **altın tek çembere** döner (büyüme + parlama + dışa yayılan altın dalga). Çember süreyle boşalır ve **altından kırmızıya** kayar (`--rc`); **son 1.5 sn kalp atışı** (gup-gup, halka + daire). Kırılınca yaylar kırmızı parlayıp dışa savrulur, daire sarsılır. Boş yayların yuvarlak uçları gizlenir (nokta bırakmaz). Booster göstergesi halkanın altında (172 px).

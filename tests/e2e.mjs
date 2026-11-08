@@ -625,6 +625,23 @@ test('canlı sıra: skor ve mesafe sırası toplamdan başlar, geçtikçe birinc
   check(await ev(`document.getElementById('h-rank').hidden && document.getElementById('h-drank').hidden`), 'Daily\'de canlı sıra görünüyor');
 });
 
+test('canlı sıra rengi: sondayken mercan, ilk 10 altın, birincilikte parlar', async () => {
+  fbReset();
+  const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
+  const S = v => ({ stringValue: String(v) }), I = v => ({ integerValue: String(v) }), D = v => ({ doubleValue: v });
+  for (let i = 0; i < 30; i++) doc(`scores/Q${i}_normal`, { name: S('Q' + i), mode: S('normal'), score: I(0), distance: D(1 + i * 0.5), ts: I(1), avatar: I(0) });
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`);
+  check(await waitFor(`!document.getElementById('h-drank').hidden`, 6000), 'sıra görünmedi');
+  await sleep(300);
+  const c0 = await ev(`document.getElementById('h-drank').style.getPropertyValue('--rk')`);
+  const g0 = +(/rgb\(255,\s*(\d+)/.exec(c0) || [0, 999])[1];
+  check(g0 < 140, `sondayken mercan değil: ${c0}`);
+  await ev(`ARC_TEST.straight(-Math.PI / 2); ARC_TEST.ghost(30); true`);
+  check(await waitFor(`(() => { const e = document.getElementById('h-drank'); return e.classList.contains('top') || e.classList.contains('first'); })()`, 20000), `ilk 10'da altın değil: ${await ev(`document.getElementById('h-drank').textContent`)}`);
+  check(await waitFor(`document.getElementById('h-drank').classList.contains('first')`, 20000), 'birincilikte parlama yok');
+});
+
 test('canlı sıra: üstte listeden çok oyuncu varken yenilenerek birinciliğe iner', async () => {
   fbReset();
   const doc = (path, f) => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`, fields: f });
