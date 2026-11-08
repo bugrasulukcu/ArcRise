@@ -396,6 +396,20 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Extreme kilidi: 100 coin + 1000 skor + 10 m · "r r" hilesi kaldırıldı (2026-11-08)
+
+- Extreme artık yalnız en iyi skor **1000** ve en iyi mesafe **10 m** (iki modun en iyisi) sağlandıktan sonra **100 coin**le açılır. İndirim yolu (eski: 45 coin direkt ya da 5 m + 120 puan + 6 coin) kaldırıldı. Pencerede tek "TO UNLOCK" listesi (skor / mesafe / 100 coin, eksikler en iyi değerle). Ayarlar'daki yeşil nokta yalnız üçü birden sağlanınca yanar.
+- Klavyede "r r" (debug modunda +900 coin, skor 2000, mesafe 15 m veriyordu) tamamen silindi.
+- Test: üç şartın her biri eksikken açılmaz, tamken 100 coin düşer; "r r" coin vermez.
+
+### Combo çubuğu (3 parça) · Vanilla sayacı ortada, altın +5 (2026-11-08)
+
+- **Combo kuralı görünür oldu:** zinciri açan nesne de 1. halka sayılır (pencere dışında alınan nesne yeni zincir başlatır), `COMBO_START` 3 → 4. Zorluk aynı (eskiden açan nesne sayılmaz + 3 sayılan = yine 4. nesne), ama oyuncu artık görüyor. "En uzun combo" rozet sayacı (`_comboStreak`) değişmedi.
+- **HUD:** çarpan hapının altında 3 parçalı çubuk. Her nesne bir parçayı doldurur; en yeni parça combo penceresi süresiyle geri gider. 3 dolu → sonraki nesnede ×2: parçalar birleşip **altın tek çubuğa** döner (parlama + ışık süpürmesi), süreyle boşalmaya devam eder. Zincir kırılınca parçalar kırmızı parlayıp dağılır.
+- Booster göstergesi combo bölümünün altına sabitlendi (eskiden zincir çubuğunun üstüne biniyordu).
+- **Vanilla:** sayaç sol üstten **üst ortaya**, pembe cam hap + yeşil küre; her eklemede sayı zıplar. Altın Vanilla'da yeniden çıkar ve **+5** (hap altın parlar); yeşil +1. Oyun sonu etiketi "COLLECTED".
+- Testler: combo çubuğu (parça parça dolum, 4. nesnede altın, kırılma), combo eşiği güncellendi, Vanilla altın +5.
+
 ### iPad / geniş ekran: oyun alanı 9:16, arayüz orantılı; ölü pencereler silindi (2026-11-07)
 
 - **Eşitlik:** dünya genişliği sabit (`W`) olduğundan geniş ekran ileriyi daha az gösteriyordu (iPad 3:4 → `H` 800, telefon ~1300). Artık ekran 9:16'dan genişse (`vh/vw < 1.75`; iPad, yatay, PC) oyun alanı 9:16'ya sabitlenir, kenarlar siyah kalır (eskiden eşik 1.25 idi, iPad tam ekran açılıyordu).

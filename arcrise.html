@@ -2795,13 +2795,6 @@
       text-align: center;
       padding-top: 2px;
     }
-    #ex-path-discount-head { color: rgba(170,255,150,.85); }
-    .ex-path-or {
-      text-align: center;
-      font-size: 9.5px; letter-spacing: 2.5px;
-      color: rgba(255,255,255,.3);
-      padding: 4px 0 0;
-    }
     .ex-req-row {
       display: flex; align-items: center; gap: 8px;
       font-family: var(--font); font-size: 11px; letter-spacing: 1.2px;
@@ -2813,9 +2806,6 @@
     .ex-req-row.met .ex-req-label  { color: rgba(200,255,200,.85); }
     .ex-req-row.unmet .ex-req-check { color: rgba(255,100,80,.7); }
     .ex-req-row.unmet .ex-req-label { color: rgba(255,180,160,.55); }
-    .ex-coin-icon { font-size: 14px; }
-    .ex-coin-icon.dim { filter: grayscale(1) opacity(.4); }
-    #ex-coin-deficit { font-size: 10px; color: rgba(255,140,100,.8); margin-left: 4px; }
 
     #extreme-confirm {
       width: 100%; padding: 14px; border-radius: 13px;
@@ -3714,9 +3704,30 @@
     #combo-lbl b { font-size: 12px; color: #ffe066; }
     #combo-hud.on #combo-lbl { visibility: visible; }
     #combo-hud.max #combo-lbl b { color: #ffb13b; }
-    #combo-bar { width: 84px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); overflow: hidden; }
-    #combo-bar-fill { display: block; height: 100%; width: 100%; border-radius: 2px; transform-origin: left center;
-      background: linear-gradient(90deg, #ffb13b, #ffe066); }
+    /* Combo çubuğu: 3 parça (zincir) → combo açılınca birleşip altın tek çubuk */
+    #combo-bar { position: relative; display: flex; gap: 4px; width: 96px; height: 6px; transition: gap .35s cubic-bezier(.3,1.4,.5,1); }
+    #combo-bar .cs { position: relative; flex: 1; height: 100%; border-radius: 3px; overflow: hidden;
+      background: rgba(255,255,255,.13); box-shadow: inset 0 0 0 1px rgba(124,255,122,.18); transition: border-radius .35s, box-shadow .35s; }
+    #combo-bar .cs > b { position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0);
+      background: linear-gradient(90deg, #4fe06d, #9dff8f); box-shadow: 0 0 6px rgba(124,255,122,.7); transition: background .35s; }
+    #combo-bar.gold { gap: 0; }
+    #combo-bar.gold .cs { border-radius: 0; box-shadow: none; }
+    #combo-bar.gold .cs:first-child { border-radius: 3px 0 0 3px; } #combo-bar.gold .cs:last-child { border-radius: 0 3px 3px 0; }
+    #combo-bar.gold .cs > b { background: linear-gradient(90deg, #ffb13b, #ffe066); box-shadow: 0 0 8px rgba(255,200,60,.8); }
+    /* altına geçiş: parlama + ışık süpürmesi + büyüme */
+    #combo-bar::after { content: ''; position: absolute; inset: -3px 0; pointer-events: none; opacity: 0; border-radius: 4px;
+      background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.95) 50%, transparent 70%) no-repeat; background-size: 60% 100%; }
+    #combo-bar.gold-in { animation: cbGoldPop .5s cubic-bezier(.3,1.6,.5,1); }
+    #combo-bar.gold-in::after { animation: cbShine .6s ease-out; }
+    @keyframes cbGoldPop { 0% { transform: scaleY(1); filter: brightness(1); } 35% { transform: scale(1.12, 2.2); filter: brightness(2.2); } 100% { transform: none; filter: none; } }
+    @keyframes cbShine { 0% { opacity: 1; background-position: -120% 0; } 100% { opacity: 0; background-position: 220% 0; } }
+    /* kırılma: parçalar ayrı yönlere düşüp söner (combo-sub görünmez olsa da animasyon görünsün) */
+    #combo-hud #combo-sub:has(#combo-bar.break) { opacity: 1; }
+    #combo-bar.break .cs { animation: cbBreak .5s ease-in forwards; background: rgba(255,90,100,.55); box-shadow: 0 0 10px rgba(255,80,90,.7); }
+    #combo-bar.break .cs:nth-child(1) { --bx: -14px; --br: -28deg; }
+    #combo-bar.break .cs:nth-child(2) { --bx: 0px;   --br: 8deg; animation-delay: .04s; }
+    #combo-bar.break .cs:nth-child(3) { --bx: 14px;  --br: 30deg; animation-delay: .08s; }
+    @keyframes cbBreak { 0% { transform: none; opacity: 1; filter: brightness(1.8); } 100% { transform: translate(var(--bx), 14px) rotate(var(--br)) scaleX(.6); opacity: 0; } }
     #combo-fx { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
     #combo-fx i { position: absolute; left: 0; top: 0; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
       background: #ffe066; box-shadow: 0 0 6px #ffcc33; animation: cfxFly var(--t) ease-out forwards; }
@@ -3873,13 +3884,13 @@
     /* ══════════ BOOSTER HUD ══════════ */
     /* Sits below the combo pill at the top — same reason: keep info above the thumb. */
     #booster-hud {   /* v27: çarpan hapının altında COMBO etiketi + pencere çizgisi var → biraz aşağıda */
-      position: absolute; top: 124px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: 152px; left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none;
     }
     #booster-hud.active { display: block; }
-    #booster-hud { transition: top .25s ease; }
-    #combo-hud.on ~ #booster-hud { top: 158px; }   /* combo satırı + çizgi açıkken altına kay */
+    /* Combo bölümü (hap + COMBO etiketi + 3 parçalı çubuk) her durumda aynı yeri kaplar → booster hep onun altında
+       (eskiden yalnız combo açıkken kayıyordu; zincir çubuğu booster hapının altında kalıyordu) */
     #booster-pill {
       display: flex; align-items: center; gap: 10px;
       background: rgba(10,6,24,0.88);
@@ -3915,7 +3926,26 @@
     #hud.active #slot-hud { display: block; }
     html.daily-run #hud.active #slot-hud { display: none; }   /* günlük: herkes aynı koşulda — yetenek yok */
     /* Vanilla: yalnız toplanan yeşil sayısı — combo, mesafe, rekor, sıra ve yetenek yok */
-    html.vanilla-run #hud.active :is(#slot-hud, #combo-hud, .hud-tr, #rt-mini, .hud-tl > :not(#h-score-lbl):not(#h-score)) { display: none !important; }
+    html.vanilla-run #hud.active :is(#slot-hud, #combo-hud, .hud-tr, .hud-tl, #rt-mini) { display: none !important; }
+    /* Vanilla sayacı: üst ortada pembe-yeşil cam hap, yeşil küre + sayı; eklemede zıplar (altında altın parlar) */
+    #van-count { display: none; }
+    html.vanilla-run #hud.active #van-count {
+      position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 18px); transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px; padding: 8px 20px 8px 10px; border-radius: 999px;
+      background: radial-gradient(120% 140% at 50% 0%, rgba(255,119,204,.20), transparent 60%), rgba(16,10,22,.72);
+      border: 1.5px solid rgba(255,140,210,.55);
+      box-shadow: 0 0 18px rgba(255,119,204,.28), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    #van-count i { width: 22px; height: 22px; border-radius: 50%; flex: none;
+      background: radial-gradient(circle at 35% 30%, #eaffe6, #7CFF7A 45%, #1f8f3a); box-shadow: 0 0 10px rgba(124,255,122,.8); }
+    #van-count b { font-size: 26px; font-weight: 800; letter-spacing: 1.5px; color: #fff; min-width: 1.2em; text-align: center;
+      text-shadow: 0 0 10px rgba(255,140,210,.7); font-variant-numeric: tabular-nums; }
+    #van-count.pop b { animation: vanPop .35s cubic-bezier(.3,1.7,.5,1); }
+    #van-count.pop.gold { animation: vanGold .6s ease-out; }
+    #van-count.pop.gold b { color: #ffe066; transition: color .6s; }
+    @keyframes vanPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+    @keyframes vanGold { 0% { box-shadow: 0 0 40px rgba(255,210,80,.9), inset 0 0 14px rgba(255,210,80,.5); border-color: #ffd24a; } 100% { } }
     .slot {
       position: absolute;
       width: 66px; height: 66px;
@@ -4261,6 +4291,7 @@
     </div>
     <div id="hud">
       <button id="vanilla-exit" type="button" hidden>BACK TO MENU</button>
+      <div id="van-count" aria-live="polite"><i aria-hidden="true"></i><b>0</b></div>
       <div class="hud-tl">
         <div class="hud-lbl" id="h-score-lbl">SCORE</div>
         <div class="hud-num" id="h-score">000</div>
@@ -4285,7 +4316,7 @@
       <!-- Combo indicator -->
       <div id="combo-hud">
         <div id="combo-pill">&times;<span id="combo-val">1</span><div id="combo-fx"></div></div>
-        <div id="combo-sub"><span id="combo-lbl">COMBO <b id="combo-cm">×2</b></span><div id="combo-bar"><i id="combo-bar-fill"></i></div></div>
+        <div id="combo-sub"><span id="combo-lbl">COMBO <b id="combo-cm">×2</b></span><div id="combo-bar"><i class="cs"><b></b></i><i class="cs"><b></b></i><i class="cs"><b></b></i></div></div>
       </div>
       <!-- Booster indicator (active mid-game purple pickup) -->
       <div id="booster-hud">
@@ -4679,33 +4710,25 @@
       <div class="extreme-row"><span class="extreme-lbl">Acceleration</span><span class="extreme-val">On</span></div>
     </div>
     <div id="extreme-reqs">
-      <div class="ex-path-head" id="ex-path-direct-head">DIRECT</div>
-      <div class="ex-req-row met" id="ex-req-direct">
-        <span class="ex-req-check"></span>
-        <span class="ex-req-label">Pay 45 coins</span>
-        <span class="ex-req-val" id="ex-req-direct-val"></span>
-      </div>
-      <div class="ex-path-or">— OR —</div>
-      <div class="ex-path-head" id="ex-path-discount-head">DISCOUNT · 6 coins if both are met</div>
-      <div class="ex-req-row unmet" id="ex-req-dist">
-        <span class="ex-req-check"></span>
-        <span class="ex-req-label">5.00m distance</span>
-        <span class="ex-req-val" id="ex-req-dist-val"></span>
-      </div>
+      <div class="ex-path-head" id="ex-path-direct-head">TO UNLOCK</div>
       <div class="ex-req-row unmet" id="ex-req-score">
         <span class="ex-req-check"></span>
-        <span class="ex-req-label">120 score</span>
+        <span class="ex-req-label">1000 score</span>
         <span class="ex-req-val" id="ex-req-score-val"></span>
       </div>
-      <div class="ex-req-row" id="ex-req-coin" style="display:none">
-        <span class="ex-coin-icon dim" id="ex-coin-icon"></span>
-        <span class="ex-req-label">5 coins</span>
-        <span id="ex-coin-deficit"></span>
-        <span class="ex-req-val" id="ex-req-coin-val"></span>
+      <div class="ex-req-row unmet" id="ex-req-dist">
+        <span class="ex-req-check"></span>
+        <span class="ex-req-label">10.00m distance</span>
+        <span class="ex-req-val" id="ex-req-dist-val"></span>
+      </div>
+      <div class="ex-req-row unmet" id="ex-req-direct">
+        <span class="ex-req-check"></span>
+        <span class="ex-req-label">Pay 100 coins</span>
+        <span class="ex-req-val" id="ex-req-direct-val"></span>
       </div>
     </div>
     <div id="extreme-warn">High speed — for experienced players only.</div>
-    <button id="extreme-confirm" class="locked">LET'S GO <span class="ic-bolt"></span> &nbsp;<span class="ic-coin"></span> <span id="extreme-price">50</span></button>
+    <button id="extreme-confirm" class="locked">LET'S GO <span class="ic-bolt"></span> &nbsp;<span class="ic-coin"></span> <span id="extreme-price">100</span></button>
     <button id="extreme-back">Stay Chill</button>
   </div>
 </div>
@@ -7574,7 +7597,16 @@ const ARC_DB = (() => {
   // Vanilla: hiçbir şey kaydedilmez. Run başında istatistiklerin kopyası alınır, run bitince / çıkınca geri
   // yüklenir → oyun içinde artan sayaçlar (altın, iz, rozet koşulları…) sonradan başka bir kayıtla yazılamaz.
   let _vanGreens = 0, _vanSnap = null;
-  function vanillaBegin() { vanillaRestore(); _vanGreens = 0; if (gameMode === 'wife') _vanSnap = JSON.stringify(stats); }
+  // Vanilla sayacı (HUD ortası): yeşil +1, altın +5; her eklemede sayı zıplar (altında altın parıltı)
+  function vanAdd(n, gold) {
+    _vanGreens += n;
+    const el = document.getElementById('van-count');
+    if (!el) return;
+    el.querySelector('b').textContent = String(_vanGreens);
+    el.classList.remove('pop', 'gold'); void el.offsetWidth; el.classList.add('pop'); if (gold) el.classList.add('gold');
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('gold'), 700);
+  }
+  function vanillaBegin() { vanillaRestore(); _vanGreens = 0; try { document.querySelector('#van-count b').textContent = '0'; } catch (_) {} if (gameMode === 'wife') _vanSnap = JSON.stringify(stats); }
   function vanillaRestore() {
     if (!_vanSnap) return;
     const o = JSON.parse(_vanSnap); _vanSnap = null;
@@ -7721,8 +7753,10 @@ const ARC_DB = (() => {
   // Süre çarpanı kademeli ve tam sayı (eskiden cd/2 → ×0.5, ×3.5 gibi küsuratlı, tavan ×6):
   // geri sayım 0–3 → ×1, 4–6 → ×2, 7–9 → ×3, 10–12 → ×4 (×4 yalnız Timer upgrade'iyle).
   function timeMulFor(cd) { return cd >= 10 ? 4 : cd >= 7 ? 3 : cd >= 4 ? 2 : 1; }
-  // Combo art arda 3 yeşille başlar: 3 → ×2, 4 → ×3 … comboCap() tavanına kadar
-  const COMBO_START = 3;
+  // Combo zinciri: pencereyi açan nesne 1. halka, pencere içinde alınan her nesne bir sonraki. HUD'daki 3 parçalı
+  // çubuk ilk 3 halkayı gösterir; 4. nesnede ×2 başlar (5 → ×3 … comboCap() tavanına kadar).
+  // (Eskiden açan nesne sayılmıyor, combo "3. sayılan"da başlıyordu — aynı 4. nesne, ama oyuncuya görünmüyordu.)
+  const COMBO_START = 4;
   function comboMul() { return runCombo >= COMBO_START ? Math.min(runCombo - (COMBO_START - 2), comboCap()) : 1; }
   // Combo penceresi (yeşil bant) açık mı, ne kadarı kaldı: 1 → yeni yeşil, 0 → kapandı
   function comboWindowFrac() {
@@ -10287,8 +10321,8 @@ const ARC_DB = (() => {
       const bonusGap = 460 * (wife ? 0.5 : 1.0);
       const needBonus = (lastBonusY - nextSpawnY) > bonusGap;
       // Pickup probabilities — tied to distance so they kick in quickly
-      // Vanilla: yalnız yeşil sayılır → altın / mor / skor nesneleri çıkmaz
-      const spawnGold   = (runCoinRainActive || distCm >= 30) && srand() < (runCoinRainActive ? 0.48 : 0.12) && !wife;  // Gold Rush: ×4, baştan
+      // Vanilla: yeşil +1, altın +5 → mor / skor nesneleri çıkmaz
+      const spawnGold   = (runCoinRainActive || distCm >= 30) && srand() < (runCoinRainActive ? 0.48 : 0.12);  // Gold Rush: ×4, baştan (Vanilla'da +5)
       const spawnPurple = distCm >= 75 && srand() < 0.08 && !wife;
 
       const bonusProb = (t < 0.15 ? .42 : .58) * (wife ? 1.7 : 1.0);
@@ -10475,10 +10509,11 @@ const ARC_DB = (() => {
   // Böylece skor "en uzun tek zincir"i değil, run boyunca kurulan zincir SAYISINI
   // ödüllendiriyor — yani oyun süresiyle doğrusal, patlamasız.
   function addCombo(wx, wy, green) {
-    if (!green) return;                 // sadece üst bantta (countdown ≥ max−1) combo sayılır
+    if (!green) { if (runCombo > 0) comboBreak(); runCombo = 1; return; }   // pencere dışında alındı → yeni zincirin 1. halkası
     runCombo++;
     // En uzun combo = art arda toplanan top SAYISI (tavanda bankalama sayımı kesmez; yalnız
     // combo penceresinden çıkınca sıfırlanır) → ×7 tavanla sınırlı değil, gerçek beceriyi ölçer.
+    // (Rozet ölçeği değişmesin diye zinciri açan nesne burada sayılmaz.)
     _comboStreak++;
     if (_comboStreak > _runMaxCombo) _runMaxCombo = _comboStreak;
     const cmNow = comboMul();
@@ -10486,6 +10521,31 @@ const ARC_DB = (() => {
       _comboPopT = 0.28; _comboHudPop = true;
       if (runCombo === COMBO_START) spawnFloatText(player.x, player.y - player.r - 34, 'COMBO!', 48, 1.3);
       else if (cmNow === comboCap()) spawnFloatText(player.x, player.y - player.r - 34, 'MAX COMBO ×' + cmNow, 48, 1.3);
+    }
+  }
+  // ── Combo çubuğu (HUD): 3 parça. Zincirde dolu halkalar tam, en yeni halka pencere süresiyle geri gider.
+  // Combo açılınca parçalar birleşip altın çubuğa döner (süreyle azalmaya devam eder); kırılınca dağılır.
+  let _comboSegBreak = false, _comboSegGold = false, _segEls = null;
+  function updateComboSegs(cm, win) {
+    const bar = document.getElementById('combo-bar');
+    if (!_segEls) _segEls = [...bar.querySelectorAll('.cs > b')];
+    const gold = cm >= 2;
+    if (gold !== _comboSegGold) {
+      _comboSegGold = gold;
+      bar.classList.toggle('gold', gold);
+      if (gold) { bar.classList.remove('gold-in'); void bar.offsetWidth; bar.classList.add('gold-in'); }
+    }
+    if (_comboSegBreak) {
+      _comboSegBreak = false;
+      bar.classList.remove('break'); void bar.offsetWidth; bar.classList.add('break');
+      setTimeout(() => bar.classList.remove('break'), 520);
+      return;   // dağılma animasyonu son dolulukla oynar
+    }
+    const n = Math.min(3, runCombo);
+    for (let k = 0; k < 3; k++) {
+      // altın: tek çubuk gibi süreyle boşalır; parçalı: dolu halkalar tam, en yenisi süreyle
+      const f = gold ? Math.max(0, Math.min(1, win * 3 - k)) : k < n - 1 ? 1 : k === n - 1 ? win : 0;
+      setStyle(_segEls[k], 'transform', `scaleX(${f.toFixed(3)})`);
     }
   }
   // Combo zinciri kırıldı: biriken pot patlar, skora eklenir, sayaç sıfırlanır.
@@ -10511,6 +10571,7 @@ const ARC_DB = (() => {
   function comboBreak() {
     _comboStreak = 0;
     if (comboMul() >= 2) _comboHudPop = true;
+    if (runCombo > 0) _comboSegBreak = true;   // HUD: parçalı çubuk efektle dağılır
     runCombo = 0; _comboPot = 0; _comboPopT = 0;
   }
   // Combo etiketi: topun ÜSTÜNDE sabit kalır (oyuncuyla birlikte hareket eder), her kare çizilir.
@@ -10664,7 +10725,7 @@ const ARC_DB = (() => {
       setTxt(comboVal, String(totM));
       comboEl.classList.toggle('on', cm >= 2);
       comboEl.classList.toggle('max', cm >= cap);
-      comboEl.classList.toggle('win', cm >= 2 && win > 0);   // COMBO satırı + çizgi yalnız combo başlayınca
+      comboEl.classList.toggle('win', (cm >= 2 || runCombo > 0) && win > 0);   // zincir varken parçalı çubuk, combo'da altın çubuk
       // Çarpan büyüdükçe hap büyür ve rengi kademelenir
       if (totM !== _lastTotM) {
         _lastTotM = totM;
@@ -10675,7 +10736,7 @@ const ARC_DB = (() => {
       }
       // Her adımda çağrılır → yalnız değişen değer DOM'a yazılır (gereksiz stil/yerleşim hesabı olmasın)
       setTxt(document.getElementById('combo-cm'), '×' + cm + (cm >= cap ? ' MAX' : ''));
-      setStyle(document.getElementById('combo-bar-fill'), 'transform', `scaleX(${win.toFixed(3)})`);
+      updateComboSegs(cm, win);
       setStyle(document.getElementById('combo-pill'), '--cg', cm >= 2 ? ((cm - 1) / Math.max(1, cap - 1)).toFixed(2) : '0');
       // Partiküller: combo seviyesine göre sıklık; seri yükselince patlama (LOWFX'te yok)
       if (!LOWFX && cm >= 2 && Math.random() < dt * (3 + cm * 3)) comboFx(1, cm);
@@ -10973,8 +11034,8 @@ const ARC_DB = (() => {
           tutLater(500, () => { if (tutActive && tutStage === 2) enterTutStage(3); });
           continue;
         }
-        if (gameMode === 'wife') {           // Vanilla: combo / puan yok — yalnız toplanan yeşil sayılır
-          _vanGreens++;
+        if (gameMode === 'wife') {           // Vanilla: combo / puan yok — yeşil +1
+          vanAdd(1);
           spawnFloatText(b.x, b.y - b.r - 8, '+1', 120, 1);
           bonuses.splice(i, 1);
           spawnGreenPull(b.x, b.y);
@@ -10999,6 +11060,13 @@ const ARC_DB = (() => {
     for (let i = goldBalls.length - 1; i >= 0; i--) {
       const b = goldBalls[i];
       if (magPull(b, player.r + Math.max(12, b.r * 9))) {
+        if (gameMode === 'wife') {           // Vanilla: altın +5 (combo / puan / coin yok)
+          vanAdd(5, true);
+          spawnFloatText(b.x, b.y - 10, '+5', 280, 1.3);
+          spawnGoldHome(b.x, b.y); addWarp('blob', b.x, b.y); addWarp('ring', b.x, b.y);
+          goldBalls.splice(i, 1);
+          continue;
+        }
         // Base 100, süre katsayısı önce, booster katsayısı üstüne
         const cd = Math.max(0, Math.ceil(energy * comboDisplayMax()));
         const timeMul  = timeMulFor(cd);
@@ -11506,7 +11574,7 @@ const ARC_DB = (() => {
     const x2Btn = document.getElementById('btn-coin-x2');
     if (x2Btn) { x2Btn.disabled = false; x2Btn.hidden = !(AdProvider.available() && !_adDoubleUsed && _x2Amount >= 1); }
     const vanillaGo = gameMode === 'wife';
-    try { document.getElementById('go-score-lbl').textContent = vanillaGo ? 'GREENS' : wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
+    try { document.getElementById('go-score-lbl').textContent = vanillaGo ? 'COLLECTED' : wasDaily ? 'DAILY SCORE' : 'SCORE'; } catch(_) {}
     document.querySelector('#gameover .panel')?.classList.toggle('go-vanilla', vanillaGo);
     // Geçiş reklamı (koşullar uygunsa) ölümle oyun sonu ekranı arasında — sayım/coin animasyonu reklamın altında kalmasın
     await new Promise(res => maybeInterstitial(res));
@@ -12441,39 +12509,6 @@ const ARC_DB = (() => {
   // ── Debug overlay (T twice on desktop, swipe RTL on mobile) ─
   let debugOverlayOn = false;
   let lastTPress = 0;
-  let lastRPress = 0;
-  function devCheatBoost() {
-    // +900 coin. Artık distTotal'a dokunmuyor — eski yöntem mesafe odometresini
-    // ileri iterek test cihazını gerçek oyuncudan farklı bir ekonomiye sokuyordu.
-    coinsEarned += 900;
-    syncCoins();
-    // Minimum 2000 score & 1500cm mesafe — her iki mode için yüksek olanı tut
-    stats.bestNormal     = Math.max(stats.bestNormal || 0, 2000);
-    stats.bestExtreme    = Math.max(stats.bestExtreme || 0, 2000);
-    stats.bestDistNormal  = Math.max(stats.bestDistNormal  || 0, 1500);
-    stats.bestDistExtreme = Math.max(stats.bestDistExtreme || 0, 1500);
-    best          = Math.max(best, 2000);
-    bestDistanceM = Math.max(bestDistanceM, 1500);
-    localStorage.setItem('arc_best', String(best));
-    localStorage.setItem('arc_bestdist', String(bestDistanceM));
-    saveStats();
-    try { applyProfile(); } catch(_){}
-    console.log('[ArcRise dev] RR cheat: +900 coins, best≥2000, dist≥1500cm');
-  }
-  // Telefonda dev coin'i: debug modunda Coins penceresindeki sayıya 2.5 sn içinde 5 dokunuş → +900 coin.
-  // (Yalnız coin — RR'deki gibi rekorları şişirmez; o rekorlar oyuncu listesine gidiyor.)
-  let _devTaps = [];
-  function devCoinTap() {
-    if (!window.ARC_DEBUG) return false;
-    const now = performance.now();
-    _devTaps = _devTaps.filter(t => now - t < 2500); _devTaps.push(now);
-    if (_devTaps.length < 5) return false;
-    _devTaps = [];
-    coinsEarned += 900; syncCoins();
-    try { applyProfile(); } catch(_){}
-    try { showToast('+900 COINS (DEV)'); } catch(_){}
-    return true;
-  }
   function toggleDebug(force) {
     debugOverlayOn = (force !== undefined) ? force : !debugOverlayOn;
     const el = document.getElementById('debug-overlay');
@@ -12488,11 +12523,6 @@ const ARC_DB = (() => {
       const now = performance.now();
       if (now - lastTPress < 500) { toggleDebug(); lastTPress = 0; }
       else lastTPress = now;
-    }
-    else if ((e.key === 'r' || e.key === 'R') && window.ARC_DEBUG) {   // dev hilesi: yalnız debug modunda
-      const now = performance.now();
-      if (now - lastRPress < 500) { devCheatBoost(); lastRPress = 0; }
-      else lastRPress = now;
     }
   });
   // Horizontal swipe on mobile — right→left opens, left→right closes
@@ -15145,7 +15175,7 @@ const ARC_DB = (() => {
       if (!extremeUnlocked && !seenExtreme) {
         const bd = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
         const bs = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
-        extNew = bd >= EX_DIST_REQ_CM && bs >= EX_SCORE_REQ;
+        extNew = bd >= EX_DIST_REQ_CM && bs >= EX_SCORE_REQ && coins >= EX_PRICE;   // açılabilir hâle geldi
       }
     } catch(_) { extNew = false; }   // EX_* / extremeUnlocked TDZ koruması
     _setDot('#btn-settings', extNew);                      // home: ayarlar butonu
@@ -15666,22 +15696,22 @@ const ARC_DB = (() => {
   document.getElementById('wife-confirm').addEventListener('click', () => { setGameMode('wife'); closeWifeModal(); });
   document.getElementById('wife-back').addEventListener('click',    () => closeWifeModal());
   wifeModal.addEventListener('click', e => { if (e.target === wifeModal) closeWifeModal(); });
-  // Extreme: ya 45 coin direkt, ya 5m + 120 puan + 6 coin (indirim).
+  // Extreme kilidi: 1000 skor VE 10 m (en iyi, iki moddan) sağlandıktan sonra 100 coin. İndirim yok.
   // İlk satın alma sonrası unlock kalıcı.
-  const EX_DIRECT_PRICE   = 45;
-  const EX_DISCOUNT_PRICE = 6;
-  const EX_DIST_REQ_CM    = 500;   // 5.00 m
-  const EX_SCORE_REQ      = 120;    // v27 skor tabanları: 5 m'lik iyi run ≈ 100-200
+  const EX_PRICE       = 100;
+  const EX_DIST_REQ_CM = 1000;   // 10.00 m
+  const EX_SCORE_REQ   = 1000;
   let extremeUnlocked = localStorage.getItem('arc_extreme_unlocked') === '1';
-  function refreshExtremeReqs() {
+  function extremeReqsMet() {
     const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
     const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
-    const distOk      = bestDist >= EX_DIST_REQ_CM;
-    const scoreOk     = bestScore >= EX_SCORE_REQ;
-    const discountOK  = distOk && scoreOk;
-    const directOK    = coins >= EX_DIRECT_PRICE;
-    const price       = discountOK ? EX_DISCOUNT_PRICE : EX_DIRECT_PRICE;
-    const canBuy      = extremeUnlocked || coins >= price;
+    return { bestDist, bestScore, distOk: bestDist >= EX_DIST_REQ_CM, scoreOk: bestScore >= EX_SCORE_REQ };
+  }
+  function refreshExtremeReqs() {
+    const { bestDist, bestScore, distOk, scoreOk } = extremeReqsMet();
+    const directOK    = coins >= EX_PRICE;
+    const price       = EX_PRICE;
+    const canBuy      = extremeUnlocked || (distOk && scoreOk && directOK);
 
     // Direct row
     const rowDirect = document.getElementById('ex-req-direct');
@@ -15689,7 +15719,6 @@ const ARC_DB = (() => {
     rowDirect.querySelector('.ex-req-check').innerHTML = iconHTML(directOK ? 'check' : 'cross', { size: 14, color: directOK ? '#66ff88' : '#ff5566' });
     document.getElementById('ex-req-direct-val').textContent = directOK ? '' : `(have: ${coins})`;
 
-    // Discount path rows
     const rowDist  = document.getElementById('ex-req-dist');
     const rowScore = document.getElementById('ex-req-score');
     rowDist.className  = 'ex-req-row ' + (distOk ? 'met' : 'unmet');
@@ -15706,11 +15735,9 @@ const ARC_DB = (() => {
     // Already unlocked: hide reqs
     if (extremeUnlocked) {
       document.getElementById('ex-path-direct-head').textContent = 'UNLOCKED';
-      document.getElementById('ex-path-discount-head').style.display = 'none';
       rowDist.style.display = 'none';
       rowScore.style.display = 'none';
       rowDirect.style.display = 'none';
-      document.querySelector('.ex-path-or').style.display = 'none';
     }
 
     const btn = document.getElementById('extreme-confirm');
@@ -15739,11 +15766,9 @@ const ARC_DB = (() => {
   });
   document.getElementById('extreme-confirm').addEventListener('click', () => {
     if (!extremeUnlocked) {
-      const bestDist  = Math.max(stats.bestDistNormal || 0, stats.bestDistExtreme || 0);
-      const bestScore = Math.max(stats.bestNormal || 0, stats.bestExtreme || 0);
-      const discountOK = bestDist >= EX_DIST_REQ_CM && bestScore >= EX_SCORE_REQ;
-      const price = discountOK ? EX_DISCOUNT_PRICE : EX_DIRECT_PRICE;
-      if (!spendCoins(price)) return;
+      const { distOk, scoreOk } = extremeReqsMet();
+      if (!distOk || !scoreOk) return;   // şartlar sağlanmadan satın alınamaz
+      if (!spendCoins(EX_PRICE)) return;
       extremeUnlocked = true;
       localStorage.setItem('arc_extreme_unlocked', '1');
     }
@@ -17006,8 +17031,6 @@ const ARC_DB = (() => {
     if (wb) wb.innerHTML = iconHTML('bottle', { size: 22, color: '#ff77cc' });
     const ei = document.getElementById('extreme-icon');
     if (ei) ei.innerHTML = iconHTML('bolt', { size: 64, color: '#ff5522' });
-    const eci = document.getElementById('ex-coin-icon');
-    if (eci) eci.innerHTML = iconHTML('coin', { size: 18 });
     const wi = document.getElementById('wife-icon');
     if (wi) wi.innerHTML = iconHTML('bottle', { size: 64, color: '#ff77cc' });
   })();

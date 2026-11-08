@@ -893,13 +893,32 @@ test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
   check(pr.every(x => x.endsWith('=0')), `hemen ölen run görev ilerletti: ${pr.join(', ')}`);
 });
 
+test('combo çubuğu: 3 parça sırayla dolar, 4. nesnede altın çubuğa döner, kırılınca dağılır', async () => {
+  await fresh();
+  await ev(`document.getElementById('btn-start').click(); ARC_TEST.straight(-Math.PI / 2); ARC_TEST.ghost(12); true`); await sleep(400);   // duvar / engelde ölmesin (ölüm zinciri efektsiz sıfırlar)
+  const segs = () => ev(`[...document.querySelectorAll('#combo-bar .cs > b')].map(b => parseFloat(b.style.transform.slice(7)) || 0)`);
+  const st = () => ev(`({ gold: document.getElementById('combo-bar').classList.contains('gold'), vis: document.getElementById('combo-hud').classList.contains('win'), n: ARC_TEST.combo.n, mul: ARC_TEST.combo.mul })`);
+  // her nesne bir halka: kendi önüne yeşil koy, alındıkça bir parça daha dolar
+  for (let k = 1; k <= 3; k++) {
+    await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(250);
+    const s = await segs(), t = await st();
+    check(t.n === k && t.vis && !t.gold && s.slice(0, k - 1).every(f => f >= 0.999) && s[k - 1] > 0.5 && s.slice(k).every(f => f === 0), `${k}. halka: ${JSON.stringify({ s, t })}`);
+  }
+  await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(250);
+  const t4 = await st();
+  check(t4.mul === 2 && t4.gold, `4. nesnede combo/altın çubuk yok: ${JSON.stringify(t4)}`);
+  // pencere kapanınca kırılır → dağılma efekti
+  check(await waitFor(`document.getElementById('combo-bar').classList.contains('break')`, 6000), 'kırılınca dağılma efekti yok');
+  check((await st()).n === 0, 'zincir sıfırlanmadı');
+});
+
 test('combo: seri çarpanı tüm kazançları çarpar (v27 tabanları)', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
   const cap = (await ev('ARC_TEST.combo')).cap;
-  await ev(`ARC_TEST.setCombo(2); true`);
-  check((await ev('ARC_TEST.combo')).mul === 1, '2 topta combo başlamamalı');
-  await ev(`ARC_TEST.setCombo(4); true`);   // combo 3 topla ×2 başlar → 4 top = ×3
+  await ev(`ARC_TEST.setCombo(3); true`);
+  check((await ev('ARC_TEST.combo')).mul === 1, '3 halkada (çubuk dolu) combo başlamamalı');
+  await ev(`ARC_TEST.setCombo(5); true`);   // 4. nesnede ×2 → 5 nesne = ×3
   check((await ev('ARC_TEST.combo')).mul === Math.min(3, cap), 'combo çarpanı 3 değil');
   const b0 = await ev('ARC_TEST.bonus');
   await ev(`ARC_TEST.ghost(3); ARC_TEST.spawnFeatHere('gate'); true`); await sleep(400);
@@ -1106,10 +1125,12 @@ test('vanilla: yalnız yeşil sayılır, combo / yükseltme yok, hiçbir şey ka
   check(fx.timer === 8 && await ev('ARC_TEST.magRing') === 0, `Vanilla'da yükseltme çalışıyor: ${JSON.stringify(fx)}`);
   const hud = await ev(`({ lbl: document.getElementById('h-score-lbl').textContent,
     combo: getComputedStyle(document.getElementById('combo-hud')).display, dist: getComputedStyle(document.querySelector('.hud-tr')).display })`);
-  check(hud.lbl === 'GREENS' && hud.combo === 'none' && hud.dist === 'none', `HUD: ${JSON.stringify(hud)}`);
+  check(hud.combo === 'none' && hud.dist === 'none' && await ev(`getComputedStyle(document.getElementById('van-count')).display !== 'none'`), `HUD: ${JSON.stringify(hud)}`);
   await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(300);
   await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(300);
-  check(await ev(`document.getElementById('h-score').textContent`) === '2', `yeşil sayacı: ${await ev(`document.getElementById('h-score').textContent`)}`);
+  check(await ev(`document.querySelector('#van-count b').textContent`) === '2', `yeşil sayacı: ${await ev(`document.querySelector('#van-count b').textContent`)}`);
+  await ev(`ARC_TEST.spawnGoldHere(0, 0); true`); await sleep(300);
+  check(await ev(`document.querySelector('#van-count b').textContent`) === '7', `altın +5 değil: ${await ev(`document.querySelector('#van-count b').textContent`)}`);
   await ev(`ARC_TEST.obstacleAhead(40, 30); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 10000), 'Vanilla run engelde bitmedi'); await sleep(1500);
   check(await ls('arc_stats_v1') === st0, 'Vanilla istatistik kaydetti');
@@ -1480,6 +1501,30 @@ test('iPad / geniş ekran: oyun alanı 9:16 (kenarlar siyah), arayüz orantılı
     const p = await m();
     check(!p.lb && p.w === 390 && p.uiz === 1, `telefonda değişti: ${JSON.stringify(p)}`);
   } finally { await send('Emulation.clearDeviceMetricsOverride'); }
+});
+
+test('Extreme kilidi: 1000 skor + 10 m şartı, sonra 100 coin; indirim yok · "r r" hilesi yok', async () => {
+  const try_ = async (st, earned) => {
+    await fresh({ arc_score_v26: '1', arc_stats_unit: 'cm', arc_dist_reset_v2: '1', arc_combo_reset_v24: '1', arc_denom_v23: '1', arc_login_day: today(), arc_coins_earned: String(earned), arc_coins_spent: '0', arc_stats_v1: { gamesTotal: 5, ...st } });
+    await ev(`document.getElementById('btn-settings').click(); true`); await sleep(300);
+    await ev(`document.getElementById('mode-btn-extreme').click(); true`); await sleep(300);
+    const locked = await ev(`document.getElementById('extreme-confirm').classList.contains('locked')`);
+    const price = await ev(`document.getElementById('extreme-price').textContent`);
+    await ev(`document.getElementById('extreme-confirm').click(); true`); await sleep(200);
+    return { locked, price, unlocked: await ls('arc_extreme_unlocked') === '1', coins: await ev('ARC_TEST.coins') };
+  };
+  const a = await try_({ bestNormal: 999, bestDistNormal: 2000 }, 500);
+  check(a.locked && !a.unlocked && a.coins === 500 && a.price === '100', `skor eksikken açıldı: ${JSON.stringify(a)}`);
+  const b = await try_({ bestNormal: 5000, bestDistNormal: 999 }, 500);
+  check(b.locked && !b.unlocked, `mesafe eksikken açıldı: ${JSON.stringify(b)}`);
+  const c = await try_({ bestNormal: 1000, bestDistNormal: 1000 }, 99);
+  check(c.locked && !c.unlocked && c.coins === 99, `coin eksikken açıldı: ${JSON.stringify(c)}`);
+  const d = await try_({ bestNormal: 1000, bestDistNormal: 1000 }, 150);
+  check(!d.locked && d.unlocked && d.coins === 50, `şartlar tamken 100 coinle açılmadı: ${JSON.stringify(d)}`);
+  // klavyeden "r r" artık coin / skor / mesafe vermez
+  const c0 = await ev('ARC_TEST.coins');
+  await ev(`for (let i = 0; i < 2; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' })); true`); await sleep(200);
+  check(await ev('ARC_TEST.coins') === c0, '"r r" hâlâ coin veriyor');
 });
 
 // ── Koştur ───────────────────────────────────────────────────
