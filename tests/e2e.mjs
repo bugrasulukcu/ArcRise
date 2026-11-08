@@ -893,22 +893,25 @@ test('görevler: START\'a basıp hemen ölmek görev ilerletmez', async () => {
   check(pr.every(x => x.endsWith('=0')), `hemen ölen run görev ilerletti: ${pr.join(', ')}`);
 });
 
-test('combo çubuğu: 3 parça sırayla dolar, 4. nesnede altın çubuğa döner, kırılınca dağılır', async () => {
+test('combo halkası: 3 yay sırayla dolar, 4. nesnede altın çembere döner, süre azalınca kırmızıya kayar, kırılınca savrulur', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); ARC_TEST.straight(-Math.PI / 2); ARC_TEST.ghost(12); true`); await sleep(400);   // duvar / engelde ölmesin (ölüm zinciri efektsiz sıfırlar)
-  const segs = () => ev(`[...document.querySelectorAll('#combo-bar .cs > b')].map(b => parseFloat(b.style.transform.slice(7)) || 0)`);
-  const st = () => ev(`({ gold: document.getElementById('combo-bar').classList.contains('gold'), vis: document.getElementById('combo-hud').classList.contains('win'), n: ARC_TEST.combo.n, mul: ARC_TEST.combo.mul })`);
-  // her nesne bir halka: kendi önüne yeşil koy, alındıkça bir parça daha dolar
+  // yay doluluğu: stroke-dasharray'in ilk değeri / tam yay uzunluğu
+  const segs = () => ev(`(() => { const C = 2 * Math.PI * 37, L = C / 3 - 9; return [...document.querySelectorAll('#combo-ring .cr-seg')].map(c => +((parseFloat(c.getAttribute('stroke-dasharray')) || 0) / L).toFixed(2)); })()`);
+  const st = () => ev(`({ gold: document.getElementById('combo-ring-wrap').classList.contains('gold'), n: ARC_TEST.combo.n, mul: ARC_TEST.combo.mul, rc: document.getElementById('combo-ring-wrap').style.getPropertyValue('--rc') })`);
   for (let k = 1; k <= 3; k++) {
     await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(250);
     const s = await segs(), t = await st();
-    check(t.n === k && t.vis && !t.gold && s.slice(0, k - 1).every(f => f >= 0.999) && s[k - 1] > 0.5 && s.slice(k).every(f => f === 0), `${k}. halka: ${JSON.stringify({ s, t })}`);
+    check(t.n === k && !t.gold && s.slice(0, k - 1).every(f => f >= 0.99) && s[k - 1] > 0.5 && s.slice(k).every(f => f === 0), `${k}. halka: ${JSON.stringify({ s, t })}`);
   }
   await ev(`ARC_TEST.spawnBonusHere(0, 0, 14); true`); await sleep(250);
   const t4 = await st();
-  check(t4.mul === 2 && t4.gold, `4. nesnede combo/altın çubuk yok: ${JSON.stringify(t4)}`);
-  // pencere kapanınca kırılır → dağılma efekti
-  check(await waitFor(`document.getElementById('combo-bar').classList.contains('break')`, 6000), 'kırılınca dağılma efekti yok');
+  check(t4.mul === 2 && t4.gold, `4. nesnede combo/altın çember yok: ${JSON.stringify(t4)}`);
+  // süre azaldıkça altından kırmızıya (yeşil bileşen düşer), son 1.5 sn kalp atışı
+  check(await waitFor(`document.getElementById('combo-ring-wrap').classList.contains('beat')`, 8000), 'son saniyelerde kalp atışı yok');
+  check(await waitFor(`(() => { const m = /rgb\\(255,\\s*(\\d+)/.exec(document.getElementById('combo-ring-wrap').style.getPropertyValue('--rc')); return m && +m[1] < 150; })()`, 3000),
+    `süre azalınca kırmızıya dönmedi: ${await ev(`document.getElementById('combo-ring-wrap').style.getPropertyValue('--rc')`)}`);
+  check(await waitFor(`document.getElementById('combo-ring-wrap').classList.contains('break')`, 6000), 'kırılınca savrulma efekti yok');
   check((await st()).n === 0, 'zincir sıfırlanmadı');
 });
 

@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Combo dairesi + halka · büyük, hareketli skor / mesafe (2026-11-08)
+
+- **Combo:** hap yerine kademe renginde çarpan **dairesi**; çevresinde 3 yaylı SVG halka (zincir: yaylar sırayla yeşil dolar, en yenisi pencere süresiyle geri gider). Combo açılınca yaylar **altın tek çembere** döner (büyüme + parlama + dışa yayılan altın dalga). Çember süreyle boşalır ve **altından kırmızıya** kayar (`--rc`); **son 1.5 sn kalp atışı** (gup-gup, halka + daire). Kırılınca yaylar kırmızı parlayıp dışa savrulur, daire sarsılır. Boş yayların yuvarlak uçları gizlenir (nokta bırakmaz). Booster göstergesi halkanın altında (172 px).
+- **Skor / mesafe:** 17 → 20–28 px (`clamp`, 320 px'te halkaya değmez), sabit genişlikli rakam. Her metrede mesafe büyüyüp yeşil parlar; her puan kazanımında skor zıplar (≥20 puan: güçlü + altın ışık); rekor skor / mesafe geçilince sayı altın kalır ve bir kez parlar. Alt satırlar (BEST) 11 → 13 px.
+- Test: halka (yay yay dolum, 4. nesnede altın, kalp atışı, kırmızıya kayma, savrulma).
+
 ### Extreme kilidi: 100 coin + 1000 skor + 10 m · "r r" hilesi kaldırıldı (2026-11-08)
 
 - Extreme artık yalnız en iyi skor **1000** ve en iyi mesafe **10 m** (iki modun en iyisi) sağlandıktan sonra **100 coin**le açılır. İndirim yolu (eski: 45 coin direkt ya da 5 m + 120 puan + 6 coin) kaldırıldı. Pencerede tek "TO UNLOCK" listesi (skor / mesafe / 100 coin, eksikler en iyi değerle). Ayarlar'daki yeşil nokta yalnız üçü birden sağlanınca yanar.
