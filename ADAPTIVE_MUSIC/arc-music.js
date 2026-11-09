@@ -99,31 +99,6 @@ const ArcMusic = (() => {
       g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
       n.connect(f); f.connect(g); g.connect(drumBus);
     }
-    // Dubstep "wobble" bas: kirli testere + kare + alt sinüs → distorsiyon → rezonanslı lowpass; kesimi tempoya
-    // bağlı LFO açar/kapar (rate Hz: 1/8, 1/16, triplet …). Süre sonunda hızla kapanır.
-    const _wsCurve = (() => { const c = new Float32Array(512); for (let i = 0; i < 512; i++) { const x = i / 256 - 1; c[i] = Math.tanh(x * 3.2); } return c; })();
-    function wobble(m, t, dur, rate, lvl, open) {
-      const end = t + dur + 0.04, f0 = mtof(m);
-      const o1 = osc('sawtooth', f0, t, end), o2 = osc('square', f0, t, end), sub = osc('sine', f0 / 2, t, end);
-      o2.detune.setValueAtTime(-11, t); o1.detune.setValueAtTime(7, t);
-      const mix = G(0.5), ws = ctx.createWaveShaper(); ws.curve = _wsCurve;
-      o1.connect(mix); o2.connect(mix); mix.connect(ws);
-      const f = F('lowpass', 220, 9), base = 180 + 260 * open, depth = 900 + 2600 * open;
-      f.frequency.setValueAtTime(base + depth / 2, t);
-      const lfo = osc('sine', rate, t, end), lg = G(depth / 2); lfo.connect(lg); lg.connect(f.frequency);
-      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.012);
-      g.gain.setValueAtTime(lvl, t + dur * 0.92); g.gain.linearRampToValueAtTime(0.0001, end);
-      ws.connect(f); f.connect(g); g.connect(synthBus);
-      const sg = G(0); sg.gain.setValueAtTime(lvl * 1.1, t); sg.gain.setValueAtTime(lvl * 1.1, t + dur * 0.92); sg.gain.linearRampToValueAtTime(0.0001, end);
-      sub.connect(sg); sg.connect(drumBus);   // alt bas filtresiz, temiz
-    }
-    function clap(t, lvl) {
-      for (const d of [0, 0.011, 0.023]) {
-        const n = noiseSrc(t + d, t + d + 0.16), f = F('bandpass', 1300, 1.1), g = G(0);
-        g.gain.setValueAtTime(lvl, t + d); g.gain.exponentialRampToValueAtTime(0.001, t + d + (d ? 0.03 : 0.15));
-        n.connect(f); f.connect(g); g.connect(drumBus); if (!d) g.connect(revIn);
-      }
-    }
     function crash(t, lvl) {
       const n = noiseSrc(t, t + 1.6), f = F('highpass', 4200, 0.5), g = G(0);
       g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
@@ -179,7 +154,7 @@ const ArcMusic = (() => {
       else if (S.scene !== 'play') { f = 700; pf = 800; }
       else if (S.mode === 'vanilla') { f = 2400; pf = 1300; }
       else {
-        f = 3200 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
+        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
         pf = 800 + 1700 * S.eS + 380 * S.combo;
       }
       musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
@@ -193,7 +168,7 @@ const ArcMusic = (() => {
       if (s === 0) {
         S.bpm = targetBpm();
         dly.delayTime.setTargetAtTime(Math.min(1.9, spb() * 3), t, 0.05);
-        const lvl = S.scene === 'dead' ? 0.022 : (play && !van ? 0.016 : (play ? 0.03 : 0.034));   // oyunda pad geri planda
+        const lvl = S.scene === 'dead' ? 0.022 : (play ? 0.03 : 0.034);
         for (const m of ch.n) padNote(m, t, spb() * 16, lvl);
         S.chord = ch.name;
       }
@@ -209,26 +184,20 @@ const ArcMusic = (() => {
         if (s === 0 || s === 8) { bass(ch.b, t, spb() * 7, 0.12, 0.1); L.add('bass'); }
         return;
       }
-      // ── Dubstep düzeni (Chill + Extreme): kırık kick, 2 ve 4'te snare+clap, 16'lık hat, wobble bas ──
-      // Yoğunluk (mesafe) arttıkça: wobble hızlanır/açılır, hat sıklaşır, kick dolar, bar sonu fill.
-      const beat = S.bpm / 60, bar4 = bar % 4;
-      const KICK = x || e > 0.6 ? [0, 3, 6, 10, 11] : [0, 6, 10];
-      if (KICK.includes(s)) kick(t, s === 0 || s === 10 ? (x ? 1 : 0.92) : 0.62);
+      if (s % 4 === 0) kick(t, x ? 0.95 : 0.85);     // kick run'ın ilk anından her vuruşta (2026-11-09)
       L.add('kick');
-      if (s === 4 || s === 12) { snare(t, x ? 0.32 : 0.28); clap(t, 0.16); L.add('snare'); }
-      if (bar4 === 3 && s >= 13 && e > 0.3) snare(t, 0.12 + 0.05 * (s - 13));           // bar sonu fill
-      const hatLvl = 0.035 + 0.04 * e + (boost ? 0.02 : 0);
-      if (s % 2 === 0) hat(t, s % 4 === 2 ? hatLvl * 1.5 : hatLvl, s === 14 && bar4 === 3);
-      else if (e > 0.4 || x || boost) hat(t, hatLvl * 0.6, false);
-      L.add('hats');
-      // wobble: yarım ölçü başına bir nota; LFO hızı ölçüye göre 1/8 → 1/16 → triplet → 1/16 (yoğunlukta daha hızlı)
-      if (s === 0 || s === 8) {
-        const RATES = e > 0.55 || x ? [4, 6, 4, 8] : [2, 4, 2, 3];
-        const rate = beat * RATES[(bar4 * 2 + (s ? 1 : 0)) % 4];
-        const m = s === 8 && bar4 % 2 ? ch.b + 3 : ch.b;               // ikinci yarıda küçük bir hareket
-        wobble(m, t, spb() * 7.6, rate, x ? 0.2 : 0.17, Math.min(1, 0.25 + e * 0.75 + (boost ? 0.3 : 0)));
-        L.add('wobble');
+      if (e > 0.22 || x) {
+        if (x) { const m = (s % 4 === 2) ? ch.b + 12 : ch.b; bass(m, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); }
+        else if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
+        else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
+        L.add('bass');
       }
+      if (e > 0.35 || x || boost) {
+        if (s % 4 === 2) hat(t, 0.09, x && s === 14);
+        if ((e > 0.72 || x || boost) && s % 2 === 1) hat(t, 0.045, false);
+        L.add('hats');
+      }
+      if (e > 0.45 || x) { if (s === 4 || s === 12) snare(t, x ? 0.3 : 0.24); L.add('snare'); }
       if (S.combo >= 1) {
         const tones = [ch.n[0], ch.n[1], ch.n[2], ch.n[1] + 12, ch.n[2] + 12, ch.n[0] + 12];
         const every = S.combo >= 2 ? 1 : 2;

@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Müzik ilk sürüme döndü, kick baştan; SFX varsayılanı tam ses (2026-11-09)
+- Buğra: dubstep düzeni yerine ilk ArcMusic sürümü daha iyi → motor 120 BPM'li ilk sürüme döndürüldü (wobble/clap kaldırıldı). Tek fark: **kick run'ın ilk anından her vuruşta** (eskiden mesafeyle giriyordu). Ses seviyesi API'si (0..1) korundu.
+- SFX varsayılanı yeniden **1** (eski seviye). Açılışta seviyeler artık kendiliğinden kaydedilmez (yalnız kaydırıcı oynatılınca); kısa süreli `arc_sfx_vol = 0.6` kaydı bir kez silinir (`arc_vol_v2`).
+- Kaydırıcılar duruyor.
+
 ### Dubstep tarzı müzik + ses kaydırıcıları (2026-11-09)
 - **ArcMusic dubstep düzeni** (Chill + Extreme; Vanilla sakin kaldı): her yarım ölçüde **wobble bas** (testere + kare → distorsiyon → rezonanslı lowpass, kesimi tempoya bağlı LFO açar/kapar; ölçüye göre 1/8 → 1/16 → triplet, mesafeyle hızlanır ve açılır) + temiz alt sinüs; kırık kick (0, 6, 10; yoğunlukta 3 ve 11 de), 2 ve 4'te snare + clap, 16'lık hat, 4. ölçü sonunda snare fill. Oyunda pad geri planda, filtre baştan daha açık → run baştan enerjik. Tempo Chill 120 sabit.
 - **SFX / Music kaydırıcıları** (Ayarlar, On/Off yerine): koyu cam yuva, soldan gökkuşağı dolgu (tüm gökkuşağı dolgu genişliğine sığar), beyaz dikey tutamaç. `arc_sfx_vol` / `arc_mus_vol` (0..1) anında kaydedilir; eski `arc_sfx`/`arc_mus` = '0' kaydı 0'a çevrilir. **SFX varsayılanı 0.6** (biraz kısık). Klasik sistemde: müzik `_BG_MAX (0.7) × musVol`, tüm SFX tek `_sfxGain` düğümünden; ArcMusic'te `setMusicEnabled/setSfxEnabled` artık 0..1 seviye de alır. 0 = kapalı (eski davranış). SFX bırakılınca örnek tık sesi.
