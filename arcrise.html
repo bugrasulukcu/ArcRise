@@ -784,6 +784,21 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.7);
     }
 
+    /* Ses kaydırıcısı: koyu cam yuva, soldan gökkuşağı dolgu (tüm gökkuşağı dolgu genişliğine sığar — referans), beyaz dikey tutamaç */
+    .vol { --v: 1; position: relative; width: 168px; height: 34px; border-radius: 12px; touch-action: none;
+      border: 1px solid rgba(255,255,255,.18);
+      background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.07), transparent 60%), linear-gradient(180deg, rgba(40,46,60,.85), rgba(14,18,28,.85));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.2); }
+    .vol::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--v) * 100%); border-radius: 11px; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,.28), transparent 45%, rgba(0,0,0,.18)),
+                  linear-gradient(90deg, #e2524f, #e6cf6c 24%, #7CFF7A 46%, #46c6e6 64%, #4a6cff 80%, #a44dff);
+      opacity: .92; }
+    .vol::after { content: ''; position: absolute; top: -4px; bottom: -4px; width: 6px; border-radius: 3px; pointer-events: none;
+      left: calc(var(--v) * (100% - 6px)); background: #fff; box-shadow: 0 0 8px rgba(255,255,255,.75), 0 0 2px #fff; }
+    .vol.zero::after { background: rgba(255,255,255,.55); box-shadow: none; }
+    .vol input { position: absolute; inset: -10px -4px; width: calc(100% + 8px); height: calc(100% + 20px); margin: 0; opacity: 0; cursor: pointer; }
+    @media (max-width: 360px) { .vol { width: 132px; } }
+
     /* On/Off toggle */
     .tog {
       display: flex; border-radius: 12px; overflow: hidden;
@@ -4527,10 +4542,7 @@
       </span>
       <span class="slbl">SFX</span>
       <div class="sctl">
-        <div class="tog">
-          <button class="tog-btn active-on"  id="sfx-on">On</button>
-          <button class="tog-btn active-off" id="sfx-off">Off</button>
-        </div>
+        <div class="vol" id="sfx-vol"><input type="range" min="0" max="100" step="1" value="60" aria-label="SFX volume"></div>
       </div>
     </div>
 
@@ -4544,10 +4556,7 @@
       </span>
       <span class="slbl">Music</span>
       <div class="sctl">
-        <div class="tog">
-          <button class="tog-btn active-on"  id="mus-on">On</button>
-          <button class="tog-btn active-off" id="mus-off">Off</button>
-        </div>
+        <div class="vol" id="mus-vol"><input type="range" min="0" max="100" step="1" value="100" aria-label="Music volume"></div>
       </div>
     </div>
 
@@ -5315,6 +5324,31 @@ const ArcMusic = (() => {
       g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
       n.connect(f); f.connect(g); g.connect(drumBus);
     }
+    // Dubstep "wobble" bas: kirli testere + kare + alt sinüs → distorsiyon → rezonanslı lowpass; kesimi tempoya
+    // bağlı LFO açar/kapar (rate Hz: 1/8, 1/16, triplet …). Süre sonunda hızla kapanır.
+    const _wsCurve = (() => { const c = new Float32Array(512); for (let i = 0; i < 512; i++) { const x = i / 256 - 1; c[i] = Math.tanh(x * 3.2); } return c; })();
+    function wobble(m, t, dur, rate, lvl, open) {
+      const end = t + dur + 0.04, f0 = mtof(m);
+      const o1 = osc('sawtooth', f0, t, end), o2 = osc('square', f0, t, end), sub = osc('sine', f0 / 2, t, end);
+      o2.detune.setValueAtTime(-11, t); o1.detune.setValueAtTime(7, t);
+      const mix = G(0.5), ws = ctx.createWaveShaper(); ws.curve = _wsCurve;
+      o1.connect(mix); o2.connect(mix); mix.connect(ws);
+      const f = F('lowpass', 220, 9), base = 180 + 260 * open, depth = 900 + 2600 * open;
+      f.frequency.setValueAtTime(base + depth / 2, t);
+      const lfo = osc('sine', rate, t, end), lg = G(depth / 2); lfo.connect(lg); lg.connect(f.frequency);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.012);
+      g.gain.setValueAtTime(lvl, t + dur * 0.92); g.gain.linearRampToValueAtTime(0.0001, end);
+      ws.connect(f); f.connect(g); g.connect(synthBus);
+      const sg = G(0); sg.gain.setValueAtTime(lvl * 1.1, t); sg.gain.setValueAtTime(lvl * 1.1, t + dur * 0.92); sg.gain.linearRampToValueAtTime(0.0001, end);
+      sub.connect(sg); sg.connect(drumBus);   // alt bas filtresiz, temiz
+    }
+    function clap(t, lvl) {
+      for (const d of [0, 0.011, 0.023]) {
+        const n = noiseSrc(t + d, t + d + 0.16), f = F('bandpass', 1300, 1.1), g = G(0);
+        g.gain.setValueAtTime(lvl, t + d); g.gain.exponentialRampToValueAtTime(0.001, t + d + (d ? 0.03 : 0.15));
+        n.connect(f); f.connect(g); g.connect(drumBus); if (!d) g.connect(revIn);
+      }
+    }
     function crash(t, lvl) {
       const n = noiseSrc(t, t + 1.6), f = F('highpass', 4200, 0.5), g = G(0);
       g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
@@ -5370,7 +5404,7 @@ const ArcMusic = (() => {
       else if (S.scene !== 'play') { f = 700; pf = 800; }
       else if (S.mode === 'vanilla') { f = 2400; pf = 1300; }
       else {
-        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
+        f = 3200 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
         pf = 800 + 1700 * S.eS + 380 * S.combo;
       }
       musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
@@ -5384,7 +5418,7 @@ const ArcMusic = (() => {
       if (s === 0) {
         S.bpm = targetBpm();
         dly.delayTime.setTargetAtTime(Math.min(1.9, spb() * 3), t, 0.05);
-        const lvl = S.scene === 'dead' ? 0.022 : (play ? 0.03 : 0.034);
+        const lvl = S.scene === 'dead' ? 0.022 : (play && !van ? 0.016 : (play ? 0.03 : 0.034));   // oyunda pad geri planda
         for (const m of ch.n) padNote(m, t, spb() * 16, lvl);
         S.chord = ch.name;
       }
@@ -5400,22 +5434,26 @@ const ArcMusic = (() => {
         if (s === 0 || s === 8) { bass(ch.b, t, spb() * 7, 0.12, 0.1); L.add('bass'); }
         return;
       }
-      if (e > 0.12 || x) {
-        if (s % 4 === 0 && (e > 0.5 || x || s % 8 === 0)) { kick(t, x ? 0.95 : 0.85); }
-        L.add('kick');
+      // ── Dubstep düzeni (Chill + Extreme): kırık kick, 2 ve 4'te snare+clap, 16'lık hat, wobble bas ──
+      // Yoğunluk (mesafe) arttıkça: wobble hızlanır/açılır, hat sıklaşır, kick dolar, bar sonu fill.
+      const beat = S.bpm / 60, bar4 = bar % 4;
+      const KICK = x || e > 0.6 ? [0, 3, 6, 10, 11] : [0, 6, 10];
+      if (KICK.includes(s)) kick(t, s === 0 || s === 10 ? (x ? 1 : 0.92) : 0.62);
+      L.add('kick');
+      if (s === 4 || s === 12) { snare(t, x ? 0.32 : 0.28); clap(t, 0.16); L.add('snare'); }
+      if (bar4 === 3 && s >= 13 && e > 0.3) snare(t, 0.12 + 0.05 * (s - 13));           // bar sonu fill
+      const hatLvl = 0.035 + 0.04 * e + (boost ? 0.02 : 0);
+      if (s % 2 === 0) hat(t, s % 4 === 2 ? hatLvl * 1.5 : hatLvl, s === 14 && bar4 === 3);
+      else if (e > 0.4 || x || boost) hat(t, hatLvl * 0.6, false);
+      L.add('hats');
+      // wobble: yarım ölçü başına bir nota; LFO hızı ölçüye göre 1/8 → 1/16 → triplet → 1/16 (yoğunlukta daha hızlı)
+      if (s === 0 || s === 8) {
+        const RATES = e > 0.55 || x ? [4, 6, 4, 8] : [2, 4, 2, 3];
+        const rate = beat * RATES[(bar4 * 2 + (s ? 1 : 0)) % 4];
+        const m = s === 8 && bar4 % 2 ? ch.b + 3 : ch.b;               // ikinci yarıda küçük bir hareket
+        wobble(m, t, spb() * 7.6, rate, x ? 0.2 : 0.17, Math.min(1, 0.25 + e * 0.75 + (boost ? 0.3 : 0)));
+        L.add('wobble');
       }
-      if (e > 0.22 || x) {
-        if (x) { const m = (s % 4 === 2) ? ch.b + 12 : ch.b; bass(m, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); }
-        else if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
-        else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
-        L.add('bass');
-      }
-      if (e > 0.35 || x || boost) {
-        if (s % 4 === 2) hat(t, 0.09, x && s === 14);
-        if ((e > 0.72 || x || boost) && s % 2 === 1) hat(t, 0.045, false);
-        L.add('hats');
-      }
-      if (e > 0.45 || x) { if (s === 4 || s === 12) snare(t, x ? 0.3 : 0.24); L.add('snare'); }
       if (S.combo >= 1) {
         const tones = [ch.n[0], ch.n[1], ch.n[2], ch.n[1] + 12, ch.n[2] + 12, ch.n[0] + 12];
         const every = S.combo >= 2 ? 1 : 2;
@@ -5468,8 +5506,8 @@ const ArcMusic = (() => {
         if (S.timer) { clearInterval(S.timer); S.timer = null; }
       },
       setMode(m) { if (PROG[m]) S.mode = m; },
-      setMusicEnabled(on, at) { musicVol.gain.setTargetAtTime(on ? 1 : 0, now(at), 0.05); },
-      setSfxEnabled(on, at) { sfx.gain.setTargetAtTime(on ? 0.9 : 0, now(at), 0.02); },
+      setMusicEnabled(on, at) { musicVol.gain.setTargetAtTime(typeof on === 'number' ? Math.max(0, Math.min(1, on)) : (on ? 1 : 0), now(at), 0.05); },   // true/false ya da 0..1 ses seviyesi
+      setSfxEnabled(on, at) { sfx.gain.setTargetAtTime(0.9 * (typeof on === 'number' ? Math.max(0, Math.min(1, on)) : (on ? 1 : 0)), now(at), 0.02); },
       setIntensity(v) { S.inten = Math.max(0, Math.min(1, v)); },
       setCombo(l) { S.combo = Math.max(0, Math.min(3, l | 0)); },
       tap(dir = 1, at) {
@@ -8142,8 +8180,13 @@ const ARC_DB = (() => {
   let _hudMeter = 0, _hudRecS = false, _hudRecD = false;
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
-  let sfxOn  = localStorage.getItem('arc_sfx') !== '0';
-  let musOn  = localStorage.getItem('arc_mus') !== '0';
+  // Ses seviyeleri 0..1 (Ayarlar'daki kaydırıcılar). Eski On/Off kaydı: Off → 0. SFX varsayılanı biraz kısık.
+  const SFX_VOL_DEF = 0.6, MUS_VOL_DEF = 1;
+  const _loadVol = (k, oldK, def) => { const v = parseFloat(localStorage.getItem(k)); return isFinite(v) ? Math.max(0, Math.min(1, v)) : (localStorage.getItem(oldK) === '0' ? 0 : def); };
+  let sfxVol = _loadVol('arc_sfx_vol', 'arc_sfx', SFX_VOL_DEF);
+  let musVol = _loadVol('arc_mus_vol', 'arc_mus', MUS_VOL_DEF);
+  let sfxOn  = sfxVol > 0;
+  let musOn  = musVol > 0;
   let aaOn   = false; // smooth permanently off — pixel-crisp look
   let bestDistanceM = Number(localStorage.getItem('arc_bestdist') || 0);
   // Migrate bestdist to cm (×7.5) one-time
@@ -8637,9 +8680,11 @@ const ARC_DB = (() => {
   //    sonradan toplu çalıyordu. <audio> yalnız Web Audio hiç yoksa yedek.
   //  • Uygulama arka plana gidince bağlam askıya alınır.
   const BG_SRC = 'AUDIO/ArcRiseBGMusic.mp3';
-  const _bgBaseVol = 0.7;
+  const _BG_MAX = 0.7;
+  const _bgVol = () => _BG_MAX * musVol;      // müzik kaydırıcısı
   let bgAudio = null;                        // yalnız Web Audio yoksa kullanılan yedek
   function _fallbackAudio(url, vol) { try { const a = new Audio(url); a.volume = vol; return a; } catch(_) { return null; } }
+  let _sfxGain = null;                       // tüm dosya/sentez SFX'leri buradan (SFX kaydırıcısı)
   let sfxCtx = null, touchBuffer = null, deadBuffer = null, musicBuffer = null;
   let _musicGain = null, _musicSrc = null, _musicStartAt = 0, _musicOffset = 0, _musicWanted = false;
   let _duckRAF = null;
@@ -8692,10 +8737,11 @@ const ARC_DB = (() => {
     if (sfxCtx) { if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {}); return; }
     try {
       sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
-      _musicGain = sfxCtx.createGain(); _musicGain.gain.value = _bgBaseVol; _musicGain.connect(sfxCtx.destination);
+      _musicGain = sfxCtx.createGain(); _musicGain.gain.value = _bgVol(); _musicGain.connect(sfxCtx.destination);
+      _sfxGain = sfxCtx.createGain(); _sfxGain.gain.value = sfxVol; _sfxGain.connect(sfxCtx.destination);
       if (ADAPTIVE_MUSIC) {   // dosya yüklenmez; motor kendi compressor/limiter'ı ile doğrudan çıkışa
         _arcMusic = ArcMusic.create(sfxCtx, sfxCtx.destination, { lite: LOWFX });
-        _arcMusic.setMusicEnabled(musOn); _arcMusic.setSfxEnabled(sfxOn);
+        _arcMusic.setMusicEnabled(musVol); _arcMusic.setSfxEnabled(sfxVol);
         if (_musicWanted) playBgMusic();
         return;
       }
@@ -8715,7 +8761,7 @@ const ARC_DB = (() => {
     const gain = sfxCtx.createGain();
     gain.gain.value = volume;
     src.connect(gain);
-    gain.connect(sfxCtx.destination);
+    gain.connect(_sfxGain || sfxCtx.destination);
     src.start(0);
     return true;
   }
@@ -8726,7 +8772,7 @@ const ARC_DB = (() => {
     if (playSfxBuffer(buffer, vol)) return;
     if (sfxCtx) return;
     const a = _sfxFallbacks[url] || (_sfxFallbacks[url] = _fallbackAudio(url, vol));
-    if (a) { const c = a.cloneNode(); c.volume = vol; c.play().catch(() => {}); }
+    if (a) { const c = a.cloneNode(); c.volume = vol * sfxVol; c.play().catch(() => {}); }
   }
 
   // Tanı: debug panelinde ve testlerde ses durumu (telefonda "müzik yok" gibi sorunlar için)
@@ -8741,7 +8787,7 @@ const ARC_DB = (() => {
       session: (navigator.audioSession && navigator.audioSession.type) || '-' };
   }
   function _musicPlaying() { if (ADAPTIVE_MUSIC) { const sc = _arcMusic && _arcMusic.state().scene; return sc === 'play' || sc === 'dead'; } return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
-  function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgBaseVol); }
+  function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgVol()); }
   function _setMusicVol(v) { if (_musicGain) _musicGain.gain.value = v; if (bgAudio) bgAudio.volume = v; }
   // ── Müzik kuralı (tek yer) ─────────────────────────────
   // Müzik YALNIZ şu durumda çalar: oyun ekranı + tutorial dışı + müzik açık + uygulama ön planda.
@@ -8775,12 +8821,12 @@ const ARC_DB = (() => {
       const src = sfxCtx.createBufferSource();
       src.buffer = musicBuffer; src.loop = true;
       src.connect(_musicGain);
-      _musicGain.gain.value = _bgBaseVol;
+      _musicGain.gain.value = _bgVol();
       src.start(0, _musicOffset % musicBuffer.duration);     // kaldığı yerden
       _musicSrc = src; _musicStartAt = sfxCtx.currentTime;
       return;
     }
-    if (!bgAudio) { bgAudio = _fallbackAudio(BG_SRC, _bgBaseVol); if (bgAudio) bgAudio.loop = true; }
+    if (!bgAudio) { bgAudio = _fallbackAudio(BG_SRC, _bgVol()); if (bgAudio) bgAudio.loop = true; }
     if (bgAudio && (bgAudio.paused || bgAudio.ended)) bgAudio.play().catch(e => console.warn('[Audio] BG play:', e));
   }
 
@@ -8794,7 +8840,7 @@ const ARC_DB = (() => {
       _musicSrc.disconnect(); _musicSrc = null;
     }
     if (bgAudio) bgAudio.pause();
-    _setMusicVol(_bgBaseVol);                                  // sıradaki çalış normal seviyeden
+    _setMusicVol(_bgVol());                                  // sıradaki çalış normal seviyeden
   }
 
   // ── Müzik dinamiği ──────────────────────────────────────
@@ -8813,7 +8859,7 @@ const ARC_DB = (() => {
   function duckMusic(on) {
     if (ADAPTIVE_MUSIC) return;            // kısma yok; booster parlaklığı activateBooster'da (_arcMusic.booster)
     if (!_musicPlaying()) return;
-    _rampMusicTo(on ? _bgBaseVol * 0.45 : _bgBaseVol, 250);
+    _rampMusicTo(on ? _bgVol() * 0.45 : _bgVol(), 250);
   }
   // Ölümde sert pause yerine 0.4s fade-out — dead SFX sting olarak öne çıkar
   function fadeOutMusic() {
@@ -8842,7 +8888,7 @@ const ARC_DB = (() => {
         g.gain.setValueAtTime(0.0001, t + d);
         g.gain.exponentialRampToValueAtTime(0.07, t + d + 0.006);
         g.gain.exponentialRampToValueAtTime(0.0001, t + d + len);
-        o.connect(g); g.connect(sfxCtx.destination);
+        o.connect(g); g.connect(_sfxGain || sfxCtx.destination);
         o.start(t + d); o.stop(t + d + len + 0.03);
       });
     } catch (_) {}
@@ -12998,26 +13044,39 @@ const ARC_DB = (() => {
   applyProfile();
 
   // ── Settings UI — toggles ─────────────────────────────────
+  // Ses kaydırıcıları: 0..1. true/false da kabul edilir (true → varsayılan seviye).
+  function _volUI(id, v) {
+    const w = document.getElementById(id); if (!w) return;
+    w.style.setProperty('--v', v.toFixed(3)); w.classList.toggle('zero', v <= 0);
+    const inp = w.querySelector('input'); if (inp && +inp.value !== Math.round(v * 100)) inp.value = Math.round(v * 100);
+  }
   function setSfx(v) {
-    sfxOn = v;   // playTouchSound / ölüm sesi sfxOn'a bakar
-    if (_arcMusic) _arcMusic.setSfxEnabled(v);
-    document.getElementById('sfx-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
-    document.getElementById('sfx-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
+    sfxVol = typeof v === 'number' ? Math.max(0, Math.min(1, v)) : (v ? SFX_VOL_DEF : 0);
+    sfxOn = sfxVol > 0;   // playTouchSound / ölüm sesi sfxOn'a bakar
+    if (_sfxGain) _sfxGain.gain.value = sfxVol;
+    if (_arcMusic) _arcMusic.setSfxEnabled(sfxVol);
+    _volUI('sfx-vol', sfxVol);
+    try { localStorage.setItem('arc_sfx_vol', String(sfxVol)); localStorage.setItem('arc_sfx', sfxOn ? '1' : '0'); } catch (_) {}
   }
   function setMus(v) {
-    musOn = v;
-    if (_arcMusic) _arcMusic.setMusicEnabled(v);
-    document.getElementById('mus-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
-    document.getElementById('mus-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
-    // If turned off mid-game, pause; if turned on mid-game, resume
-    v ? playBgMusic() : stopBgMusic();
+    const was = musOn;
+    musVol = typeof v === 'number' ? Math.max(0, Math.min(1, v)) : (v ? MUS_VOL_DEF : 0);
+    musOn = musVol > 0;
+    if (_arcMusic) _arcMusic.setMusicEnabled(musVol);
+    if (_musicGain && !_duckRAF) _musicGain.gain.value = _bgVol();
+    if (bgAudio) bgAudio.volume = _bgVol();
+    _volUI('mus-vol', musVol);
+    try { localStorage.setItem('arc_mus_vol', String(musVol)); localStorage.setItem('arc_mus', musOn ? '1' : '0'); } catch (_) {}
+    // Oyun ortasında kapatılırsa durur, açılırsa devam eder
+    if (musOn !== was || !musOn) musOn ? playBgMusic() : stopBgMusic();
   }
   applyAA();
-  document.getElementById('sfx-on').addEventListener('click',  () => setSfx(true));
-  document.getElementById('sfx-off').addEventListener('click', () => setSfx(false));
-  document.getElementById('mus-on').addEventListener('click',  () => setMus(true));
-  document.getElementById('mus-off').addEventListener('click', () => setMus(false));
-  setSfx(sfxOn); setMus(musOn);
+  [['sfx-vol', setSfx], ['mus-vol', setMus]].forEach(([id, fn]) => {
+    const inp = document.querySelector('#' + id + ' input');
+    inp.addEventListener('input', () => fn(inp.value / 100));
+    if (id === 'sfx-vol') inp.addEventListener('change', () => { initAudio(); playTouchSound(); });   // bırakınca örnek ses
+  });
+  setSfx(sfxVol); setMus(musVol);
 
   const fbOn  = document.getElementById('fb-on');
   const fbOff = document.getElementById('fb-off');
@@ -16281,8 +16340,6 @@ const ARC_DB = (() => {
   document.getElementById('btn-settings').addEventListener('click', () => showScene('settings'));
 
   document.getElementById('settings-back').addEventListener('click', () => {
-    localStorage.setItem('arc_sfx', sfxOn ? '1' : '0');
-    localStorage.setItem('arc_mus', musOn ? '1' : '0');
     localStorage.setItem('arc_fb', feedbackOn ? '1' : '0');
     showScene('home');
   });

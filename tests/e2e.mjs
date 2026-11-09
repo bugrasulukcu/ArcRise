@@ -406,6 +406,27 @@ test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor ç
   check(await ev(`ARC_TEST.audio.music !== 'adaptive'`), 'varsayılan sürümde uyarlanabilir müzik açık');
 });
 
+test('ses kaydırıcıları: SFX / Music 0–100, kaydedilir, eski Off kaydı 0 olur, 0 = kapalı, motora seviye gider', async () => {
+  await fresh({ arc_mus: '0' });   // eski sürümde müzik kapalıydı
+  check(await ev(`document.querySelector('#mus-vol input').value === '0' && document.querySelector('#sfx-vol input').value === '60'`), 'eski kayıt / varsayılan yanlış: ' + await ev(`[document.querySelector('#sfx-vol input').value, document.querySelector('#mus-vol input').value]`));
+  await ev(`document.getElementById('btn-settings').click(); true`); await sleep(400);
+  const setV = (id, v) => ev(`(() => { const i = document.querySelector('#${id} input'); i.value = ${v}; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await setV('mus-vol', 40); await setV('sfx-vol', 0);
+  check(await ev(`localStorage.getItem('arc_mus_vol') === '0.4' && localStorage.getItem('arc_sfx_vol') === '0' && localStorage.getItem('arc_sfx') === '0'`), 'seviyeler kaydedilmedi');
+  check(await ev(`getComputedStyle(document.getElementById('mus-vol')).getPropertyValue('--v').trim() === '0.400'`), 'dolgu güncellenmedi');
+  // yeniden aç → aynı seviyeler; uyarlanabilir motor seviyeyi alır, run'da müzik çalar
+  await fresh({ arc_mus_vol: '0.4', arc_sfx_vol: '0', arc_music: 'adaptive' });
+  check(await ev(`document.querySelector('#mus-vol input').value === '40' && document.querySelector('#sfx-vol input').value === '0'`), 'seviyeler geri yüklenmedi');
+  await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`ARC_TEST.audio.engine && ARC_TEST.audio.engine.scene === 'play'`, 5000), 'müzik %40 iken çalmadı');
+  check(await waitFor(`ARC_TEST.audio.engine.layers.includes('wobble')`, 5000), 'dubstep wobble katmanı yok: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
+  await ev(`ARC_BOT.stop(); true`);
+  // müzik 0 → durur
+  await fresh({ arc_mus_vol: '0' });
+  await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.getElementById('btn-start').click(); true`); await sleep(1500);
+  check(await ev(`window.__music === 0`), 'müzik 0 iken çalıyor');
+});
+
 test('ekonomi: metre başına coin, extreme ×2, günlük yumuşak tavan', async () => {
   await fresh({ arc_coin_day: today(), arc_coin_day_amt: '20' });
   const [n, x] = await ev(`(() => { const m = ARC_TEST.mode; ARC_TEST.setMode('normal'); const a = ARC_TEST.runCoinsRaw(1000, 0);

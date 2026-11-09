@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Dubstep tarzı müzik + ses kaydırıcıları (2026-11-09)
+- **ArcMusic dubstep düzeni** (Chill + Extreme; Vanilla sakin kaldı): her yarım ölçüde **wobble bas** (testere + kare → distorsiyon → rezonanslı lowpass, kesimi tempoya bağlı LFO açar/kapar; ölçüye göre 1/8 → 1/16 → triplet, mesafeyle hızlanır ve açılır) + temiz alt sinüs; kırık kick (0, 6, 10; yoğunlukta 3 ve 11 de), 2 ve 4'te snare + clap, 16'lık hat, 4. ölçü sonunda snare fill. Oyunda pad geri planda, filtre baştan daha açık → run baştan enerjik. Tempo Chill 120 sabit.
+- **SFX / Music kaydırıcıları** (Ayarlar, On/Off yerine): koyu cam yuva, soldan gökkuşağı dolgu (tüm gökkuşağı dolgu genişliğine sığar), beyaz dikey tutamaç. `arc_sfx_vol` / `arc_mus_vol` (0..1) anında kaydedilir; eski `arc_sfx`/`arc_mus` = '0' kaydı 0'a çevrilir. **SFX varsayılanı 0.6** (biraz kısık). Klasik sistemde: müzik `_BG_MAX (0.7) × musVol`, tüm SFX tek `_sfxGain` düğümünden; ArcMusic'te `setMusicEnabled/setSfxEnabled` artık 0..1 seviye de alır. 0 = kapalı (eski davranış). SFX bırakılınca örnek tık sesi.
+- Test: ses kaydırıcıları testi (kayıt, eski Off göçü, %40 müzikle çalma, wobble katmanı, 0'da müzik yok).
+
 ### Uyarlanabilir müzik (deneme sürümü) + üst HUD referansa göre (2026-11-09)
 - **ArcMusic** (`ADAPTIVE_MUSIC/arc-music.js`, Claude prototipi) `arcrise.html`'e ayrı `<script>` bloğu olarak gömüldü. Yalnız **`?music=adaptive`** ile açılır (seçim `arc_music` ile hatırlanır, `?music=classic` geri alır). Varsayılan oyuncular ve mağaza sürümü eski mp3/wav sistemiyle aynen çalışır.
   - Demo linki: `https://bugrasulukcu.github.io/ArcRise/arcrise.html?fakeads=1&music=adaptive`
