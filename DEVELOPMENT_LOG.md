@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Başlangıç çizgisi 7 cm (HUD'un altında) + avatar renk noktaları kaldırıldı (2026-11-09)
+- `START_CM` 10 → **7**: 10 cm'de çizgi açılışta üst HUD'un (skor/mesafe, BEST, combo dairesi) altına denk geliyordu. Mesafe/skor yine çizgiden 0'dan sayılır. Günlük pistin zorluk eğrisi eski 10 cm'ye göre sabit (`DAILY_START_PX`) → aynı günün pisti sürüm farkından etkilenmez.
+- Avatar renk noktaları kaldırıldı (anlamı belli değildi): HUD'da BEST skorunun yanı (`#hud-av`), oyun sonu sıralaması (`.go-lr-dot`), High Scores listesi (`.lb-row-dot`).
+- Test: başlangıç çizgisi 390×844, 375×667 ve iPad'de HUD'un en az 30 px altında (10 cm'de düştüğü doğrulandı).
+
+### Ses kaydırıcısı dolgusu sıkışmıyor (2026-11-09)
+- Gökkuşağı artık yuvanın tamamına sabit; seviye `clip-path` ile yalnız görünen kısmı belirler (kısarken renkler sıkışmaz, sağdan silinir).
+
 ### HUD çizgisi gradyanı + slot kutusu dokunuşu yutmuyor (2026-11-09)
 - `#hud-line`: kenarlarda beyaz (.42), %34–%66 arası tam saydam **beyaz** (`rgba(255,255,255,0)`, gri ara ton yok) → çizgi combo dairesine değmeden söner.
 - `#slot-hud` 150×192 kutusu `pointer-events: auto` idi → 1 ya da 3 slot açıkken gizli 2./4. slotun yeri oyun alanına dokunuşu yutuyordu. Kutu artık `none`, yalnız `.slot` düğmeleri `auto`. Test eklendi (düzeltme olmadan düştüğü doğrulandı).

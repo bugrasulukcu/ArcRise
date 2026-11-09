@@ -274,8 +274,6 @@
     @keyframes rankUp { 0% { color: #7dffa0; transform: scale(1.35); } 100% { transform: scale(1); } }
     .hud-tl .hud-rank.up { transform-origin: left center; } .hud-tr .hud-rank.up { transform-origin: right center; }
     /* Küçük avatar renk noktası YOUR BEST yanında */
-    #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
-    @media (max-width: 360px) { #hud-av { display: none; } }   /* dar ekranda combo halkasına değmesin */
 
     /* ══════════ PROFILE (Settings içinde) ══════════ */
     .profile-sect {
@@ -643,10 +641,6 @@
       color: rgba(255,255,255,.5); font-style: italic;
     }
     .lb-row-rank { font-size: 11.5px; opacity: .7; letter-spacing: 1px; }
-    .lb-row-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      display: inline-block; margin-right: 7px; vertical-align: middle;
-    }
     .lb-empty {
       text-align: center; padding: 32px 0;
       color: rgba(255,255,255,.35); font-size: 11.5px; letter-spacing: 1.8px;
@@ -784,12 +778,13 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.7);
     }
 
-    /* Ses kaydırıcısı: koyu cam yuva, soldan gökkuşağı dolgu (tüm gökkuşağı dolgu genişliğine sığar — referans), beyaz dikey tutamaç */
+    /* Ses kaydırıcısı: koyu cam yuva, gökkuşağı yuvanın tamamına sabit — seviye yalnız ne kadarının görüneceğini belirler (sıkışmaz), beyaz dikey tutamaç */
     .vol { --v: 1; position: relative; width: 168px; height: 34px; border-radius: 12px; touch-action: none;
       border: 1px solid rgba(255,255,255,.18);
       background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.07), transparent 60%), linear-gradient(180deg, rgba(40,46,60,.85), rgba(14,18,28,.85));
       box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.2); }
-    .vol::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--v) * 100%); border-radius: 11px; pointer-events: none;
+    .vol::before { content: ''; position: absolute; inset: 0; border-radius: 11px; pointer-events: none;
+      clip-path: inset(0 calc((1 - var(--v)) * 100%) 0 0 round 11px);
       background: linear-gradient(180deg, rgba(255,255,255,.28), transparent 45%, rgba(0,0,0,.18)),
                   linear-gradient(90deg, #e2524f, #e6cf6c 24%, #7CFF7A 46%, #46c6e6 64%, #4a6cff 80%, #a44dff);
       opacity: .92; }
@@ -852,7 +847,6 @@
     .go-lr-name { display: flex; align-items: center; min-width: 0; white-space: nowrap; }
     .go-lr-name .nm { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
     .go-lr-name .bdg-in-name { flex: 0 0 auto; top: 0; }
-    .go-lr-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; margin-right: 7px; }
     .go-lr-score { text-align: right; font-variant-numeric: tabular-nums; }
     .go-lr-score i { font-style: normal; opacity: .3; }
     .go-lr-act { display: flex; justify-content: flex-end; }
@@ -4350,7 +4344,7 @@
         <div class="hud-rank-lbl" id="h-rank-lbl" hidden></div>
         <div class="hud-rank" id="h-rank" hidden>#—</div>
         <div class="hud-divider"></div>
-        <div class="hud-best"><span class="hud-best-lbl">BEST</span><span class="hud-sub-num" id="h-best">000</span><span id="hud-av"></span></div>
+        <div class="hud-best"><span class="hud-best-lbl">BEST</span><span class="hud-sub-num" id="h-best">000</span></div>
         <div class="hud-sub-lbl" id="chal-lbl" hidden>⚔ TARGET</div>
         <div class="hud-sub-num" id="chal-num" hidden>000</div>
       </div>
@@ -7416,7 +7410,6 @@ const ARC_DB = (() => {
   const hudEl      = document.getElementById('hud');
   const hScore     = document.getElementById('h-score');
   const hBest      = document.getElementById('h-best');
-  const hudAvDot   = document.getElementById('hud-av');
   const homeEl     = document.getElementById('home');
   const settingsEl = document.getElementById('settings');
   const gameoverEl = document.getElementById('gameover');
@@ -7524,7 +7517,6 @@ const ARC_DB = (() => {
   }
 
   function applyProfile() {
-    hudAvDot.style.background = AVATAR_COLORS[avatarIdx];
     const src = avatarSrc();
     // Home profile card
     const hImg = document.getElementById('home-av-img');
@@ -8207,9 +8199,11 @@ const ARC_DB = (() => {
   // 1 ekran yüksekliği = 15 cm (sabit referans). Mesafe metre cinsinden,
   // 0.00 formatında gösteriliyor. fmtDist girdisi cm, çıktısı "X.XXm".
   const CM_PER_SCREEN = 15;
-  // Başlangıç çizgisi: ilk 10 cm ısınma — mesafe ve skor bu çizgiden itibaren 0'dan sayılır.
+  // Başlangıç çizgisi: ilk 7 cm ısınma — mesafe ve skor bu çizgiden itibaren 0'dan sayılır.
+  // (2026-11-09: 10 → 7 cm; 10 cm'de çizgi açılışta üst HUD'un altına denk geliyordu.)
   // (START'a basıp hemen duvara çarpan run 0 m / 0 puan kalır.) distOriginY = mesafe 0'ın dünya y'si.
-  const START_CM = 10, START_PX = START_CM / CM_PER_SCREEN * H_REF;
+  const START_CM = 7, START_PX = START_CM / CM_PER_SCREEN * H_REF;
+  const DAILY_START_PX = 10 / CM_PER_SCREEN * H_REF;   // günlük pist zorluğu eski 10 cm'ye göre sabit (aynı günün pisti sürüm farkından etkilenmesin)
   const distOriginY = () => (H - 200) - START_PX;
   let _startCrossed = false, _startFlashAt = 0;
   // Magnet: seviye başı +1 mm toplama yarıçapı, oyunun mesafe metriğiyle (1066px = 15cm → ~7px).
@@ -10770,7 +10764,7 @@ const ARC_DB = (() => {
       // (~0-6m) sıkıştırıldı: oyuncular ~2-9m'de ölüyor, eski 0-75m kalibrasyonunda
       // zorluk eğrisi hiç devreye girmiyordu. Tam zorluk artık ~5m'de (distCm 500).
       const distCm = _seeded()
-        ? Math.max(0, _runStartY - nextSpawnY - 2200 - START_PX) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
+        ? Math.max(0, _runStartY - nextSpawnY - 2200 - DAILY_START_PX) / H_REF * CM_PER_SCREEN   // günlük: slot konumundan (deterministik)
         : (distancePx / H_REF) * CM_PER_SCREEN;
       const t  = Math.max(0, Math.min(1, distCm / 500));
       const tMove = Math.max(0, (distCm - 100) / 400); // movement after ~1m
@@ -12338,12 +12332,11 @@ const ARC_DB = (() => {
     for (const idx of showArr) {
       if (prev >= 0 && idx > prev + 1) html += '<div class="go-lr-gap"><i></i><i></i><i></i></div>';
       const r  = ann[idx];
-      const rc = AVATAR_COLORS[r.avatar] ?? '#fff';
       const canAdd = !r.isYou && !lbFallback;
       const addBtn = canAdd ? `<button class="go-add-fr" type="button" data-n="${esc(r.name)}" data-t="${esc(r.tag || '')}" aria-label="Add friend">${GO_ADD_IC}</button>` : '';
       html += `<div class="go-lr${r.isYou ? ' you' : ''}${idx === 0 ? ' top' : ''}">
         <span class="go-lr-rank">${String(r.rank + 1).padStart(3, '0')}.</span>
-        <span class="go-lr-name"><i class="go-lr-dot" style="background:${rc}"></i><span class="nm">${esc(r.name)}</span>${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
+        <span class="go-lr-name"><span class="nm">${esc(r.name)}</span>${badgeIconsHTML(r.isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
         <span class="go-lr-score">${scoreHTML(r.score)}</span>
         <span class="go-lr-act">${addBtn}</span>
       </div>`;
@@ -12982,7 +12975,7 @@ const ARC_DB = (() => {
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },
     setCombo: n => { runCombo = n; energy = 1; },
     get startCrossed() { return _startCrossed; }, set preStartT(v) { _preStartT = v; },
-    get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); }, get floorIsBottom() { return Math.abs(floorY() - S2W(H - 4)) < 1; },
+    get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); }, get startLineCssY() { return W2S(distOriginY()) * ((hudEl.clientHeight || H) / H); }, get floorIsBottom() { return Math.abs(floorY() - S2W(H - 4)) < 1; },
     get lastSafe() { return _lastSafePos && { x: Math.round(_lastSafePos.x), y: Math.round(_lastSafePos.y) }; },
     get trailJumps() { return trail.filter(p => p.j).length; },
     // Test: nesneyi oyuncunun bulunduğu yere koy (hemen tetiklensin)
@@ -13266,11 +13259,10 @@ const ARC_DB = (() => {
       // #1 always wears the gold frame — even when it's the player themself.
       // (CSS rule order makes .top visually win over .you so the gold reads.)
       const cls = `lb-list-row${isYou ? ' you' : ''}${r._markTop ? ' top' : ''}`;
-      const col = AVATAR_COLORS[r.avatar] || '#fff';
       const rankStr = String(r.rank + 1).padStart(3, '0') + '.';
       return `<div class="${cls}">
         <span class="lb-row-rank">${rankStr}</span>
-        <span><span class="lb-row-dot" style="background:${col}"></span>${esc(r.name)}${badgeIconsHTML(isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
+        <span>${esc(r.name)}${badgeIconsHTML(isYou ? (equippedBadges || []).filter(Boolean).join(',') : r.badges)}</span>
         <span>${fmtMetric(r.score)}</span>
       </div>`;
     }).join('');

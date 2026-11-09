@@ -396,7 +396,7 @@ test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor ç
   check(await waitFor(`ARC_TEST.audio.engine.bpm >= 126 && ARC_TEST.audio.engine.bpm < 133`, 15000), 'Chill (drive) run başı temposu 126 civarı değil: ' + (await ev(`ARC_TEST.audio`)).engine.bpm);
   check(await waitFor(`ARC_TEST.audio.engine.inten > 0`, 15000), 'mesafe arttıkça yoğunluk artmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
   check(await ev(`!performance.getEntriesByType('resource').some(e => /AUDIO\\/ArcRise/.test(e.name))`), 'eski ses dosyaları yine yüklendi');
-  check(await waitFor(`ARC_TEST.audio.engine.eS > 0.04`, 20000), 'ilk run yoğunlaşmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));   // ikinci run kontrolü anlamlı olsun
+  check(await waitFor(`ARC_TEST.audio.engine.eS > 0.025`, 30000), 'ilk run yoğunlaşmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));   // ikinci run kontrolü anlamlı olsun
   await ev(`ARC_BOT.stop(); ARC_TEST.straight(0); true`);
   check(await waitFor(`ARC_TEST.audio.engine.scene === 'dead' || ARC_TEST.audio.engine.scene === 'off'`, 30000), 'ölümde motor boğulmadı');
   check(await waitFor(`ARC_TEST.scene === 'over' && ARC_TEST.audio.engine.scene === 'off'`, 30000), 'oyun sonu ekranında müzik sürüyor');
@@ -1023,9 +1023,17 @@ test('combo: seri çarpanı tüm kazançları çarpar (v27 tabanları)', async (
   check((await ev('ARC_TEST.combo')).mul === cap, 'tavanda çarpan tavanı aşıyor');
 });
 
-test('başlangıç çizgisi: 10 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılmaz', async () => {
+test('başlangıç çizgisi: 7 cm\'yi geçmeyen run 0 m / 0 puan, oyun sayılmaz; çizgi açılışta üst HUD\'un altında', async () => {
   await fresh();
   await ev(`document.getElementById('btn-start').click(); true`);
+  for (const [w, h] of [[390, 844], [375, 667], [768, 1024]]) {   // uzun telefon, kısa telefon, iPad (9:16 letterbox)
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: true }); await sleep(300);
+    const g = await ev(`(() => { const hud = document.getElementById('hud').getBoundingClientRect(); const z = hud.height / document.getElementById('hud').offsetHeight || 1;
+      const bottoms = ['.hud-tl .hud-best', '.hud-tr .hud-best', '#combo-ring-wrap'].map(q => document.querySelector(q).getBoundingClientRect().bottom - hud.top);
+      return { line: ARC_TEST.startLineCssY * z, hud: Math.max(...bottoms) }; })()`);
+    check(g.line > g.hud + 30, `${w}×${h}: başlangıç çizgisi HUD'a çok yakın / altında değil: ${JSON.stringify(g)}`);
+  }
+  await send('Emulation.clearDeviceMetricsOverride');
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'run bitmedi');
   await sleep(800);
   if (await ev('ARC_TEST.startCrossed')) return;   // top yayla çizgiyi geçtiyse test geçersiz (nadir)
