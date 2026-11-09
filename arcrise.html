@@ -195,18 +195,21 @@
 
     /* Duvar iç kenarı: canvas 600px'de 20px sol/sağ → %3.33
        Güvenli bölge başlangıcı = calc(3.4% + 10px)                */
+    /* Üst HUD sabit ızgarada: etiket 12 + 2 · sayı 26 · sıra 15 · 6 → yatay çizgi --hud-top + 61px.
+       Combo dairesinin merkezi aynı çizgide (combo-hud top = çizgi − 42). */
+    #hud { --hud-top: calc(env(safe-area-inset-top, 0px) + 16px); }
     .hud-tl {
-      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px);
+      position: absolute; top: var(--hud-top);
       left: calc(3.4% + 12px);
     }
     .hud-tr {
-      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px);
+      position: absolute; top: var(--hud-top);
       right: calc(3.4% + 12px);
       text-align: right;
     }
-    .hud-lbl { font-size: 10.5px; color: var(--green); letter-spacing: 1.4px; margin-bottom: 4px; }
+    .hud-lbl { font-size: 10px; line-height: 12px; color: var(--green); letter-spacing: 1.6px; margin-bottom: 2px; }
     /* Skor / mesafe: büyük, sayılar sabit genişlik (titremesin); 320 px'te ortadaki combo halkasına değmez */
-    .hud-num { font-size: clamp(20px, calc(6.4 * var(--vw)), 28px); font-weight: 700; letter-spacing: 1px; font-variant-numeric: tabular-nums;
+    .hud-num { font-size: clamp(17px, calc(5.4 * var(--vw)), 23px); line-height: 26px; height: 26px; font-weight: 700; letter-spacing: .5px; font-variant-numeric: tabular-nums;
       display: inline-block; transform-origin: left center; transition: color .4s, text-shadow .4s; }
     .hud-tr .hud-num { transform-origin: right center; }
     /* her metre: mesafe kısa büyüyüp yeşil parlar */
@@ -242,10 +245,13 @@
     }
     #debug-overlay .dbg-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
     #debug-overlay .dbg-row span:first-child { color: rgba(255,255,255,.5); }
-    .hud-divider {
-      width: 60%; height: 1px; margin: 7px 0 6px;
-      background: rgba(255,255,255,.18);
-    }
+    /* Bölüm çizgisi artık tek parça #hud-line (kenardan kenara, combo dairesinin ortasından geçer);
+       eski ayraç yalnız boşluk tutar */
+    .hud-divider { width: 60%; height: 1px; margin: 6px 0 7px; visibility: hidden; }
+    #hud-line { position: absolute; top: calc(var(--hud-top) + 61px); left: calc(3.4% + 8px); right: calc(3.4% + 8px); height: 1px;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,.34) 12%, rgba(255,255,255,.16) 36%, transparent 47%,
+        transparent 53%, rgba(255,255,255,.16) 64%, rgba(255,255,255,.34) 88%, rgba(255,255,255,.08)); }
     .hud-tr .hud-divider { margin-left: auto; }
     .hud-sub-lbl { font-size: 8.5px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
     .hud-sub-num { font-size: 13px; color: rgba(255,255,255,.75); letter-spacing: 1px; font-variant-numeric: tabular-nums; }
@@ -258,9 +264,9 @@
        ilk 10 altın + parlama, birincilik daha güçlü. Geçilen her oyuncuda nabız. */
     .hud-rank-lbl { display: none !important; }
     .hud-tr .hud-rank { margin-left: auto; }
-    .hud-rank { display: block; width: fit-content; margin-top: 3px; font-size: 13px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
+    .hud-rank { display: block; width: fit-content; height: 14px; line-height: 14px; margin-top: 1px; font-size: 11.5px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
       color: var(--rk, #9fd8ff); transition: color .6s, text-shadow .6s; }
-    .hud-rank[hidden] { display: none; }
+    .hud-rank[hidden] { display: block; visibility: hidden; }   /* yer tutar: çizgi hep aynı yükseklikte */
     .hud-rank.up { animation: rankUp .35s ease-out; }
     .hud-rank.top { color: #ffd25a; text-shadow: 0 0 8px rgba(255,210,90,.55); }
     .hud-rank.first { color: #ffe27a; text-shadow: 0 0 12px rgba(255,210,90,.9), 0 0 2px #fff; animation: rankFirst 1.6s ease-in-out infinite; }
@@ -269,6 +275,7 @@
     .hud-tl .hud-rank.up { transform-origin: left center; } .hud-tr .hud-rank.up { transform-origin: right center; }
     /* Küçük avatar renk noktası YOUR BEST yanında */
     #hud-av { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
+    @media (max-width: 360px) { #hud-av { display: none; } }   /* dar ekranda combo halkasına değmesin */
 
     /* ══════════ PROFILE (Settings içinde) ══════════ */
     .profile-sect {
@@ -3693,7 +3700,7 @@
     /* Combo + booster HUDs sit just under the top score row so they aren't
        hidden under the player's thumb during play. */
     #combo-hud {
-      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 30px); left: 50%; transform: translateX(-50%);
+      position: absolute; top: calc(var(--hud-top) + 61px - 42px); left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none; align-items: center; gap: 4px;
     }
@@ -3955,7 +3962,7 @@
     #hud.active #slot-hud { display: block; }
     html.daily-run #hud.active #slot-hud { display: none; }   /* günlük: herkes aynı koşulda — yetenek yok */
     /* Vanilla: yalnız toplanan yeşil sayısı — combo, mesafe, rekor, sıra ve yetenek yok */
-    html.vanilla-run #hud.active :is(#slot-hud, #combo-hud, .hud-tr, .hud-tl, #rt-mini) { display: none !important; }
+    html.vanilla-run #hud.active :is(#slot-hud, #combo-hud, .hud-tr, .hud-tl, #rt-mini, #hud-line) { display: none !important; }
     /* Vanilla sayacı: üst ortada pembe-yeşil cam hap, yeşil küre + sayı; eklemede zıplar (altında altın parlar) */
     #van-count { display: none; }
     html.vanilla-run #hud.active #van-count {
@@ -4339,6 +4346,7 @@
         <div class="hud-divider"></div>
         <div class="hud-best"><span class="hud-best-lbl">BEST</span><span class="hud-sub-num" id="h-dist-best">0</span></div>
       </div>
+      <div id="hud-line" aria-hidden="true"></div>
       <div id="rt-mini" aria-hidden="true"></div>
       <!-- Combo indicator -->
       <div id="combo-hud">
@@ -5204,6 +5212,323 @@
   4. Aşağıdaki FIREBASE_CONFIG alanını doldur
   ══════════════════════════════════════════════════════════
 -->
+<!-- ArcMusic: uyarlanabilir müzik motoru (ADAPTIVE_MUSIC/arc-music.js'in kopyası). Yalnız ?music=adaptive ile açılır. -->
+<script>
+// ArcMusic — ArcRise uyarlanabilir müzik + SFX motoru (Web Audio, ses dosyası yok)
+// Kaynak: Claude ile hazırlanan prototip (ADAPTIVE_MUSIC/prototype.html). Entegrasyon: ADAPTIVE_MUSIC/HANDOFF.md
+// Tamamen kodla sentezlenir; harici lisanslı ses içermez.
+/* ═══════════════ ArcMusic — uyarlanabilir müzik motoru (Web Audio, dosyasız) ═══════════════
+   create(ctx, destination) → motor. Gerçek zamanlıda kendi zamanlayıcısıyla çalışır;
+   OfflineAudioContext'te { offline:true } ile verilir ve advance(t) ile ileri sarılır.
+   Tüm olay metotları isteğe bağlı bir `at` (saniye) alır; verilmezse ctx.currentTime. */
+const ArcMusic = (() => {
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const PENTA = [0, 3, 5, 7, 10];                    // A minör pentatonik
+  const PROG = {
+    chill:   [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+    extreme: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [50, 53, 57], b: 38, name: 'Dm' }, { n: [52, 56, 59], b: 40, name: 'E' }],
+    vanilla: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+  };
+  const LEAD = [76, 74, 72, 69, 72, 74, 76, 79];      // MAX combo lead motifi (E5 D5 C5 A4 ...)
+
+  function makeNoise(ctx) {
+    const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
+    let seed = 1234567;                               // deterministik (çevrimdışı ölçüm tekrarlanabilsin)
+    for (let i = 0; i < d.length; i++) { seed = (seed * 16807) % 2147483647; d[i] = seed / 1073741823.5 - 1; }
+    return b;
+  }
+  function makeIR(ctx, sec) {
+    const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
+    let seed = 42;
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < len; i++) { seed = (seed * 16807) % 2147483647; d[i] = (seed / 1073741823.5 - 1) * Math.pow(1 - i / len, 3.2); }
+    }
+    return b;
+  }
+
+  function create(ctx, out, opts = {}) {
+    out = out || ctx.destination;
+    const S = { mode: 'chill', scene: 'off', inten: 0, eS: 0, combo: 0, chain: 0, bpm: 96, step: 0, next: 0,
+                boostUntil: 0, deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
+    const G = v => { const n = ctx.createGain(); n.gain.value = v; return n; };
+    const F = (type, f, q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
+
+    // ── Sinyal yolu ──
+    const master = G(0.72), comp = ctx.createDynamicsCompressor(), limiter = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.22;
+    limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.001; limiter.release.value = 0.08;
+    const trim = G(0.9);                                   // limiter'in kaçırdığı en hızlı tepeler için pay
+    const analyser = ctx.createAnalyser(); analyser.fftSize = 1024; analyser.smoothingTimeConstant = 0.78;
+    master.connect(comp); comp.connect(limiter); limiter.connect(trim); trim.connect(analyser); analyser.connect(out);
+    const music = G(0), musicLP = F('lowpass', 700, 0.6), musicVol = G(1);   // musicVol: ayarlardaki müzik aç/kapa
+    music.connect(musicLP); musicLP.connect(musicVol); musicVol.connect(master);
+    const padLP = F('lowpass', 900, 0.5), padBus = G(1); padLP.connect(padBus); padBus.connect(music);
+    const drumBus = G(1); drumBus.connect(music);
+    const synthBus = G(1); synthBus.connect(music);
+    const sfx = G(0.9); sfx.connect(master);
+    // opts.lite (zayıf cihaz / LOWFX): yankı ve gecikme kapalı → çok daha az işlem
+    const rev = ctx.createConvolver(); if (!opts.lite) rev.buffer = makeIR(ctx, 2.6);
+    const revIn = G(opts.lite ? 0 : 1), revOut = G(0.3); revIn.connect(rev); rev.connect(revOut); revOut.connect(master);
+    const padSend = G(0.4); padBus.connect(padSend); padSend.connect(revIn);
+    const dly = ctx.createDelay(2), dfb = G(0.36), dIn = G(1), dOut = G(0.42), dLP = F('lowpass', 3200, 0.5);
+    if (!opts.lite) { dIn.connect(dly); dly.connect(dLP); dLP.connect(dfb); dfb.connect(dly); dLP.connect(dOut); dOut.connect(music); }
+    const noise = makeNoise(ctx);
+
+    // ── Ses üreteçleri ──
+    const osc = (type, f, t, end) => { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.start(t); o.stop(end); return o; };
+    const noiseSrc = (t, end) => { const s = ctx.createBufferSource(); s.buffer = noise; s.loop = true; s.start(t, Math.random() * 0.9); s.stop(end); return s; };
+
+    function padNote(m, t, dur, lvl) {
+      const end = t + dur + 1.2;
+      for (const det of [-9, 8]) {
+        const o = osc('sawtooth', mtof(m), t, end); o.detune.setValueAtTime(det, t);
+        const g = G(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + 0.45);
+        g.gain.setValueAtTime(lvl, t + dur); g.gain.linearRampToValueAtTime(0, end);
+        o.connect(g); g.connect(padLP);
+      }
+    }
+    function bass(m, t, len, lvl, bright) {
+      const end = t + len + 0.05;
+      const o = osc('sawtooth', mtof(m), t, end), sub = osc('sine', mtof(m - 12), t, end);
+      const f = F('lowpass', 200 + bright * 1600, 4);
+      f.frequency.setValueAtTime(260 + bright * 2200, t); f.frequency.exponentialRampToValueAtTime(180, t + len);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, end);
+      const gs = G(lvl * 0.7); gs.gain.setValueAtTime(lvl * 0.7, t); gs.gain.exponentialRampToValueAtTime(0.0001, end);
+      o.connect(f); f.connect(g); g.connect(synthBus); sub.connect(gs); gs.connect(synthBus);
+    }
+    function kick(t, lvl) {
+      const o = osc('sine', 150, t, t + 0.4); o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
+      const g = G(0); g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.36);
+      o.connect(g); g.connect(drumBus);
+      padBus.gain.setValueAtTime(0.5, t); padBus.gain.linearRampToValueAtTime(1, t + 0.24);   // synthwave "pump"
+    }
+    function snare(t, lvl) {
+      const n = noiseSrc(t, t + 0.25), f = F('bandpass', 1900, 0.8), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      n.connect(f); f.connect(g); g.connect(drumBus); g.connect(revIn);
+      const o = osc('triangle', 190, t, t + 0.12), g2 = G(0); g2.gain.setValueAtTime(lvl * 0.6, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      o.connect(g2); g2.connect(drumBus);
+    }
+    function hat(t, lvl, open) {
+      const d = open ? 0.22 : 0.04, n = noiseSrc(t, t + d + 0.02), f = F('highpass', 7600, 0.7), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      n.connect(f); f.connect(g); g.connect(drumBus);
+    }
+    function crash(t, lvl) {
+      const n = noiseSrc(t, t + 1.6), f = F('highpass', 4200, 0.5), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+      n.connect(f); f.connect(g); g.connect(drumBus); g.connect(revIn);
+    }
+    function pluck(m, t, lvl, dur = 0.2, type = 'square', delaySend = 0.5) {
+      const end = t + dur + 0.05, o = osc(type, mtof(m), t, end), f = F('lowpass', 4200, 1.2), g = G(0);
+      f.frequency.setValueAtTime(4200, t); f.frequency.exponentialRampToValueAtTime(700, t + dur);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.0008, end);
+      o.connect(f); f.connect(g); g.connect(synthBus);
+      if (delaySend) { const s = G(delaySend); g.connect(s); s.connect(dIn); }
+    }
+    function leadNote(m, t, dur, lvl) {
+      const end = t + dur + 0.3, o = osc('sawtooth', mtof(m), t, end), o2 = osc('square', mtof(m + 12), t, end);
+      o2.detune.setValueAtTime(5, t);
+      const f = F('lowpass', 2600, 2), g = G(0);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + 0.03); g.gain.setValueAtTime(lvl, t + dur * 0.7); g.gain.linearRampToValueAtTime(0, end);
+      const g2 = G(0.35); o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(synthBus);
+      const s = G(0.45); g.connect(s); s.connect(dIn);
+    }
+    function fireStab(m, t, lvl) {
+      const end = t + 0.32, o = osc('sawtooth', mtof(m), t, end), ws = ctx.createWaveShaper();
+      const c = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(x * 4); } ws.curve = c;
+      const f = F('lowpass', 1400, 3), g = G(0); g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, end);
+      o.connect(ws); ws.connect(f); f.connect(g); g.connect(synthBus);
+    }
+    function bell(m, t, lvl, dur = 0.7) {
+      const end = t + dur, o = osc('sine', mtof(m), t, end), o2 = osc('triangle', mtof(m + 12), t, end);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0005, end);
+      const g2 = G(0.25); o2.connect(g2); g2.connect(g); o.connect(g); g.connect(sfx);
+      const s = G(0.5); g.connect(s); s.connect(revIn);
+    }
+    function whoosh(t, lvl, dur, f0, f1, pan0 = 0, pan1 = 0) {
+      const n = noiseSrc(t, t + dur + 0.05), f = F('bandpass', f0, 1.4), g = G(0);
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + dur * 0.55); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+      let last = g;
+      if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.setValueAtTime(pan0, t); p.pan.linearRampToValueAtTime(pan1, t + dur); g.connect(p); last = p; }
+      n.connect(f); f.connect(g); last.connect(sfx);
+    }
+
+    // ── Zamanlayıcı ──
+    const spb = () => 60 / S.bpm / 4;                // 16'lık nota süresi
+    function targetBpm() {
+      if (S.mode === 'vanilla') return 88;
+      if (S.scene !== 'play') return 96;
+      return S.mode === 'extreme' ? 126 + 24 * S.eS : 100 + 22 * S.eS;
+    }
+    function filterTargets(t) {
+      let f, pf;
+      const boost = t < S.boostUntil;
+      if (S.scene === 'dead') { f = 260; pf = 500; }
+      else if (S.scene !== 'play') { f = 700; pf = 800; }
+      else if (S.mode === 'vanilla') { f = 2400; pf = 1300; }
+      else {
+        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
+        pf = 800 + 1700 * S.eS + 380 * S.combo;
+      }
+      musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
+      padLP.frequency.setTargetAtTime(Math.min(pf, 6000), t, 0.25);
+    }
+    function scheduleStep(t, i) {
+      const s = i % 16, bar = Math.floor(i / 16), prog = PROG[S.mode], ch = prog[bar % 4];
+      const L = S.layers; L.clear();
+      S.eS += (S.inten - S.eS) * 0.06;
+      const e = S.eS, x = S.mode === 'extreme', van = S.mode === 'vanilla', play = S.scene === 'play', boost = t < S.boostUntil;
+      if (s === 0) {
+        S.bpm = targetBpm();
+        dly.delayTime.setTargetAtTime(Math.min(1.9, spb() * 3), t, 0.05);
+        const lvl = S.scene === 'dead' ? 0.022 : (play ? 0.03 : 0.034);
+        for (const m of ch.n) padNote(m, t, spb() * 16, lvl);
+        S.chord = ch.name;
+      }
+      if (S.scene === 'off') return;
+      L.add('pad');
+      filterTargets(t);
+      if (!play) {                                    // menü / oyun sonu: seyrek, boğuk arpej
+        if (S.scene === 'menu' && s % 4 === 0) pluck(ch.n[(s / 4) % 3] + 12, t, 0.035, 0.35, 'triangle', 0.6);
+        return;
+      }
+      if (van) {                                      // Vanilla: davulsuz, yumuşak
+        if (s % 2 === 0) { const seq = [0, 1, 2, 1, 2, 0, 1, 2]; pluck(ch.n[seq[(s / 2) % 8]] + 12, t, 0.06, 0.4, 'triangle', 0.5); L.add('arp'); }
+        if (s === 0 || s === 8) { bass(ch.b, t, spb() * 7, 0.12, 0.1); L.add('bass'); }
+        return;
+      }
+      if (e > 0.12 || x) {
+        if (s % 4 === 0 && (e > 0.5 || x || s % 8 === 0)) { kick(t, x ? 0.95 : 0.85); }
+        L.add('kick');
+      }
+      if (e > 0.22 || x) {
+        if (x) { const m = (s % 4 === 2) ? ch.b + 12 : ch.b; bass(m, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); }
+        else if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
+        else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
+        L.add('bass');
+      }
+      if (e > 0.35 || x || boost) {
+        if (s % 4 === 2) hat(t, 0.09, x && s === 14);
+        if ((e > 0.72 || x || boost) && s % 2 === 1) hat(t, 0.045, false);
+        L.add('hats');
+      }
+      if (e > 0.45 || x) { if (s === 4 || s === 12) snare(t, x ? 0.3 : 0.24); L.add('snare'); }
+      if (S.combo >= 1) {
+        const tones = [ch.n[0], ch.n[1], ch.n[2], ch.n[1] + 12, ch.n[2] + 12, ch.n[0] + 12];
+        const every = S.combo >= 2 ? 1 : 2;
+        if (s % every === 0) { const m = tones[(s / every) % tones.length] + 12; pluck(m, t, S.combo >= 3 ? 0.06 : 0.05, 0.16, 'square', 0.55); }
+        L.add('arp');
+      }
+      if (S.combo >= 3 && s % 4 === 0) {
+        const m = LEAD[((bar % 2) * 4 + s / 4) % LEAD.length];
+        leadNote(m, t, spb() * 3.5, 0.05); L.add('lead');
+      }
+      if (x && e > 0.55) {
+        if (s === 0 || s === 6 || s === 10) fireStab(ch.b, t, 0.11);
+        if (s === 0 && bar % 4 === 0) crash(t, 0.12);
+        L.add('fire');
+      }
+      if (boost) { if (s % 2 === 0) pluck(ch.n[(s / 2) % 3] + 24, t, 0.03, 0.08, 'sawtooth', 0.3); L.add('boost'); }
+    }
+    function advance(until) {
+      while (S.next < until) { scheduleStep(S.next, S.step); S.step++; S.next += spb(); }
+    }
+    function startTimer() {
+      if (opts.offline || S.timer) return;
+      S.timer = setInterval(() => advance(ctx.currentTime + 0.12), 25);
+    }
+    const now = at => (at == null ? ctx.currentTime : at);
+
+    // ── Dış arayüz ──
+    const api = {
+      ctx, analyser, advance,
+      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil }),
+      menu(at) {
+        const t = now(at);
+        if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
+        S.scene = 'menu'; S.combo = 0; S.chain = 0;
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(0.8, t, 0.4);
+        startTimer();
+      },
+      start(mode, at) {
+        const t = now(at);
+        if (mode) S.mode = mode;
+        if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
+        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0;
+        if (S.step % 16) { S.step += 16 - (S.step % 16); }            // yeni run yeni ölçüden başlar
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t, 0.15);
+        startTimer();
+      },
+      stop(at) {
+        const t = now(at); S.scene = 'off';
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(0, t, 0.3);
+        if (S.timer) { clearInterval(S.timer); S.timer = null; }
+      },
+      setMode(m) { if (PROG[m]) S.mode = m; },
+      setMusicEnabled(on, at) { musicVol.gain.setTargetAtTime(on ? 1 : 0, now(at), 0.05); },
+      setSfxEnabled(on, at) { sfx.gain.setTargetAtTime(on ? 0.9 : 0, now(at), 0.02); },
+      setIntensity(v) { S.inten = Math.max(0, Math.min(1, v)); },
+      setCombo(l) { S.combo = Math.max(0, Math.min(3, l | 0)); },
+      tap(dir = 1, at) {
+        const t = now(at), ch = PROG[S.mode][Math.floor(S.step / 16) % 4];
+        const o = osc('sine', mtof(ch.n[0] + 24 + (dir > 0 ? 7 : 0)), t, t + 0.07), g = G(0);
+        g.gain.setValueAtTime(0.09, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.06); o.connect(g); g.connect(sfx);
+        const n = noiseSrc(t, t + 0.02), f = F('highpass', 3000), g2 = G(0.05); g2.gain.setValueAtTime(0.05, t); g2.gain.exponentialRampToValueAtTime(0.0005, t + 0.015);
+        n.connect(f); f.connect(g2); g2.connect(sfx);
+      },
+      collect(at) {
+        const t = now(at), idx = S.chain++, m = 69 + PENTA[idx % 5] + 12 * (Math.floor(idx / 5) % 2);
+        bell(m, t, 0.26, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
+        return S.chain;
+      },
+      gold(at) { const t = now(at); bell(88, t, 0.22, 0.8); bell(93, t + 0.07, 0.2, 0.9); bell(100, t + 0.14, 0.1, 0.9); },
+      comboBreak(at) {
+        const t = now(at); S.chain = 0; S.combo = 0;
+        const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
+        const f = F('lowpass', 3000, 3); f.frequency.setValueAtTime(3000, t); f.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+        const g = G(0); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+        o.connect(f); f.connect(g); g.connect(sfx);
+        whoosh(t, 0.1, 0.18, 6000, 1200);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
+      },
+      nearMiss(at) { const t = now(at); whoosh(t, 0.22, 0.28, 500, 5200, -0.7, 0.7); },
+      booster(dur = 5, at) {
+        const t = now(at); S.boostUntil = t + dur;
+        const o = osc('sawtooth', 180, t, t + 0.6); o.frequency.exponentialRampToValueAtTime(1400, t + 0.55);
+        const f = F('bandpass', 900, 2), g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.1, t + 0.4); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        o.connect(f); f.connect(g); g.connect(sfx); whoosh(t, 0.1, 0.55, 400, 6000);
+      },
+      death(at) {
+        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.deadAt = t;
+        const o = osc('sine', 95, t, t + 0.8); o.frequency.exponentialRampToValueAtTime(26, t + 0.7);
+        const g = G(0); g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.75); o.connect(g); g.connect(sfx);
+        const n = noiseSrc(t, t + 0.7), f = F('lowpass', 2400, 0.7), g2 = G(0);
+        f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(160, t + 0.6);
+        g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.65); n.connect(f); f.connect(g2); g2.connect(sfx); g2.connect(revIn);
+        const gl = osc('square', 220, t, t + 0.5); gl.frequency.exponentialRampToValueAtTime(55, t + 0.45);
+        const g3 = G(0); g3.gain.setValueAtTime(0.06, t); g3.gain.exponentialRampToValueAtTime(0.001, t + 0.48); gl.connect(g3); g3.connect(sfx);
+        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.setTargetAtTime(0.32, t, 0.25);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(240, t, 0.12);
+      },
+      revive(at) {
+        const t = now(at);
+        whoosh(t, 0.16, 0.85, 200, 7000); const o = osc('sawtooth', 110, t, t + 0.9); o.frequency.exponentialRampToValueAtTime(880, t + 0.85);
+        const f = F('lowpass', 2000, 2), g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.08, t + 0.8); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        o.connect(f); f.connect(g); g.connect(sfx);
+        S.scene = 'play';
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t + 0.6, 0.2);
+        crash(t + 0.85, 0.1);
+      },
+    };
+    return api;
+  }
+  return { create };
+})();
+if (typeof window !== 'undefined') window.ArcMusic = ArcMusic;
+</script>
 <script>
 // ── Firebase Firestore (REST API — SDK gerekmez) ────────────
 // Config'i console.firebase.google.com > Project Settings > Web app'ten al
@@ -7599,6 +7924,7 @@ const ARC_DB = (() => {
     BOOSTER_BAR.style.background = info.color;
     BOOSTER_EL.classList.add('active');
     duckMusic(true); // boost sırasında müzik kısılır
+    if (_arcMusic) _arcMusic.booster(dur);
   }
 
   function clearBooster() {
@@ -8317,6 +8643,19 @@ const ARC_DB = (() => {
   let sfxCtx = null, touchBuffer = null, deadBuffer = null, musicBuffer = null;
   let _musicGain = null, _musicSrc = null, _musicStartAt = 0, _musicOffset = 0, _musicWanted = false;
   let _duckRAF = null;
+  // Uyarlanabilir müzik (deneme): ?music=adaptive → kodla üretilen ArcMusic motoru (müzik + oyun içi SFX).
+  // Varsayılan (parametresiz) eski mp3/wav sistemi aynen çalışır. ?music=classic eski sisteme döner; seçim hatırlanır.
+  const ADAPTIVE_MUSIC = (() => {
+    try {
+      const q = new URLSearchParams(location.search).get('music');
+      if (q === 'classic') localStorage.removeItem('arc_music');
+      else if (q === 'adaptive') localStorage.setItem('arc_music', 'adaptive');
+      return localStorage.getItem('arc_music') === 'adaptive' && typeof ArcMusic !== 'undefined';
+    } catch (_) { return false; }
+  })();
+  let _arcMusic = null;
+  const AM_CHILL_FULL_CM = 1500, AM_EXTREME_FULL_CM = 7500;   // yoğunluğun tam açıldığı mesafe (Chill/Vanilla 15 m, Extreme 75 m)
+  const _amMode = () => ({ normal: 'chill', extreme: 'extreme', wife: 'vanilla' })[gameMode] || 'chill';
 
   async function loadSfxBuffer(ctx, url) {
     try {
@@ -8354,6 +8693,12 @@ const ARC_DB = (() => {
     try {
       sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
       _musicGain = sfxCtx.createGain(); _musicGain.gain.value = _bgBaseVol; _musicGain.connect(sfxCtx.destination);
+      if (ADAPTIVE_MUSIC) {   // dosya yüklenmez; motor kendi compressor/limiter'ı ile doğrudan çıkışa
+        _arcMusic = ArcMusic.create(sfxCtx, sfxCtx.destination, { lite: LOWFX });
+        _arcMusic.setMusicEnabled(musOn); _arcMusic.setSfxEnabled(sfxOn);
+        if (_musicWanted) playBgMusic();
+        return;
+      }
       loadSfxBuffer(sfxCtx, 'AUDIO/ArcRiseTouch.wav').then(b => { touchBuffer = b; });
       loadSfxBuffer(sfxCtx, 'AUDIO/ArcRiseDead.wav').then(b  => { deadBuffer  = b; });
       loadSfxBuffer(sfxCtx, BG_SRC).then(b => { musicBuffer = b; if (_musicWanted) playBgMusic(); });
@@ -8386,11 +8731,16 @@ const ARC_DB = (() => {
 
   // Tanı: debug panelinde ve testlerde ses durumu (telefonda "müzik yok" gibi sorunlar için)
   function _audioDiag() {
+    if (ADAPTIVE_MUSIC) {
+      const st = _arcMusic ? _arcMusic.state() : null;
+      return { ctx: sfxCtx ? sfxCtx.state : 'none', music: 'adaptive', engine: st, playing: _musicPlaying(), gain: _musicPlaying() ? 1 : 0,
+        musOn, wanted: _musicWanted, session: (navigator.audioSession && navigator.audioSession.type) || '-' };
+    }
     return { ctx: sfxCtx ? sfxCtx.state : 'none', music: musicBuffer ? 'ok' : (sfxCtx ? 'loading/fail' : '-'),
       playing: !!_musicSrc, gain: _musicGain ? +_musicGain.gain.value.toFixed(2) : null, musOn, wanted: _musicWanted,
       session: (navigator.audioSession && navigator.audioSession.type) || '-' };
   }
-  function _musicPlaying() { return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
+  function _musicPlaying() { if (ADAPTIVE_MUSIC) { const sc = _arcMusic && _arcMusic.state().scene; return sc === 'play' || sc === 'dead'; } return _musicSrc ? true : !!(bgAudio && !bgAudio.paused); }
   function _getMusicVol()  { return _musicGain && musicBuffer ? _musicGain.gain.value : (bgAudio ? bgAudio.volume : _bgBaseVol); }
   function _setMusicVol(v) { if (_musicGain) _musicGain.gain.value = v; if (bgAudio) bgAudio.volume = v; }
   // ── Müzik kuralı (tek yer) ─────────────────────────────
@@ -8408,6 +8758,15 @@ const ARC_DB = (() => {
     if (!musicAllowed()) { _musicWanted = false; return; }
     if (_fadeStopT) { clearTimeout(_fadeStopT); _fadeStopT = null; }   // önceki ölümün bekleyen durdurması yeni müziği kesmesin
     initAudioViz();
+    if (ADAPTIVE_MUSIC) {
+      if (!_arcMusic) { _musicWanted = true; return; }   // ilk dokunuşta bağlam kurulunca başlar
+      if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {});
+      _musicWanted = false;
+      const sc = _arcMusic.state().scene;
+      if (sc === 'dead') _arcMusic.revive();               // revive / reklamla devam: riser + müzik geri gelir
+      else if (sc !== 'play') _arcMusic.start(_amMode());
+      return;
+    }
     if (sfxCtx) {
       if (sfxCtx.state !== 'running') sfxCtx.resume().catch(() => {});
       if (!musicBuffer) { _musicWanted = true; return; }   // çözülünce başlar
@@ -8427,6 +8786,7 @@ const ARC_DB = (() => {
 
   function stopBgMusic() {
     _musicWanted = false;
+    if (ADAPTIVE_MUSIC) { if (_arcMusic) _arcMusic.stop(); return; }
     if (_duckRAF) { cancelAnimationFrame(_duckRAF); _duckRAF = null; }
     if (_musicSrc) {
       _musicOffset += sfxCtx.currentTime - _musicStartAt;    // sıradaki çalış aynı yerden
@@ -8451,12 +8811,14 @@ const ARC_DB = (() => {
     stepFn();
   }
   function duckMusic(on) {
+    if (ADAPTIVE_MUSIC) return;            // kısma yok; booster parlaklığı activateBooster'da (_arcMusic.booster)
     if (!_musicPlaying()) return;
     _rampMusicTo(on ? _bgBaseVol * 0.45 : _bgBaseVol, 250);
   }
   // Ölümde sert pause yerine 0.4s fade-out — dead SFX sting olarak öne çıkar
   function fadeOutMusic() {
     _musicWanted = false;               // tampon sonradan çözülse de bu ölümde başlamasın
+    if (ADAPTIVE_MUSIC) { if (_arcMusic) _arcMusic.death(); return; }   // bas darbesi + patlama, müzik boğulur; oyun sonu ekranı stop()
     if (!_musicPlaying()) return;
     _rampMusicTo(0, 400);
     if (_fadeStopT) clearTimeout(_fadeStopT);
@@ -8465,6 +8827,7 @@ const ARC_DB = (() => {
 
   function playTouchSound() {
     if (!sfxOn) return;
+    if (ADAPTIVE_MUSIC) { if (_arcMusic) _arcMusic.tap(player.dir || 1); return; }
     playSfx(touchBuffer, 'AUDIO/ArcRiseTouch.wav', 0.55);
   }
   // Game over coin "ting"i: iki kısa üçgen dalga (dörtlü aralık, klasik coin sesi); ardışık coinlerde
@@ -9211,6 +9574,7 @@ const ARC_DB = (() => {
   let _ccCool = 0, _wallNm = false;
   function triggerCloseCall(pts) {
     _ccCool = 2.0;
+    if (_arcMusic) _arcMusic.nearMiss();
     floatTexts.push({ x: player.x, y: player.y - 22, text: pts > 0 ? 'CLOSE! +' + pts : 'CLOSE!', hue: 15, life: 1, scale: 1.6, pop: true });
   }
   function resetCloseCall() { _ccCool = 0; _wallNm = false; }
@@ -9434,7 +9798,7 @@ const ARC_DB = (() => {
         } else {
           const dx = player.x - p.x, dy = player.y - p.y, d = Math.hypot(dx, dy) || 1;
           if (d < player.r + 10 || d < Math.hypot(p.vx, p.vy) * dt || p.age > t0 + 0.7) {   // bu karede varır / takıldı
-            if (p.gold) { _goldHitAt = performance.now(); _goldHitN++; }
+            if (p.gold) { _goldHitAt = performance.now(); _goldHitN++; if (_arcMusic) _arcMusic.gold(); }
             else if (!_greenHomeArrived) { _greenHomeArrived = true; _ringFillAt = performance.now(); }
             particles.splice(i, 1); continue;
           }
@@ -10565,7 +10929,8 @@ const ARC_DB = (() => {
   // Böylece skor "en uzun tek zincir"i değil, run boyunca kurulan zincir SAYISINI
   // ödüllendiriyor — yani oyun süresiyle doğrusal, patlamasız.
   function addCombo(wx, wy, green) {
-    if (!green) { if (runCombo > 0) comboBreak(); runCombo = 1; return; }   // pencere dışında alındı → yeni zincirin 1. halkası
+    if (!green) { if (runCombo > 0) comboBreak(); runCombo = 1; if (_arcMusic) _arcMusic.collect(); return; }   // comboBreak motorda zinciri sıfırlar → nota baştan
+    if (_arcMusic) _arcMusic.collect();   // uyarlanabilir müzik: yeşil = pentatonikte sıradaki nota   // pencere dışında alındı → yeni zincirin 1. halkası
     runCombo++;
     // En uzun combo = art arda toplanan top SAYISI (tavanda bankalama sayımı kesmez; yalnız
     // combo penceresinden çıkınca sıfırlanır) → ×7 tavanla sınırlı değil, gerçek beceriyi ölçer.
@@ -10648,6 +11013,7 @@ const ARC_DB = (() => {
   }
   function comboBreak() {
     _comboStreak = 0;
+    if (_arcMusic && runCombo > 0) _arcMusic.comboBreak();
     if (comboMul() >= 2) _comboHudPop = true;
     if (runCombo > 0) _comboSegBreak = true;   // HUD: parçalı çubuk efektle dağılır
     runCombo = 0; _comboPot = 0; _comboPopT = 0;
@@ -10776,6 +11142,12 @@ const ARC_DB = (() => {
           spawnFloatText(player.x, pbWorldY, '+' + pbPts + ' PB', 60, 1.4);
         }
       }
+    }
+    if (_arcMusic) {   // uyarlanabilir müzik: mesafe → yoğunluk (katmanlar/tempo), combo çarpanı → arpej/lead
+      const dCm = (distancePx / H_REF) * CM_PER_SCREEN;
+      _arcMusic.setIntensity(gameMode === 'extreme' ? 0.3 + 0.7 * Math.min(1, dCm / AM_EXTREME_FULL_CM) : Math.min(1, dCm / AM_CHILL_FULL_CM));
+      const mul = gameMode === 'wife' ? 1 : comboMul();
+      _arcMusic.setCombo(mul < 2 ? 0 : 1 + Math.round(2 * (mul - 2) / Math.max(1, comboCap() - 2)));
     }
     // Extreme mode: dynamic speed ramps linearly with distance (0 → 1000m
      // takes base to 2×). Booster overrides this.
@@ -11399,7 +11771,7 @@ const ARC_DB = (() => {
     spawnDeathExplosion(player.x, player.y);      // ateşli patlama efekti
     addWarp('shock', player.x, player.y);         // oyun alanını büken şok dalgası
     fadeOutMusic();                               // müzik sönerken patlama sesi öne çıkar
-    if (sfxOn) {
+    if (sfxOn && !ADAPTIVE_MUSIC) {   // uyarlanabilir müzikte ölüm sesi death() içinde
       playSfx(deadBuffer, 'AUDIO/ArcRiseDead.wav', 1.0);
     }
     haptic(120); // kısa darbe — uzun titreşim endGame'de
@@ -12628,11 +13000,13 @@ const ARC_DB = (() => {
   // ── Settings UI — toggles ─────────────────────────────────
   function setSfx(v) {
     sfxOn = v;   // playTouchSound / ölüm sesi sfxOn'a bakar
+    if (_arcMusic) _arcMusic.setSfxEnabled(v);
     document.getElementById('sfx-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('sfx-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
   }
   function setMus(v) {
     musOn = v;
+    if (_arcMusic) _arcMusic.setMusicEnabled(v);
     document.getElementById('mus-on').className  = 'tog-btn ' + (v  ? 'active-on' : 'active-off');
     document.getElementById('mus-off').className = 'tog-btn ' + (!v ? 'active-on' : 'active-off');
     // If turned off mid-game, pause; if turned on mid-game, resume

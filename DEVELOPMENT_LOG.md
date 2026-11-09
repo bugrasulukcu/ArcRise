@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Uyarlanabilir müzik (deneme sürümü) + üst HUD referansa göre (2026-11-09)
+- **ArcMusic** (`ADAPTIVE_MUSIC/arc-music.js`, Claude prototipi) `arcrise.html`'e ayrı `<script>` bloğu olarak gömüldü. Yalnız **`?music=adaptive`** ile açılır (seçim `arc_music` ile hatırlanır, `?music=classic` geri alır). Varsayılan oyuncular ve mağaza sürümü eski mp3/wav sistemiyle aynen çalışır.
+  - Demo linki: `https://bugrasulukcu.github.io/ArcRise/arcrise.html?fakeads=1&music=adaptive`
+  - Bağlantılar: run başı `start(mod)`, ölüm `death()` (eski dead.wav çalmaz), revive / reklamla devam `revive()`, oyun sonu ve menü `stop()` (Karar 1: menüde müzik yok), booster `booster(süre)` (kısma yok — Karar 2), dokunuş `tap()` (Karar 3), yeşil `collect()`, combo kırılması `comboBreak()`, CLOSE `nearMiss()`, altın `gold()`, her kare `setIntensity` (Chill/Vanilla 15 m, Extreme 0.3 + 0.7 × 75 m) ve `setCombo` (çarpan 2..tavan → 1..3). Ayarlar `setMusicEnabled` / `setSfxEnabled`. `LOWFX` → `lite: true`.
+  - Uyarlanabilir modda `AUDIO/` dosyaları hiç yüklenmez. Lisanslı dosyalar ve `RESOURCES/` henüz silinmedi (Buğra'nın kararı: dokunma); deneme beğenilirse varsayılan yapılıp eski sistem kaldırılacak (HANDOFF.md "Kaldırılacaklar").
+- **Üst HUD** (referans görsel): skor/mesafe sayısı küçüldü (17–23 px), satırlar sıkı sabit ızgarada (etiket · sayı · sıra). Kenardan kenara tek ince yatay çizgi (`#hud-line`), combo dairesinin tam ortasından geçer; daire ona hizalandı. Sıra gizliyken de yeri korunur (çizgi hep aynı yükseklikte). 360 px altında avatar noktası gizli (halkaya değmesin).
+- Test: uyarlanabilir müzik testi eklendi (dosya yüklenmez, run'da çalar, mesafeyle yoğunlaşır, ölüm/oyun sonu, varsayılan klasik).
+
 ### Zemin = ekranın alt kenarı, çizgi yok (2026-11-09)
 - Vanilla, tutorial ve başlangıç çizgisi öncesi zemin artık ayrı bir ışık bandı değil: top doğrudan ekranın alt kenarından (`S2W(H - 4)`) seker. Kamera yalnız yukarı kaydığı için alt kenar asla aşağı inmez.
 - `drawFloor`, `_bestY` ve `FLOOR_GAP` kaldırıldı. Vanilla BACK TO MENU düğmesi sabit olarak ekranın altında.

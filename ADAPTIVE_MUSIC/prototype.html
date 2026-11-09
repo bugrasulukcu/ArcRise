@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ArcRise Adaptive Score</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarpanch:wght@500;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: oyun ekranı gibi koyu, tek tema. Sol: koşu simülatörü (demo + olay tuşları). Sağ: motorun canlı göstergesi. Altta: oyunla eşleme tablosu. */
+:root {
+  color-scheme: dark;
+  --bg: #080a0e;          /* oyunun zemin rengi */
+  --panel: #0f1218;
+  --line: #1d2330;
+  --fg: #e7e9ee;
+  --muted: #8a92a3;
+  --green: #7cff7a;       /* yeşil top */
+  --gold: #ffcc44;        /* altın top */
+  --red: #ff4d6a;         /* engel */
+  --violet: #8b5cff;      /* ikon zemini */
+  --fire: #ff7a2e;        /* extreme */
+  --f-display: "Sarpanch", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px; background-position: -1px -1px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+.brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--green); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(34px, 6vw, 58px); line-height: .95; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h1 span { color: var(--green); text-shadow: 0 0 22px rgba(124,255,122,.45); }
+.lede { max-width: 62ch; color: var(--muted); margin: 6px 0 0; }
+.power {
+  font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: .12em;
+  background: transparent; color: var(--green); border: 2px solid var(--green); border-radius: 12px;
+  padding: 12px 22px; cursor: pointer; box-shadow: 0 0 18px rgba(124,255,122,.25) inset;
+}
+.power[aria-pressed="true"] { background: var(--green); color: var(--bg); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: color-mix(in srgb, var(--panel) 92%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 700; font-size: 20px; letter-spacing: .08em; margin: 0; text-transform: uppercase; }
+.hint { font-size: 13px; color: var(--muted); margin: -10px 0 0; }
+
+.demos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .demos { grid-template-columns: minmax(0, 1fr); } }
+.demo {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  background: #0b0e13; color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+}
+.demo b { font-family: var(--f-display); font-weight: 800; font-size: 17px; letter-spacing: .08em; }
+.demo small { color: var(--muted); font-size: 12.5px; }
+.demo[data-mode="chill"] b { color: var(--green); }
+.demo[data-mode="extreme"] b { color: var(--fire); }
+.demo[data-mode="vanilla"] b { color: #c9d4ff; }
+.demo[aria-pressed="true"] { border-color: currentColor; box-shadow: 0 0 0 1px var(--green) inset; }
+.demo:disabled, .pad:disabled { opacity: .4; cursor: not-allowed; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 0; padding: 9px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #1a2130; color: var(--fg); }
+label.slider { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.2em; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; flex: 1 1 260px; }
+label.slider output { color: var(--fg); text-align: right; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--green); }
+
+.pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .pads { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pad {
+  position: relative; display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+  background: #0b0e13; color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left;
+  transition: transform .08s ease, border-color .15s ease;
+}
+.pad b { font-family: var(--f-display); font-weight: 700; font-size: 15px; letter-spacing: .06em; }
+.pad kbd { position: absolute; top: 8px; right: 9px; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.pad small { font-size: 12px; color: var(--muted); }
+.pad.hit { transform: scale(.97); border-color: var(--hc, var(--green)); }
+.pad[data-k="green"] b { color: var(--green); }  .pad[data-k="green"] { --hc: var(--green); }
+.pad[data-k="gold"] b { color: var(--gold); }    .pad[data-k="gold"] { --hc: var(--gold); }
+.pad[data-k="break"] b, .pad[data-k="death"] b { color: var(--red); } .pad[data-k="break"], .pad[data-k="death"] { --hc: var(--red); }
+.pad[data-k="boost"] b { color: var(--violet); } .pad[data-k="boost"] { --hc: var(--violet); }
+
+/* Readout */
+.scope { width: 100%; height: 150px; display: block; border-radius: 12px; background: #06080b; border: 1px solid var(--line); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.stat span { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.stat strong { font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.meter { height: 10px; border-radius: 6px; background: #151a24; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--gold) 70%, var(--fire)); transition: width .2s linear; }
+.mrow { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 10px; align-items: center; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.chain i { height: 10px; border-radius: 6px; background: #151a24; transition: background .15s ease, box-shadow .15s ease; }
+.chain i.on { background: var(--gold); box-shadow: 0 0 10px rgba(255,204,68,.55); }
+.layers { display: flex; flex-wrap: wrap; gap: 6px; }
+.layer { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: #4d5566; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.layer.on { color: var(--bg); background: var(--green); border-color: var(--green); }
+.layer.on[data-l="fire"] { background: var(--fire); border-color: var(--fire); }
+.layer.on[data-l="boost"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+.scene { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.scene b { color: var(--fg); font-weight: 600; }
+
+/* Mapping */
+.map { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+td code { font-family: var(--f-mono); font-size: 12.5px; color: var(--green); }
+.note { font-size: 13px; color: var(--muted); max-width: 75ch; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="eyebrow">ArcRise · prototip müzik motoru</div>
+      <h1>Adaptive <span>Score</span></h1>
+      <p class="lede">Hiç ses dosyası yok: müziğin tamamı tarayıcıda, sentezleyicilerle o anda çalınıyor. Hız, combo, mod ve ölüm müziği anında değiştiriyor; yeşil toplar müziğin tonunda notalar çalıyor.</p>
+    </div>
+    <button class="power" id="power" type="button" aria-pressed="false">SESİ AÇ</button>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="sim-h">
+      <h2 id="sim-h">Koşu simülatörü</h2>
+      <p class="hint">Bir demo seç: otomatik bir run oynatır (hız artar, toplar toplanır, combo kurulur, sonunda ölüm). Ya da aşağıdaki tuşlarla kendin oyna.</p>
+      <div class="demos">
+        <button class="demo" type="button" id="demo-chill" data-mode="chill" aria-pressed="false" disabled><b>CHILL RUN</b><small>~45 sn · sakin başlar, yükselir</small></button>
+        <button class="demo" type="button" id="demo-extreme" data-mode="extreme" aria-pressed="false" disabled><b>EXTREME RUN</b><small>~35 sn · hızlı, sert, ateşli</small></button>
+        <button class="demo" type="button" id="demo-vanilla" data-mode="vanilla" aria-pressed="false" disabled><b>VANILLA</b><small>~30 sn · davulsuz, yumuşak</small></button>
+      </div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Mod">
+          <button type="button" data-mode="chill" aria-pressed="true">Chill</button>
+          <button type="button" data-mode="extreme" aria-pressed="false">Extreme</button>
+          <button type="button" data-mode="vanilla" aria-pressed="false">Vanilla</button>
+        </div>
+        <div class="seg" role="group" aria-label="Ekran">
+          <button type="button" data-scene="menu" aria-pressed="true">Menü</button>
+          <button type="button" data-scene="play" aria-pressed="false">Oyun</button>
+        </div>
+      </div>
+      <div class="row">
+        <label class="slider" for="inten">Hız <input id="inten" type="range" min="0" max="100" value="0"><output id="inten-o">0%</output></label>
+      </div>
+      <div class="pads">
+        <button class="pad" type="button" data-k="tap" disabled><kbd>Space</kbd><b>TAP</b><small>yay çevirme</small></button>
+        <button class="pad" type="button" data-k="green" disabled><kbd>G</kbd><b>GREEN</b><small>tonunda nota</small></button>
+        <button class="pad" type="button" data-k="gold" disabled><kbd>O</kbd><b>GOLD +5</b><small>çınlama</small></button>
+        <button class="pad" type="button" data-k="near" disabled><kbd>N</kbd><b>NEAR MISS</b><small>kıl payı</small></button>
+        <button class="pad" type="button" data-k="break" disabled><kbd>B</kbd><b>COMBO BREAK</b><small>zincir kırılır</small></button>
+        <button class="pad" type="button" data-k="boost" disabled><kbd>M</kbd><b>BOOSTER</b><small>5 sn yükselme</small></button>
+        <button class="pad" type="button" data-k="death" disabled><kbd>D</kbd><b>DEATH</b><small>şok dalgası</small></button>
+        <button class="pad" type="button" data-k="revive" disabled><kbd>R</kbd><b>REVIVE</b><small>geri dönüş</small></button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="eng-h">
+      <h2 id="eng-h">Motor</h2>
+      <canvas class="scope" id="scope" width="900" height="300" aria-label="Ses görselleştirici"></canvas>
+      <div class="stats">
+        <div class="stat"><span>Tempo</span><strong id="s-bpm">—</strong></div>
+        <div class="stat"><span>Akor</span><strong id="s-chord">—</strong></div>
+        <div class="stat"><span>Zincir</span><strong id="s-chain">0</strong></div>
+        <div class="stat"><span>Ekran</span><strong id="s-scene">KAPALI</strong></div>
+      </div>
+      <div class="mrow">Yoğunluk <div class="meter"><i id="m-int"></i></div></div>
+      <div class="mrow">Combo <div class="chain" id="m-combo"><i></i><i></i><i></i></div></div>
+      <div class="layers" id="layers" aria-label="Aktif katmanlar">
+        <span class="layer" data-l="pad">Pad</span>
+        <span class="layer" data-l="kick">Kick</span>
+        <span class="layer" data-l="bass">Bas</span>
+        <span class="layer" data-l="hats">Hi-hat</span>
+        <span class="layer" data-l="snare">Snare</span>
+        <span class="layer" data-l="arp">Arp</span>
+        <span class="layer" data-l="lead">Lead</span>
+        <span class="layer" data-l="fire">Fire</span>
+        <span class="layer" data-l="boost">Boost</span>
+      </div>
+      <div class="scene" id="scene-line">Başlamak için <b>SESİ AÇ</b>'a bas. Kulaklıkla dinlemek en iyisi.</div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="map-h">
+    <h2 id="map-h">Oyunda ne değişir</h2>
+    <div class="map">
+      <table>
+        <thead><tr><th>Oyundaki an</th><th>Müzikte olan</th><th>Bağlanacağı yer</th></tr></thead>
+        <tbody>
+          <tr><td>Menü, oyun sonu</td><td>Yalnız pad; filtre kapalı, sakin ve boğuk</td><td><code>showScene</code></td></tr>
+          <tr><td>Hız / mesafe artıyor</td><td>Sırayla kick, bas, hi-hat, snare girer; tempo yükselir, filtre açılır</td><td>run döngüsü (hız)</td></tr>
+          <tr><td>Yeşil top</td><td>Pentatonik dizide bir sonraki nota; zincir uzadıkça perde yükselir</td><td><code>addCombo</code></td></tr>
+          <tr><td>Combo 1 / 2 / MAX</td><td>Arpej girer, hızlanır; MAX'ta lead melodisi ve tam açık filtre</td><td><code>comboMul</code></td></tr>
+          <tr><td>Combo kırılması</td><td>Aşağı kayan glide, filtrede ani düşüş, zincir sıfırlanır</td><td><code>comboBreak</code></td></tr>
+          <tr><td>Altın top</td><td>İki notalı parlak çınlama</td><td>altın toplama</td></tr>
+          <tr><td>Extreme mod</td><td>Daha gergin akor yürüyüşü (Am F Dm E), 16'lık bas, Fire katmanı</td><td><code>gameMode</code></td></tr>
+          <tr><td>Vanilla mod</td><td>Davulsuz, yavaş, yumuşak pluck melodisi</td><td><code>gameMode</code></td></tr>
+          <tr><td>Booster</td><td>Yükselen sweep, 5 sn ekstra hi-hat ve parlaklık</td><td><code>activateBooster</code></td></tr>
+          <tr><td>Ölüm</td><td>Bas darbesi + patlama; müzik boğulup kısılır</td><td><code>beginDeath</code></td></tr>
+          <tr><td>Revive</td><td>Yükselen riser, müzik geri döner</td><td><code>doRevive</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Tüm sesler A minör tonunda. Motor oyunun mevcut ses bağlamına bağlanır; müzik/SFX açma-kapama ve iOS sessiz modu kuralları aynen geçerli kalır. Dosya boyutu birkaç KB, bu yüzden 2 MB'lık oynanabilir reklama da sığar.</p>
+  </section>
+</div>
+
+<script>
+/* ═══════════════ ArcMusic — uyarlanabilir müzik motoru (Web Audio, dosyasız) ═══════════════
+   create(ctx, destination) → motor. Gerçek zamanlıda kendi zamanlayıcısıyla çalışır;
+   OfflineAudioContext'te { offline:true } ile verilir ve advance(t) ile ileri sarılır.
+   Tüm olay metotları isteğe bağlı bir `at` (saniye) alır; verilmezse ctx.currentTime. */
+const ArcMusic = (() => {
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const PENTA = [0, 3, 5, 7, 10];                    // A minör pentatonik
+  const PROG = {
+    chill:   [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+    extreme: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [50, 53, 57], b: 38, name: 'Dm' }, { n: [52, 56, 59], b: 40, name: 'E' }],
+    vanilla: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+  };
+  const LEAD = [76, 74, 72, 69, 72, 74, 76, 79];      // MAX combo lead motifi (E5 D5 C5 A4 ...)
+
+  function makeNoise(ctx) {
+    const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
+    let seed = 1234567;                               // deterministik (çevrimdışı ölçüm tekrarlanabilsin)
+    for (let i = 0; i < d.length; i++) { seed = (seed * 16807) % 2147483647; d[i] = seed / 1073741823.5 - 1; }
+    return b;
+  }
+  function makeIR(ctx, sec) {
+    const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
+    let seed = 42;
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < len; i++) { seed = (seed * 16807) % 2147483647; d[i] = (seed / 1073741823.5 - 1) * Math.pow(1 - i / len, 3.2); }
+    }
+    return b;
+  }
+
+  function create(ctx, out, opts = {}) {
+    out = out || ctx.destination;
+    const S = { mode: 'chill', scene: 'off', inten: 0, eS: 0, combo: 0, chain: 0, bpm: 96, step: 0, next: 0,
+                boostUntil: 0, deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
+    const G = v => { const n = ctx.createGain(); n.gain.value = v; return n; };
+    const F = (type, f, q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
+
+    // ── Sinyal yolu ──
+    const master = G(0.72), comp = ctx.createDynamicsCompressor(), limiter = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.22;
+    limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.001; limiter.release.value = 0.08;
+    const trim = G(0.9);                                   // limiter'in kaçırdığı en hızlı tepeler için pay
+    const analyser = ctx.createAnalyser(); analyser.fftSize = 1024; analyser.smoothingTimeConstant = 0.78;
+    master.connect(comp); comp.connect(limiter); limiter.connect(trim); trim.connect(analyser); analyser.connect(out);
+    const music = G(0), musicLP = F('lowpass', 700, 0.6), musicVol = G(1);   // musicVol: ayarlardaki müzik aç/kapa
+    music.connect(musicLP); musicLP.connect(musicVol); musicVol.connect(master);
+    const padLP = F('lowpass', 900, 0.5), padBus = G(1); padLP.connect(padBus); padBus.connect(music);
+    const drumBus = G(1); drumBus.connect(music);
+    const synthBus = G(1); synthBus.connect(music);
+    const sfx = G(0.9); sfx.connect(master);
+    // opts.lite (zayıf cihaz / LOWFX): yankı ve gecikme kapalı → çok daha az işlem
+    const rev = ctx.createConvolver(); if (!opts.lite) rev.buffer = makeIR(ctx, 2.6);
+    const revIn = G(opts.lite ? 0 : 1), revOut = G(0.3); revIn.connect(rev); rev.connect(revOut); revOut.connect(master);
+    const padSend = G(0.4); padBus.connect(padSend); padSend.connect(revIn);
+    const dly = ctx.createDelay(2), dfb = G(0.36), dIn = G(1), dOut = G(0.42), dLP = F('lowpass', 3200, 0.5);
+    if (!opts.lite) { dIn.connect(dly); dly.connect(dLP); dLP.connect(dfb); dfb.connect(dly); dLP.connect(dOut); dOut.connect(music); }
+    const noise = makeNoise(ctx);
+
+    // ── Ses üreteçleri ──
+    const osc = (type, f, t, end) => { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.start(t); o.stop(end); return o; };
+    const noiseSrc = (t, end) => { const s = ctx.createBufferSource(); s.buffer = noise; s.loop = true; s.start(t, Math.random() * 0.9); s.stop(end); return s; };
+
+    function padNote(m, t, dur, lvl) {
+      const end = t + dur + 1.2;
+      for (const det of [-9, 8]) {
+        const o = osc('sawtooth', mtof(m), t, end); o.detune.setValueAtTime(det, t);
+        const g = G(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + 0.45);
+        g.gain.setValueAtTime(lvl, t + dur); g.gain.linearRampToValueAtTime(0, end);
+        o.connect(g); g.connect(padLP);
+      }
+    }
+    function bass(m, t, len, lvl, bright) {
+      const end = t + len + 0.05;
+      const o = osc('sawtooth', mtof(m), t, end), sub = osc('sine', mtof(m - 12), t, end);
+      const f = F('lowpass', 200 + bright * 1600, 4);
+      f.frequency.setValueAtTime(260 + bright * 2200, t); f.frequency.exponentialRampToValueAtTime(180, t + len);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, end);
+      const gs = G(lvl * 0.7); gs.gain.setValueAtTime(lvl * 0.7, t); gs.gain.exponentialRampToValueAtTime(0.0001, end);
+      o.connect(f); f.connect(g); g.connect(synthBus); sub.connect(gs); gs.connect(synthBus);
+    }
+    function kick(t, lvl) {
+      const o = osc('sine', 150, t, t + 0.4); o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
+      const g = G(0); g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.36);
+      o.connect(g); g.connect(drumBus);
+      padBus.gain.setValueAtTime(0.5, t); padBus.gain.linearRampToValueAtTime(1, t + 0.24);   // synthwave "pump"
+    }
+    function snare(t, lvl) {
+      const n = noiseSrc(t, t + 0.25), f = F('bandpass', 1900, 0.8), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      n.connect(f); f.connect(g); g.connect(drumBus); g.connect(revIn);
+      const o = osc('triangle', 190, t, t + 0.12), g2 = G(0); g2.gain.setValueAtTime(lvl * 0.6, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      o.connect(g2); g2.connect(drumBus);
+    }
+    function hat(t, lvl, open) {
+      const d = open ? 0.22 : 0.04, n = noiseSrc(t, t + d + 0.02), f = F('highpass', 7600, 0.7), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      n.connect(f); f.connect(g); g.connect(drumBus);
+    }
+    function crash(t, lvl) {
+      const n = noiseSrc(t, t + 1.6), f = F('highpass', 4200, 0.5), g = G(0);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+      n.connect(f); f.connect(g); g.connect(drumBus); g.connect(revIn);
+    }
+    function pluck(m, t, lvl, dur = 0.2, type = 'square', delaySend = 0.5) {
+      const end = t + dur + 0.05, o = osc(type, mtof(m), t, end), f = F('lowpass', 4200, 1.2), g = G(0);
+      f.frequency.setValueAtTime(4200, t); f.frequency.exponentialRampToValueAtTime(700, t + dur);
+      g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.0008, end);
+      o.connect(f); f.connect(g); g.connect(synthBus);
+      if (delaySend) { const s = G(delaySend); g.connect(s); s.connect(dIn); }
+    }
+    function leadNote(m, t, dur, lvl) {
+      const end = t + dur + 0.3, o = osc('sawtooth', mtof(m), t, end), o2 = osc('square', mtof(m + 12), t, end);
+      o2.detune.setValueAtTime(5, t);
+      const f = F('lowpass', 2600, 2), g = G(0);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + 0.03); g.gain.setValueAtTime(lvl, t + dur * 0.7); g.gain.linearRampToValueAtTime(0, end);
+      const g2 = G(0.35); o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(synthBus);
+      const s = G(0.45); g.connect(s); s.connect(dIn);
+    }
+    function fireStab(m, t, lvl) {
+      const end = t + 0.32, o = osc('sawtooth', mtof(m), t, end), ws = ctx.createWaveShaper();
+      const c = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(x * 4); } ws.curve = c;
+      const f = F('lowpass', 1400, 3), g = G(0); g.gain.setValueAtTime(lvl, t); g.gain.exponentialRampToValueAtTime(0.001, end);
+      o.connect(ws); ws.connect(f); f.connect(g); g.connect(synthBus);
+    }
+    function bell(m, t, lvl, dur = 0.7) {
+      const end = t + dur, o = osc('sine', mtof(m), t, end), o2 = osc('triangle', mtof(m + 12), t, end);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0005, end);
+      const g2 = G(0.25); o2.connect(g2); g2.connect(g); o.connect(g); g.connect(sfx);
+      const s = G(0.5); g.connect(s); s.connect(revIn);
+    }
+    function whoosh(t, lvl, dur, f0, f1, pan0 = 0, pan1 = 0) {
+      const n = noiseSrc(t, t + dur + 0.05), f = F('bandpass', f0, 1.4), g = G(0);
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + dur * 0.55); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+      let last = g;
+      if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.setValueAtTime(pan0, t); p.pan.linearRampToValueAtTime(pan1, t + dur); g.connect(p); last = p; }
+      n.connect(f); f.connect(g); last.connect(sfx);
+    }
+
+    // ── Zamanlayıcı ──
+    const spb = () => 60 / S.bpm / 4;                // 16'lık nota süresi
+    function targetBpm() {
+      if (S.mode === 'vanilla') return 88;
+      if (S.scene !== 'play') return 96;
+      return S.mode === 'extreme' ? 126 + 24 * S.eS : 100 + 22 * S.eS;
+    }
+    function filterTargets(t) {
+      let f, pf;
+      const boost = t < S.boostUntil;
+      if (S.scene === 'dead') { f = 260; pf = 500; }
+      else if (S.scene !== 'play') { f = 700; pf = 800; }
+      else if (S.mode === 'vanilla') { f = 2400; pf = 1300; }
+      else {
+        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
+        pf = 800 + 1700 * S.eS + 380 * S.combo;
+      }
+      musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
+      padLP.frequency.setTargetAtTime(Math.min(pf, 6000), t, 0.25);
+    }
+    function scheduleStep(t, i) {
+      const s = i % 16, bar = Math.floor(i / 16), prog = PROG[S.mode], ch = prog[bar % 4];
+      const L = S.layers; L.clear();
+      S.eS += (S.inten - S.eS) * 0.06;
+      const e = S.eS, x = S.mode === 'extreme', van = S.mode === 'vanilla', play = S.scene === 'play', boost = t < S.boostUntil;
+      if (s === 0) {
+        S.bpm = targetBpm();
+        dly.delayTime.setTargetAtTime(Math.min(1.9, spb() * 3), t, 0.05);
+        const lvl = S.scene === 'dead' ? 0.022 : (play ? 0.03 : 0.034);
+        for (const m of ch.n) padNote(m, t, spb() * 16, lvl);
+        S.chord = ch.name;
+      }
+      if (S.scene === 'off') return;
+      L.add('pad');
+      filterTargets(t);
+      if (!play) {                                    // menü / oyun sonu: seyrek, boğuk arpej
+        if (S.scene === 'menu' && s % 4 === 0) pluck(ch.n[(s / 4) % 3] + 12, t, 0.035, 0.35, 'triangle', 0.6);
+        return;
+      }
+      if (van) {                                      // Vanilla: davulsuz, yumuşak
+        if (s % 2 === 0) { const seq = [0, 1, 2, 1, 2, 0, 1, 2]; pluck(ch.n[seq[(s / 2) % 8]] + 12, t, 0.06, 0.4, 'triangle', 0.5); L.add('arp'); }
+        if (s === 0 || s === 8) { bass(ch.b, t, spb() * 7, 0.12, 0.1); L.add('bass'); }
+        return;
+      }
+      if (e > 0.12 || x) {
+        if (s % 4 === 0 && (e > 0.5 || x || s % 8 === 0)) { kick(t, x ? 0.95 : 0.85); }
+        L.add('kick');
+      }
+      if (e > 0.22 || x) {
+        if (x) { const m = (s % 4 === 2) ? ch.b + 12 : ch.b; bass(m, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); }
+        else if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
+        else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
+        L.add('bass');
+      }
+      if (e > 0.35 || x || boost) {
+        if (s % 4 === 2) hat(t, 0.09, x && s === 14);
+        if ((e > 0.72 || x || boost) && s % 2 === 1) hat(t, 0.045, false);
+        L.add('hats');
+      }
+      if (e > 0.45 || x) { if (s === 4 || s === 12) snare(t, x ? 0.3 : 0.24); L.add('snare'); }
+      if (S.combo >= 1) {
+        const tones = [ch.n[0], ch.n[1], ch.n[2], ch.n[1] + 12, ch.n[2] + 12, ch.n[0] + 12];
+        const every = S.combo >= 2 ? 1 : 2;
+        if (s % every === 0) { const m = tones[(s / every) % tones.length] + 12; pluck(m, t, S.combo >= 3 ? 0.06 : 0.05, 0.16, 'square', 0.55); }
+        L.add('arp');
+      }
+      if (S.combo >= 3 && s % 4 === 0) {
+        const m = LEAD[((bar % 2) * 4 + s / 4) % LEAD.length];
+        leadNote(m, t, spb() * 3.5, 0.05); L.add('lead');
+      }
+      if (x && e > 0.55) {
+        if (s === 0 || s === 6 || s === 10) fireStab(ch.b, t, 0.11);
+        if (s === 0 && bar % 4 === 0) crash(t, 0.12);
+        L.add('fire');
+      }
+      if (boost) { if (s % 2 === 0) pluck(ch.n[(s / 2) % 3] + 24, t, 0.03, 0.08, 'sawtooth', 0.3); L.add('boost'); }
+    }
+    function advance(until) {
+      while (S.next < until) { scheduleStep(S.next, S.step); S.step++; S.next += spb(); }
+    }
+    function startTimer() {
+      if (opts.offline || S.timer) return;
+      S.timer = setInterval(() => advance(ctx.currentTime + 0.12), 25);
+    }
+    const now = at => (at == null ? ctx.currentTime : at);
+
+    // ── Dış arayüz ──
+    const api = {
+      ctx, analyser, advance,
+      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil }),
+      menu(at) {
+        const t = now(at);
+        if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
+        S.scene = 'menu'; S.combo = 0; S.chain = 0;
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(0.8, t, 0.4);
+        startTimer();
+      },
+      start(mode, at) {
+        const t = now(at);
+        if (mode) S.mode = mode;
+        if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
+        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0;
+        if (S.step % 16) { S.step += 16 - (S.step % 16); }            // yeni run yeni ölçüden başlar
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t, 0.15);
+        startTimer();
+      },
+      stop(at) {
+        const t = now(at); S.scene = 'off';
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(0, t, 0.3);
+        if (S.timer) { clearInterval(S.timer); S.timer = null; }
+      },
+      setMode(m) { if (PROG[m]) S.mode = m; },
+      setMusicEnabled(on, at) { musicVol.gain.setTargetAtTime(on ? 1 : 0, now(at), 0.05); },
+      setSfxEnabled(on, at) { sfx.gain.setTargetAtTime(on ? 0.9 : 0, now(at), 0.02); },
+      setIntensity(v) { S.inten = Math.max(0, Math.min(1, v)); },
+      setCombo(l) { S.combo = Math.max(0, Math.min(3, l | 0)); },
+      tap(dir = 1, at) {
+        const t = now(at), ch = PROG[S.mode][Math.floor(S.step / 16) % 4];
+        const o = osc('sine', mtof(ch.n[0] + 24 + (dir > 0 ? 7 : 0)), t, t + 0.07), g = G(0);
+        g.gain.setValueAtTime(0.09, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.06); o.connect(g); g.connect(sfx);
+        const n = noiseSrc(t, t + 0.02), f = F('highpass', 3000), g2 = G(0.05); g2.gain.setValueAtTime(0.05, t); g2.gain.exponentialRampToValueAtTime(0.0005, t + 0.015);
+        n.connect(f); f.connect(g2); g2.connect(sfx);
+      },
+      collect(at) {
+        const t = now(at), idx = S.chain++, m = 69 + PENTA[idx % 5] + 12 * (Math.floor(idx / 5) % 2);
+        bell(m, t, 0.26, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
+        return S.chain;
+      },
+      gold(at) { const t = now(at); bell(88, t, 0.22, 0.8); bell(93, t + 0.07, 0.2, 0.9); bell(100, t + 0.14, 0.1, 0.9); },
+      comboBreak(at) {
+        const t = now(at); S.chain = 0; S.combo = 0;
+        const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
+        const f = F('lowpass', 3000, 3); f.frequency.setValueAtTime(3000, t); f.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+        const g = G(0); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+        o.connect(f); f.connect(g); g.connect(sfx);
+        whoosh(t, 0.1, 0.18, 6000, 1200);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
+      },
+      nearMiss(at) { const t = now(at); whoosh(t, 0.22, 0.28, 500, 5200, -0.7, 0.7); },
+      booster(dur = 5, at) {
+        const t = now(at); S.boostUntil = t + dur;
+        const o = osc('sawtooth', 180, t, t + 0.6); o.frequency.exponentialRampToValueAtTime(1400, t + 0.55);
+        const f = F('bandpass', 900, 2), g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.1, t + 0.4); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        o.connect(f); f.connect(g); g.connect(sfx); whoosh(t, 0.1, 0.55, 400, 6000);
+      },
+      death(at) {
+        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.deadAt = t;
+        const o = osc('sine', 95, t, t + 0.8); o.frequency.exponentialRampToValueAtTime(26, t + 0.7);
+        const g = G(0); g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.75); o.connect(g); g.connect(sfx);
+        const n = noiseSrc(t, t + 0.7), f = F('lowpass', 2400, 0.7), g2 = G(0);
+        f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(160, t + 0.6);
+        g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.65); n.connect(f); f.connect(g2); g2.connect(sfx); g2.connect(revIn);
+        const gl = osc('square', 220, t, t + 0.5); gl.frequency.exponentialRampToValueAtTime(55, t + 0.45);
+        const g3 = G(0); g3.gain.setValueAtTime(0.06, t); g3.gain.exponentialRampToValueAtTime(0.001, t + 0.48); gl.connect(g3); g3.connect(sfx);
+        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.setTargetAtTime(0.32, t, 0.25);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(240, t, 0.12);
+      },
+      revive(at) {
+        const t = now(at);
+        whoosh(t, 0.16, 0.85, 200, 7000); const o = osc('sawtooth', 110, t, t + 0.9); o.frequency.exponentialRampToValueAtTime(880, t + 0.85);
+        const f = F('lowpass', 2000, 2), g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.08, t + 0.8); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        o.connect(f); f.connect(g); g.connect(sfx);
+        S.scene = 'play';
+        music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t + 0.6, 0.2);
+        crash(t + 0.85, 0.1);
+      },
+    };
+    return api;
+  }
+  return { create };
+})();
+
+/* ═══════════════ Deneme sayfası ═══════════════ */
+(() => {
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  let ctx = null, M = null, demo = null, mode = 'chill', scene = 'menu', inten = 0;
+  const power = $('#power'), slider = $('#inten'), out = $('#inten-o');
+
+  function enable(on) { $$('.demo, .pad').forEach(b => b.disabled = !on); }
+  function setPressed(sel, key, val) { $$(sel).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[key] === val))); }
+  function setMode(m) { mode = m; setPressed('.seg [data-mode]', 'mode', m); if (M) M.setMode(m); }
+  function setScene(s) {
+    scene = s; setPressed('.seg [data-scene]', 'scene', s);
+    if (!M) return;
+    if (s === 'play') M.start(mode); else M.menu();
+  }
+  function setInten(v) { inten = v; slider.value = Math.round(v * 100); out.textContent = Math.round(v * 100) + '%'; if (M) M.setIntensity(v); }
+
+  power.addEventListener('click', async () => {
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) {}
+      M = ArcMusic.create(ctx, ctx.destination);
+      M.setMode(mode); M.setIntensity(inten); M.menu();
+      enable(true); power.setAttribute('aria-pressed', 'true'); power.textContent = 'SESİ KAPAT';
+      draw();
+      return;
+    }
+    if (ctx.state === 'running') { stopDemo(); await ctx.suspend(); power.setAttribute('aria-pressed', 'false'); power.textContent = 'SESİ AÇ'; enable(false); }
+    else { await ctx.resume(); power.setAttribute('aria-pressed', 'true'); power.textContent = 'SESİ KAPAT'; enable(true); }
+  });
+
+  $$('.seg [data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  $$('.seg [data-scene]').forEach(b => b.addEventListener('click', () => { stopDemo(); setScene(b.dataset.scene); }));
+  slider.addEventListener('input', () => setInten(slider.value / 100));
+
+  function comboFromChain(c) { return c >= 9 ? 3 : c >= 6 ? 2 : c >= 3 ? 1 : 0; }
+  const ACT = {
+    tap: () => M.tap(Math.random() < .5 ? -1 : 1),
+    green: () => { if (scene !== 'play') setScene('play'); const c = M.collect(); M.setCombo(comboFromChain(c)); },
+    gold: () => M.gold(),
+    near: () => M.nearMiss(),
+    break: () => M.comboBreak(),
+    boost: () => M.booster(5),
+    death: () => { M.death(); scene = 'dead'; setPressed('.seg [data-scene]', 'scene', 'none'); },
+    revive: () => { M.revive(); scene = 'play'; setPressed('.seg [data-scene]', 'scene', 'play'); },
+  };
+  function flash(k) { const b = document.querySelector(`.pad[data-k="${k}"]`); if (!b) return; b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 120); }
+  function fire(k) { if (!M || ctx.state !== 'running') return; ACT[k](); flash(k); }
+  $$('.pad').forEach(b => b.addEventListener('click', () => fire(b.dataset.k)));
+  const KEYS = { ' ': 'tap', g: 'green', o: 'gold', n: 'near', b: 'break', m: 'boost', d: 'death', r: 'revive' };
+  document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input')) return;
+    const k = KEYS[e.key.toLowerCase()]; if (!k || !M) return;
+    if (e.key === ' ') e.preventDefault(); fire(k);
+  });
+
+  // ── Otomatik demo koşuları ──
+  function stopDemo() {
+    if (!demo) return;
+    demo.timers.forEach(clearTimeout); clearInterval(demo.ramp); demo = null;
+    $$('.demo').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  }
+  function runDemo(kind) {
+    if (!M) return;
+    stopDemo();
+    const cfg = {
+      chill:   { len: 44, from: 0.05, to: 0.95, tap: [0.55, 1.1], green: 1.05, golds: [9, 21, 33], nears: [17, 28, 38], breaks: [14, 31], boost: 24, death: 42 },
+      extreme: { len: 34, from: 0.3, to: 1, tap: [0.35, 0.7], green: 0.75, golds: [6, 15, 25], nears: [10, 19, 27, 31], breaks: [12, 23], boost: 18, death: 32.5 },
+      vanilla: { len: 30, from: 0.2, to: 0.5, tap: [0.7, 1.4], green: 1.4, golds: [10, 22], nears: [], breaks: [], boost: null, death: null },
+    }[kind];
+    setMode(kind); setInten(cfg.from); setScene('play');
+    $$('.demo').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === kind)));
+    const T = [], at = (sec, fn) => T.push(setTimeout(fn, sec * 1000));
+    const t0 = performance.now();
+    const ramp = setInterval(() => {
+      const p = Math.min(1, (performance.now() - t0) / 1000 / (cfg.death || cfg.len));
+      setInten(cfg.from + (cfg.to - cfg.from) * p);
+    }, 200);
+    const end = cfg.death || cfg.len;
+    let tt = 0.4; while (tt < end) { at(tt, () => fire('tap')); tt += cfg.tap[0] + Math.random() * (cfg.tap[1] - cfg.tap[0]); }
+    let tg = 1.2; while (tg < end - 0.5) { if (!cfg.breaks.some(b => Math.abs(b - tg) < 0.6)) at(tg, () => fire('green')); tg += cfg.green * (0.8 + Math.random() * 0.4); }
+    cfg.golds.forEach(s => at(s, () => fire('gold')));
+    cfg.nears.forEach(s => at(s, () => fire('near')));
+    cfg.breaks.forEach(s => at(s, () => fire('break')));
+    if (cfg.boost) at(cfg.boost, () => fire('boost'));
+    if (cfg.death) {
+      at(cfg.death, () => { clearInterval(ramp); fire('death'); });
+      at(cfg.death + 3, () => { setScene('menu'); setInten(0); stopDemo(); });
+    } else at(cfg.len, () => { setScene('menu'); setInten(0); stopDemo(); });
+    demo = { timers: T, ramp };
+  }
+  $('#demo-chill').addEventListener('click', () => runDemo('chill'));
+  $('#demo-extreme').addEventListener('click', () => runDemo('extreme'));
+  $('#demo-vanilla').addEventListener('click', () => runDemo('vanilla'));
+
+  // ── Gösterge ──
+  const cv = $('#scope'), g2 = cv.getContext('2d');
+  const SCENE_TR = { off: 'KAPALI', menu: 'MENÜ', play: 'OYUN', dead: 'ÖLÜM' };
+  function draw() {
+    requestAnimationFrame(draw);
+    if (!M) return;
+    const st = M.state(), W = cv.width, H = cv.height;
+    const data = new Uint8Array(M.analyser.frequencyBinCount); M.analyser.getByteFrequencyData(data);
+    g2.clearRect(0, 0, W, H);
+    const bars = 64, bw = W / bars;
+    const col = st.mode === 'extreme' ? [255, 122, 46] : st.mode === 'vanilla' ? [201, 212, 255] : [124, 255, 122];
+    for (let i = 0; i < bars; i++) {
+      const v = data[Math.floor(Math.pow(i / bars, 1.7) * data.length * 0.7)] / 255, h = v * (H - 16);
+      g2.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.25 + v * 0.75})`;
+      g2.fillRect(i * bw + 2, H - h - 6, bw - 4, h);
+    }
+    $('#s-bpm').textContent = st.scene === 'off' ? '—' : Math.round(st.bpm);
+    $('#s-chord').textContent = st.chord;
+    $('#s-chain').textContent = st.chain;
+    $('#s-scene').textContent = SCENE_TR[st.scene] || st.scene;
+    $('#m-int').style.width = Math.round(st.eS * 100) + '%';
+    $$('#m-combo i').forEach((el, i) => el.classList.toggle('on', st.combo > i));
+    const on = new Set(st.layers); if (st.boost) on.add('boost');
+    $$('.layer').forEach(el => el.classList.toggle('on', on.has(el.dataset.l)));
+    $('#scene-line').innerHTML = st.scene === 'dead' ? 'Ölüm: müzik boğuldu. <b>REVIVE</b> ile geri getir ya da bir demo başlat.'
+      : st.scene === 'menu' ? 'Menü: yalnız pad çalıyor. <b>Oyun</b>a geç ya da bir demo başlat.'
+      : `Oyun: <b>${st.mode.toUpperCase()}</b> · yoğunluk %${Math.round(st.eS * 100)} · combo ${st.combo}/3`;
+  }
+  window.ArcMusic = ArcMusic;   // test ve entegrasyon için
+})();
+</script>
+
+</body>
+</html>

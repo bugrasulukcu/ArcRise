@@ -386,6 +386,25 @@ test('müzik: yalnız oyun ekranında çalar', async () => {
   check(await waitFor(`window.__music === 0`, 3000), 'game over ekranında müzik sürüyor');
 });
 
+test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor çalar, mesafeyle yoğunlaşır, ölümde boğulur, oyun sonunda durur', async () => {
+  await fresh({ arc_music: 'adaptive' });
+  await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(800);
+  let a = await ev(`ARC_TEST.audio`);
+  check(a.music === 'adaptive' && a.engine && a.engine.scene === 'off', `menüde motor sessiz değil: ${JSON.stringify(a)}`);
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`ARC_TEST.audio.engine.scene === 'play'`, 5000), 'run başında motor başlamadı');
+  check(await waitFor(`ARC_TEST.audio.engine.inten > 0`, 15000), 'mesafe arttıkça yoğunluk artmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
+  check(await ev(`!performance.getEntriesByType('resource').some(e => /AUDIO\\/ArcRise/.test(e.name))`), 'eski ses dosyaları yine yüklendi');
+  await ev(`ARC_BOT.stop(); ARC_TEST.straight(0); true`);
+  check(await waitFor(`ARC_TEST.audio.engine.scene === 'dead' || ARC_TEST.audio.engine.scene === 'off'`, 30000), 'ölümde motor boğulmadı');
+  check(await waitFor(`ARC_TEST.scene === 'over' && ARC_TEST.audio.engine.scene === 'off'`, 30000), 'oyun sonu ekranında müzik sürüyor');
+  // ?music=classic → eski sisteme döner
+  await ev(`localStorage.removeItem('arc_music'); true`);
+  await fresh({});
+  await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(300);
+  check(await ev(`ARC_TEST.audio.music !== 'adaptive'`), 'varsayılan sürümde uyarlanabilir müzik açık');
+});
+
 test('ekonomi: metre başına coin, extreme ×2, günlük yumuşak tavan', async () => {
   await fresh({ arc_coin_day: today(), arc_coin_day_amt: '20' });
   const [n, x] = await ev(`(() => { const m = ARC_TEST.mode; ARC_TEST.setMode('normal'); const a = ARC_TEST.runCoinsRaw(1000, 0);
