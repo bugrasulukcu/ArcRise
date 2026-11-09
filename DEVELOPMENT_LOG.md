@@ -396,6 +396,10 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### HUD çizgisi gradyanı + slot kutusu dokunuşu yutmuyor (2026-11-09)
+- `#hud-line`: kenarlarda beyaz (.42), %34–%66 arası tam saydam **beyaz** (`rgba(255,255,255,0)`, gri ara ton yok) → çizgi combo dairesine değmeden söner.
+- `#slot-hud` 150×192 kutusu `pointer-events: auto` idi → 1 ya da 3 slot açıkken gizli 2./4. slotun yeri oyun alanına dokunuşu yutuyordu. Kutu artık `none`, yalnız `.slot` düğmeleri `auto`. Test eklendi (düzeltme olmadan düştüğü doğrulandı).
+
 ### Müzik stilleri moda göre + yoğunluk taşınma düzeltmesi (2026-11-09)
 - (Claude Desktop, 12e15c5) ArcMusic stil eşlemesi: **Vanilla → pulse** (eski Chill, sabit 120), **Chill → drive** (eski Extreme, 126→150), **Extreme → hyper** (160→174; kök-oktav-beşli bas, senkoplu kick, 16'lık hat, 4 ölçüde snare rulosu, sürekli arpej).
 - Düzeltme: `start()` yoğunluğu `S.inten`'e eşitliyordu ama run başında bu hâlâ önceki run'ın son değeriydi → yeni run eski tempo/katmanla başlıyordu. Oyun artık `start()`'tan önce bu run'ın yoğunluğunu verir (`_amIntensity()`).

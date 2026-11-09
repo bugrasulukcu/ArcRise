@@ -433,6 +433,31 @@ test('ses kaydırıcıları: SFX / Music 0–100, varsayılan tam ses, kaydedili
   check(await ev(`window.__music === 0`), 'müzik 0 iken çalıyor');
 });
 
+test('slot kutusu: sahip olunmayan slotların yeri oyun alanına dokunuşu geçirir; açık slot dokunulabilir', async () => {
+  for (const n of ['1', '3']) {
+    await fresh({ arc_slots_owned: n });
+    await ev(`document.getElementById('btn-start').click(); true`); await sleep(500);
+    const r = await ev(`(() => { const at = id => { const b = document.getElementById(id).getBoundingClientRect(); return document.elementFromPoint(b.x + 33 * b.width / 66, b.y + 33 * b.height / 66); };
+      const hud = document.getElementById('slot-hud').getBoundingClientRect();
+      const s2 = document.getElementById('slot-2'), s1 = document.getElementById('slot-1');
+      s2.style.display = s2.style.display; const hid = getComputedStyle(s2).display === 'none';
+      // gizli 2. slotun yeri: görünür olsaydı nerede olurdu → kutu içinde slot-pos-1 noktası
+      const p = { x: hud.x + (84 + 33) * hud.width / 150, y: hud.y + (124 + 33) * hud.height / 192 };
+      const el = document.elementFromPoint(p.x, p.y);
+      return { hid, under: el && (el.id || el.tagName), s1: (at('slot-1') || {}).closest ? !!at('slot-1').closest('#slot-1') : false }; })()`);
+    if (n === '1') check(r.hid && r.under === 'gc', `slot 2 yeri dokunuşu yutuyor (${n} slot): ${JSON.stringify(r)}`);
+    check(r.s1, `açık slot dokunulamıyor: ${JSON.stringify(r)}`);
+    if (n === '3') {
+      const r4 = await ev(`(() => { const hud = document.getElementById('slot-hud').getBoundingClientRect(); const b = document.getElementById('slot-4');
+        const st = getComputedStyle(b); const l = parseFloat(st.left), t = parseFloat(st.top); b.style.visibility = 'hidden';
+        const prev = b.style.display; b.style.display = 'none';
+        const el = document.elementFromPoint(hud.x + (l + 33) * hud.width / 150, hud.y + (t + 33) * hud.height / 192); b.style.display = prev; b.style.visibility = '';
+        return el && (el.id || el.tagName); })()`);
+      check(r4 === 'gc', `slot 4 yeri dokunuşu yutuyor (3 slot): ${r4}`);
+    }
+  }
+});
+
 test('ekonomi: metre başına coin, extreme ×2, günlük yumuşak tavan', async () => {
   await fresh({ arc_coin_day: today(), arc_coin_day_amt: '20' });
   const [n, x] = await ev(`(() => { const m = ARC_TEST.mode; ARC_TEST.setMode('normal'); const a = ARC_TEST.runCoinsRaw(1000, 0);

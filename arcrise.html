@@ -250,8 +250,8 @@
     .hud-divider { width: 60%; height: 1px; margin: 6px 0 7px; visibility: hidden; }
     #hud-line { position: absolute; top: calc(var(--hud-top) + 61px); left: calc(3.4% + 8px); right: calc(3.4% + 8px); height: 1px;
       pointer-events: none;
-      background: linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,.34) 12%, rgba(255,255,255,.16) 36%, transparent 47%,
-        transparent 53%, rgba(255,255,255,.16) 64%, rgba(255,255,255,.34) 88%, rgba(255,255,255,.08)); }
+      /* kenarlarda beyaz → combo dairesine varmadan tam saydam beyaz (gri ara ton olmasın diye 'transparent' değil) */
+      background: linear-gradient(90deg, rgba(255,255,255,.42), rgba(255,255,255,0) 34%, rgba(255,255,255,0) 66%, rgba(255,255,255,.42)); }
     .hud-tr .hud-divider { margin-left: auto; }
     .hud-sub-lbl { font-size: 8.5px; color: rgba(255,255,255,.5); letter-spacing: 1px; margin-bottom: 3px; }
     .hud-sub-num { font-size: 13px; color: rgba(255,255,255,.75); letter-spacing: 1px; font-variant-numeric: tabular-nums; }
@@ -3972,8 +3972,9 @@
       position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); left: 44px;
       width: 150px; height: 192px;
       z-index: 16; display: none;
-      pointer-events: auto;
+      pointer-events: none;   /* kutunun boş yerleri (gizli / sahip olunmayan slotlar) oyun alanına dokunuşu geçirir */
     }
+    #slot-hud .slot { pointer-events: auto; }
     #hud.active #slot-hud { display: block; }
     html.daily-run #hud.active #slot-hud { display: none; }   /* günlük: herkes aynı koşulda — yetenek yok */
     /* Vanilla: yalnız toplanan yeşil sayısı — combo, mesafe, rekor, sıra ve yetenek yok */
