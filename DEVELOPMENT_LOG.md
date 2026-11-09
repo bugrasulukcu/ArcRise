@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Zemin = ekranın alt kenarı, çizgi yok (2026-11-09)
+- Vanilla, tutorial ve başlangıç çizgisi öncesi zemin artık ayrı bir ışık bandı değil: top doğrudan ekranın alt kenarından (`S2W(H - 4)`) seker. Kamera yalnız yukarı kaydığı için alt kenar asla aşağı inmez.
+- `drawFloor`, `_bestY` ve `FLOOR_GAP` kaldırıldı. Vanilla BACK TO MENU düğmesi sabit olarak ekranın altında.
+- Test: Vanilla testi zeminin ekranın altı olduğunu (`ARC_TEST.floorIsBottom`) ve topun oraya inip altına geçmediğini doğruluyor. Tam suite 76/76.
+
 ### Başlangıçta aşağısı duvar (her mod) + 15 sn güvenlik (2026-11-09)
 
 - Sayaç başlangıç çizgisi geçilince başladığı için top ekranın altında sonsuza dek dönebiliyordu (ölüm yok, çıkış yok). Artık çizgi geçilene kadar **her modda** Vanilla / tutorial zemini geçerli: top aşağı inemez, zeminden yukarı seker, çizgiye ilerler (zemin çizgisi ekrandaysa görünür).

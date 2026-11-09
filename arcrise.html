@@ -7630,7 +7630,6 @@ const ARC_DB = (() => {
   // reklamla devam) → çizgi orada kesilir.
   const ghostSampled = [], GS_STEP = 6, GS_JUMP = 120, GS_MAX = 40000;
   let _trailBreak = false, _gsBreak = false;   // devamda true → izin / paylaşılan çizginin sonraki noktası öncekine bağlanmaz
-  let _bestY = Infinity;                        // Vanilla / tutorial zemini için topun en yüksek noktası (dünya y)
   const PRE_START_MAX = 15;                     // sn: başlangıç çizgisi geçilmese de geri sayım bu süreden sonra başlar
   let _preStartT = 0;
   // Vanilla: hiçbir şey kaydedilmez. Run başında istatistiklerin kopyası alınır, run bitince / çıkınca geri
@@ -10313,7 +10312,7 @@ const ARC_DB = (() => {
     player.speed = GAME_SPEED;
     _hudMeter = 0; _hudRecS = _hudRecD = false; _scoreBump = 0; _preStartT = 0;
     try { ['h-score', 'h-dist'].forEach(id => document.getElementById(id).classList.remove('rec', 'rec-in', 'tick', 'bump', 'bump-big')); } catch (_) {}
-    camY = 0; trail.length = 0; ghostSampled.length = 0; _bestY = Infinity; _trailBreak = _gsBreak = false;
+    camY = 0; trail.length = 0; ghostSampled.length = 0; _trailBreak = _gsBreak = false;
     _runStartY = player.y;
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
@@ -11288,13 +11287,10 @@ const ARC_DB = (() => {
       beginArc(-player.dir, getRadius());
     }
   }
-  // Vanilla / tutorial: aşağısı hep duvar. Zemin, topun çıktığı en yüksek noktanın FLOOR_GAP altında
-  // (başlangıçta ekranın alt kenarı); top yukarı çıktıkça zemin de çıkar, asla aşağı inmez → top aşağı
-  // gidemez, zemine değince yukarı seker.
-  const FLOOR_GAP = 196;
-  const floorY = () => Math.min(S2W(H - 4), _bestY + FLOOR_GAP);   // dünya y'si
+  // Vanilla / tutorial / başlangıç çizgisi öncesi: aşağısı hep duvar. Zemin ekranın alt kenarı
+  // (kamera yalnız yukarı kayar, alt kenar asla aşağı inmez); top oraya değince yukarı seker. Çizgi yok.
+  const floorY = () => S2W(H - 4);   // dünya y'si
   function floorBounce() {
-    _bestY = Math.min(_bestY, player.y);
     const fy = floorY();
     if (player.y + player.r > fy) {
       player.y = fy - player.r - 1;
@@ -11303,20 +11299,7 @@ const ARC_DB = (() => {
       haptic(20);
     }
   }
-  // Zemin çizgisi: ekrandaysa ince, soluk bir ışık bandı (nereden sekileceği görünsün)
-  function drawFloor() {
-    if (!(gameMode === 'wife' || tutActive || !_startCrossed) || scene !== 'play') return;
-    const sy = W2S(floorY());
-    if (sy > H - 6 || sy < 0) return;
-    ctx.save();
-    const g = ctx.createLinearGradient(0, sy, 0, sy + 26);
-    g.addColorStop(0, 'rgba(160,200,255,.16)'); g.addColorStop(1, 'rgba(160,200,255,0)');
-    ctx.fillStyle = g; ctx.fillRect(walls.left, sy, walls.right - walls.left, 26);
-    ctx.strokeStyle = 'rgba(180,215,255,.45)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(walls.left, sy); ctx.lineTo(walls.right, sy); ctx.stroke();
-    ctx.restore();
-  }
-  // Vanilla'da ölüm yok → oyundan çıkış düğmesi zeminin hemen altında (ekran dışına taşarsa alt kenarda)
+  // Vanilla'da ölüm yok → oyundan çıkış düğmesi ekranın altında
   const _vxBtn = document.getElementById('vanilla-exit');
   let _vxTop = -1;
   function updateVanillaExit() {
@@ -11324,7 +11307,7 @@ const ARC_DB = (() => {
     if (_vxBtn.hidden === on) _vxBtn.hidden = !on;
     if (!on) return;
     const k = (hudEl.clientHeight || H) / H;   // oyun birimi → CSS px
-    const top = Math.round(Math.min(W2S(floorY()) + 12, H - 50) * k);
+    const top = Math.round((H - 50) * k);
     if (top !== _vxTop) { _vxTop = top; _vxBtn.style.top = top + 'px'; }
   }
   _vxBtn.addEventListener('click', e => {
@@ -12108,7 +12091,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); drawFloor(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls();
       drawTrail(time); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -12579,7 +12562,7 @@ const ARC_DB = (() => {
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },
     setCombo: n => { runCombo = n; energy = 1; },
     get startCrossed() { return _startCrossed; }, set preStartT(v) { _preStartT = v; },
-    get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); },
+    get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); }, get floorIsBottom() { return Math.abs(floorY() - S2W(H - 4)) < 1; },
     get lastSafe() { return _lastSafePos && { x: Math.round(_lastSafePos.x), y: Math.round(_lastSafePos.y) }; },
     get trailJumps() { return trail.filter(p => p.j).length; },
     // Test: nesneyi oyuncunun bulunduğu yere koy (hemen tetiklensin)

@@ -1123,14 +1123,16 @@ test('vanilla: duvardan ve zeminden seker, aşağı inemez, zeminde BACK TO MENU
   await ev(`ARC_TEST.placePlayer(ARC_TEST.player.wr - ARC_TEST.player.r - 6, 0, 1); ARC_TEST.straight(0); true`); await sleep(500);
   const p1 = await ev('ARC_TEST.player');
   check(await ev(`ARC_TEST.scene === 'play'`) && p1.x + p1.r <= p1.wr + 1, `duvardan sekmedi: ${JSON.stringify(p1)}`);
-  // biraz yüksel, sonra dümdüz aşağı → zemin en yüksek noktanın altında sabit kalır
+  // biraz yüksel, sonra dümdüz aşağı → zemin ekranın alt kenarı (ayrı çizgi yok)
   await ev(`ARC_TEST.placePlayer(${p0.x}, 0, 1); ARC_TEST.straight(-Math.PI / 2); true`); await sleep(1500);
   const top = (await ev('ARC_TEST.player')).y, fl = await ev('ARC_TEST.floorY');
-  check(fl <= top + 200, `zemin topun çok altında: top ${top}, zemin ${fl}`);
-  await ev(`ARC_TEST.straight(Math.PI / 2); true`); await sleep(1500);
-  const p2 = await ev('ARC_TEST.player');
-  check(await ev(`ARC_TEST.scene === 'play'`) && p2.y + p2.r <= fl + 2, `top zeminin altına indi: y ${p2.y}, zemin ${fl}`);
-  check(Math.sin(p2.heading) < 0 || p2.y < top, `zeminden yukarı sekmedi: ${JSON.stringify(p2)}`);
+  check(await ev(`ARC_TEST.floorIsBottom`), `zemin ekranın altı değil: ${fl}`);
+  await ev(`ARC_TEST.straight(Math.PI / 2); true`);
+  const reached = await waitFor(`ARC_TEST.player.y + ARC_TEST.player.r >= ARC_TEST.floorY - 30`, 5000);   // ekranın altına kadar iner
+  check(reached, 'top ekranın altına ulaşmadı (zemin daha yukarıda?)');
+  await sleep(800);
+  const p2 = await ev('ARC_TEST.player'), fl2 = await ev('ARC_TEST.floorY');
+  check(await ev(`ARC_TEST.scene === 'play'`) && p2.y + p2.r <= fl2 + 2, `top zeminin altına indi: y ${p2.y}, zemin ${fl2}`);   // sekme yönü: tutorial testi
   // ölüm yok → zeminin altında BACK TO MENU; dokununca ana menü
   check(await ev(`(() => { const b = document.getElementById('vanilla-exit'); return !b.hidden && getComputedStyle(b).display !== 'none'; })()`), 'Vanilla\'da çıkış düğmesi yok');
   await ev(`document.getElementById('vanilla-exit').click(); true`); await sleep(300);
