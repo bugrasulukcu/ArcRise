@@ -7631,6 +7631,8 @@ const ARC_DB = (() => {
   const ghostSampled = [], GS_STEP = 6, GS_JUMP = 120, GS_MAX = 40000;
   let _trailBreak = false, _gsBreak = false;   // devamda true → izin / paylaşılan çizginin sonraki noktası öncekine bağlanmaz
   let _bestY = Infinity;                        // Vanilla / tutorial zemini için topun en yüksek noktası (dünya y)
+  const PRE_START_MAX = 15;                     // sn: başlangıç çizgisi geçilmese de geri sayım bu süreden sonra başlar
+  let _preStartT = 0;
   // Vanilla: hiçbir şey kaydedilmez. Run başında istatistiklerin kopyası alınır, run bitince / çıkınca geri
   // yüklenir → oyun içinde artan sayaçlar (altın, iz, rozet koşulları…) sonradan başka bir kayıtla yazılamaz.
   let _vanGreens = 0, _vanSnap = null;
@@ -10309,7 +10311,7 @@ const ARC_DB = (() => {
     player.x = W/2; player.y = H - 200;
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
-    _hudMeter = 0; _hudRecS = _hudRecD = false; _scoreBump = 0;
+    _hudMeter = 0; _hudRecS = _hudRecD = false; _scoreBump = 0; _preStartT = 0;
     try { ['h-score', 'h-dist'].forEach(id => document.getElementById(id).classList.remove('rec', 'rec-in', 'tick', 'bump', 'bump-big')); } catch (_) {}
     camY = 0; trail.length = 0; ghostSampled.length = 0; _bestY = Infinity; _trailBreak = _gsBreak = false;
     _runStartY = player.y;
@@ -10681,10 +10683,14 @@ const ARC_DB = (() => {
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
     if (tutActive) tutTick(dt);
-    if (gameMode === 'wife' || tutActive) floorBounce();
-    if (gameMode === 'wife' || tutActive || !_startCrossed) {
+    // Zemin: Vanilla / tutorial'da hep; diğer modlarda başlangıç çizgisi geçilene kadar (sayaç işlemezken top
+    // ekranın altında sonsuza dek dönebiliyordu — ölüm yok, çıkış yok). Zemin yukarı sektirir → top çizgiye ilerler.
+    if (gameMode === 'wife' || tutActive || !_startCrossed) floorBounce();
+    if (!_startCrossed) _preStartT += dt;
+    if (gameMode === 'wife' || tutActive || (!_startCrossed && _preStartT < PRE_START_MAX)) {
       // Vanilla / tutorial: süre sınırı yok — enerji hep dolu, ölüm yok.
-      // Diğer modlar: geri sayım başlangıç çizgisi geçilince başlar (o ana dek enerji dolu).
+      // Diğer modlar: geri sayım başlangıç çizgisi geçilince başlar (o ana dek enerji dolu). Çizgi PRE_START_MAX sn
+      // içinde geçilmezse yine başlar: dar dönüşte (Radius eksi + Narrow) top zemine değmeden yerinde dönebiliyordu.
       energy = 1;
       graceTimer = 0;
     } else {
@@ -11299,7 +11305,7 @@ const ARC_DB = (() => {
   }
   // Zemin çizgisi: ekrandaysa ince, soluk bir ışık bandı (nereden sekileceği görünsün)
   function drawFloor() {
-    if (!(gameMode === 'wife' || tutActive) || scene !== 'play') return;
+    if (!(gameMode === 'wife' || tutActive || !_startCrossed) || scene !== 'play') return;
     const sy = W2S(floorY());
     if (sy > H - 6 || sy < 0) return;
     ctx.save();
@@ -12572,7 +12578,7 @@ const ARC_DB = (() => {
     get bonus() { return scoreBonus; },
     get combo() { return { n: runCombo, mul: comboMul(), cap: comboCap() }; },
     setCombo: n => { runCombo = n; energy = 1; },
-    get startCrossed() { return _startCrossed; },
+    get startCrossed() { return _startCrossed; }, set preStartT(v) { _preStartT = v; },
     get energy() { return +energy.toFixed(3); }, get floorY() { return Math.round(floorY()); },
     get lastSafe() { return _lastSafePos && { x: Math.round(_lastSafePos.x), y: Math.round(_lastSafePos.y) }; },
     get trailJumps() { return trail.filter(p => p.j).length; },

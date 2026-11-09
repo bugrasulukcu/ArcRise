@@ -396,6 +396,12 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Başlangıçta aşağısı duvar (her mod) + 15 sn güvenlik (2026-11-09)
+
+- Sayaç başlangıç çizgisi geçilince başladığı için top ekranın altında sonsuza dek dönebiliyordu (ölüm yok, çıkış yok). Artık çizgi geçilene kadar **her modda** Vanilla / tutorial zemini geçerli: top aşağı inemez, zeminden yukarı seker, çizgiye ilerler (zemin çizgisi ekrandaysa görünür).
+- Dar dönüşte (Radius eksi + Narrow) top zemine değmeden yerinde dönebileceği için: çizgi **15 sn** (`PRE_START_MAX`) içinde geçilmezse geri sayım yine başlar.
+- Testler: başlangıçta aşağı yönlenen top zeminin altına inmez; çizgi geçilmezse 15 sn sonra sayaç işler. `playRun` ve PB testi bot bırakınca topu duvara / yukarı yönlendirir (eskiden "dokunmayınca ölür" varsayımı vardı).
+
 ### HUD düzeni: sıra sayının altında, tek satır BEST · sıra rengi dilime göre (2026-11-08)
 
 - Skor / mesafe sütunu: başlık → büyük sayı → **canlı sıra** (RANK etiketi yok, "#" yeterli) → çizgi → **"BEST değer"** tek satır. Sütun 6 satırdan 4'e indi; combo halkası biraz aşağıda (üst + 30 px), booster onun altında.

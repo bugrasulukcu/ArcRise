@@ -193,6 +193,9 @@ async function realClick(sel) {   // gerçek fare olayı (sentetik .click() değ
 async function playRun(ms) {   // bot `ms` oynar, sonra bırakır → top düşer → game over
   dbg('run başlıyor'); await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
   await sleep(ms); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu');
+  // bot bırakınca top kendiliğinden ölmeyebilir (çizgi geçilmediyse zeminden seker, sayaç 15 sn bekler; yeşil toplarsa
+  // enerji dolar) → duvara yönlendir: duvar her zaman bitirir
+  await ev(`if (ARC_TEST.scene === 'play') ARC_TEST.straight(0); true`);
   if (!await waitFor(`ARC_TEST.scene === 'over'`, 30000)) throw new Error('game over ekranına gelinmedi');
   dbg('game over');
   await sleep(2500);   // skor gönderimi (async) bitsin
@@ -237,7 +240,7 @@ test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli 
   const myDoc = `scores/${uid}_normal`;
   // 1. run başlangıç çizgisini kesin geçsin (bot bazen hemen ölüyordu → skor 0, yazım yok)
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(300);
-  await ev(`ARC_TEST.ghost(6); true`); await sleep(8000); await ev(`ARC_BOT.stop(); true`);   // skor > 0 olacak kadar (5 puan/m)
+  await ev(`ARC_TEST.ghost(6); true`); await sleep(8000); await ev(`ARC_BOT.stop(); ARC_TEST.straight(-Math.PI / 2); true`);   // skor > 0 olacak kadar (5 puan/m)
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), '1. run bitmedi'); await sleep(2500);
   const w1 = fb.writes.filter(w => w.path === myDoc);
   check(w1.length === 1 && w1[0].authed && w1[0].mustNotExist && w1[0].status === 200,
@@ -248,7 +251,7 @@ test('pb: ilk skor oluşturulur, daha iyisi kimlikli güncellenir; aynı isimli 
   await ev(`ARC_TEST.ghost(12); true`);
   // skor artık küçük (5 puan/m) → iyileşmeyi garanti et: 3 kapı (her biri +10 × çarpan)
   for (let g = 0; g < 3; g++) { await sleep(700); await ev(`ARC_TEST.spawnFeatHere('gate'); true`); }
-  dbg('2. run'); await sleep(12000); await ev(`ARC_BOT.stop(); true`); dbg('bot durdu, sahne=' + await scene());
+  dbg('2. run'); await sleep(12000); await ev(`ARC_BOT.stop(); ARC_TEST.straight(-Math.PI / 2); true`); dbg('bot durdu, sahne=' + await scene());   // çizgiyi geçsin → sayaç biter
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'ikinci run bitmedi'); dbg('2. game over');
   await sleep(2500);
   const best = Number(await ls('arc_best'));
@@ -1094,6 +1097,21 @@ test('geri sayım başlangıç çizgisi geçilince başlar', async () => {
   check(await waitFor('ARC_TEST.startCrossed', 6000), 'çizgi geçilmedi');
   await sleep(600);
   check(await ev('ARC_TEST.energy') < 1, 'çizgiden sonra sayaç işlemiyor');
+});
+
+test('başlangıç: çizgi geçilene kadar aşağısı duvar (her modda), çizgi 15 sn geçilmezse sayaç yine başlar', async () => {
+  await fresh({});
+  await ev(`document.getElementById('btn-start').click(); true`); await sleep(300);
+  // dümdüz aşağı → ekranın altına inmez, zeminden yukarı seker
+  await ev(`ARC_TEST.ghost(10); ARC_TEST.straight(Math.PI / 2); window.__low = 0; window.__lt = setInterval(() => { const p = ARC_TEST.player; window.__low = Math.max(window.__low, p.y + p.r - ARC_TEST.floorY); }, 50); true`);   // ghost: duvarda ölmesin
+  await sleep(2500);
+  const low = await ev(`(clearInterval(window.__lt), window.__low)`);
+  check(await ev(`ARC_TEST.scene === 'play'`) && low <= 2, `top zeminin altına indi (${low} px)`);
+  // top yerinde kalsa da (çizgi hiç geçilmese de) 15 sn sonra geri sayım başlar
+  await ev(`ARC_TEST.placePlayer(ARC_TEST.player.x, -Math.PI / 2, 0); true`);   // donuk: ilerlemez
+  check(await ev('ARC_TEST.energy') === 1 && !(await ev('ARC_TEST.startCrossed')), 'çizgiden önce sayaç işliyor');
+  await ev(`ARC_TEST.preStartT = 14.9; true`); await sleep(800);
+  check(await ev('ARC_TEST.energy') < 1, 'çizgi geçilmeden 15 sn sonra sayaç başlamadı');
 });
 
 test('vanilla: duvardan ve zeminden seker, aşağı inemez, zeminde BACK TO MENU; adı VANILLA', async () => {
