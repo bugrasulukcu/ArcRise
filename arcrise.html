@@ -5233,10 +5233,12 @@
 const ArcMusic = (() => {
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
   const PENTA = [0, 3, 5, 7, 10];                    // A minör pentatonik
+  // Oyun modu → müzik stili (2026-11-09: Vanilla eski Chill'i, Chill eski Extreme'i aldı; Extreme'e yeni "hyper")
+  const STYLE = { vanilla: 'pulse', chill: 'drive', extreme: 'hyper' };
   const PROG = {
-    chill:   [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
-    extreme: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [50, 53, 57], b: 38, name: 'Dm' }, { n: [52, 56, 59], b: 40, name: 'E' }],
-    vanilla: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+    pulse: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [55, 60, 64], b: 48, name: 'C' }, { n: [55, 59, 62], b: 43, name: 'G' }],
+    drive: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [50, 53, 57], b: 38, name: 'Dm' }, { n: [52, 56, 59], b: 40, name: 'E' }],
+    hyper: [{ n: [57, 60, 64], b: 45, name: 'Am' }, { n: [55, 59, 62], b: 43, name: 'G' }, { n: [53, 57, 60], b: 41, name: 'F' }, { n: [52, 56, 59], b: 40, name: 'E' }],
   };
   const LEAD = [76, 74, 72, 69, 72, 74, 76, 79];      // MAX combo lead motifi (E5 D5 C5 A4 ...)
 
@@ -5367,33 +5369,35 @@ const ArcMusic = (() => {
 
     // ── Zamanlayıcı ──
     const spb = () => 60 / S.bpm / 4;                // 16'lık nota süresi
+    const style = () => STYLE[S.mode] || 'drive';
     function targetBpm() {
-      if (S.mode === 'vanilla') return 88;
       if (S.scene !== 'play') return 96;
-      return S.mode === 'extreme' ? 126 + 24 * S.eS : 120;   // Chill: eski müzik gibi sabit 120 BPM (yoğunluk katmanları/filtreyi açar)
+      const st = style();
+      if (st === 'pulse') return 120;                         // Vanilla: eski Chill (sabit 120)
+      if (st === 'drive') return 126 + 24 * S.eS;             // Chill: eski Extreme (126→150)
+      return 160 + 14 * S.eS;                                 // Extreme: hyper (160→174)
     }
     function filterTargets(t) {
       let f, pf;
-      const boost = t < S.boostUntil;
+      const boost = t < S.boostUntil, st = style();
       if (S.scene === 'dead') { f = 260; pf = 500; }
       else if (S.scene !== 'play') { f = 700; pf = 800; }
-      else if (S.mode === 'vanilla') { f = 2400; pf = 1300; }
       else {
-        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (S.mode === 'extreme' ? 1600 : 0);
-        pf = 800 + 1700 * S.eS + 380 * S.combo;
+        f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (st === 'drive' ? 1600 : st === 'hyper' ? 3200 : 0);
+        pf = 800 + 1700 * S.eS + 380 * S.combo + (st === 'hyper' ? 600 : 0);
       }
       musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
       padLP.frequency.setTargetAtTime(Math.min(pf, 6000), t, 0.25);
     }
     function scheduleStep(t, i) {
-      const s = i % 16, bar = Math.floor(i / 16), prog = PROG[S.mode], ch = prog[bar % 4];
+      const st = style(), s = i % 16, bar = Math.floor(i / 16), ch = PROG[st][bar % 4];
       const L = S.layers; L.clear();
       S.eS += (S.inten - S.eS) * 0.06;
-      const e = S.eS, x = S.mode === 'extreme', van = S.mode === 'vanilla', play = S.scene === 'play', boost = t < S.boostUntil;
+      const e = S.eS, play = S.scene === 'play', boost = t < S.boostUntil;
       if (s === 0) {
         S.bpm = targetBpm();
         dly.delayTime.setTargetAtTime(Math.min(1.9, spb() * 3), t, 0.05);
-        const lvl = S.scene === 'dead' ? 0.022 : (play ? 0.03 : 0.034);
+        const lvl = S.scene === 'dead' ? 0.022 : (play ? (st === 'hyper' ? 0.026 : 0.03) : 0.034);
         for (const m of ch.n) padNote(m, t, spb() * 16, lvl);
         S.chord = ch.name;
       }
@@ -5404,25 +5408,53 @@ const ArcMusic = (() => {
         if (S.scene === 'menu' && s % 4 === 0) pluck(ch.n[(s / 4) % 3] + 12, t, 0.035, 0.35, 'triangle', 0.6);
         return;
       }
-      if (van) {                                      // Vanilla: davulsuz, yumuşak
-        if (s % 2 === 0) { const seq = [0, 1, 2, 1, 2, 0, 1, 2]; pluck(ch.n[seq[(s / 2) % 8]] + 12, t, 0.06, 0.4, 'triangle', 0.5); L.add('arp'); }
-        if (s === 0 || s === 8) { bass(ch.b, t, spb() * 7, 0.12, 0.1); L.add('bass'); }
-        return;
-      }
-      if (s % 4 === 0) kick(t, x ? 0.95 : 0.85);     // kick run'ın ilk anından her vuruşta (2026-11-09)
-      L.add('kick');
-      if (e > 0.22 || x) {
-        if (x) { const m = (s % 4 === 2) ? ch.b + 12 : ch.b; bass(m, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); }
-        else if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
-        else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
-        L.add('bass');
-      }
-      if (e > 0.35 || x || boost) {
-        if (s % 4 === 2) hat(t, 0.09, x && s === 14);
-        if ((e > 0.72 || x || boost) && s % 2 === 1) hat(t, 0.045, false);
+      if (st === 'pulse') {                           // ── Vanilla: eski Chill düzeni ──
+        if (s % 4 === 0) kick(t, 0.85);               // kick run'ın ilk anından her vuruşta
+        L.add('kick');
+        if (e > 0.22) {
+          if (e > 0.62) { if (s % 2 === 0) bass(s % 4 === 2 ? ch.b + 12 : ch.b, t, spb() * 1.6, 0.2, 0.25 + e * 0.4); }
+          else if (s % 4 === 0 || s % 4 === 3) bass(ch.b, t, spb() * 1.8, 0.2, 0.2);
+          L.add('bass');
+        }
+        if (e > 0.35 || boost) {
+          if (s % 4 === 2) hat(t, 0.09, false);
+          if ((e > 0.72 || boost) && s % 2 === 1) hat(t, 0.045, false);
+          L.add('hats');
+        }
+        if (e > 0.45) { if (s === 4 || s === 12) snare(t, 0.24); L.add('snare'); }
+      } else if (st === 'drive') {                    // ── Chill: eski Extreme düzeni ──
+        if (s % 4 === 0) kick(t, 0.95);
+        L.add('kick');
+        bass((s % 4 === 2) ? ch.b + 12 : ch.b, t, spb() * 0.9, s % 4 === 0 ? 0.24 : 0.17, 0.35 + e * 0.5); L.add('bass');
+        if (s % 4 === 2) hat(t, 0.09, s === 14);
+        if (s % 2 === 1) hat(t, 0.045, false);
         L.add('hats');
+        if (s === 4 || s === 12) snare(t, 0.3);
+        L.add('snare');
+        if (e > 0.55) {
+          if (s === 0 || s === 6 || s === 10) fireStab(ch.b, t, 0.11);
+          if (s === 0 && bar % 4 === 0) crash(t, 0.12);
+          L.add('fire');
+        }
+      } else {                                        // ── Extreme: hyper ──
+        const fill = bar % 4 === 3 && s >= 12;        // her 4 ölçünün sonunda snare rulosu
+        if (s % 4 === 0 || s === 10 || (e > 0.5 && s === 7)) kick(t, s % 4 === 0 ? 1 : 0.7);
+        L.add('kick');
+        const roll = [0, 12, 7, 12];                  // kök – oktav – beşli – oktav
+        bass(ch.b + roll[s % 4], t, spb() * 0.85, s % 4 === 0 ? 0.25 : 0.18, 0.55 + e * 0.45); L.add('bass');
+        hat(t, s % 2 ? 0.05 : 0.07, s % 4 === 2 && e > 0.5);
+        L.add('hats');
+        if (fill) snare(t, 0.14 + (s - 12) * 0.05);
+        else if (s === 4 || s === 12) snare(t, 0.32);
+        L.add('snare');
+        if (s === 0 || s === 3 || s === 6 || s === 10 || s === 13) fireStab(ch.b + (s === 13 ? 12 : 0), t, 0.1);
+        if (s === 0 && bar % 2 === 0) crash(t, 0.13);
+        L.add('fire');
+        if (S.combo < 1 && s % 2 === 0) {             // combo olmasa da sürekli bir arpej nabzı
+          const tones = [ch.n[0], ch.n[2], ch.n[1] + 12, ch.n[2]];
+          pluck(tones[(s / 2) % 4] + 12, t, 0.03, 0.1, 'square', 0.35); L.add('arp');
+        }
       }
-      if (e > 0.45 || x) { if (s === 4 || s === 12) snare(t, x ? 0.3 : 0.24); L.add('snare'); }
       if (S.combo >= 1) {
         const tones = [ch.n[0], ch.n[1], ch.n[2], ch.n[1] + 12, ch.n[2] + 12, ch.n[0] + 12];
         const every = S.combo >= 2 ? 1 : 2;
@@ -5432,11 +5464,6 @@ const ArcMusic = (() => {
       if (S.combo >= 3 && s % 4 === 0) {
         const m = LEAD[((bar % 2) * 4 + s / 4) % LEAD.length];
         leadNote(m, t, spb() * 3.5, 0.05); L.add('lead');
-      }
-      if (x && e > 0.55) {
-        if (s === 0 || s === 6 || s === 10) fireStab(ch.b, t, 0.11);
-        if (s === 0 && bar % 4 === 0) crash(t, 0.12);
-        L.add('fire');
       }
       if (boost) { if (s % 2 === 0) pluck(ch.n[(s / 2) % 3] + 24, t, 0.03, 0.08, 'sawtooth', 0.3); L.add('boost'); }
     }
@@ -5465,6 +5492,7 @@ const ArcMusic = (() => {
         if (mode) S.mode = mode;
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
         S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0;
+        S.eS = S.inten;                                          // önceki run'ın yoğunluğu (tempo/katman) yeni run'a taşınmasın
         if (S.step % 16) { S.step += 16 - (S.step % 16); }            // yeni run yeni ölçüden başlar
         music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t, 0.15);
         startTimer();
@@ -5474,13 +5502,13 @@ const ArcMusic = (() => {
         music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(0, t, 0.3);
         if (S.timer) { clearInterval(S.timer); S.timer = null; }
       },
-      setMode(m) { if (PROG[m]) S.mode = m; },
+      setMode(m) { if (STYLE[m]) S.mode = m; },
       setMusicEnabled(on, at) { musicVol.gain.setTargetAtTime(typeof on === 'number' ? Math.max(0, Math.min(1, on)) : (on ? 1 : 0), now(at), 0.05); },   // true/false ya da 0..1 ses seviyesi
       setSfxEnabled(on, at) { sfx.gain.setTargetAtTime(0.9 * (typeof on === 'number' ? Math.max(0, Math.min(1, on)) : (on ? 1 : 0)), now(at), 0.02); },
       setIntensity(v) { S.inten = Math.max(0, Math.min(1, v)); },
       setCombo(l) { S.combo = Math.max(0, Math.min(3, l | 0)); },
       tap(dir = 1, at) {
-        const t = now(at), ch = PROG[S.mode][Math.floor(S.step / 16) % 4];
+        const t = now(at), ch = PROG[STYLE[S.mode] || 'drive'][Math.floor(S.step / 16) % 4];
         const o = osc('sine', mtof(ch.n[0] + 24 + (dir > 0 ? 7 : 0)), t, t + 0.07), g = G(0);
         g.gain.setValueAtTime(0.09, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.06); o.connect(g); g.connect(sfx);
         const n = noiseSrc(t, t + 0.02), f = F('highpass', 3000), g2 = G(0.05); g2.gain.setValueAtTime(0.05, t); g2.gain.exponentialRampToValueAtTime(0.0005, t + 0.015);
