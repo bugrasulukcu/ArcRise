@@ -396,6 +396,11 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Müzik stilleri moda göre + yoğunluk taşınma düzeltmesi (2026-11-09)
+- (Claude Desktop, 12e15c5) ArcMusic stil eşlemesi: **Vanilla → pulse** (eski Chill, sabit 120), **Chill → drive** (eski Extreme, 126→150), **Extreme → hyper** (160→174; kök-oktav-beşli bas, senkoplu kick, 16'lık hat, 4 ölçüde snare rulosu, sürekli arpej).
+- Düzeltme: `start()` yoğunluğu `S.inten`'e eşitliyordu ama run başında bu hâlâ önceki run'ın son değeriydi → yeni run eski tempo/katmanla başlıyordu. Oyun artık `start()`'tan önce bu run'ın yoğunluğunu verir (`_amIntensity()`).
+- Test: Chill (drive) run başı ~126 BPM; ikinci run önceki yoğunluğu taşımaz (düzeltme olmadan düştüğü doğrulandı).
+
 ### Müzik ilk sürüme döndü, kick baştan; SFX varsayılanı tam ses (2026-11-09)
 - Buğra: dubstep düzeni yerine ilk ArcMusic sürümü daha iyi → motor 120 BPM'li ilk sürüme döndürüldü (wobble/clap kaldırıldı). Tek fark: **kick run'ın ilk anından her vuruşta** (eskiden mesafeyle giriyordu). Ses seviyesi API'si (0..1) korundu.
 - SFX varsayılanı yeniden **1** (eski seviye). Açılışta seviyeler artık kendiliğinden kaydedilmez (yalnız kaydırıcı oynatılınca); kısa süreli `arc_sfx_vol = 0.6` kaydı bir kez silinir (`arc_vol_v2`).

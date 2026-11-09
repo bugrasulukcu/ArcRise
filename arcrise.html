@@ -8699,6 +8699,9 @@ const ARC_DB = (() => {
   })();
   let _arcMusic = null;
   const AM_CHILL_FULL_CM = 1500, AM_EXTREME_FULL_CM = 7500;   // yoğunluğun tam açıldığı mesafe (Chill/Vanilla 15 m, Extreme 75 m)
+  // Mesafe → müzik yoğunluğu (Chill/Vanilla 15 m'de tam; Extreme 0.3'ten 75 m'de tam)
+  const _amIntensity = () => { const dCm = (distancePx / H_REF) * CM_PER_SCREEN;
+    return gameMode === 'extreme' ? 0.3 + 0.7 * Math.min(1, dCm / AM_EXTREME_FULL_CM) : Math.min(1, dCm / AM_CHILL_FULL_CM); };
   const _amMode = () => ({ normal: 'chill', extreme: 'extreme', wife: 'vanilla' })[gameMode] || 'chill';
 
   async function loadSfxBuffer(ctx, url) {
@@ -8809,7 +8812,7 @@ const ARC_DB = (() => {
       _musicWanted = false;
       const sc = _arcMusic.state().scene;
       if (sc === 'dead') _arcMusic.revive();               // revive / reklamla devam: riser + müzik geri gelir
-      else if (sc !== 'play') _arcMusic.start(_amMode());
+      else if (sc !== 'play') { _arcMusic.setIntensity(_amIntensity()); _arcMusic.start(_amMode()); }   // önce bu run'ın yoğunluğu: start() eS'i ona eşitler (önceki run'ınki taşınmaz)
       return;
     }
     if (sfxCtx) {
@@ -11189,8 +11192,7 @@ const ARC_DB = (() => {
       }
     }
     if (_arcMusic) {   // uyarlanabilir müzik: mesafe → yoğunluk (katmanlar/tempo), combo çarpanı → arpej/lead
-      const dCm = (distancePx / H_REF) * CM_PER_SCREEN;
-      _arcMusic.setIntensity(gameMode === 'extreme' ? 0.3 + 0.7 * Math.min(1, dCm / AM_EXTREME_FULL_CM) : Math.min(1, dCm / AM_CHILL_FULL_CM));
+      _arcMusic.setIntensity(_amIntensity());
       const mul = gameMode === 'wife' ? 1 : comboMul();
       _arcMusic.setCombo(mul < 2 ? 0 : 1 + Math.round(2 * (mul - 2) / Math.max(1, comboCap() - 2)));
     }

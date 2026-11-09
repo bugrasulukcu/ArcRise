@@ -393,12 +393,17 @@ test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor ç
   check(a.music === 'adaptive' && a.engine && a.engine.scene === 'off', `menüde motor sessiz değil: ${JSON.stringify(a)}`);
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
   check(await waitFor(`ARC_TEST.audio.engine.scene === 'play'`, 5000), 'run başında motor başlamadı');
-  check(await waitFor(`Math.abs(ARC_TEST.audio.engine.bpm - 120) < 1`, 15000), 'Chill temposu 120 BPM değil: ' + (await ev(`ARC_TEST.audio`)).engine.bpm);
+  check(await waitFor(`ARC_TEST.audio.engine.bpm >= 126 && ARC_TEST.audio.engine.bpm < 133`, 15000), 'Chill (drive) run başı temposu 126 civarı değil: ' + (await ev(`ARC_TEST.audio`)).engine.bpm);
   check(await waitFor(`ARC_TEST.audio.engine.inten > 0`, 15000), 'mesafe arttıkça yoğunluk artmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
   check(await ev(`!performance.getEntriesByType('resource').some(e => /AUDIO\\/ArcRise/.test(e.name))`), 'eski ses dosyaları yine yüklendi');
+  check(await waitFor(`ARC_TEST.audio.engine.eS > 0.04`, 20000), 'ilk run yoğunlaşmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));   // ikinci run kontrolü anlamlı olsun
   await ev(`ARC_BOT.stop(); ARC_TEST.straight(0); true`);
   check(await waitFor(`ARC_TEST.audio.engine.scene === 'dead' || ARC_TEST.audio.engine.scene === 'off'`, 30000), 'ölümde motor boğulmadı');
   check(await waitFor(`ARC_TEST.scene === 'over' && ARC_TEST.audio.engine.scene === 'off'`, 30000), 'oyun sonu ekranında müzik sürüyor');
+  // ikinci run önceki run'ın yoğunluğunu taşımaz
+  await ev(`document.getElementById('btn-again') ? document.getElementById('btn-again').click() : document.getElementById('wrap-again').click(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play' && ARC_TEST.audio.engine.scene === 'play'`, 5000), 'ikinci run başlamadı');
+  check(await ev(`ARC_TEST.audio.engine.eS < 0.01`), 'ikinci run önceki yoğunlukla başladı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
   // ?music=classic → eski sisteme döner
   await ev(`localStorage.removeItem('arc_music'); true`);
   await fresh({});
