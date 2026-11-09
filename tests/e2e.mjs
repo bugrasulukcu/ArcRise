@@ -393,6 +393,7 @@ test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor ç
   check(a.music === 'adaptive' && a.engine && a.engine.scene === 'off', `menüde motor sessiz değil: ${JSON.stringify(a)}`);
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
   check(await waitFor(`ARC_TEST.audio.engine.scene === 'play'`, 5000), 'run başında motor başlamadı');
+  check(await waitFor(`Math.abs(ARC_TEST.audio.engine.bpm - 120) < 1`, 15000), 'Chill temposu 120 BPM değil: ' + (await ev(`ARC_TEST.audio`)).engine.bpm);
   check(await waitFor(`ARC_TEST.audio.engine.inten > 0`, 15000), 'mesafe arttıkça yoğunluk artmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
   check(await ev(`!performance.getEntriesByType('resource').some(e => /AUDIO\\/ArcRise/.test(e.name))`), 'eski ses dosyaları yine yüklendi');
   await ev(`ARC_BOT.stop(); ARC_TEST.straight(0); true`);

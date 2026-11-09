@@ -402,6 +402,7 @@ App yüklenince:
   - Bağlantılar: run başı `start(mod)`, ölüm `death()` (eski dead.wav çalmaz), revive / reklamla devam `revive()`, oyun sonu ve menü `stop()` (Karar 1: menüde müzik yok), booster `booster(süre)` (kısma yok — Karar 2), dokunuş `tap()` (Karar 3), yeşil `collect()`, combo kırılması `comboBreak()`, CLOSE `nearMiss()`, altın `gold()`, her kare `setIntensity` (Chill/Vanilla 15 m, Extreme 0.3 + 0.7 × 75 m) ve `setCombo` (çarpan 2..tavan → 1..3). Ayarlar `setMusicEnabled` / `setSfxEnabled`. `LOWFX` → `lite: true`.
   - Uyarlanabilir modda `AUDIO/` dosyaları hiç yüklenmez. Lisanslı dosyalar ve `RESOURCES/` henüz silinmedi (Buğra'nın kararı: dokunma); deneme beğenilirse varsayılan yapılıp eski sistem kaldırılacak (HANDOFF.md "Kaldırılacaklar").
 - **Üst HUD** (referans görsel): skor/mesafe sayısı küçüldü (17–23 px), satırlar sıkı sabit ızgarada (etiket · sayı · sıra). Kenardan kenara tek ince yatay çizgi (`#hud-line`), combo dairesinin tam ortasından geçer; daire ona hizalandı. Sıra gizliyken de yeri korunur (çizgi hep aynı yükseklikte). 360 px altında avatar noktası gizli (halkaya değmesin).
+- Chill temposu sabit **120 BPM** (eski müziğin temposu; önce 100→122 artıyordu). Extreme 126→150, Vanilla 88 aynı.
 - Test: uyarlanabilir müzik testi eklendi (dosya yüklenmez, run'da çalar, mesafeyle yoğunlaşır, ölüm/oyun sonu, varsayılan klasik).
 
 ### Zemin = ekranın alt kenarı, çizgi yok (2026-11-09)

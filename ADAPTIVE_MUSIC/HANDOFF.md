@@ -114,7 +114,7 @@ Oyun tek dosya (`arcrise.html`). İki seçenek:
 
 ## Ayarlanabilir sabitler (`arc-music.js` içinde)
 
-- `targetBpm()`: Chill `100 + 22·e`, Extreme `126 + 24·e`, Vanilla 88, menü 96.
+- `targetBpm()`: Chill sabit 120 (2026-11-09, eski müzik temposu), Extreme `126 + 24·e`, Vanilla 88, menü 96.
 - Katman eşikleri `scheduleStep()` içinde: kick `e > 0.12`, bas `> 0.22`, hi-hat `> 0.35`, snare `> 0.45`, 16'lık bas `> 0.62`, 16'lık hat `> 0.72`.
 - Akor yürüyüşleri `PROG`: Chill/Vanilla Am–F–C–G, Extreme Am–F–Dm–E.
 - Toplama notaları `PENTA` (A minör pentatonik), MAX combo melodisi `LEAD`.

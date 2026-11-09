@@ -145,7 +145,7 @@ const ArcMusic = (() => {
     function targetBpm() {
       if (S.mode === 'vanilla') return 88;
       if (S.scene !== 'play') return 96;
-      return S.mode === 'extreme' ? 126 + 24 * S.eS : 100 + 22 * S.eS;
+      return S.mode === 'extreme' ? 126 + 24 * S.eS : 120;   // Chill: eski müzik gibi sabit 120 BPM (yoğunluk katmanları/filtreyi açar)
     }
     function filterTargets(t) {
       let f, pf;
