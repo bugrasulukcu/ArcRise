@@ -399,6 +399,8 @@ test('uyarlanabilir müzik (?music=adaptive): dosya yüklenmez, run\'da motor ç
   check(await waitFor(`ARC_TEST.audio.engine.eS > 0.025`, 30000), 'ilk run yoğunlaşmadı: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));   // ikinci run kontrolü anlamlı olsun
   await ev(`ARC_BOT.stop(); ARC_TEST.straight(0); true`);
   check(await waitFor(`ARC_TEST.audio.engine.scene === 'dead' || ARC_TEST.audio.engine.scene === 'off'`, 30000), 'ölümde motor boğulmadı');
+  await sleep(150);
+  check(await ev(`ARC_TEST.audio.engine.musicGain < 0.02`), 'ölümde müzik küt diye kesilmedi: ' + JSON.stringify((await ev(`ARC_TEST.audio`)).engine));
   check(await waitFor(`ARC_TEST.scene === 'over' && ARC_TEST.audio.engine.scene === 'off'`, 30000), 'oyun sonu ekranında müzik sürüyor');
   // ikinci run önceki run'ın yoğunluğunu taşımaz
   await ev(`document.getElementById('btn-again') ? document.getElementById('btn-again').click() : document.getElementById('wrap-again').click(); true`);

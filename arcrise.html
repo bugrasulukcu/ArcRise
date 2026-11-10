@@ -5474,7 +5474,7 @@ const ArcMusic = (() => {
     // ── Dış arayüz ──
     const api = {
       ctx, analyser, advance,
-      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil }),
+      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil, musicGain: +music.gain.value.toFixed(3) }),
       menu(at) {
         const t = now(at);
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
@@ -5540,7 +5540,7 @@ const ArcMusic = (() => {
         g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.65); n.connect(f); f.connect(g2); g2.connect(sfx); g2.connect(revIn);
         const gl = osc('square', 220, t, t + 0.5); gl.frequency.exponentialRampToValueAtTime(55, t + 0.45);
         const g3 = G(0); g3.gain.setValueAtTime(0.06, t); g3.gain.exponentialRampToValueAtTime(0.001, t + 0.48); gl.connect(g3); g3.connect(sfx);
-        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.setTargetAtTime(0.32, t, 0.25);
+        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.linearRampToValueAtTime(0, t + 0.05);   // müzik patlamayla küt diye kesilir (eski oyundaki gibi)
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(240, t, 0.12);
       },
       revive(at) {

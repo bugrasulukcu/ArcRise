@@ -396,6 +396,9 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Ölümde müzik küt diye kesilir (ArcMusic) (2026-11-09)
+- `death()`: müzik eskiden %32'ye boğuluyordu; artık patlamayla 50 ms'de 0'a iner (eski oyundaki gibi). Patlama sesi SFX yolunda, etkilenmez; revive / reklamla devam müziği geri getirir. `state().musicGain` eklendi, test ölümde kesildiğini doğrular.
+
 ### Başlangıç çizgisi 7 cm (HUD'un altında) + avatar renk noktaları kaldırıldı (2026-11-09)
 - `START_CM` 10 → **7**: 10 cm'de çizgi açılışta üst HUD'un (skor/mesafe, BEST, combo dairesi) altına denk geliyordu. Mesafe/skor yine çizgiden 0'dan sayılır. Günlük pistin zorluk eğrisi eski 10 cm'ye göre sabit (`DAILY_START_PX`) → aynı günün pisti sürüm farkından etkilenmez.
 - Avatar renk noktaları kaldırıldı (anlamı belli değildi): HUD'da BEST skorunun yanı (`#hud-av`), oyun sonu sıralaması (`.go-lr-dot`), High Scores listesi (`.lb-row-dot`).
