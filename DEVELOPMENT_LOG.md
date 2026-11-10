@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yetenek sesleri gözden geçirildi: Shock = ölüm patlaması, seviyeler dengeli, ezgiler akordan (2026-11-10)
+- **Shock**: ölümdeki patlamanın aynısı (ortak `boom()`; `death()` de onu kullanır). Müzik kesilmez, yalnız an için boğulur (`musicLP` 300 Hz, zamanlayıcı geri açar).
+- Seviyeler yeşil top (`collect`) sesine göre ölçülerek ayarlandı (offline render, 50 ms RMS tepe): yetenekler collect'in ±4 dB'inde, ölüm/Shock en yüksek.
+  - Anchor ışınlanma: 1800 Hz'e çıkan tiz sinüsler → alçak geçirgenli üçgen dalga, 0.26 → 0.14; çınlama 0.2 → 0.12 (−4.3 dB → 0 dB collect'e göre).
+  - Phase Burst: FM ton 0.16 → 0.09, 0.65 → 0.5 sn; Time Slow derin vuum 0.32 → 0.22; Coin Pull emişi 0.16 → 0.1 (1500 → 1200 Hz); Anchor klonk üst harmonikleri kısıldı.
+- Ezgili parçalar sabit A minör notaları yerine **o an çalan akordan** (`chordUp`): Coin Pull pırıltısı akor arpeji, Anchor çınlaması, Phase Burst tonu, "hazır" pingi (Am'de eski notalarla aynı). Yeşil top / altın sesleri gibi müzikle aynı tonda kalır.
+- `prototype.html` motor kopyası da güncellendi.
+- Test: Shock zarfı ölümle aynı (<1.5 dB), her yetenek collect'ten en çok 4 dB yüksek.
+
 ### SFX dengesi, günlük rekorlar ayrı, DAILY KING gün sonunda, rozet bilgisi, HUD aralıkları (2026-11-10)
 - **Altın SFX (ArcMusic)**: altın topta ~20 parçacık topa varıyor ve her biri 3 parlak çan (0.22+0.2+0.1) çalıyordu → ~1 sn'de 60 çan. Artık parçacık başına tek, kısa, kısık tını (0.045, 0.22 sn); art arda gelenler pentatonikte yükselir. Yeşil `collect` çanı 0.26 → 0.2, `nearMiss` whoosh 0.22 → 0.15.
 - **Ses kaydırıcısı**: dolgu `clip-path` artık `round` içermiyor → kısarken sağ kenar düz kesilir (yuvarlak köşe görünmez).

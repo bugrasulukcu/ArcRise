@@ -1138,6 +1138,25 @@ test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldo
   check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
 });
 
+test('yetenek sesleri: Shock ölüm patlamasıyla aynı; yetenekler yeşil top sesinden çok yüksek değil', async () => {
+  await fresh({});
+  const r = await ev(`(async () => {
+    const render = async f => { const sr = 22050, oc = new OfflineAudioContext(1, sr * 1.2, sr), a = ArcMusic.create(oc, oc.destination, { offline: true });
+      a.setSfxEnabled(1); f(a); const d = (await oc.startRendering()).getChannelData(0), W = 1102, env = [];
+      for (let i = 0; i + W <= d.length; i += W) { let s = 0; for (let j = i; j < i + W; j++) s += d[j] * d[j]; env.push(10 * Math.log10(s / W + 1e-12)); }
+      return env; };
+    const death = await render(a => a.death(0.02)), shock = await render(a => a.ability('shock', {}, 0.02)), col = await render(a => a.collect(0.02));
+    const loud = e => Math.max(...e);
+    const diff = Math.max(...death.slice(0, 12).map((v, i) => Math.abs(v - shock[i])));
+    const ab = {};
+    for (const [k, o] of [['timeslow', { dur: 3 }], ['phaseburst', {}], ['coinpull', {}], ['brake', {}], ['anchor', { phase: 'drop' }], ['anchor', { phase: 'teleport' }]])
+      ab[k + (o.phase ? ':' + o.phase : '')] = +(loud(await render(a => a.ability(k, o, 0.02))) - loud(col)).toFixed(1);
+    return { diff: +diff.toFixed(2), ab };
+  })()`);
+  check(r.diff < 1.5, `Shock zarfı ölümden farklı (${r.diff} dB)`);
+  check(Object.values(r.ab).every(v => v < 4), `yetenek sesi yeşil topa göre çok yüksek: ${JSON.stringify(r.ab)}`);
+});
+
 test('yetenek sesleri: klasik ve uyarlanabilir modda her yetenek sesini çalar, Anchor bırakma, süreli bitiş, Time Slow müziği boğar', async () => {
   for (const music of ['classic', 'adaptive']) {
     await fresh({ ...(music === 'adaptive' ? { arc_music: 'adaptive' } : {}), arc_slots_owned: '4',
