@@ -291,10 +291,14 @@ const ArcMusic = (() => {
       },
       collect(at) {
         const t = now(at), idx = S.chain++, m = 69 + PENTA[idx % 5] + 12 * (Math.floor(idx / 5) % 2);
-        bell(m, t, 0.26, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
+        bell(m, t, 0.2, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
         return S.chain;
       },
-      gold(at) { const t = now(at); bell(88, t, 0.22, 0.8); bell(93, t + 0.07, 0.2, 0.9); bell(100, t + 0.14, 0.1, 0.9); },
+      gold(at) {   // her altın parçacığı topa vardığında çağrılır (≈20 kez / 45 ms arayla): tek, kısa, kısık bir tını — art arda gelenler pentatonikte yükselir
+        const t = now(at); S.goldK = (t - (S.goldAt || -9) < 0.3) ? (S.goldK || 0) + 1 : 0; S.goldAt = t;
+        const k = S.goldK % 10, m = 81 + PENTA[k % 5] + 12 * Math.floor(k / 5);
+        bell(m, t, 0.045, 0.22);
+      },
       comboBreak(at) {
         const t = now(at); S.chain = 0; S.combo = 0;
         const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
@@ -304,7 +308,7 @@ const ArcMusic = (() => {
         whoosh(t, 0.1, 0.18, 6000, 1200);
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
       },
-      nearMiss(at) { const t = now(at); whoosh(t, 0.22, 0.28, 500, 5200, -0.7, 0.7); },
+      nearMiss(at) { const t = now(at); whoosh(t, 0.15, 0.28, 500, 5200, -0.7, 0.7); },
       booster(dur = 5, at) {
         const t = now(at); S.boostUntil = t + dur;
         const o = osc('sawtooth', 180, t, t + 0.6); o.frequency.exponentialRampToValueAtTime(1400, t + 0.55);

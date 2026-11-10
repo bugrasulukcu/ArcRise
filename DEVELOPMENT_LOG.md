@@ -396,6 +396,15 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### SFX dengesi, günlük rekorlar ayrı, DAILY KING gün sonunda, rozet bilgisi, HUD aralıkları (2026-11-10)
+- **Altın SFX (ArcMusic)**: altın topta ~20 parçacık topa varıyor ve her biri 3 parlak çan (0.22+0.2+0.1) çalıyordu → ~1 sn'de 60 çan. Artık parçacık başına tek, kısa, kısık tını (0.045, 0.22 sn); art arda gelenler pentatonikte yükselir. Yeşil `collect` çanı 0.26 → 0.2, `nearMiss` whoosh 0.22 → 0.15.
+- **Ses kaydırıcısı**: dolgu `clip-path` artık `round` içermiyor → kısarken sağ kenar düz kesilir (yuvarlak köşe görünmez).
+- **Günlük rekorlar ayrı**: `arc_daily_v1` günün en iyi mesafesini de tutar (`dist`). Günlük run'da HUD'daki BEST yerine **DAILY** (günün en iyi skoru / mesafesi); oyun sonundaki BEST ve NEW BEST de günün rekoruna göre. Günlük run normal rekorlara (`arc_best`, `arc_bestdist`, `stats.bestNormal/bestDistNormal`) artık dokunmaz.
+- **DAILY KING**: run sonunda günün tablosunda anlık 1. olunca verilmiyor. Oynanan günler `arc_daily_king_pending` kuyruğuna yazılır (son 7); açılışta ve uygulamaya dönünce biten günlerin tablosundan 1. satıra bakılır (`getDailyTop(day, 1)`, gün başına 1 okuma), 1. sensen rozet verilir. Çevrimdışıysa gün kuyrukta kalır. Açıklama: "Finish a day #1 on the Daily high score".
+- **Rozet ekranı**: rozete dokununca yalnız özelliği yazar (ad / EQUIPPED LEFT yok); sonraki aşama + ilerleme ikinci satırda beyaz (`showToast(msg, sub)` → `.toast-sub`). Üstteki iki slotta LEFT / RIGHT yazısı kaldırıldı.
+- **HUD**: tüm üst HUD 6 px aşağı (`--hud-top` +16 → +22); çizgi bloğa göre 5 px daha aşağı (+61 → +66, combo dairesi de) → sıra (#1) yazısıyla çizgi ve çizgiyle BEST yazısı arası görsel olarak eşit (~14 px).
+- Testler: günlük rekorlar + DAILY KING (bugün verilmez, başkası 1. iken verilmez, gün sonunda 1.'ye verilir, kuyruk), rozet bilgisi iki satır, kaydırıcı düz kesim + HUD aralıkları.
+
 ### Ölümde müzik küt diye kesilir (ArcMusic) (2026-11-09)
 - `death()`: müzik eskiden %32'ye boğuluyordu; artık patlamayla 50 ms'de 0'a iner (eski oyundaki gibi). Patlama sesi SFX yolunda, etkilenmez; revive / reklamla devam müziği geri getirir. `state().musicGain` eklendi, test ölümde kesildiğini doğrular.
 

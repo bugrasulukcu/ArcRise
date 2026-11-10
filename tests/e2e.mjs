@@ -1563,6 +1563,80 @@ test('rozet ekranı: kaydırma yok, 320×568 ve 390×844\'te sığar; sıralama 
   check(['top100', 'top10', 'run-top100', 'daily-king'].every(id => e.includes(id)) && !e.includes('run-top10'), `kazanılan: ${JSON.stringify(e)}`);
 });
 
+test('ses kaydırıcısı dolgusu sağdan düz kesilir (köşe yuvarlaklığı yalnız yuvada), HUD çizgi aralıkları eşit', async () => {
+  await fresh({});
+  const cp = await ev(`getComputedStyle(document.getElementById('sfx-vol'), '::before').clipPath`);
+  check(/inset/.test(cp) && !/round/.test(cp), `clip-path: ${cp}`);
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(1200);
+  const g = await ev(`(() => { const r = id => document.getElementById(id).getBoundingClientRect();
+    return { line: r('hud-line').top, rank: r('h-rank').bottom, best: r('h-best').top, ringMid: (r('combo-ring-wrap').top + r('combo-ring-wrap').bottom) / 2 }; })()`);
+  // görsel boşluk ≈ eşit: sıra (14px kutu, 11.5px yazı) altı ↔ çizgi = 11, çizgi ↔ BEST kutusu = 7 (13px yazı, 19px kutu)
+  check(Math.abs((g.line - g.rank) - 11) <= 1 && Math.abs((g.best - g.line - 1) - 7) <= 1, `HUD aralıkları: ${JSON.stringify(g)}`);
+  check(Math.abs(g.ringMid - g.line) <= 2, `çizgi dairenin ortasından geçmiyor: ${JSON.stringify(g)}`);
+  await ev(`ARC_BOT.stop(); true`);
+});
+
+test('günlük rekorlar ayrı: HUD\'da DAILY best/mesafe, normal rekora dokunmaz; DAILY KING yalnız gün bitince 1.\'ye', async () => {
+  fbReset();
+  const ymd = d => '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const day = ymd(new Date()), y1 = ymd(new Date(Date.now() - 86400000)), y2 = ymd(new Date(Date.now() - 2 * 86400000));
+  await fresh({ arc_daily_v1: { day, best: 77, runs: 1, dist: 123 } });
+  // normal run: BEST = normal rekor
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`); await sleep(6000); await ev(`ARC_BOT.stop(); true`);
+  const n = await ev(`({ lbl: document.querySelector('.hud-tl .hud-best-lbl').textContent })`);
+  check(n.lbl === 'BEST', `normal HUD: ${JSON.stringify(n)}`);
+  await ev(`ARC_TEST.straight(0); true`); check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'normal run bitmedi'); await sleep(1500);
+  const nb = await ls('arc_best'), nd = await ls('arc_bestdist'), st0 = await lsJSON('arc_stats_v1');
+  check(Number(nb) > 0 && nb !== "77", `normal run rekor yazmadı: ${nb}`);
+  for (const t of ['pointerdown', 'pointerup']) { await ev(`document.getElementById('btn-menu').dispatchEvent(new PointerEvent('${t}', { bubbles: true })); true`); await sleep(700); }
+  check(await waitFor(`ARC_TEST.scene === 'home'`, 5000), 'menüye dönülmedi');
+  // günlük run: HUD günün en iyisini gösterir
+  await ev(`document.getElementById('btn-quests').click(); true`); await sleep(400);
+  await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
+  const d = await ev(`({ lbl: [...document.querySelectorAll('#hud .hud-best-lbl')].map(e => e.textContent), s: document.getElementById('h-best').textContent, dd: document.getElementById('h-dist-best').textContent })`);
+  check(d.lbl.every(x => x === 'DAILY') && /^0*77$/.test(d.s) && d.dd !== '0.00M', `günlük HUD: ${JSON.stringify(d)}`);
+  await ev(`ARC_TEST.straight(-Math.PI / 2); true`);
+  check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'günlük run bitmedi'); await sleep(2500);
+  check(d.s !== String(nb).padStart(6, '0'), 'günlükte normal rekor gösterildi');
+  const st1 = await lsJSON('arc_stats_v1');
+  check(await ls('arc_best') === nb && await ls('arc_bestdist') === nd && (!st0 || (st1.bestNormal === st0.bestNormal && st1.bestDistNormal === st0.bestDistNormal)),
+    `günlük run normal rekoru değiştirdi: ${await ls('arc_best')} / ${await ls('arc_bestdist')}`);
+  const dl = await lsJSON('arc_daily_v1');
+  check(dl.runs === 2 && dl.dist >= 123, `günlük kayıt: ${JSON.stringify(dl)}`);
+  // tek oyuncu olarak günün tablosunda 1. olsan da gün bitmeden DAILY KING yok
+  check(!(await lsJSON('arc_badges_earned_v1') || []).includes('daily-king'), 'gün bitmeden DAILY KING verildi');
+  await ev('ARC_TEST.dailyKing()');
+  check(!(await lsJSON('arc_badges_earned_v1') || []).includes('daily-king'), 'bugün için DAILY KING verildi');
+  // dün: başkası 1. → yok; önceki gün: sen 1. → var; bakılan günler kuyruktan düşer, bugün kalır
+  const uid = await ev('ARC_DB.getUid()');
+  const row = (path, name, score, tag = '') => fb.docs.set(path, { name: `projects/p/databases/(default)/documents/${path}`,
+    fields: { name: { stringValue: name }, score: { integerValue: String(score) }, avatar: { integerValue: '0' }, tag: { stringValue: tag } } });
+  row(`daily/${y1}/scores/OTHER`, 'ZED', 900); row(`daily/${y1}/scores/${uid}`, 'ARC', 100);
+  row(`daily/${y2}/scores/${uid}`, 'ARC', 300); row(`daily/${y2}/scores/OTHER`, 'ZED', 200);
+  await ev(`localStorage.setItem('arc_daily_king_pending', JSON.stringify(['${y1}', '${day}'])); true`);
+  await ev('ARC_TEST.dailyKing()');
+  check(!(await lsJSON('arc_badges_earned_v1') || []).includes('daily-king'), 'başkası 1. iken DAILY KING verildi');
+  check(JSON.stringify(await lsJSON('arc_daily_king_pending')) === JSON.stringify([day]), `kuyruk: ${await ls('arc_daily_king_pending')}`);
+  await ev(`localStorage.setItem('arc_daily_king_pending', JSON.stringify(['${y2}', '${day}'])); true`);
+  await ev('ARC_TEST.dailyKing()');
+  check((await lsJSON('arc_badges_earned_v1') || []).includes('daily-king'), 'gün sonunda 1. olana DAILY KING verilmedi');
+});
+
+test('rozet ekranı: dokununca yalnız özellik, sonraki aşama beyaz 2. satırda; slotlarda LEFT/RIGHT yok', async () => {
+  await fresh({ arc_badges_earned_v1: ['score-1', 'score-2'] });
+  await ev(`document.getElementById('home-profile').click(); true`); await sleep(500);
+  await ev(`document.querySelector('.prof-eq-slot').click(); true`); await sleep(500);
+  check(await ev(`document.getElementById('badges-slot-pick').innerText.trim()`) === '', 'slotlarda yazı var');
+  await ev(`document.querySelector('#badges-modal-grid .prof-badge').click(); true`); await sleep(300);
+  const t = await ev(`(() => { const el = document.getElementById('toast'), sub = el.querySelector('.toast-sub');
+    return { main: el.firstChild.textContent, sub: sub && sub.textContent, col: sub && getComputedStyle(sub).color, disp: sub && getComputedStyle(sub).display }; })()`);
+  check(/^SCORE 200\+ IN ONE RUN$/.test(t.main), `1. satır: ${JSON.stringify(t)}`);
+  check(/^NEXT: SCORE 800\+ IN ONE RUN · NOW \d+\/800$/.test(t.sub) && t.col === 'rgb(255, 255, 255)' && t.disp === 'block', `2. satır: ${JSON.stringify(t)}`);
+  await ev(`document.querySelectorAll('#badges-modal-grid .prof-badge')[3].click(); true`); await sleep(300);   // kilitli: koşul + ilerleme
+  const l = await ev(`({ main: document.getElementById('toast').firstChild.textContent, sub: document.querySelector('#toast .toast-sub')?.textContent })`);
+  check(!/EQUIPPED|LEFT|RIGHT/.test(l.main) && /^NOW \d+\/\d+$/.test(l.sub || ''), `kilitli rozet: ${JSON.stringify(l)}`);
+});
+
 test('quests düğmesi: günlük skor + sıra satırı ("Daily Run: 1,234 • #3/17")', async () => {
   const d = new Date(), day = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
   const txt = `document.getElementById('btn-quests-daily').textContent.replace(/\u00a0/g, ' ')`;

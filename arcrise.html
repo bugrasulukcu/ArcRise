@@ -195,9 +195,10 @@
 
     /* Duvar iç kenarı: canvas 600px'de 20px sol/sağ → %3.33
        Güvenli bölge başlangıcı = calc(3.4% + 10px)                */
-    /* Üst HUD sabit ızgarada: etiket 12 + 2 · sayı 26 · sıra 15 · 6 → yatay çizgi --hud-top + 61px.
+    /* Üst HUD sabit ızgarada: etiket 12 + 2 · sayı 26 · sıra 15 · 11 → yatay çizgi --hud-top + 66px.
+       Çizgi ↔ sıra (#1) yazısı ile çizgi ↔ BEST yazısı arası görsel olarak eşit (~14px).
        Combo dairesinin merkezi aynı çizgide (combo-hud top = çizgi − 42). */
-    #hud { --hud-top: calc(env(safe-area-inset-top, 0px) + 16px); }
+    #hud { --hud-top: calc(env(safe-area-inset-top, 0px) + 22px); }
     .hud-tl {
       position: absolute; top: var(--hud-top);
       left: calc(3.4% + 12px);
@@ -247,8 +248,8 @@
     #debug-overlay .dbg-row span:first-child { color: rgba(255,255,255,.5); }
     /* Bölüm çizgisi artık tek parça #hud-line (kenardan kenara, combo dairesinin ortasından geçer);
        eski ayraç yalnız boşluk tutar */
-    .hud-divider { width: 60%; height: 1px; margin: 6px 0 7px; visibility: hidden; }
-    #hud-line { position: absolute; top: calc(var(--hud-top) + 61px); left: calc(3.4% + 8px); right: calc(3.4% + 8px); height: 1px;
+    .hud-divider { width: 60%; height: 1px; margin: 11px 0 7px; visibility: hidden; }
+    #hud-line { position: absolute; top: calc(var(--hud-top) + 66px); left: calc(3.4% + 8px); right: calc(3.4% + 8px); height: 1px;
       pointer-events: none;
       /* kenarlarda beyaz → combo dairesine varmadan tam saydam beyaz (gri ara ton olmasın diye 'transparent' değil) */
       background: linear-gradient(90deg, rgba(255,255,255,.42), rgba(255,255,255,0) 34%, rgba(255,255,255,0) 66%, rgba(255,255,255,.42)); }
@@ -784,7 +785,7 @@
       background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.07), transparent 60%), linear-gradient(180deg, rgba(40,46,60,.85), rgba(14,18,28,.85));
       box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 12px rgba(0,0,0,.2); }
     .vol::before { content: ''; position: absolute; inset: 0; border-radius: 11px; pointer-events: none;
-      clip-path: inset(0 calc((1 - var(--v)) * 100%) 0 0 round 11px);
+      clip-path: inset(0 calc((1 - var(--v)) * 100%) 0 0);   /* sağdan düz kesilir; köşe yuvarlaklığı yalnız yuvanın kendi kenarlarında */
       background: linear-gradient(180deg, rgba(255,255,255,.28), transparent 45%, rgba(0,0,0,.18)),
                   linear-gradient(90deg, #e2524f, #e6cf6c 24%, #7CFF7A 46%, #46c6e6 64%, #4a6cff 80%, #a44dff);
       opacity: .92; }
@@ -1751,7 +1752,7 @@
     /* Rozet penceresi: hangi slota (sol / sağ) takılacağını seçme */
     #badges-slot-pick { display: flex; gap: 10px; justify-content: center; width: 100%; }
     .bsp-slot {
-      display: flex; align-items: center; gap: 8px; min-width: 112px; padding: 6px 12px 6px 6px;
+      display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px;
       border-radius: 12px; border: 1.5px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03);
       color: rgba(255,255,255,.55); font-family: var(--font); font-size: 10px; letter-spacing: 2px; cursor: pointer;
       transition: border-color .2s, box-shadow .2s, background .2s, color .2s;
@@ -2520,6 +2521,7 @@
     /* Alt satır: önemli kısımlar (isim, skor) kalın-beyaz, kalanı ince-soluk; işaretsiz metin tümüyle kalın */
     .rt-sub { font-size: 13.5px; letter-spacing: 1px; color: rgba(255,255,255,.72); font-weight: 400; }
     .rt-sub.all-b, .rt-sub b, #toast b { color: #fff; font-weight: 700; }
+    #toast .toast-sub { display: block; margin-top: 4px; color: #fff; }
     #toast { font-weight: 400; }
     .rt-coin {
       display: inline-flex; align-items: center; gap: 5px; margin-top: 2px;
@@ -3709,7 +3711,7 @@
     /* Combo + booster HUDs sit just under the top score row so they aren't
        hidden under the player's thumb during play. */
     #combo-hud {
-      position: absolute; top: calc(var(--hud-top) + 61px - 42px); left: 50%; transform: translateX(-50%);
+      position: absolute; top: calc(var(--hud-top) + 66px - 42px); left: 50%; transform: translateX(-50%);
       z-index: 16; pointer-events: none;
       display: none; align-items: center; gap: 4px;
     }
@@ -5197,8 +5199,8 @@
     </div>
     <div id="badges-modal-sub">Shown next to your name on the leaderboard · pick a slot, tap a badge · re-tap to remove</div>
     <div id="badges-slot-pick">
-      <button class="bsp-slot" type="button" data-slot="0"><span class="bsp-icon"></span><span class="bsp-lbl">LEFT</span></button>
-      <button class="bsp-slot" type="button" data-slot="1"><span class="bsp-icon"></span><span class="bsp-lbl">RIGHT</span></button>
+      <button class="bsp-slot" type="button" data-slot="0" aria-label="Left slot"><span class="bsp-icon"></span></button>
+      <button class="bsp-slot" type="button" data-slot="1" aria-label="Right slot"><span class="bsp-icon"></span></button>
     </div>
     <div id="badges-modal-grid"></div>
   </div>
@@ -5511,10 +5513,14 @@ const ArcMusic = (() => {
       },
       collect(at) {
         const t = now(at), idx = S.chain++, m = 69 + PENTA[idx % 5] + 12 * (Math.floor(idx / 5) % 2);
-        bell(m, t, 0.26, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
+        bell(m, t, 0.2, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
         return S.chain;
       },
-      gold(at) { const t = now(at); bell(88, t, 0.22, 0.8); bell(93, t + 0.07, 0.2, 0.9); bell(100, t + 0.14, 0.1, 0.9); },
+      gold(at) {   // her altın parçacığı topa vardığında çağrılır (≈20 kez / 45 ms arayla): tek, kısa, kısık bir tını — art arda gelenler pentatonikte yükselir
+        const t = now(at); S.goldK = (t - (S.goldAt || -9) < 0.3) ? (S.goldK || 0) + 1 : 0; S.goldAt = t;
+        const k = S.goldK % 10, m = 81 + PENTA[k % 5] + 12 * Math.floor(k / 5);
+        bell(m, t, 0.045, 0.22);
+      },
       comboBreak(at) {
         const t = now(at); S.chain = 0; S.combo = 0;
         const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
@@ -5524,7 +5530,7 @@ const ArcMusic = (() => {
         whoosh(t, 0.1, 0.18, 6000, 1200);
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
       },
-      nearMiss(at) { const t = now(at); whoosh(t, 0.22, 0.28, 500, 5200, -0.7, 0.7); },
+      nearMiss(at) { const t = now(at); whoosh(t, 0.15, 0.28, 500, 5200, -0.7, 0.7); },
       booster(dur = 5, at) {
         const t = now(at); S.boostUntil = t + dur;
         const o = osc('sawtooth', 180, t, t + 0.6); o.frequency.exponentialRampToValueAtTime(1400, t + 0.55);
@@ -7611,10 +7617,10 @@ const ARC_DB = (() => {
   // Bilgi toast'ı — 5sn görünür; herhangi bir yere dokununca kapanır.
   // Bildirim metni: **…** arası kalın (önce HTML kaçırılır → kullanıcı adı güvenli)
   const richTxt = t => esc(t || '').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  function showToast(msg) {
+  function showToast(msg, sub) {   // sub: ikinci satır (beyaz)
     const el = document.getElementById('toast');
     if (!el) return;
-    el.innerHTML = richTxt(msg);
+    el.innerHTML = richTxt(msg) + (sub ? `<span class="toast-sub">${richTxt(sub)}</span>` : '');
     el.classList.add('show');
     if (_toastTimer) clearTimeout(_toastTimer);
     const hide = () => {
@@ -8167,7 +8173,7 @@ const ARC_DB = (() => {
     if (!el) return;
     el.classList.remove('tick', 'bump', 'bump-big', 'rec-in'); void el.offsetWidth; el.classList.add(cls);
   }
-  let _hudMeter = 0, _hudRecS = false, _hudRecD = false;
+  let _hudMeter = 0, _hudRecS = false, _hudRecD = false, _hudBestS = 0, _hudBestD = 0;   // HUD'daki BEST: günlükte günün en iyisi
 
   let feedbackOn = localStorage.getItem('arc_fb') !== '0';
   // Ses seviyeleri 0..1 (Ayarlar'daki kaydırıcılar). Eski On/Off kaydı: Off → 0. Varsayılan tam ses (eski seviye).
@@ -10718,6 +10724,8 @@ const ARC_DB = (() => {
     player.heading = -Math.PI/2; player.dir = 0;
     player.speed = GAME_SPEED;
     _hudMeter = 0; _hudRecS = _hudRecD = false; _scoreBump = 0; _preStartT = 0;
+    { const dl = _dailyRun ? dailyLocal() : null; _hudBestS = dl ? dl.best : best; _hudBestD = dl ? (dl.dist || 0) : bestDistanceM;
+      document.querySelectorAll('#hud .hud-best-lbl').forEach(e => { e.textContent = dl ? 'DAILY' : 'BEST'; }); }
     try { ['h-score', 'h-dist'].forEach(id => document.getElementById(id).classList.remove('rec', 'rec-in', 'tick', 'bump', 'bump-big')); } catch (_) {}
     camY = 0; trail.length = 0; ghostSampled.length = 0; _trailBreak = _gsBreak = false;
     _runStartY = player.y;
@@ -11975,15 +11983,17 @@ const ARC_DB = (() => {
     }
     const earned = coins - prevCoins;
     // Rekor kırıldı mı? (güncellemeden önce kıyasla → game over'da BEST yerine NEW BEST)
-    const newBest     = gameMode !== 'wife' && lastScore > 0 && lastScore > best;
-    const newBestDist = gameMode !== 'wife' && runDistCm >= 5 && runDistCm > bestDistanceM;
-    const bestBefore  = best, bestDistBefore = bestDistanceM;   // sayım sürerken eski rekor görünür
+    // Günlük run kendi rekoruyla (günün en iyisi) kıyaslanır; normal rekorlar ayrı
+    const _dl = wasDaily ? dailyLocal() : null;
+    const bestBefore  = _dl ? _dl.best : best, bestDistBefore = _dl ? (_dl.dist || 0) : bestDistanceM;   // sayım sürerken eski rekor görünür
+    const newBest     = gameMode !== 'wife' && lastScore > 0 && lastScore > bestBefore;
+    const newBestDist = gameMode !== 'wife' && runDistCm >= 5 && runDistCm > bestDistBefore;
     // Wife Mode: skor/mesafe kaydı yok — sadece coin'lerle birlikte tamamen
     // casual akış. (Daha aşağıdaki submitScore zaten guard'lı.)
     if (gameMode !== 'wife') {
-      best = Math.max(best, lastScore);
-      localStorage.setItem('arc_best', String(best));
-      if (runDistCm > bestDistanceM) {
+      // Günlük run normal rekorlara dokunmaz (günün en iyisi dailyLocalRecord'da ayrı tutulur)
+      if (!wasDaily) { best = Math.max(best, lastScore); localStorage.setItem('arc_best', String(best)); }
+      if (!wasDaily && runDistCm > bestDistanceM) {
         bestDistanceM = runDistCm;
         localStorage.setItem('arc_bestdist', String(bestDistanceM));
       }
@@ -12016,7 +12026,7 @@ const ARC_DB = (() => {
       if (gameMode === 'extreme') {
         if (lastScore > stats.bestExtreme) stats.bestExtreme = lastScore;
         if (runDistCm > (stats.bestDistExtreme || 0)) stats.bestDistExtreme = runDistCm;
-      } else {
+      } else if (!wasDaily) {
         if (lastScore > stats.bestNormal) stats.bestNormal = lastScore;
         if (runDistCm > (stats.bestDistNormal || 0)) stats.bestDistNormal = runDistCm;
       }
@@ -12041,9 +12051,9 @@ const ARC_DB = (() => {
 
     // Best lines under twin SCORE / DISTANCE values
     const goBestInline = document.getElementById('go-best-val-inline');
-    if (goBestInline) goBestInline.textContent = pad(newBest ? bestBefore : best);
+    if (goBestInline) goBestInline.textContent = pad(bestBefore);   // rekor kırıldıysa eski rekor (NEW BEST yanında)
     const goBestDistInline = document.getElementById('go-bestdist-val-inline');
-    if (goBestDistInline) goBestDistInline.textContent = fmtDist((newBestDist ? bestDistBefore : bestDistanceM) || 0);
+    if (goBestDistInline) goBestDistInline.textContent = fmtDist(bestDistBefore || 0);
     // Reklamla devam: run başına tek hak; Wife, günlük/meydan okuma ve güvenli nokta yoksa kapalı.
     // Reklam hazır değilse (web, onay yok) düğmeler hiç görünmez.
     const adBtn = document.getElementById('btn-continue-ad');
@@ -12251,9 +12261,10 @@ const ARC_DB = (() => {
     } else renderGoChal(null);
     if (wasDaily) {
       const eqB = (equippedBadges || []).filter(Boolean).join(',');
-      dailyLocalRecord(sc);
+      dailyLocalRecord(sc, runDistCm);
       try { updateQuestButton(); } catch(_) {}
       await ARC_DB.submitDaily(dailyDay(), playerName, avatarIdx, sc, eqB, myTag(), runPts);
+      if (sc > 0) try { dkMark(dailyDay()); } catch(_) {}   // gün bitince DAILY KING kontrolü
     } else if (gameMode !== 'wife') {
       // Takılı badge'ler leaderboard'da isim yanında gösterilir
       const eqBadges = (equippedBadges || []).filter(Boolean).join(',');
@@ -12293,7 +12304,7 @@ const ARC_DB = (() => {
     }
 
     // Sıralama rozetleri (gerçek liste; tek kişilik yedek listede sayılmaz)
-    if (markedYou && !lbFallback && !chal) try { awardRankBadges(wasDaily ? 'daily' : 'score', ann.find(r => r.isYou).rank); } catch(_) {}
+    if (markedYou && !lbFallback && !chal && !wasDaily) try { awardRankBadges('score', ann.find(r => r.isYou).rank); } catch(_) {}   // DAILY KING gün sonunda (checkDailyKing)
     // Oyuncu top-50 dışındaysa doğru pozisyona ekle
     if (!markedYou) {
       const ins = ann.findIndex(r => r.score < sc);
@@ -12523,7 +12534,7 @@ const ARC_DB = (() => {
       if (dt > 0.025) { step(dt / 2); step(dt / 2); } else step(dt);
       setTxt(hScore, gameMode === 'wife' ? String(_vanGreens) : pad(Math.floor(score)));
       // skor efektleri: rekor geçilince altın + parlama; yoksa kazanım büyüklüğüne göre zıplama
-      if (!_hudRecS && best > 0 && score > best && !_seeded() && gameMode !== 'wife') { _hudRecS = true; hScore.classList.add('rec'); hudFx(hScore, 'rec-in'); }
+      if (!_hudRecS && _hudBestS > 0 && score > _hudBestS && !_activeChal && gameMode !== 'wife') { _hudRecS = true; hScore.classList.add('rec'); hudFx(hScore, 'rec-in'); }
       else if (_scoreBump) hudFx(hScore, _scoreBump >= 20 ? 'bump-big' : 'bump');
       _scoreBump = 0;
       if (_activeChal) {   // meydan okuma: alanda hedef (gelen) ya da şimdiye kadarki en iyi (gönderen); geçilince yeşil
@@ -12533,7 +12544,7 @@ const ARC_DB = (() => {
             l.textContent = `⚔ ${c.role === 'recv' ? 'TARGET' : 'BEST'} · ${c.tries + 1}/${CHAL_TRIES}`; cn.textContent = pad(ref); }
           cn.classList.toggle('beat', ref > 0 && score > ref); }
       }
-      setTxt(hBest, pad(best));
+      setTxt(hBest, pad(_hudBestS));
       // Distance: 1 screen height = 15cm. (Spawn-relative, cm 1 decimal)
       const distCm = (distancePx / H_REF) * CM_PER_SCREEN;
       const dEl = document.getElementById('h-dist');
@@ -12541,13 +12552,12 @@ const ARC_DB = (() => {
         setTxt(dEl, fmtDist(distCm));
         // her metrede kısa büyüme + yeşil parlama; en iyi mesafe geçilince altın
         const m = Math.floor(distCm / 100);
-        if (!_hudRecD && bestDistanceM >= 100 && distCm > bestDistanceM && !_seeded()) { _hudRecD = true; dEl.classList.add('rec'); hudFx(dEl, 'rec-in'); _hudMeter = m; }
+        if (!_hudRecD && _hudBestD >= 100 && distCm > _hudBestD && !_activeChal) { _hudRecD = true; dEl.classList.add('rec'); hudFx(dEl, 'rec-in'); _hudMeter = m; }
         else if (m > _hudMeter) { _hudMeter = m; hudFx(dEl, 'tick'); }
       }
       const dBestEl = document.getElementById('h-dist-best');
       if (dBestEl) {
-        const bd = bestDistanceM || 0;
-        setTxt(dBestEl, fmtDist(bd));
+        setTxt(dBestEl, fmtDist(_hudBestD || 0));
       }
       tickLiveRank(dtRaw, Math.floor(score), distCm);
     }
@@ -15542,7 +15552,7 @@ const ARC_DB = (() => {
     { id: 'top10',      icon: 'medal', name: 'TOP 10',      desc: 'Reach the top 10 in high score',   cond: () => !!stats.rkScore10 },
     { id: 'run-top100', icon: 'ruler', name: 'RUN TOP 100', desc: 'Reach the top 100 in longest run', cond: () => !!stats.rkDist100 },
     { id: 'run-top10',  icon: 'ruler', name: 'RUN TOP 10',  desc: 'Reach the top 10 in longest run',  cond: () => !!stats.rkDist10 },
-    { id: 'daily-king', icon: 'crown', name: 'DAILY KING',  desc: 'Be #1 on the Daily high score',    cond: () => !!stats.rkDailyKing },
+    { id: 'daily-king', icon: 'crown', name: 'DAILY KING',  desc: 'Finish a day #1 on the Daily high score',    cond: () => !!stats.rkDailyKing },
     { id: 'speedrun',  icon: 'hourglass', name: 'SPEEDRUN',  desc: '5.00m in under 60 seconds',
       cond: () => !!stats.speedrunDone },
     { id: 'night-owl', icon: 'owl',       name: 'NIGHT OWL', desc: 'Finish a run between 00:00-04:00',
@@ -15804,7 +15814,9 @@ const ARC_DB = (() => {
     const eqIdx = id => { const fam = findBadge(id)?.family;
       return equippedBadges.findIndex(e => e && (e === id || (fam && findBadge(e)?.family === fam))); };
     // Ortak hücre: id = equip edilecek rozet, colored ikon + ad; locked ise gri.
-    const addCell = (id, icon, label, desc, locked, col, progressTxt) => {
+    // feat: rozetin özelliği (dokununca tek bu yazar); next: sonraki aşama (ikinci satır, beyaz)
+    const addCell = (id, icon, label, feat, locked, col, next) => {
+      const desc = feat;
       const el = document.createElement('button');
       el.type = 'button';
       const at = eqIdx(id);
@@ -15814,19 +15826,18 @@ const ARC_DB = (() => {
       el.innerHTML = `<span class="prof-badge-icon">${badgeHTML(findBadge(id) || { id, tier: 0 }, 44)}</span><span class="prof-badge-name">${label}</span>`
         + (at !== -1 ? `<span class="prof-badge-pos">${at === 0 ? 'L' : 'R'}</span>` : '');
       el.addEventListener('click', () => {
-        if (locked) { try { showToast((desc + (progressTxt ? ' · ' + progressTxt : '')).toUpperCase()); } catch(_){} return; }
+        const tip = () => { try { showToast(feat.toUpperCase(), next ? next.toUpperCase() : ''); } catch(_){} };
+        if (locked) { tip(); return; }
         // Seçili slota (sol / sağ) takılır: aynı slottakine tekrar dokunmak çıkarır, öbür slottakine
         // dokunmak iki slotu yer değiştirir. Öbür slot boşsa seçim ona geçer (ikinciyi takmak kolay olsun).
         const t = _badgeTarget, o = 1 - t, idx = eqIdx(id);
-        let state;
-        if (idx === t) { equippedBadges[t] = null; state = 'REMOVED'; }
-        else if (idx === o) { const cur = equippedBadges[o]; equippedBadges[o] = equippedBadges[t]; equippedBadges[t] = cur; state = 'MOVED ' + (t ? 'RIGHT' : 'LEFT'); }
-        else { equippedBadges[t] = id; state = 'EQUIPPED ' + (t ? 'RIGHT' : 'LEFT'); if (!equippedBadges[o]) _badgeTarget = o; }
+        if (idx === t) { equippedBadges[t] = null; }
+        else if (idx === o) { const cur = equippedBadges[o]; equippedBadges[o] = equippedBadges[t]; equippedBadges[t] = cur; }
+        else { equippedBadges[t] = id; if (!equippedBadges[o]) _badgeTarget = o; }
         saveBadges();
         renderBadgeGrid();
         renderEquipSlots();
-        // Dokununca altta geçici bilgi: takıldı/çıkarıldı + koşul + ilerleme
-        try { showToast(`${label} ${state} · ${desc}${progressTxt ? ' · ' + progressTxt : ''}`.toUpperCase()); } catch(_){}
+        tip();   // altta geçici bilgi: yalnız özellik; sonraki aşama ikinci satırda
       });
       grid.appendChild(el);
     };
@@ -15835,15 +15846,13 @@ const ARC_DB = (() => {
       const top = familyTopTier(f.id);
       const locked = top === 0;
       const id = `${f.id}-${Math.max(1, top)}`;
-      // Kilitliyse hedef = kademe I; açıksa gösterilen = mevcut kademe,
-      // toast/desc bir SONRAKİ hedefi anlatır (V'te tamamlandı der).
+      // Dokununca: 1. satır rozetin özelliği (kilitliyse kademe I'in koşulu), 2. satır sonraki aşama + ilerleme
       const nextIdx = Math.min(top, f.tiers.length - 1);
-      const desc = top >= 5
-        ? `${f.name} maxed — ${f.desc(f.tiers[4])}`
-        : f.desc(f.tiers[nextIdx]);
-      const progress = top >= 5 ? '' : `now ${Math.floor(f.stat())}/${f.tiers[nextIdx]}`;
+      const feat = f.desc(f.tiers[Math.max(0, top - 1)]);
+      const prog = `now ${Math.floor(f.stat())}/${f.tiers[nextIdx]}`;
+      const next = top >= 5 ? 'Maxed' : locked ? prog : `Next: ${f.desc(f.tiers[nextIdx])} · ${prog}`;
       addCell(id, f.icon, f.name + (top > 0 ? ' ' + TIER_NAMES[top - 1] : ''),
-        desc, locked, top > 0 ? TIER_COLORS[top - 1] : undefined, progress);
+        feat, locked, top > 0 ? TIER_COLORS[top - 1] : undefined, next);
     });
     // Özel rozetler
     BADGE_SPECIALS.forEach(s => {
@@ -15929,10 +15938,10 @@ const ARC_DB = (() => {
   const DAILY_KEY = 'arc_daily_v1';
   function dailyLocal() {
     try { const o = JSON.parse(localStorage.getItem(DAILY_KEY)); if (o && o.day === dailyDay()) return o; } catch(_) {}
-    return { day: dailyDay(), best: 0, runs: 0 };
+    return { day: dailyDay(), best: 0, runs: 0, dist: 0 };
   }
-  function dailyLocalRecord(sc) {
-    const o = dailyLocal(); o.runs++; if (sc > o.best) o.best = sc;
+  function dailyLocalRecord(sc, distCm = 0) {   // günün en iyi skoru ve mesafesi normal rekorlardan ayrı tutulur
+    const o = dailyLocal(); o.runs++; if (sc > o.best) o.best = sc; if (distCm > (o.dist || 0)) o.dist = distCm;
     try { localStorage.setItem(DAILY_KEY, JSON.stringify(o)); } catch(_) {}
   }
   function startDailyRun() {
@@ -17466,6 +17475,30 @@ const ARC_DB = (() => {
   // uygulamaya dönünce hemen. Oyun sırasında ağ trafiği yapılmaz.
   setInterval(() => { try { if (!document.hidden && scene !== 'play') loadSocial(); } catch(_){} }, 20000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) try { loadSocial(); } catch(_){} });
+
+  // DAILY KING: yalnız GÜN BİTİNCE o günün tablosunda 1. olana verilir (run sırasında anlık 1.lik sayılmaz).
+  // Oynanan günler kuyruğa yazılır; açılışta / uygulamaya dönünce biten günlerin birincisine bakılır.
+  const DK_KEY = 'arc_daily_king_pending';
+  const dkPending = () => { try { const a = JSON.parse(localStorage.getItem(DK_KEY)); return Array.isArray(a) ? a : []; } catch(_) { return []; } };
+  function dkMark(day) { const a = dkPending(); if (!a.includes(day)) { a.push(day); try { localStorage.setItem(DK_KEY, JSON.stringify(a.slice(-7))); } catch(_) {} } }
+  let _dkBusy = false;
+  async function checkDailyKing() {
+    if (_dkBusy) return; _dkBusy = true;
+    try {
+      const today = dailyDay(), left = [];
+      for (const day of dkPending()) {
+        if (day >= today) { left.push(day); continue; }            // gün henüz bitmedi
+        const rows = await ARC_DB.getDailyTop(day, 1);
+        if (!rows) { left.push(day); continue; }                    // çevrimdışı → sonra yeniden
+        const uid = ARC_DB.getUid(), top = rows[0];
+        if (top && (uid ? top.owner === uid : isMyRow(top))) awardRankBadges('daily', 0);
+      }
+      try { localStorage.setItem(DK_KEY, JSON.stringify(left)); } catch(_) {}
+    } catch(_) {} finally { _dkBusy = false; }
+  }
+  setTimeout(() => { checkDailyKing(); }, 3000);
+  if (window.ARC_TEST) window.ARC_TEST.dailyKing = () => checkDailyKing();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && scene !== 'play') checkDailyKing(); });
 
   updateQuestButton();
 
