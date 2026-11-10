@@ -1138,6 +1138,27 @@ test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldo
   check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
 });
 
+test('yetenek sesleri: klasik ve uyarlanabilir modda her yetenek sesini çalar, Anchor bırakma, süreli bitiş, Time Slow müziği boğar', async () => {
+  for (const music of ['classic', 'adaptive']) {
+    await fresh({ ...(music === 'adaptive' ? { arc_music: 'adaptive' } : {}), arc_slots_owned: '4',
+      arc_slots_v1: [{ type: 'ability', key: 'timeslow', icon: 'u-timeslow' }, { type: 'ability', key: 'anchor', icon: 'u-anchor' },
+                     { type: 'ability', key: 'shock', icon: 'u-shock' }, { type: 'ability', key: 'brake', icon: 'u-brake' }],
+      arc_upg_v1: { comboSplitV22: true, inv: { timeslow: { owned: true, durLvl: 0 }, anchor: { owned: true, durLvl: 0 }, shock: { owned: true, durLvl: 0 }, brake: { owned: true, durLvl: 0 } } } });
+    await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); true`); await sleep(300);
+    await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+    check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), `${music}: run başlamadı`);
+    await sleep(400);
+    await ev(`ARC_TEST.trigger(0); true`);
+    if (music === 'adaptive') check(await ev(`ARC_TEST.audio.engine.slow === true`), 'Time Slow sırasında müzik boğulmadı');
+    await ev(`ARC_TEST.trigger(1); ARC_TEST.trigger(2); ARC_TEST.trigger(3); true`);
+    const ab = await ev(`ARC_TEST.audio.abilitySfx`);
+    check(Array.isArray(ab) && ['timeslow', 'anchor:drop', 'shock', 'brake'].every(k => ab.includes(k)), `${music}: yetenek sesleri çalmadı: ${JSON.stringify(ab)}`);
+    check(await waitFor(`(ARC_TEST.audio.abilitySfx || []).some(k => k.startsWith('end:'))`, 8000), `${music}: süreli yetenek bitiş sesi yok: ${JSON.stringify(await ev('ARC_TEST.audio.abilitySfx'))}`);
+    if (music === 'classic') check(await ev(`ARC_TEST.audio.music !== 'adaptive'`), 'klasik modda uyarlanabilir müzik açıldı');
+    await ev(`ARC_BOT.stop(); true`);
+  }
+});
+
 test('boş slot: dokununca hiçbir şey olmaz (upgrades açılmaz), + yerine yasak ikonu', async () => {
   await fresh({ arc_slots_owned: '2', arc_slots_v1: [{ type: 'ability', key: 'shock', icon: 'u-shock' }, null, null, null],
     arc_upg_v1: { comboSplitV22: true, inv: { shock: { owned: true, durLvl: 0 } } } });

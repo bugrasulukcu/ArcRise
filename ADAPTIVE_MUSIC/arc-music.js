@@ -36,7 +36,7 @@ const ArcMusic = (() => {
   function create(ctx, out, opts = {}) {
     out = out || ctx.destination;
     const S = { mode: 'chill', scene: 'off', inten: 0, eS: 0, combo: 0, chain: 0, bpm: 96, step: 0, next: 0,
-                boostUntil: 0, deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
+                boostUntil: 0, slowUntil: 0, abil: [], deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
     const G = v => { const n = ctx.createGain(); n.gain.value = v; return n; };
     const F = (type, f, q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
 
@@ -142,6 +142,91 @@ const ArcMusic = (() => {
       n.connect(f); f.connect(g); last.connect(sfx);
     }
 
+    // ── Yetenek sesleri (2026-11-10) ──
+    const curChord = () => PROG[STYLE[S.mode] || 'drive'][Math.floor(S.step / 16) % 4];
+    function sweep(type, f0, f1, t, dur, lvl, o = {}) {
+      const end = t + dur + 0.05, ox = osc(type, f0, t, end);
+      ox.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + (o.atk || 0.01)); g.gain.exponentialRampToValueAtTime(0.0005, end);
+      let node = ox;
+      if (o.lp) { const f = F('lowpass', o.lp, o.q || 1); ox.connect(f); node = f; }
+      node.connect(g); g.connect(sfx);
+      if (o.rev) { const r = G(o.rev); g.connect(r); r.connect(revIn); }
+      return ox;
+    }
+    function ring(freq, t, dur, lvl, rev = 0.5) {               // tek sinüs, hızlı vuruş + üstel sönüm
+      const ox = osc('sine', freq, t, t + dur + 0.02), g = G(0);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+      ox.connect(g); g.connect(sfx); if (rev) { const r = G(rev); g.connect(r); r.connect(revIn); }
+    }
+    const ABIL = {
+      timeslow(t, o) {                                         // akor oktav aşağı kayar + derin "vuuum"
+        curChord().n.forEach((m, k) => sweep('sawtooth', mtof(m + 12), mtof(m), t + k * 0.015, 0.7, 0.045, { lp: 1800, rev: 0.6 }));
+        sweep('sine', 220, 55, t, 0.8, 0.32);
+        whoosh(t, 0.1, 0.6, 3000, 300);
+        S.slowUntil = t + (o.dur || 3);
+      },
+      phaseburst(t) {                                          // titreşen hayalet ton (FM) + yükselen hava
+        const end = t + 0.65, car = osc('sine', mtof(81), t, end), mod = osc('sine', 31, t, end), md = G(170);
+        car.frequency.exponentialRampToValueAtTime(mtof(88), t + 0.5);
+        mod.connect(md); md.connect(car.frequency);
+        const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, end);
+        car.connect(g); g.connect(sfx); const r = G(0.8); g.connect(r); r.connect(revIn);
+        for (const d of [-12, 12]) { const ox = sweep('triangle', mtof(76), mtof(81), t, 0.45, 0.04, { rev: 0.6 }); ox.detune.setValueAtTime(d, t); }
+        whoosh(t, 0.13, 0.45, 800, 9000, 0.6, -0.6);
+      },
+      coinpull(t) {                                            // mıknatıs emişi + toplanma pırıltısı
+        const ox = sweep('sine', 260, 1500, t, 0.32, 0.16, { atk: 0.04 });
+        const vib = osc('sine', 13, t, t + 0.4), vd = G(35); vib.connect(vd); vd.connect(ox.frequency);
+        whoosh(t, 0.12, 0.3, 6500, 700);
+        [69, 72, 76, 81].forEach((m, k) => bell(m + 12, t + 0.26 + k * 0.05, 0.08, 0.35));
+      },
+      brake(t) {                                               // "pşşş" hava freni + tok darbe
+        const n = noiseSrc(t, t + 0.4), f = F('bandpass', 2600, 1.1), g = G(0);
+        f.frequency.setValueAtTime(2600, t); f.frequency.exponentialRampToValueAtTime(380, t + 0.35);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.2, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.38);
+        n.connect(f); f.connect(g); g.connect(sfx);
+        sweep('sawtooth', 300, 90, t, 0.28, 0.07, { lp: 900 });
+        sweep('sine', 120, 55, t, 0.14, 0.28);
+      },
+      shock(t) {                                               // elektrik çıtırtısı + alçak patlama + yayılan dalga
+        sweep('sine', 82, 32, t, 0.5, 0.42);
+        const n = noiseSrc(t, t + 0.32), f = F('highpass', 1300, 0.7), g = G(0);
+        g.gain.setValueAtTime(0.0001, t);
+        for (let k = 0; k < 14; k++) g.gain.setValueAtTime((k % 2 ? 0.05 : 0.2) * (1 - k / 15), t + k * 0.02);   // çıtırtı: kesik kesik
+        g.gain.setValueAtTime(0.0001, t + 0.3);
+        n.connect(f); f.connect(g); g.connect(sfx); const r = G(0.4); g.connect(r); r.connect(revIn);
+        sweep('square', 55, 48, t, 0.26, 0.06, { lp: 900 });
+        whoosh(t + 0.02, 0.15, 0.4, 400, 7000, -0.8, 0.8);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(600, t, 0.02);   // zamanlayıcı geri açar
+      },
+      anchor(t, o) {
+        if (o.phase === 'teleport') {                          // warp: aşağı-yukarı süpürme + çınlama
+          sweep('sine', 1800, 180, t, 0.09, 0.26);
+          sweep('sine', 180, 1400, t + 0.09, 0.18, 0.26, { rev: 0.5 });
+          whoosh(t, 0.16, 0.22, 6000, 800);
+          bell(81, t + 0.24, 0.2, 0.7); bell(88, t + 0.3, 0.1, 0.6);
+        } else {                                               // işaret bırakma: metalik "klonk"
+          ring(660, t, 0.6, 0.12); ring(1563, t, 0.35, 0.07); ring(2540, t, 0.2, 0.05);
+          sweep('sine', 140, 70, t, 0.15, 0.18);
+        }
+      },
+    };
+    const logAbil = k => { S.abil.push(k); if (S.abil.length > 12) S.abil.shift(); };
+    const ABIL_END = {
+      timeslow(t) {                                            // geri hızlanma: akor yukarı + açılan hava
+        S.slowUntil = 0;
+        curChord().n.forEach((m, k) => sweep('sawtooth', mtof(m), mtof(m + 12), t + k * 0.012, 0.4, 0.035, { lp: 2400, rev: 0.4 }));
+        whoosh(t, 0.08, 0.4, 300, 4000);
+      },
+      phaseburst(t) {                                          // yeniden katılaşma: kısa "pıt"
+        sweep('sine', 1400, 500, t, 0.08, 0.14);
+        const n = noiseSrc(t, t + 0.03), f = F('highpass', 2500), g = G(0); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.025);
+        n.connect(f); f.connect(g); g.connect(sfx);
+      },
+      brake(t) { whoosh(t, 0.2, 0.25, 300, 2500); sweep('sine', 90, 160, t, 0.12, 0.08); },   // fren bırakıldı
+    };
+
     // ── Zamanlayıcı ──
     const spb = () => 60 / S.bpm / 4;                // 16'lık nota süresi
     const style = () => STYLE[S.mode] || 'drive';
@@ -161,6 +246,7 @@ const ArcMusic = (() => {
         f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (st === 'drive' ? 1600 : st === 'hyper' ? 3200 : 0);
         pf = 800 + 1700 * S.eS + 380 * S.combo + (st === 'hyper' ? 600 : 0);
       }
+      if (S.scene === 'play' && t < (S.slowUntil || 0)) { f = Math.min(f, 1100); pf = Math.min(pf, 700); }   // Time Slow: su altı gibi
       musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
       padLP.frequency.setTargetAtTime(Math.min(pf, 6000), t, 0.25);
     }
@@ -254,7 +340,7 @@ const ArcMusic = (() => {
     // ── Dış arayüz ──
     const api = {
       ctx, analyser, advance,
-      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil, musicGain: +music.gain.value.toFixed(3) }),
+      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil, slow: ctx.currentTime < (S.slowUntil || 0), abil: S.abil.slice(), musicGain: +music.gain.value.toFixed(3) }),
       menu(at) {
         const t = now(at);
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
@@ -266,7 +352,7 @@ const ArcMusic = (() => {
         const t = now(at);
         if (mode) S.mode = mode;
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
-        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0;
+        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.slowUntil = 0;
         S.eS = S.inten;                                          // önceki run'ın yoğunluğu (tempo/katman) yeni run'a taşınmasın
         if (S.step % 16) { S.step += 16 - (S.step % 16); }            // yeni run yeni ölçüden başlar
         music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t, 0.15);
@@ -308,6 +394,10 @@ const ArcMusic = (() => {
         whoosh(t, 0.1, 0.18, 6000, 1200);
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
       },
+      // Yetenekler: key = timeslow | phaseburst | coinpull | brake | shock | anchor; o = { dur, phase: 'drop'|'teleport' }
+      ability(key, o = {}, at) { const f = ABIL[key]; if (!f) return; f(now(at), o || {}); logAbil(key === 'anchor' ? 'anchor:' + (o.phase || 'drop') : key); },
+      abilityEnd(key, at) { const f = ABIL_END[key]; if (!f) return; f(now(at)); logAbil('end:' + key); },
+      abilityReady(at) { const t = now(at); bell(76, t, 0.07, 0.35); bell(81, t + 0.06, 0.06, 0.45); logAbil('ready'); },
       nearMiss(at) { const t = now(at); whoosh(t, 0.15, 0.28, 500, 5200, -0.7, 0.7); },
       booster(dur = 5, at) {
         const t = now(at); S.boostUntil = t + dur;
@@ -316,7 +406,7 @@ const ArcMusic = (() => {
         o.connect(f); f.connect(g); g.connect(sfx); whoosh(t, 0.1, 0.55, 400, 6000);
       },
       death(at) {
-        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.deadAt = t;
+        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.slowUntil = 0; S.deadAt = t;
         const o = osc('sine', 95, t, t + 0.8); o.frequency.exponentialRampToValueAtTime(26, t + 0.7);
         const g = G(0); g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.75); o.connect(g); g.connect(sfx);
         const n = noiseSrc(t, t + 0.7), f = F('lowpass', 2400, 0.7), g2 = G(0);

@@ -95,6 +95,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .pad[data-k="gold"] b { color: var(--gold); }    .pad[data-k="gold"] { --hc: var(--gold); }
 .pad[data-k="break"] b, .pad[data-k="death"] b { color: var(--red); } .pad[data-k="break"], .pad[data-k="death"] { --hc: var(--red); }
 .pad[data-k="boost"] b { color: var(--violet); } .pad[data-k="boost"] { --hc: var(--violet); }
+.abil .pad b { color: #b9a6ff; } .abil .pad { --hc: var(--violet); }
 
 /* Readout */
 .scope { width: 100%; height: 150px; display: block; border-radius: 12px; background: #06080b; border: 1px solid var(--line); }
@@ -173,6 +174,17 @@ td code { font-family: var(--f-mono); font-size: 12.5px; color: var(--green); }
         <button class="pad" type="button" data-k="death" disabled><kbd>D</kbd><b>DEATH</b><small>şok dalgası</small></button>
         <button class="pad" type="button" data-k="revive" disabled><kbd>R</kbd><b>REVIVE</b><small>geri dönüş</small></button>
       </div>
+      <h2 id="ab-h">Yetenekler</h2>
+      <p class="hint">Süreli yetenekler 3 sn sonra bitiş sesini çalar. Anchor ilk basışta işaret bırakır, ikincide ışınlar.</p>
+      <div class="pads abil" aria-labelledby="ab-h">
+        <button class="pad" type="button" data-ab="timeslow" disabled><kbd>1</kbd><b>TIME SLOW</b><small>zaman bükülür, müzik boğulur</small></button>
+        <button class="pad" type="button" data-ab="phaseburst" disabled><kbd>2</kbd><b>PHASE BURST</b><small>hayalet geçiş</small></button>
+        <button class="pad" type="button" data-ab="coinpull" disabled><kbd>3</kbd><b>COIN PULL</b><small>mıknatıs + pırıltı</small></button>
+        <button class="pad" type="button" data-ab="brake" disabled><kbd>4</kbd><b>BRAKE</b><small>hava freni</small></button>
+        <button class="pad" type="button" data-ab="shock" disabled><kbd>5</kbd><b>SHOCK</b><small>elektrik dalgası</small></button>
+        <button class="pad" type="button" data-ab="anchor" disabled><kbd>6</kbd><b>ANCHOR</b><small id="anchor-sub">işaret bırak</small></button>
+        <button class="pad" type="button" data-ab="ready" disabled><kbd>7</kbd><b>READY</b><small>yetenek hazır</small></button>
+      </div>
     </section>
 
     <section class="panel" aria-labelledby="eng-h">
@@ -218,6 +230,7 @@ td code { font-family: var(--f-mono); font-size: 12.5px; color: var(--green); }
           <tr><td>Vanilla mod</td><td>Sabit 120 BPM, Am F C G; kick baştan, bas/hi-hat/snare mesafeyle sırayla girer</td><td><code>gameMode</code></td></tr>
           <tr><td>Booster</td><td>Yükselen sweep, 5 sn ekstra hi-hat ve parlaklık</td><td><code>activateBooster</code></td></tr>
           <tr><td>Ölüm</td><td>Bas darbesi + patlama; müzik boğulup kısılır</td><td><code>beginDeath</code></td></tr>
+          <tr><td>Yetenekler</td><td>Her biri kendi sesini çalar (Time Slow sırasında müzik boğulur); süreli olanlar bitince dönüş sesi, bekleme süresi dolunca hafif bir ping</td><td><code>triggerAbility</code></td></tr>
           <tr><td>Revive</td><td>Yükselen riser, müzik geri döner</td><td><code>doRevive</code></td></tr>
         </tbody>
       </table>
@@ -262,7 +275,7 @@ const ArcMusic = (() => {
   function create(ctx, out, opts = {}) {
     out = out || ctx.destination;
     const S = { mode: 'chill', scene: 'off', inten: 0, eS: 0, combo: 0, chain: 0, bpm: 96, step: 0, next: 0,
-                boostUntil: 0, deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
+                boostUntil: 0, slowUntil: 0, abil: [], deadAt: -1, layers: new Set(), chord: '—', timer: null, running: false };
     const G = v => { const n = ctx.createGain(); n.gain.value = v; return n; };
     const F = (type, f, q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
 
@@ -368,6 +381,91 @@ const ArcMusic = (() => {
       n.connect(f); f.connect(g); last.connect(sfx);
     }
 
+    // ── Yetenek sesleri (2026-11-10) ──
+    const curChord = () => PROG[STYLE[S.mode] || 'drive'][Math.floor(S.step / 16) % 4];
+    function sweep(type, f0, f1, t, dur, lvl, o = {}) {
+      const end = t + dur + 0.05, ox = osc(type, f0, t, end);
+      ox.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + (o.atk || 0.01)); g.gain.exponentialRampToValueAtTime(0.0005, end);
+      let node = ox;
+      if (o.lp) { const f = F('lowpass', o.lp, o.q || 1); ox.connect(f); node = f; }
+      node.connect(g); g.connect(sfx);
+      if (o.rev) { const r = G(o.rev); g.connect(r); r.connect(revIn); }
+      return ox;
+    }
+    function ring(freq, t, dur, lvl, rev = 0.5) {               // tek sinüs, hızlı vuruş + üstel sönüm
+      const ox = osc('sine', freq, t, t + dur + 0.02), g = G(0);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(lvl, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+      ox.connect(g); g.connect(sfx); if (rev) { const r = G(rev); g.connect(r); r.connect(revIn); }
+    }
+    const ABIL = {
+      timeslow(t, o) {                                         // akor oktav aşağı kayar + derin "vuuum"
+        curChord().n.forEach((m, k) => sweep('sawtooth', mtof(m + 12), mtof(m), t + k * 0.015, 0.7, 0.045, { lp: 1800, rev: 0.6 }));
+        sweep('sine', 220, 55, t, 0.8, 0.32);
+        whoosh(t, 0.1, 0.6, 3000, 300);
+        S.slowUntil = t + (o.dur || 3);
+      },
+      phaseburst(t) {                                          // titreşen hayalet ton (FM) + yükselen hava
+        const end = t + 0.65, car = osc('sine', mtof(81), t, end), mod = osc('sine', 31, t, end), md = G(170);
+        car.frequency.exponentialRampToValueAtTime(mtof(88), t + 0.5);
+        mod.connect(md); md.connect(car.frequency);
+        const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0005, end);
+        car.connect(g); g.connect(sfx); const r = G(0.8); g.connect(r); r.connect(revIn);
+        for (const d of [-12, 12]) { const ox = sweep('triangle', mtof(76), mtof(81), t, 0.45, 0.04, { rev: 0.6 }); ox.detune.setValueAtTime(d, t); }
+        whoosh(t, 0.13, 0.45, 800, 9000, 0.6, -0.6);
+      },
+      coinpull(t) {                                            // mıknatıs emişi + toplanma pırıltısı
+        const ox = sweep('sine', 260, 1500, t, 0.32, 0.16, { atk: 0.04 });
+        const vib = osc('sine', 13, t, t + 0.4), vd = G(35); vib.connect(vd); vd.connect(ox.frequency);
+        whoosh(t, 0.12, 0.3, 6500, 700);
+        [69, 72, 76, 81].forEach((m, k) => bell(m + 12, t + 0.26 + k * 0.05, 0.08, 0.35));
+      },
+      brake(t) {                                               // "pşşş" hava freni + tok darbe
+        const n = noiseSrc(t, t + 0.4), f = F('bandpass', 2600, 1.1), g = G(0);
+        f.frequency.setValueAtTime(2600, t); f.frequency.exponentialRampToValueAtTime(380, t + 0.35);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.2, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.38);
+        n.connect(f); f.connect(g); g.connect(sfx);
+        sweep('sawtooth', 300, 90, t, 0.28, 0.07, { lp: 900 });
+        sweep('sine', 120, 55, t, 0.14, 0.28);
+      },
+      shock(t) {                                               // elektrik çıtırtısı + alçak patlama + yayılan dalga
+        sweep('sine', 82, 32, t, 0.5, 0.42);
+        const n = noiseSrc(t, t + 0.32), f = F('highpass', 1300, 0.7), g = G(0);
+        g.gain.setValueAtTime(0.0001, t);
+        for (let k = 0; k < 14; k++) g.gain.setValueAtTime((k % 2 ? 0.05 : 0.2) * (1 - k / 15), t + k * 0.02);   // çıtırtı: kesik kesik
+        g.gain.setValueAtTime(0.0001, t + 0.3);
+        n.connect(f); f.connect(g); g.connect(sfx); const r = G(0.4); g.connect(r); r.connect(revIn);
+        sweep('square', 55, 48, t, 0.26, 0.06, { lp: 900 });
+        whoosh(t + 0.02, 0.15, 0.4, 400, 7000, -0.8, 0.8);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(600, t, 0.02);   // zamanlayıcı geri açar
+      },
+      anchor(t, o) {
+        if (o.phase === 'teleport') {                          // warp: aşağı-yukarı süpürme + çınlama
+          sweep('sine', 1800, 180, t, 0.09, 0.26);
+          sweep('sine', 180, 1400, t + 0.09, 0.18, 0.26, { rev: 0.5 });
+          whoosh(t, 0.16, 0.22, 6000, 800);
+          bell(81, t + 0.24, 0.2, 0.7); bell(88, t + 0.3, 0.1, 0.6);
+        } else {                                               // işaret bırakma: metalik "klonk"
+          ring(660, t, 0.6, 0.12); ring(1563, t, 0.35, 0.07); ring(2540, t, 0.2, 0.05);
+          sweep('sine', 140, 70, t, 0.15, 0.18);
+        }
+      },
+    };
+    const logAbil = k => { S.abil.push(k); if (S.abil.length > 12) S.abil.shift(); };
+    const ABIL_END = {
+      timeslow(t) {                                            // geri hızlanma: akor yukarı + açılan hava
+        S.slowUntil = 0;
+        curChord().n.forEach((m, k) => sweep('sawtooth', mtof(m), mtof(m + 12), t + k * 0.012, 0.4, 0.035, { lp: 2400, rev: 0.4 }));
+        whoosh(t, 0.08, 0.4, 300, 4000);
+      },
+      phaseburst(t) {                                          // yeniden katılaşma: kısa "pıt"
+        sweep('sine', 1400, 500, t, 0.08, 0.14);
+        const n = noiseSrc(t, t + 0.03), f = F('highpass', 2500), g = G(0); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.025);
+        n.connect(f); f.connect(g); g.connect(sfx);
+      },
+      brake(t) { whoosh(t, 0.2, 0.25, 300, 2500); sweep('sine', 90, 160, t, 0.12, 0.08); },   // fren bırakıldı
+    };
+
     // ── Zamanlayıcı ──
     const spb = () => 60 / S.bpm / 4;                // 16'lık nota süresi
     const style = () => STYLE[S.mode] || 'drive';
@@ -387,6 +485,7 @@ const ArcMusic = (() => {
         f = 1500 + 5400 * S.eS + 900 * S.combo + (boost ? 3200 : 0) + (st === 'drive' ? 1600 : st === 'hyper' ? 3200 : 0);
         pf = 800 + 1700 * S.eS + 380 * S.combo + (st === 'hyper' ? 600 : 0);
       }
+      if (S.scene === 'play' && t < (S.slowUntil || 0)) { f = Math.min(f, 1100); pf = Math.min(pf, 700); }   // Time Slow: su altı gibi
       musicLP.frequency.setTargetAtTime(Math.min(f, 17000), t, 0.18);
       padLP.frequency.setTargetAtTime(Math.min(pf, 6000), t, 0.25);
     }
@@ -480,7 +579,7 @@ const ArcMusic = (() => {
     // ── Dış arayüz ──
     const api = {
       ctx, analyser, advance,
-      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil }),
+      state: () => ({ scene: S.scene, mode: S.mode, bpm: S.bpm, eS: S.eS, inten: S.inten, combo: S.combo, chain: S.chain, chord: S.chord, layers: [...S.layers], boost: ctx.currentTime < S.boostUntil, slow: ctx.currentTime < (S.slowUntil || 0), abil: S.abil.slice(), musicGain: +music.gain.value.toFixed(3) }),
       menu(at) {
         const t = now(at);
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
@@ -492,7 +591,7 @@ const ArcMusic = (() => {
         const t = now(at);
         if (mode) S.mode = mode;
         if (S.scene === 'off') { S.next = t + 0.05; S.step = 0; }
-        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0;
+        S.scene = 'play'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.slowUntil = 0;
         S.eS = S.inten;                                          // önceki run'ın yoğunluğu (tempo/katman) yeni run'a taşınmasın
         if (S.step % 16) { S.step += 16 - (S.step % 16); }            // yeni run yeni ölçüden başlar
         music.gain.cancelScheduledValues(t); music.gain.setTargetAtTime(1, t, 0.15);
@@ -517,10 +616,14 @@ const ArcMusic = (() => {
       },
       collect(at) {
         const t = now(at), idx = S.chain++, m = 69 + PENTA[idx % 5] + 12 * (Math.floor(idx / 5) % 2);
-        bell(m, t, 0.26, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
+        bell(m, t, 0.2, 0.6); pluck(m + 12, t, 0.03, 0.12, 'triangle', 0.4);
         return S.chain;
       },
-      gold(at) { const t = now(at); bell(88, t, 0.22, 0.8); bell(93, t + 0.07, 0.2, 0.9); bell(100, t + 0.14, 0.1, 0.9); },
+      gold(at) {   // her altın parçacığı topa vardığında çağrılır (≈20 kez / 45 ms arayla): tek, kısa, kısık bir tını — art arda gelenler pentatonikte yükselir
+        const t = now(at); S.goldK = (t - (S.goldAt || -9) < 0.3) ? (S.goldK || 0) + 1 : 0; S.goldAt = t;
+        const k = S.goldK % 10, m = 81 + PENTA[k % 5] + 12 * Math.floor(k / 5);
+        bell(m, t, 0.045, 0.22);
+      },
       comboBreak(at) {
         const t = now(at); S.chain = 0; S.combo = 0;
         const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
@@ -530,7 +633,11 @@ const ArcMusic = (() => {
         whoosh(t, 0.1, 0.18, 6000, 1200);
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
       },
-      nearMiss(at) { const t = now(at); whoosh(t, 0.22, 0.28, 500, 5200, -0.7, 0.7); },
+      // Yetenekler: key = timeslow | phaseburst | coinpull | brake | shock | anchor; o = { dur, phase: 'drop'|'teleport' }
+      ability(key, o = {}, at) { const f = ABIL[key]; if (!f) return; f(now(at), o || {}); logAbil(key === 'anchor' ? 'anchor:' + (o.phase || 'drop') : key); },
+      abilityEnd(key, at) { const f = ABIL_END[key]; if (!f) return; f(now(at)); logAbil('end:' + key); },
+      abilityReady(at) { const t = now(at); bell(76, t, 0.07, 0.35); bell(81, t + 0.06, 0.06, 0.45); logAbil('ready'); },
+      nearMiss(at) { const t = now(at); whoosh(t, 0.15, 0.28, 500, 5200, -0.7, 0.7); },
       booster(dur = 5, at) {
         const t = now(at); S.boostUntil = t + dur;
         const o = osc('sawtooth', 180, t, t + 0.6); o.frequency.exponentialRampToValueAtTime(1400, t + 0.55);
@@ -538,7 +645,7 @@ const ArcMusic = (() => {
         o.connect(f); f.connect(g); g.connect(sfx); whoosh(t, 0.1, 0.55, 400, 6000);
       },
       death(at) {
-        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.deadAt = t;
+        const t = now(at); S.scene = 'dead'; S.combo = 0; S.chain = 0; S.boostUntil = 0; S.slowUntil = 0; S.deadAt = t;
         const o = osc('sine', 95, t, t + 0.8); o.frequency.exponentialRampToValueAtTime(26, t + 0.7);
         const g = G(0); g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.75); o.connect(g); g.connect(sfx);
         const n = noiseSrc(t, t + 0.7), f = F('lowpass', 2400, 0.7), g2 = G(0);
@@ -546,7 +653,7 @@ const ArcMusic = (() => {
         g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.65); n.connect(f); f.connect(g2); g2.connect(sfx); g2.connect(revIn);
         const gl = osc('square', 220, t, t + 0.5); gl.frequency.exponentialRampToValueAtTime(55, t + 0.45);
         const g3 = G(0); g3.gain.setValueAtTime(0.06, t); g3.gain.exponentialRampToValueAtTime(0.001, t + 0.48); gl.connect(g3); g3.connect(sfx);
-        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.setTargetAtTime(0.32, t, 0.25);
+        music.gain.cancelScheduledValues(t); music.gain.setValueAtTime(music.gain.value || 1, t); music.gain.linearRampToValueAtTime(0, t + 0.05);   // müzik patlamayla küt diye kesilir (eski oyundaki gibi)
         musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(240, t, 0.12);
       },
       revive(at) {
@@ -611,7 +718,25 @@ const ArcMusic = (() => {
   };
   function flash(k) { const b = document.querySelector(`.pad[data-k="${k}"]`); if (!b) return; b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 120); }
   function fire(k) { if (!M || ctx.state !== 'running') return; ACT[k](); flash(k); }
-  $$('.pad').forEach(b => b.addEventListener('click', () => fire(b.dataset.k)));
+  $$('.pad[data-k]').forEach(b => b.addEventListener('click', () => fire(b.dataset.k)));
+  // Yetenekler
+  let anchorSet = false;
+  const DUR = { timeslow: 3, phaseburst: 3, brake: 3 };
+  function fireAbility(k) {
+    if (!M || ctx.state !== 'running') return;
+    const el = document.querySelector(`.pad[data-ab="${k}"]`);
+    if (el) { el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 120); }
+    if (k === 'ready') { M.abilityReady(); return; }
+    if (k === 'anchor') {
+      M.ability('anchor', { phase: anchorSet ? 'teleport' : 'drop' }); anchorSet = !anchorSet;
+      $('#anchor-sub').textContent = anchorSet ? 'ışınlan' : 'işaret bırak'; return;
+    }
+    M.ability(k, { dur: DUR[k] || 0 });
+    if (DUR[k]) setTimeout(() => { if (M) M.abilityEnd(k); }, DUR[k] * 1000);
+  }
+  $$('.pad[data-ab]').forEach(b => b.addEventListener('click', () => fireAbility(b.dataset.ab)));
+  const AB_KEYS = { '1': 'timeslow', '2': 'phaseburst', '3': 'coinpull', '4': 'brake', '5': 'shock', '6': 'anchor', '7': 'ready' };
+  document.addEventListener('keydown', e => { const k = AB_KEYS[e.key]; if (k && !(e.target.closest && e.target.closest('input'))) fireAbility(k); });
   const KEYS = { ' ': 'tap', g: 'green', o: 'gold', n: 'near', b: 'break', m: 'boost', d: 'death', r: 'revive' };
   document.addEventListener('keydown', e => {
     if (e.target.closest && e.target.closest('input')) return;
