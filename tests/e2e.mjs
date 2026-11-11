@@ -1154,7 +1154,7 @@ test('yetenek görselleri: Shockwave dalgası, bullet time, Brake yankısı, Anc
   check(await ev(`/saturate/.test(document.getElementById('gc').style.filter)`), 'bullet time renkleri soluklaştırmıyor');
   await ev('ARC_TEST.trigger(2); true'); await sleep(250);
   check((await vfx()).echo >= 2, `Brake yankısı yok: ${JSON.stringify(await vfx())}`);
-  await ev('ARC_TEST.trigger(3); true'); await sleep(100);
+  await ev('ARC_TEST.trigger(3); true'); await sleep(30);
   check((await vfx()).anchor, 'Anchor çıpası yok');
   check(await waitFor(`ARC_TEST.vfx.bt === 0 && document.getElementById('gc').style.filter === 'none'`, 8000), 'bullet time kapanmadı');
   await ev('ARC_BOT.stop(); true');
@@ -1168,27 +1168,33 @@ test('yetenek görselleri: Shockwave dalgası, bullet time, Brake yankısı, Anc
   check((await vfx()).ghostBits > 10, `Ghost'ta engeller parçalanmıyor: ${JSON.stringify(await vfx())}`);
 });
 
-test('Anchor: bırakınca hemen ışınlanılabilir, bekleme süresi ışınlanınca başlar; çıpa ekranın altından çıkınca kopar, yetenek hazır kalır', async () => {
+test('Anchor (dağcı çıpası): yol açıksa baktığı yöne hızla çekilir; duvar / engel yolu keserse top ilerlemez, bekleme başlamaz', async () => {
   await fresh({ arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'anchor', icon: 'u-anchor' }, null, null, null],
     arc_upg_v1: { comboSplitV22: true, inv: { anchor: { owned: true, durLvl: 0 } } } });
   await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
-  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'run başlamadı'); await sleep(1500);
-  await ev(`ARC_BOT.stop(); true`);   // bot yetenekleri kendisi de tetikliyor
-  const p0 = await ev('(() => { ARC_TEST.trigger(0); return ARC_TEST.player; })()'), cd0 = (await ev('ARC_TEST.slotCD'))[0];
-  check((await ev('ARC_TEST.vfx')).anchor && cd0 > 0 && cd0 <= 0.4, `bırakınca kilit 0.4 sn olmalı: ${cd0}`);
-  await sleep(600);
-  const pm = await ev('ARC_TEST.player');
-  const p1 = await ev('(() => { ARC_TEST.trigger(0); return ARC_TEST.player; })()'), cd1 = (await ev('ARC_TEST.slotCD'))[0];
-  check(Math.hypot(pm.x - p0.x, pm.y - p0.y) > 20 && Math.abs(p1.y - p0.y) < 2 && Math.abs(p1.x - p0.x) < 2, `çıpaya ışınlanmadı: ${JSON.stringify([p0, pm, p1])}`);
-  check(cd1 > 10 && !(await ev('ARC_TEST.vfx')).anchor, `ışınlanınca bekleme başlamadı: ${cd1}`);
-  // ikinci tur: çıpa ekranın altından çıkarsa kopar, bekleme yok
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'run başlamadı'); await sleep(2500);
+  // yol açıkken: tetikle (bot sürmeye devam eder, yetenekleri kendisi de tetikleyebilir → hazırlık ve tetikleme aynı karede)
+  let p0 = null;
+  for (let i = 0; i < 60 && !p0; i++) {
+    p0 = await ev(`(() => { if (ARC_TEST.slotCD[0] > 0 || ARC_TEST.hookPreview().blocked) return null; ARC_BOT.stop(); const a = ARC_TEST.player; ARC_TEST.trigger(0); return a; })()`);
+    if (!p0) await sleep(100);
+  }
+  check(p0, 'açık yol bulunamadı');
+  const cd = (await ev('ARC_TEST.slotCD'))[0];
+  check(cd > 5, `bekleme başlamadı: ${cd}`);
+  check(await waitFor('!ARC_TEST.vfx.anchor', 2000, 20), 'çekilme bitmedi');
+  const p1 = await ev('ARC_TEST.player');
+  const along = (p1.x - p0.x) * Math.cos(p0.heading) + (p1.y - p0.y) * Math.sin(p0.heading);
+  check(along > 200 && await ev(`ARC_TEST.scene === 'play'`), `top baktığı yöne çekilmedi: ${along} ${JSON.stringify([p0, p1])}`);
+  // önünde engel: çıpa çarpıp geri döner, top ilerlemez (yalnız kendi yayında sürer), bekleme yok
   await ev('ARC_BOT.start(); true');
   check(await waitFor('ARC_TEST.slotCD[0] === 0', 30000), 'bekleme bitmedi');
-  await ev('ARC_TEST.trigger(0); true'); await sleep(100);
-  check((await ev('ARC_TEST.vfx')).anchor, 'çıpa bırakılmadı');
-  check(await waitFor('!ARC_TEST.vfx.anchor', 20000), 'çıpa ekrandan çıkınca kopmadı');
-  check((await ev('ARC_TEST.slotCD'))[0] === 0 && await ev(`ARC_TEST.scene === 'play'`), `koptuktan sonra yetenek hazır değil: ${JSON.stringify(await ev('ARC_TEST.slotCD'))}`);
-  await ev('ARC_BOT.stop(); true');
+  const r = await ev(`(() => { ARC_BOT.stop(); ARC_TEST.obstacleAhead(170, 26); const a = ARC_TEST.player, pv = ARC_TEST.hookPreview(); ARC_TEST.trigger(0); return { a, pv, cd: ARC_TEST.slotCD[0] }; })()`);
+  check(r.pv.blocked && r.cd <= 0.5, `engel önündeyken bekleme başladı: ${JSON.stringify(r)}`);
+  const phases = new Set();
+  for (let i = 0; i < 25; i++) { const ph = await ev('ARC_TEST.vfx.hookPhase'); if (ph) phases.add(ph); else if (phases.size) break; await sleep(15); }
+  check(!phases.has('pull') && phases.has('back'), `engelde top çekildi: ${[...phases]}`);
+  check(await ev(`ARC_TEST.scene === 'play'`), 'engelde öldü');
 });
 
 test('yetenek sesleri: Shock ölüm patlamasıyla aynı; yetenekler yeşil top sesinden çok yüksek değil', async () => {

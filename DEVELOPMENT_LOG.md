@@ -396,6 +396,14 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Anchor artık dağcı çıpası: baktığın yöne fırlar, seni hızla ileri çeker (2026-11-11)
+- Eski Anchor (bırak → geri ışınlan) neredeyse işe yaramıyordu: kamera hep yukarı gittiği için çıpa 2–3 sn'de ekranın altından çıkıyordu.
+- Yeni: dokununca çıpa topun baktığı yöne fırlar (`HOOK_RANGE` 300 px, 3200 px/s), oturunca top halatla ≈0.2 sn'de oraya çekilir (ease-in-out). Çekilirken yay dönmez, yayın merkezi topla birlikte taşınır → varınca aynı yön ve dönüşle devam eder.
+- Yol 300 px içinde duvar ya da engelle kesiliyorsa (`hookTarget().blocked`: ışın ↔ engel+top çemberi) **top hiç ilerlemez**: çıpa çarpar (kıvılcım halkası + klonk), topa geri sarılır, bekleme süresi başlamaz (0.5 sn kilit). Yol açıksa bekleme fırlatınca başlar (20 sn, değişmedi); çekilirken engel çarpışması yok.
+- Görsel: dönen çıpa ikonu + gergin parlak halat, oturduğu yerde halka, varışta topun çevresinde açılan halka. Ses: fırlatmada "klonk", çekilmede warp süpürmesi.
+- Eski çıpa bırakma / kopma / ışınlanma kodu ve `.slot.armed` kaldırıldı; açıklama metni yenilendi.
+- Test: açık yolda top baktığı yöne ≥200 px çekilir ve yaşar; önünde engel varken çekilme olmaz, bekleme başlamaz. `ARC_TEST.hookPreview()` eklendi.
+
 ### Daily HUD: skor ve mesafe çizgiye iner (2026-11-11)
 - Daily'de canlı sıra (#1) yok ama yeri boş tutuluyordu → sayılar çizgiden uzak kalıyordu. `html.daily-run`'da etiket + sayı 18 px aşağı (`top`, transform değil — sayı animasyonları transform kullanıyor): sayının alt kenarı ↔ çizgi ≈14 px = çizgi ↔ DAILY yazısı. Test: günlük testinde aralık ölçülür.
 

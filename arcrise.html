@@ -4091,8 +4091,6 @@
     }
     .slot.cooling .slot-ring { opacity: 1; }
     .slot.cooling { opacity: 0.55; }
-    .slot.armed:not(.cooling) { animation: slotArmed 1s ease-in-out infinite; }   /* Anchor bırakıldı: ışınlanmaya hazır */
-    @keyframes slotArmed { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--sc),.0), 0 0 14px rgba(var(--sc),.35); } 50% { box-shadow: 0 0 0 4px rgba(var(--sc),.35), 0 0 22px rgba(var(--sc),.7); } }
     /* ══════════ KÜÇÜK EKRAN (iPhone SE: 667px, Safari çubuklarıyla ~550px; SE 1: 568/~460) ══════════
        .screen içeriği justify-content:center ile ortalanıyordu → sığmayınca ÜSTTEN de taşıp
        ulaşılamaz oluyordu (ilk girişteki profil paneli SE'de 43-75px iki yandan kesiliyordu).
@@ -10905,7 +10903,7 @@ const ARC_DB = (() => {
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
-    shockWaves.length = 0; brakeT = 0; anchorPoint = null; _anchorZip = null; _anchorSnap = null; _brakeEcho.length = 0; _pullFx = null; _ghostBits.length = 0;
+    shockWaves.length = 0; brakeT = 0; _hook = null; _hookDone = null; _brakeEcho.length = 0; _pullFx = null; _ghostBits.length = 0;
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
@@ -11266,9 +11264,20 @@ const ARC_DB = (() => {
     // Brake: açısal hıza çarpan (player.speed'i ezmez → Extreme'in kare-başı hız hesabıyla çakışmaz)
     const w  = player.speed / player.radius * (brakeT > 0 ? 0.5 : 1);
     if (brakeT > 0) brakeT = Math.max(0, brakeT - dt);
-    player.ang += w * dt * player.dir;
-    player.x    = player.cx + Math.cos(player.ang) * player.radius;
-    player.y    = player.cy + Math.sin(player.ang) * player.radius;
+    if (_hook) tickHook(dt);
+    if (_hook && _hook.phase === 'pull') {
+      // Dağcı çıpası: top halatla çıpaya kayar; yay dönmez, merkezi topla birlikte taşınır → varınca aynı yaya devam eder
+      const h = _hook; h.t2 = (h.t2 || 0) + dt;
+      const u = Math.min(1, h.t2 / h.pullDur), e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+      const nx = h.sx + (h.tx - h.sx) * e, ny = h.sy + (h.ty - h.sy) * e;
+      player.cx += nx - player.x; player.cy += ny - player.y;
+      player.x = nx; player.y = ny;
+      if (u >= 1) { _hook = null; _hookDone = { t: 0 }; }
+    } else {
+      player.ang += w * dt * player.dir;
+      player.x    = player.cx + Math.cos(player.ang) * player.radius;
+      player.y    = player.cy + Math.sin(player.ang) * player.radius;
+    }
     player.heading = player.ang + (player.dir > 0 ? Math.PI/2 : -Math.PI/2);
 
     if (tutActive) tutTick(dt);
@@ -11634,7 +11643,7 @@ const ARC_DB = (() => {
         if (gw < 10) _wallNm = true;
         else if (_wallNm && gw > 40) { _wallNm = false; if (_ccCool <= 0) triggerCloseCall(0); }
       }
-      for (const ob of obstacles) {
+      for (const ob of (_hook && _hook.phase === 'pull') ? [] : obstacles) {   // çekilirken çarpışma yok (yol önceden açık)
         const dx = player.x - ob._ox, dy = player.y - ob._oy;
         const rr = player.r + ob.r;
         const d2 = dx*dx + dy*dy;
@@ -12706,7 +12715,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls(); tickBrakeEcho(dtRaw); tickAnchor();
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls(); tickBrakeEcho(dtRaw);
       drawTrail(time); drawAbilityFx(dtRaw); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -13159,8 +13168,9 @@ const ARC_DB = (() => {
     abil: (k, i = 0) => ({ R: Math.round(abilityRadius(k)), dur: +slotAbilityDuration(i, k).toFixed(2), cd: slotAbilityCooldown(i, k) }),
     get slotCD() { return [...slotCD]; },
     booster: t => applyBooster(t),
-    get vfx() { return { bt: +_bt.toFixed(2), echo: _brakeEcho.length, anchor: !!anchorPoint, ghostBits: _ghostBits.length, pull: !!_pullFx, holeSg: _hole ? Math.round(_hole.sg) : 0, field: _wl.some(w => w.k === 3), warps: warps.length }; },
+    get vfx() { return { bt: +_bt.toFixed(2), echo: _brakeEcho.length, anchor: !!_hook, hookPhase: _hook ? _hook.phase : null, ghostBits: _ghostBits.length, pull: !!_pullFx, holeSg: _hole ? Math.round(_hole.sg) : 0, field: _wl.some(w => w.k === 3), warps: warps.length }; },
     trigger: i => triggerAbility(i),
+    hookPreview: () => { const t = hookTarget(); return { blocked: t.blocked, dist: Math.round(t.dist) }; },
     get trailInfo() { return { n: trail.length, headD: Math.round(trail.at(-1)?.d || 0), tailD: Math.round(trail[0]?.d || 0) }; },
     // Test: topun gidiş yönünde, çarpacağı mesafeye engel koy
     obstacleAhead: (dist = 60, r = 24) => { const x = player.x + Math.cos(player.heading) * dist, y = player.y + Math.sin(player.heading) * dist; obstacles.push({ x, y, r, _ox: x, _oy: y }); },
@@ -14191,8 +14201,6 @@ const ARC_DB = (() => {
       const cooling = !!item && item.type === 'ability' && cd > 0;
       const dash = cooling ? (289 * (1 - Math.min(1, cd / slotAbilityCooldown(i, item.key)))).toFixed(1) : '289';
       if (el._cool !== cooling) { el._cool = cooling; el.classList.toggle('cooling', cooling); }
-      const armed = !!item && item.key === 'anchor' && !!anchorPoint;   // çıpa bırakıldı: slot "ışınlan" için nabız atar
-      if (el._armed !== armed) { el._armed = armed; el.classList.toggle('armed', armed); }
       if (el._dash !== dash) { el._dash = dash; ring.setAttribute('stroke-dashoffset', dash); }
     }
   }
@@ -14200,8 +14208,10 @@ const ARC_DB = (() => {
   // Aktif ability (anlık efekt): {key, t} — t saniye azalır
   let activeAbility = null;
   // Anchor: { x, y } veya null. Çift-tap mekaniği: 1) anchor bırak, 2) ışınla.
-  let anchorPoint = null;
-  let _anchorZip = null;          // ışınlanma anı: halat eski konumdan çıpaya toplanır
+  // Anchor = dağcı çıpası: topun baktığı yöne fırlatılır, oturunca top halatla hızla oraya çekilir.
+  // _hook: { phase: 'shoot'|'pull', t (fırlatma), t2 (çekilme), x0,y0 (fırlatma yeri), sx,sy (çekilme başı), tx,ty (çıpa), ang }
+  let _hook = null, _hookDone = null;
+  const HOOK_RANGE = 300, HOOK_SHOOT_SPEED = 3200, HOOK_PULL_S = 0.2;
   let brakeT = 0;
   const _brakeEcho = [];          // Brake: topun geride bıraktığı yankılar { x, y (dünya), r, t }
   let _brakeEchoAcc = 0;
@@ -14288,57 +14298,36 @@ const ARC_DB = (() => {
       }
       ctx.restore();
     }
-    // Anchor: çıpa + topa bağlı ince halat (ışınlanana kadar topu izler)
-    if (anchorPoint && scene === 'play') {
-      anchorPoint.t = (anchorPoint.t || 0) + dt;
-      const ax = anchorPoint.x, ay = W2S(anchorPoint.y), px = player.x, py = W2S(player.y);
-      const drop = Math.min(1, anchorPoint.t / 0.28), land = 1 - Math.pow(1 - drop, 3);
-      // atılma: çıpa topun yerinden kısa bir yay çizip yere oturur
-      const ix = ax, iy = ay - 26 * Math.sin(Math.PI * drop) * (1 - drop * 0.4);
-      const d = Math.hypot(px - ix, py - iy) || 1, sag = Math.min(26, 8 + d * 0.06) * (1 - Math.min(1, d / 900) * 0.6);
-      ctx.save();
-      ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(150,205,255,.75)'; ctx.setLineDash([5, 4]); ctx.lineDashOffset = -now * 18;
-      ctx.beginPath(); ctx.moveTo(ix, iy - 12 * (0.6 + 0.4 * land));
-      ctx.quadraticCurveTo((ix + px) / 2 + Math.sin(now * 1.7) * 3, (iy + py) / 2 + sag, px, py);
-      ctx.stroke();
-      if (drop >= 1) {   // oturduğu yerde yavaş nabız
-        const pk = (now * 0.9) % 1;
-        ctx.globalAlpha = 0.35 * (1 - pk); ctx.strokeStyle = '#cfe0ff'; ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.arc(ax, ay, 15 + 16 * pk, 0, Math.PI * 2); ctx.stroke();
+    // Anchor (dağcı çıpası): fırlayan çıpa + topa gergin halat; oturunca halka, varınca topun çevresinde halka
+    if (_hook && scene === 'play') {
+      const h = _hook, px = player.x, py = W2S(player.y);
+      const k = h.phase === 'shoot' ? Math.min(1, h.t / h.shootDur) : h.phase === 'back' ? 1 - Math.min(1, h.t3 / 0.14) : 1;
+      const bx = h.phase === 'back' ? player.x : h.x0, by = h.phase === 'back' ? player.y : h.y0;   // geri sarılırken topa döner
+      const ax = bx + (h.tx - bx) * k, ay = W2S(by + (h.ty - by) * k);
+      ctx.save(); ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(190,225,255,.9)'; ctx.lineWidth = h.phase === 'pull' ? 2 : 1.4;
+      if (!LOWFX) { ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 8; }
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ax, ay); ctx.stroke();
+      if (h.phase === 'back') {   // çarptığı yerde kısa kıvılcım halkası
+        const u = Math.min(1, h.t3 / 0.14);
+        ctx.globalAlpha = 1 - u; ctx.strokeStyle = 'rgba(255,170,150,.9)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(h.tx, W2S(h.ty), 6 + 14 * u, 0, Math.PI * 2); ctx.stroke();
       }
-      ctx.setLineDash([]); ctx.globalAlpha = 0.85 * land; ctx.fillStyle = 'rgba(10,14,26,.9)';   // çıpanın koyu zemini
-      ctx.beginPath(); ctx.arc(ix, iy, 15, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(150,205,255,.6)'; ctx.lineWidth = 1.2; ctx.stroke();
+      if (h.phase === 'pull') {
+        const u = Math.min(1, (h.t2 || 0) / h.pullDur);
+        ctx.globalAlpha = 1 - u; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(h.tx, W2S(h.ty), 10 + 18 * u, 0, Math.PI * 2); ctx.stroke();
+      }
       ctx.restore();
-      drawAnchorIcon(ix, iy, 1.6 - 0.4 * land, 0.4 + 0.6 * land);
+      ctx.save(); ctx.translate(ax, ay); ctx.rotate(h.ang - Math.PI / 2); drawAnchorIcon(0, 0, 1.45, 1); ctx.restore();   // çengeller ileri bakar
     }
-    // Halat koptu (çıpa ekranın altında kaldı): topun ucundaki parça geri savrulup söner
-    if (_anchorSnap) {
-      const z = _anchorSnap; z.t += dt;
-      const u = Math.min(1, z.t / 0.35);
-      if (u >= 1) _anchorSnap = null;
+    if (_hookDone) {
+      const z = _hookDone; z.t += dt;
+      const u = Math.min(1, z.t / 0.25);
+      if (u >= 1) _hookDone = null;
       else {
-        const px = player.x, py = W2S(player.y), dx = z.ax - px, dy = W2S(z.ay) - py, L = Math.hypot(dx, dy) || 1;
-        const len = Math.min(140, L) * (1 - u) * (1 - u);
-        ctx.save(); ctx.strokeStyle = `rgba(150,205,255,${(0.8 * (1 - u)).toFixed(3)})`; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]);
-        ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo(px + dx / L * len * 0.5 + 14 * u, py + dy / L * len * 0.5, px + dx / L * len, py + dy / L * len);
-        ctx.stroke(); ctx.restore();
-      }
-    }
-    // Işınlanma: halat eski konumdan çıpaya doğru toplanır
-    if (_anchorZip) {
-      const z = _anchorZip; z.t += dt;
-      const u = Math.min(1, z.t / 0.22);
-      if (u >= 1) _anchorZip = null;
-      else {
-        const e = 1 - Math.pow(1 - u, 2), sx = z.x + (z.ax - z.x) * e, sy0 = W2S(z.y + (z.ay - z.y) * e), ay = W2S(z.ay);
-        ctx.save(); ctx.lineCap = 'round';
-        ctx.strokeStyle = `rgba(235,245,255,${(0.9 * (1 - u)).toFixed(3)})`; ctx.lineWidth = 3 * (1 - u) + 1;
-        if (!LOWFX) { ctx.shadowColor = '#bcd6ff'; ctx.shadowBlur = 12; }
-        ctx.beginPath(); ctx.moveTo(sx, sy0); ctx.lineTo(z.ax, ay); ctx.stroke();
-        ctx.globalAlpha = 1 - u; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(z.ax, ay, player.r + 6 + 30 * e, 0, Math.PI * 2); ctx.stroke();   // varışta açılan halka
-        ctx.restore();
+        ctx.save(); ctx.globalAlpha = 0.8 * (1 - u); ctx.strokeStyle = '#d6e6ff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(player.x, W2S(player.y), player.r + 4 + 26 * u, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
       }
     }
   }
@@ -14360,25 +14349,47 @@ const ARC_DB = (() => {
     const key = item.key;
     const dur = slotAbilityDuration(slotIdx, key);
     const cd  = slotAbilityCooldown(slotIdx, key);
-    const anchorPhase = key === 'anchor' ? (anchorPoint ? 'teleport' : 'drop') : null;   // efekt uygulanmadan önce
     applyAbilityEffect(key, dur);
-    try { const a = _abilityAudio(); if (a) a.ability(key, { dur, phase: anchorPhase }); } catch(_) {}
+    try { const a = _abilityAudio(); if (a) a.ability(key, { dur, phase: key === 'anchor' ? 'drop' : null }); } catch(_) {}   // Anchor: fırlatma "klonk"u
     if (dur > 0) activeAbility = { key, t: dur };
-    // Anchor: bekleme süresi çıpayı bırakınca değil, IŞINLANINCA başlar (eskiden 20 sn beklemek gerekiyordu,
-    // o arada çıpa ekranın altında kalıyordu). Bırakınca yalnız 0.4 sn kilit: yanlışlıkla çift dokunma ışınlamasın.
-    slotCD[slotIdx] = anchorPhase === 'drop' ? ANCHOR_ARM_S : cd;
+    slotCD[slotIdx] = (key === 'anchor' && _hook && _hook.fail) ? 0.5 : cd;   // Anchor yolu kapalıysa bekleme yok, kısa kilit
     haptic(60);
   }
-  const ANCHOR_ARM_S = 0.4;
-  // Çıpa ekranın altından çıkarsa halat kopar: ışınlanma topu ekran dışına atıp öldürmesin. Işınlanılmadığı için
-  // bekleme süresi yok — yetenek hemen yeniden kullanılabilir.
-  let _anchorSnap = null;
-  function tickAnchor() {
-    if (!anchorPoint || scene !== 'play') return;
-    if (W2S(anchorPoint.y) > H + 18) {
-      _anchorSnap = { x: player.x, y: player.y, ax: anchorPoint.x, ay: anchorPoint.y, t: 0 };
-      anchorPoint = null;
-      haptic(25);
+  // Çıpanın yolu: topun baktığı yönde HOOK_RANGE; duvarda ya da ilk engelin önünde durur (çıpa topu engele çekmesin)
+  function hookTarget() {
+    const a = player.heading, dx = Math.cos(a), dy = Math.sin(a), R = player.r;
+    let dist = HOOK_RANGE;
+    if (dx < -1e-6) dist = Math.min(dist, (walls.left + R + 2 - player.x) / dx);
+    if (dx >  1e-6) dist = Math.min(dist, (walls.right - R - 2 - player.x) / dx);
+    for (const o of obstacles) {   // ışın ↔ (engel + top + pay) çemberi: ilk kesişim
+      const ox = (o._ox ?? o.x) - player.x, oy = (o._oy ?? o.y) - player.y, rr = o.r + R + 6;
+      const b = ox * dx + oy * dy, c = ox * ox + oy * oy - rr * rr;
+      if (c < 0) { if (b > 0) dist = 0; continue; }
+      const disc = b * b - c;
+      if (b > 0 && disc >= 0) dist = Math.min(dist, b - Math.sqrt(disc));
+    }
+    dist = Math.max(0, dist);
+    // blocked: yol duvar ya da engelle kesiliyor → çıpa çarpıp geri döner, top ilerlemez
+    return { x: player.x + dx * dist, y: player.y + dy * dist, dist, ang: a, blocked: dist < HOOK_RANGE - 1 };
+  }
+  function tickHook(dt) {
+    const h = _hook;
+    if (h.phase === 'back') {   // engel / duvar: çıpa topa geri sarılır, top ilerlemez
+      h.t3 += dt; if (h.t3 >= 0.14) _hook = null;
+      return;
+    }
+    if (h.phase !== 'shoot') return;
+    h.t += dt;
+    if (h.t >= h.shootDur && h.fail) {
+      h.phase = 'back'; h.t3 = 0; h.hitT = performance.now();
+      try { const a = _abilityAudio(); if (a) a.ability('anchor', { phase: 'drop' }); } catch(_) {}   // çarpma "klonk"u
+      haptic(20);
+      return;
+    }
+    if (h.t >= h.shootDur) {   // çıpa oturdu → çekilme başlar
+      h.phase = 'pull'; h.sx = player.x; h.sy = player.y; h.t2 = 0;
+      try { const a = _abilityAudio(); if (a) a.ability('anchor', { phase: 'teleport' }); } catch(_) {}
+      haptic(40);
     }
   }
   function applyAbilityEffect(key, dur) {
@@ -14405,14 +14416,9 @@ const ARC_DB = (() => {
       addWarp('shock', player.x, player.y, { T: R / WARP.shock.sp + 0.25 });
       haptic(80);
     } else if (key === 'anchor') {
-      if (!anchorPoint) {
-        anchorPoint = { x: player.x, y: player.y, t: 0 };   // t: atılma animasyonu
-      } else {
-        _anchorZip = { x: player.x, y: player.y, ax: anchorPoint.x, ay: anchorPoint.y, t: 0 };   // halat topu çeker
-        player.x = anchorPoint.x; player.y = anchorPoint.y;
-        spawnGoldParticles(player.x, player.y);
-        anchorPoint = null;
-      }
+      const tg = hookTarget();
+      _hook = { phase: 'shoot', t: 0, x0: player.x, y0: player.y, tx: tg.x, ty: tg.y, ang: tg.ang, fail: tg.blocked,
+        shootDur: Math.max(0.05, tg.dist / HOOK_SHOOT_SPEED), pullDur: HOOK_PULL_S * Math.max(0.4, tg.dist / HOOK_RANGE) };
     }
   }
   document.querySelectorAll('.slot').forEach(el => {
@@ -15502,7 +15508,7 @@ const ARC_DB = (() => {
     coinpull:   'Instantly pulls every green, gold and purple ball within its radius into your ball. Upgrade to widen the radius.',
     brake:      'Halves only your own speed for a few seconds. Obstacles keep moving and energy drains as usual, but it recharges much faster.',
     shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes. Upgrade to widen its reach.',
-    anchor:     'First use drops an anchor where you are. Tap again to teleport back to it; it recharges after the teleport. If the anchor falls off the bottom of the screen it breaks free.',
+    anchor:     'Fires a grappling anchor the way you are facing and pulls you to it in a flash. If a wall or obstacle is in the way, the anchor bounces back and you stay put (no cooldown).',
   };
 
 
