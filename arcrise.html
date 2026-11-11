@@ -268,6 +268,9 @@
     .hud-rank { display: block; width: fit-content; height: 14px; line-height: 14px; margin-top: 1px; font-size: 11.5px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
       color: var(--rk, #9fd8ff); transition: color .6s, text-shadow .6s; }
     .hud-rank[hidden] { display: block; visibility: hidden; }   /* yer tutar: çizgi hep aynı yükseklikte */
+    /* Daily'de canlı sıra yok → etiket + sayı boş sıra yerine iner: sayının alt kenarı ↔ çizgi = çizgi ↔ DAILY yazısı (~14px).
+       transform değil top: sayının tick/bump animasyonları transform kullanıyor */
+    html.daily-run #hud :is(.hud-tl, .hud-tr) > :is(.hud-lbl, .hud-num) { position: relative; top: 18px; }
     .hud-rank.up { animation: rankUp .35s ease-out; }
     .hud-rank.top { color: #ffd25a; text-shadow: 0 0 8px rgba(255,210,90,.55); }
     .hud-rank.first { color: #ffe27a; text-shadow: 0 0 12px rgba(255,210,90,.9), 0 0 2px #fff; animation: rankFirst 1.6s ease-in-out infinite; }
@@ -4088,6 +4091,8 @@
     }
     .slot.cooling .slot-ring { opacity: 1; }
     .slot.cooling { opacity: 0.55; }
+    .slot.armed:not(.cooling) { animation: slotArmed 1s ease-in-out infinite; }   /* Anchor bırakıldı: ışınlanmaya hazır */
+    @keyframes slotArmed { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--sc),.0), 0 0 14px rgba(var(--sc),.35); } 50% { box-shadow: 0 0 0 4px rgba(var(--sc),.35), 0 0 22px rgba(var(--sc),.7); } }
     /* ══════════ KÜÇÜK EKRAN (iPhone SE: 667px, Safari çubuklarıyla ~550px; SE 1: 568/~460) ══════════
        .screen içeriği justify-content:center ile ortalanıyordu → sığmayınca ÜSTTEN de taşıp
        ulaşılamaz oluyordu (ilk girişteki profil paneli SE'de 43-75px iki yandan kesiliyordu).
@@ -10900,7 +10905,7 @@ const ARC_DB = (() => {
     _dailyRng = _activeChal ? mulberry32(dailySeed('chal-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed(dailyDay())) : null;
     _fxRng = _activeChal ? mulberry32(dailySeed('chalfx-' + _activeChal.seed)) : _dailyRun ? mulberry32(dailySeed('fx-' + dailyDay())) : null;
     obstacles.length = 0; bonuses.length = 0; ripples.length = 0;
-    shockWaves.length = 0; brakeT = 0; anchorPoint = null; _anchorZip = null; _brakeEcho.length = 0; _pullFx = null; _ghostBits.length = 0;
+    shockWaves.length = 0; brakeT = 0; anchorPoint = null; _anchorZip = null; _anchorSnap = null; _brakeEcho.length = 0; _pullFx = null; _ghostBits.length = 0;
     // İlk engel ekranın üstünde başlasın — oyuncu yaklaşırken sahneye girer.
     // Enerji (bonus) sahnede normal akışıyla görünür, gizlenmesin.
     // Engel/enerjiler bir ekran yukarıda hep dolu olsun — yukarıdan akarak gelirler.
@@ -12701,7 +12706,7 @@ const ARC_DB = (() => {
       updateFloatTexts(dt);
       updateFlameParticles(dt);
       updateFlyScores(dt);
-      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls(); tickBrakeEcho(dtRaw);
+      drawWarpFx(); drawWalls(); drawMilestoneLines(); drawBestDistanceLine(); drawDeathMarkers(); drawRemoteDeathMarkers(); drawOtherTraces(); drawStartLine(); updateVanillaExit(); drawObstacles(); drawFeats(); drawDeathMark(dt); drawShockWaves(); drawBonuses(); drawGoldBalls(); drawPurpleBalls(); tickBrakeEcho(dtRaw); tickAnchor();
       drawTrail(time); drawAbilityFx(dtRaw); drawParticles(); drawFloatTexts(); drawPlayer(); drawRipples();
       drawFlameParticles();
       if (scene === 'play') { drawFlyScores(); drawBoosterBorder(); drawResumeCountdown(dtRaw); drawCloseCall(dt);   /* combo etiketi v27'de HUD'a taşındı (drawComboLabel kullanılmıyor) */ }
@@ -14186,6 +14191,8 @@ const ARC_DB = (() => {
       const cooling = !!item && item.type === 'ability' && cd > 0;
       const dash = cooling ? (289 * (1 - Math.min(1, cd / slotAbilityCooldown(i, item.key)))).toFixed(1) : '289';
       if (el._cool !== cooling) { el._cool = cooling; el.classList.toggle('cooling', cooling); }
+      const armed = !!item && item.key === 'anchor' && !!anchorPoint;   // çıpa bırakıldı: slot "ışınlan" için nabız atar
+      if (el._armed !== armed) { el._armed = armed; el.classList.toggle('armed', armed); }
       if (el._dash !== dash) { el._dash = dash; ring.setAttribute('stroke-dashoffset', dash); }
     }
   }
@@ -14305,6 +14312,19 @@ const ARC_DB = (() => {
       ctx.restore();
       drawAnchorIcon(ix, iy, 1.6 - 0.4 * land, 0.4 + 0.6 * land);
     }
+    // Halat koptu (çıpa ekranın altında kaldı): topun ucundaki parça geri savrulup söner
+    if (_anchorSnap) {
+      const z = _anchorSnap; z.t += dt;
+      const u = Math.min(1, z.t / 0.35);
+      if (u >= 1) _anchorSnap = null;
+      else {
+        const px = player.x, py = W2S(player.y), dx = z.ax - px, dy = W2S(z.ay) - py, L = Math.hypot(dx, dy) || 1;
+        const len = Math.min(140, L) * (1 - u) * (1 - u);
+        ctx.save(); ctx.strokeStyle = `rgba(150,205,255,${(0.8 * (1 - u)).toFixed(3)})`; ctx.lineWidth = 1.3; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo(px + dx / L * len * 0.5 + 14 * u, py + dy / L * len * 0.5, px + dx / L * len, py + dy / L * len);
+        ctx.stroke(); ctx.restore();
+      }
+    }
     // Işınlanma: halat eski konumdan çıpaya doğru toplanır
     if (_anchorZip) {
       const z = _anchorZip; z.t += dt;
@@ -14344,8 +14364,22 @@ const ARC_DB = (() => {
     applyAbilityEffect(key, dur);
     try { const a = _abilityAudio(); if (a) a.ability(key, { dur, phase: anchorPhase }); } catch(_) {}
     if (dur > 0) activeAbility = { key, t: dur };
-    slotCD[slotIdx] = cd;
+    // Anchor: bekleme süresi çıpayı bırakınca değil, IŞINLANINCA başlar (eskiden 20 sn beklemek gerekiyordu,
+    // o arada çıpa ekranın altında kalıyordu). Bırakınca yalnız 0.4 sn kilit: yanlışlıkla çift dokunma ışınlamasın.
+    slotCD[slotIdx] = anchorPhase === 'drop' ? ANCHOR_ARM_S : cd;
     haptic(60);
+  }
+  const ANCHOR_ARM_S = 0.4;
+  // Çıpa ekranın altından çıkarsa halat kopar: ışınlanma topu ekran dışına atıp öldürmesin. Işınlanılmadığı için
+  // bekleme süresi yok — yetenek hemen yeniden kullanılabilir.
+  let _anchorSnap = null;
+  function tickAnchor() {
+    if (!anchorPoint || scene !== 'play') return;
+    if (W2S(anchorPoint.y) > H + 18) {
+      _anchorSnap = { x: player.x, y: player.y, ax: anchorPoint.x, ay: anchorPoint.y, t: 0 };
+      anchorPoint = null;
+      haptic(25);
+    }
   }
   function applyAbilityEffect(key, dur) {
     if (key === 'timeslow') {
@@ -15468,7 +15502,7 @@ const ARC_DB = (() => {
     coinpull:   'Instantly pulls every green, gold and purple ball within its radius into your ball. Upgrade to widen the radius.',
     brake:      'Halves only your own speed for a few seconds. Obstacles keep moving and energy drains as usual, but it recharges much faster.',
     shock:      'Sends out a shockwave around you. Every red obstacle it touches explodes. Upgrade to widen its reach.',
-    anchor:     'First use drops a marker where you are. Use it again after it recharges to teleport back to the marker.',
+    anchor:     'First use drops an anchor where you are. Tap again to teleport back to it; it recharges after the teleport. If the anchor falls off the bottom of the screen it breaks free.',
   };
 
 

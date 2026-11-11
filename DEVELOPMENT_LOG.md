@@ -396,6 +396,16 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Daily HUD: skor ve mesafe çizgiye iner (2026-11-11)
+- Daily'de canlı sıra (#1) yok ama yeri boş tutuluyordu → sayılar çizgiden uzak kalıyordu. `html.daily-run`'da etiket + sayı 18 px aşağı (`top`, transform değil — sayı animasyonları transform kullanıyor): sayının alt kenarı ↔ çizgi ≈14 px = çizgi ↔ DAILY yazısı. Test: günlük testinde aralık ölçülür.
+
+### Anchor kullanımı düzeltildi: bekleme süresi ışınlanınca başlar, çıpa ekrandan çıkınca kopar (2026-11-11)
+- Eskiden 20 sn'lik bekleme çıpayı bırakınca başlıyordu ve ışınlanmak için bitmesi gerekiyordu → çoğu zaman kullanmaya fırsat kalmıyor, çıpa da ekranın altında kalıp ışınlanma topu ekran dışına atarak öldürüyordu.
+- Artık bırakınca yalnız 0.4 sn kilit (yanlışlıkla çift dokunma ışınlamasın), sonra istediğin an ışınlanırsın; bekleme süresi ışınlanınca başlar.
+- Çıpa ekranın altından çıkarsa halat kopar (kısa kopma animasyonu), ışınlanılmadığı için bekleme yok — yetenek hemen yeniden kullanılabilir.
+- Çıpa bekliyorken slot kendi renginde nabız atar (`.slot.armed`). Açıklama metni güncellendi.
+- Test: bırak → 0.4 sn → ışınlan (aynı nokta), bekleme ışınlanınca başlar; çıpa ekrandan çıkınca kopar ve slot hazır kalır.
+
 ### Yetenek görselleri, Phase Burst → Ghost, mor booster alan dalgası, yeni combo bozulma sesi (2026-11-11)
 - **Shockwave**: ölümdeki şok dalgasının aynısı — oyun alanının ızgarasını büker (`addWarp('shock', …, { T: R/sp + 0.25 })`, yeteneğin menzilinde söner), cephe halkası artık beyaz ve daha ince. `addWarp` dördüncü argümanla dalga başına WARP değerlerini ezebiliyor.
 - **Time Slow — bullet time**: önceki kare hafif büyütülüp soluk çizilir → hareket eden her şey merkezden dışa akan hayalet izler bırakır (zoom-blur hissi; girişte kısa "çekilme" darbesi). Renkler soluklaşır (canvas'a CSS `saturate/contrast` filtresi — canvas `saturation` karışımı saydam alana gri bastığı için), kenarlar soğuk mavi-mor vinyetle kararır. Açılış ≈0.1 sn, kapanış ≈0.2 sn. Sade modda (LOWFX) iz ve filtre yok, yalnız vinyet.

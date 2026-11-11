@@ -1168,6 +1168,29 @@ test('yetenek görselleri: Shockwave dalgası, bullet time, Brake yankısı, Anc
   check((await vfx()).ghostBits > 10, `Ghost'ta engeller parçalanmıyor: ${JSON.stringify(await vfx())}`);
 });
 
+test('Anchor: bırakınca hemen ışınlanılabilir, bekleme süresi ışınlanınca başlar; çıpa ekranın altından çıkınca kopar, yetenek hazır kalır', async () => {
+  await fresh({ arc_slots_owned: '1', arc_slots_v1: [{ type: 'ability', key: 'anchor', icon: 'u-anchor' }, null, null, null],
+    arc_upg_v1: { comboSplitV22: true, inv: { anchor: { owned: true, durLvl: 0 } } } });
+  await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+  check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'run başlamadı'); await sleep(1500);
+  await ev(`ARC_BOT.stop(); true`);   // bot yetenekleri kendisi de tetikliyor
+  const p0 = await ev('(() => { ARC_TEST.trigger(0); return ARC_TEST.player; })()'), cd0 = (await ev('ARC_TEST.slotCD'))[0];
+  check((await ev('ARC_TEST.vfx')).anchor && cd0 > 0 && cd0 <= 0.4, `bırakınca kilit 0.4 sn olmalı: ${cd0}`);
+  await sleep(600);
+  const pm = await ev('ARC_TEST.player');
+  const p1 = await ev('(() => { ARC_TEST.trigger(0); return ARC_TEST.player; })()'), cd1 = (await ev('ARC_TEST.slotCD'))[0];
+  check(Math.hypot(pm.x - p0.x, pm.y - p0.y) > 20 && Math.abs(p1.y - p0.y) < 2 && Math.abs(p1.x - p0.x) < 2, `çıpaya ışınlanmadı: ${JSON.stringify([p0, pm, p1])}`);
+  check(cd1 > 10 && !(await ev('ARC_TEST.vfx')).anchor, `ışınlanınca bekleme başlamadı: ${cd1}`);
+  // ikinci tur: çıpa ekranın altından çıkarsa kopar, bekleme yok
+  await ev('ARC_BOT.start(); true');
+  check(await waitFor('ARC_TEST.slotCD[0] === 0', 30000), 'bekleme bitmedi');
+  await ev('ARC_TEST.trigger(0); true'); await sleep(100);
+  check((await ev('ARC_TEST.vfx')).anchor, 'çıpa bırakılmadı');
+  check(await waitFor('!ARC_TEST.vfx.anchor', 20000), 'çıpa ekrandan çıkınca kopmadı');
+  check((await ev('ARC_TEST.slotCD'))[0] === 0 && await ev(`ARC_TEST.scene === 'play'`), `koptuktan sonra yetenek hazır değil: ${JSON.stringify(await ev('ARC_TEST.slotCD'))}`);
+  await ev('ARC_BOT.stop(); true');
+});
+
 test('yetenek sesleri: Shock ölüm patlamasıyla aynı; yetenekler yeşil top sesinden çok yüksek değil', async () => {
   await fresh({});
   const r = await ev(`(async () => {
@@ -1665,6 +1688,9 @@ test('günlük rekorlar ayrı: HUD\'da DAILY best/mesafe, normal rekora dokunmaz
   await ev(`document.querySelector('.dl-play').click(); true`); await sleep(900);
   const d = await ev(`({ lbl: [...document.querySelectorAll('#hud .hud-best-lbl')].map(e => e.textContent), s: document.getElementById('h-best').textContent, dd: document.getElementById('h-dist-best').textContent })`);
   check(d.lbl.every(x => x === 'DAILY') && /^0*77$/.test(d.s) && d.dd !== '0.00M', `günlük HUD: ${JSON.stringify(d)}`);
+  // Daily'de sıra yok → sayı çizgiye iner: sayı kutusunun altı ↔ çizgi 8px (yazının altı ≈14px = çizgi ↔ DAILY yazısı)
+  const gp = await ev(`(() => { const r = id => document.getElementById(id).getBoundingClientRect(); return [r('h-score').bottom, r('h-dist').bottom, r('hud-line').top]; })()`);
+  check(Math.abs(gp[2] - gp[0] - 8) <= 1 && Math.abs(gp[2] - gp[1] - 8) <= 1, `günlükte sayılar çizgiye inmedi: ${JSON.stringify(gp)}`);
   await ev(`ARC_TEST.straight(-Math.PI / 2); true`);
   check(await waitFor(`ARC_TEST.scene === 'over'`, 30000), 'günlük run bitmedi'); await sleep(2500);
   check(d.s !== String(nb).padStart(6, '0'), 'günlükte normal rekor gösterildi');
