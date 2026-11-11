@@ -396,6 +396,18 @@ App yüklenince:
 
 ## 📝 Son Yapılan Değişiklikler (kronolojik, en yeni üstte)
 
+### Yetenek görselleri, Phase Burst → Ghost, mor booster alan dalgası, yeni combo bozulma sesi (2026-11-11)
+- **Shockwave**: ölümdeki şok dalgasının aynısı — oyun alanının ızgarasını büker (`addWarp('shock', …, { T: R/sp + 0.25 })`, yeteneğin menzilinde söner), cephe halkası artık beyaz ve daha ince. `addWarp` dördüncü argümanla dalga başına WARP değerlerini ezebiliyor.
+- **Time Slow — bullet time**: önceki kare hafif büyütülüp soluk çizilir → hareket eden her şey merkezden dışa akan hayalet izler bırakır (zoom-blur hissi; girişte kısa "çekilme" darbesi). Renkler soluklaşır (canvas'a CSS `saturate/contrast` filtresi — canvas `saturation` karışımı saydam alana gri bastığı için), kenarlar soğuk mavi-mor vinyetle kararır. Açılış ≈0.1 sn, kapanış ≈0.2 sn. Sade modda (LOWFX) iz ve filtre yok, yalnız vinyet.
+- **Brake**: fren süresince topun izinde 0.06 sn arayla yankı halkaları kalır, açılarak söner.
+- **Anchor**: bırakılan yere çıpa atılır (kısa yay + oturma, koyu zemin, yavaş nabız halkası); topa kesikli, hafif sarkan ince bir halat bağlanır, ışınlanana kadar topu izler. Işınlanınca halat eski konumdan çıpaya toplanır, varışta halka açılır.
+- **Phase Burst → Ghost** (ekrandaki ad; kayıtlardaki `phaseburst` anahtarı aynı). Ghost açılırken (yetenek ya da mor booster) ekrandaki kırmızı engeller ≈0.2 sn'de saydamlaşırken kenarlarından parçacıklara ayrılır; Ghost bitince parçacıklar geri toplanır. Parçacıklar engele bağlı (dönen engelle birlikte gider).
+- **Coin Pull**: toplar artık ışınlanmaz; topun kara deliği yeteneğin çapına kadar büyüyüp çöker (ızgara ve hale), çaptaki toplar Magnet gibi hızlanarak topa çekilir (`magT`). Sade modda eski yeşil çap halkası.
+- **Mor booster**: booster süresince tüm oyun alanı yavaşça dalgalanır (tam alan warp'ı, `k: 3`); girişte 0.5 sn açılır, son 0.6 sn'de söner. Kötü olursa kaldırılacak.
+- **Combo bozulma sesi (ArcMusic)**: inen "vınnn" yerine glitch — müzik bir an üç kez kekeler, altında tok bir düşüş, kısa dijital cızırtı.
+- `ARC_TEST.vfx` (efekt durumları) ve `ARC_TEST.booster(type)` eklendi; test: her yeteneğin görseli açılır, bullet time kapanınca filtre kalkar.
+- Not: Anchor'ın bekleme süresi 20 sn ve çıpa ekranın altında kalmışsa ışınlanma topu ekran dışına atıp öldürüyor (eski davranış, değiştirilmedi).
+
 ### Yetenek sesleri gözden geçirildi: Shock = ölüm patlaması, seviyeler dengeli, ezgiler akordan (2026-11-10)
 - **Shock**: ölümdeki patlamanın aynısı (ortak `boom()`; `death()` de onu kullanır). Müzik kesilmez, yalnız an için boğulur (`musicLP` 300 Hz, zamanlayıcı geri açar).
 - Seviyeler yeşil top (`collect`) sesine göre ölçülerek ayarlandı (offline render, 50 ms RMS tepe): yetenekler collect'in ±4 dB'inde, ölüm/Shock en yüksek.

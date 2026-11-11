@@ -631,14 +631,23 @@ const ArcMusic = (() => {
         const k = S.goldK % 10, m = 81 + PENTA[k % 5] + 12 * Math.floor(k / 5);
         bell(m, t, 0.045, 0.22);
       },
-      comboBreak(at) {
+      comboBreak(at) {   // "glitch": müzik bir an kekeler (3 kısa kesik), altında tok düşüş + kısa dijital cızırtı
         const t = now(at); S.chain = 0; S.combo = 0;
-        const o = osc('sawtooth', mtof(81), t, t + 0.42); o.frequency.exponentialRampToValueAtTime(mtof(57), t + 0.38);
-        const f = F('lowpass', 3000, 3); f.frequency.setValueAtTime(3000, t); f.frequency.exponentialRampToValueAtTime(300, t + 0.4);
-        const g = G(0); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
-        o.connect(f); f.connect(g); g.connect(sfx);
-        whoosh(t, 0.1, 0.18, 6000, 1200);
-        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t, 0.03);
+        if (S.scene === 'play') {
+          const gv = music.gain; gv.cancelScheduledValues(t); gv.setValueAtTime(1, t);
+          [0, 0.055, 0.11].forEach(o => { gv.setValueAtTime(0.06, t + o); gv.setValueAtTime(1, t + o + 0.03); });
+        }
+        const o = osc('sine', 120, t, t + 0.26); o.frequency.exponentialRampToValueAtTime(42, t + 0.22);
+        const g = G(0); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.32, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.24);
+        o.connect(g); g.connect(sfx);
+        const n = noiseSrc(t, t + 0.16), f = F('bandpass', 1800, 2.2), g2 = G(0);
+        for (let k = 0; k < 6; k++) { const tk = t + k * 0.024; g2.gain.setValueAtTime(k % 2 ? 0.0001 : 0.09 * (1 - k / 7), tk); }
+        g2.gain.setValueAtTime(0.0001, t + 0.15);
+        n.connect(f); f.connect(g2); g2.connect(sfx);
+        const sq = osc('square', mtof(45), t, t + 0.14), sf = F('lowpass', 700, 1), g3 = G(0);
+        g3.gain.setValueAtTime(0.035, t); g3.gain.setValueAtTime(0.0001, t + 0.03); g3.gain.setValueAtTime(0.03, t + 0.06); g3.gain.exponentialRampToValueAtTime(0.0005, t + 0.13);
+        sq.connect(sf); sf.connect(g3); g3.connect(sfx);
+        musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(450, t + 0.14, 0.03);
       },
       // Yetenekler: key = timeslow | phaseburst | coinpull | brake | shock | anchor; o = { dur, phase: 'drop'|'teleport' }
       ability(key, o = {}, at) { const f = ABIL[key]; if (!f) return; f(now(at), o || {}); logAbil(key === 'anchor' ? 'anchor:' + (o.phase || 'drop') : key); },

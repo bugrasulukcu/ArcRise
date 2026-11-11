@@ -1138,6 +1138,36 @@ test('yetenek çapı + slot geliştirmeleri: Coin Pull çapla sınırlı, cooldo
   check(cd > 15 && cd <= 16, `tetik sonrası slot cooldown ${cd}`);
 });
 
+test('yetenek görselleri: Shockwave dalgası, bullet time, Brake yankısı, Anchor çıpası, Ghost parçalanması, Coin Pull kara deliği, mor booster alanı', async () => {
+  const run = async keys => {
+    await fresh({ arc_slots_owned: '4', arc_slots_v1: keys.map(k => ({ type: 'ability', key: k, icon: 'u-' + k })),
+      arc_upg_v1: { comboSplitV22: true, inv: Object.fromEntries(keys.map(k => [k, { owned: true, durLvl: 0 }])) } });
+    await ev(`document.getElementById('btn-start').click(); ARC_BOT.start(); true`);
+    check(await waitFor(`ARC_TEST.scene === 'play'`, 5000), 'run başlamadı'); await sleep(1500);
+  };
+  const vfx = () => ev('ARC_TEST.vfx');
+  await run(['shock', 'timeslow', 'brake', 'anchor']);
+  await ev('ARC_TEST.trigger(0); true'); await sleep(60);
+  check((await vfx()).warps > 0, 'Shockwave oyun alanını bükmüyor');
+  await ev('ARC_TEST.trigger(1); true');
+  check(await waitFor(`ARC_TEST.vfx.bt > 0.8`, 1500), `bullet time açılmadı: ${JSON.stringify(await vfx())}`);
+  check(await ev(`/saturate/.test(document.getElementById('gc').style.filter)`), 'bullet time renkleri soluklaştırmıyor');
+  await ev('ARC_TEST.trigger(2); true'); await sleep(250);
+  check((await vfx()).echo >= 2, `Brake yankısı yok: ${JSON.stringify(await vfx())}`);
+  await ev('ARC_TEST.trigger(3); true'); await sleep(100);
+  check((await vfx()).anchor, 'Anchor çıpası yok');
+  check(await waitFor(`ARC_TEST.vfx.bt === 0 && document.getElementById('gc').style.filter === 'none'`, 8000), 'bullet time kapanmadı');
+  await ev('ARC_BOT.stop(); true');
+  await run(['coinpull', 'phaseburst', 'shock', 'timeslow']);
+  await ev('ARC_TEST.trigger(0); true'); await sleep(200);
+  const p = await vfx();
+  check(p.pull && p.holeSg > 100, `Coin Pull kara deliği büyümedi: ${JSON.stringify(p)}`);
+  await ev(`ARC_TEST.booster('x2'); true`); await sleep(700);
+  check((await vfx()).field, `mor booster tam alan dalgası yok: ${await ev('ARC_TEST.scene')} ${JSON.stringify(await vfx())}`);
+  await ev('ARC_TEST.obstacleAhead(150, 26); ARC_TEST.obstacleAhead(240, 30); ARC_TEST.trigger(1); true'); await sleep(60);
+  check((await vfx()).ghostBits > 10, `Ghost'ta engeller parçalanmıyor: ${JSON.stringify(await vfx())}`);
+});
+
 test('yetenek sesleri: Shock ölüm patlamasıyla aynı; yetenekler yeşil top sesinden çok yüksek değil', async () => {
   await fresh({});
   const r = await ev(`(async () => {
